@@ -9,56 +9,68 @@
 
 #define super HyperVICService
 
-#define SYSLOG(str, ...) LOG_PRINT("HyperVShutdown", str, ## __VA_ARGS__)
-
-#ifdef DEBUG
-#define DBGLOG(str, ...) LOG_PRINT("HyperVShutdown", str, ## __VA_ARGS__)
-#else
-#define DBGLOG(str, ...) {}
-#endif
+#define SYSLOG(str, ...) SYSLOG_PRINT("HyperVShutdown", str, ## __VA_ARGS__)
+#define DBGLOG(str, ...) DBGLOG_PRINT("HyperVShutdown", str, ## __VA_ARGS__)
 
 extern "C" int reboot_kernel(int, char *);
 
 OSDefineMetaClassAndStructors(HyperVShutdown, super);
 
 bool HyperVShutdown::start(IOService *provider) {
-  DBGLOG("Starting guest shutdown service");
-  return super::start(provider);
-}
-
-inline void processShutdown(VMBusICMessageShutdown* shutdownMsg) {
-  DBGLOG("Got shutdown request %X", shutdownMsg->flags);
-  reboot_kernel(0x08, "test");
+  if (!super::start(provider)) {
+    return false;
+  }
+  
+  SYSLOG("Initialized Hyper-V Guest Shutdown");
+  return true;
 }
 
 void HyperVShutdown::processMessage() {
-  DBGLOG("Interrupt!");
+  VMBusICMessageShutdown shutdownMsg;
   
-  UInt8 data[2100];
-  UInt32 dataSize = 2100;
+  HyperVVMBusDeviceRequest request = { 0 };
+  request.responseData = &shutdownMsg;
+  request.responseDataLength = sizeof (shutdownMsg);
   
-  VMBusICMessageHeader *icHeader = (VMBusICMessageHeader*)data;
-  
-  /*bool result = hvDevice->readPacket(data, &dataSize);
-  if (!result || dataSize == 0) {
+  //
+  // Ignore errors and the acknowledgement interrupt (no data to read).
+  //
+  if (hvDevice->doRequest(&request) != kIOReturnSuccess || request.responseDataLength == 0) {
     return;
-  }*/
+  }
   
-  switch (icHeader->type) {
+  switch (shutdownMsg.header.type) {
     case kVMBusICMessageTypeNegotiate:
-      createNegotiationResponse((VMBusICMessageNegotiate*) icHeader, 3, 3);
+      createNegotiationResponse(&shutdownMsg.negotiate, 3, 3);
       break;
       
     case kVMBusICMessageTypeShutdown:
-      processShutdown((VMBusICMessageShutdown*)icHeader);
+      handleShutdown(&shutdownMsg.shutdown);
       break;
       
     default:
-      DBGLOG("Unknown IC message type %u", icHeader->type);
-      icHeader->status = kHyperVStatusFail;
+      DBGLOG("Unknown shutdown message type %u", shutdownMsg.header.type);
+      shutdownMsg.header.status = kHyperVStatusFail;
       break;
   }
   
-  icHeader->flags = kVMBusICFlagTransaction | kVMBusICFlagResponse;
- // hvDevice->writePacket(data, dataSize);
+  shutdownMsg.header.flags = kVMBusICFlagTransaction | kVMBusICFlagResponse;
+  
+  UInt32 sendLength = request.responseDataLength;
+  
+  request = { 0 };
+  request.sendData = &shutdownMsg;
+  request.sendDataLength = sendLength;
+  request.sendPacketType = kVMBusPacketTypeDataInband;
+  
+  hvDevice->doRequest(&request);
+}
+
+void HyperVShutdown::handleShutdown(VMBusICMessageShutdownData *shutdownData) {
+  SYSLOG("Shutdown request received, flags 0x%X, reason 0x%X", shutdownData->flags, shutdownData->reason);
+  
+  //
+  // Shutdown currently not supported.
+  //
+  shutdownData->header.status = kHyperVStatusFail;
 }

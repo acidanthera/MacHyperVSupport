@@ -70,7 +70,7 @@
 			<string>HyperVShutdown</string>
 			<key>IOPropertyMatch</key>
 			<dict>
-				<key>DisabledHVType</key>
+				<key>HVType</key>
 				<string>0e0b6031-5213-4934-818b-38d90ced39db</string>
 			</dict>
 			<key>IOProviderClass</key>

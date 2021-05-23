@@ -56,7 +56,7 @@ void HyperVHeartbeat::processMessage() {
       break;
       
     default:
-      DBGLOG("Unknown IC message type %u", heartbeatMsg.header.type);
+      DBGLOG("Unknown heartbeat message type %u", heartbeatMsg.header.type);
       heartbeatMsg.header.status = kHyperVStatusFail;
       break;
   }

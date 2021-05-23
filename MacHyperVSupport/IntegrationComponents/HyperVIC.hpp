@@ -25,6 +25,9 @@ typedef enum : UInt16 {
 #define kVMBusICFlagRequest       2
 #define kVMBusICFlagResponse      4
 
+//
+// Header and common negotiation message.
+//
 typedef struct __attribute__((packed)) {
   UInt32              pipeFlags;
   UInt32              pipeMsgs;
@@ -48,6 +51,9 @@ typedef struct __attribute__((packed)) {
   UInt32                versions[];
 } VMBusICMessageNegotiate;
 
+//
+// Heartbeat messages.
+//
 typedef struct __attribute__((packed)) {
   VMBusICMessageHeader  header;
   
@@ -63,6 +69,9 @@ typedef struct __attribute__((packed)) {
   };
 } VMBusICMessageHeartbeat;
 
+//
+// Shutdown messages.
+//
 typedef struct __attribute__((packed)) {
   VMBusICMessageHeader  header;
   
@@ -70,6 +79,14 @@ typedef struct __attribute__((packed)) {
   UInt32                timeoutSeconds;
   UInt32                flags;
   char                  displayMessage[2048];
+} VMBusICMessageShutdownData;
+
+typedef struct __attribute__((packed)) {
+  union {
+    VMBusICMessageHeader            header;
+    VMBusICMessageNegotiate         negotiate;
+    VMBusICMessageShutdownData      shutdown;
+  };
 } VMBusICMessageShutdown;
 
 #endif

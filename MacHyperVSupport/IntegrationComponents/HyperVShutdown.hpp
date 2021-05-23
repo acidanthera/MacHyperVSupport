@@ -13,6 +13,9 @@
 class HyperVShutdown : public HyperVICService {
   OSDeclareDefaultStructors(HyperVShutdown);
   
+private:
+  void handleShutdown(VMBusICMessageShutdownData *shutdownData);
+  
 protected:
   void processMessage() APPLE_KEXT_OVERRIDE;
   
