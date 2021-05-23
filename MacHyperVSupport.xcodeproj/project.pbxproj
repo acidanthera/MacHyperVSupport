@@ -1,0 +1,509 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		41078473264603F1005894D4 /* VMBusChannel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41078472264603F1005894D4 /* VMBusChannel.cpp */; };
+		41225F3C2642086300574E86 /* SynICProcessor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41225F3A2642086300574E86 /* SynICProcessor.cpp */; };
+		41225F3D2642086300574E86 /* SynICProcessor.h in Headers */ = {isa = PBXBuildFile; fileRef = 41225F3B2642086300574E86 /* SynICProcessor.h */; };
+		41225F512644C34300574E86 /* HyperVVMBusDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41225F4F2644C34300574E86 /* HyperVVMBusDevice.cpp */; };
+		41225F522644C34300574E86 /* HyperVVMBusDevice.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41225F502644C34300574E86 /* HyperVVMBusDevice.hpp */; };
+		41225F572644D98500574E86 /* HyperVHeartbeat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41225F552644D98500574E86 /* HyperVHeartbeat.cpp */; };
+		41225F582644D98500574E86 /* HyperVHeartbeat.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41225F562644D98500574E86 /* HyperVHeartbeat.hpp */; };
+		416E4180264A0D5D006DED6D /* HyperVStoragePrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 416E417E264A0D5D006DED6D /* HyperVStoragePrivate.cpp */; };
+		416E418E2651E42E006DED6D /* HyperVMousePrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 416E418D2651E42E006DED6D /* HyperVMousePrivate.cpp */; };
+		416E429D265751CC006DED6D /* HyperVVMBusDevicePrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 416E429C265751CC006DED6D /* HyperVVMBusDevicePrivate.cpp */; };
+		418219662648607600619C15 /* HyperVKeyboard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 418219642648607600619C15 /* HyperVKeyboard.cpp */; };
+		418219672648607600619C15 /* HyperVKeyboard.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 418219652648607600619C15 /* HyperVKeyboard.hpp */; };
+		418F05162646ED3D00E1D14C /* Interrupts.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 418F05152646ED3D00E1D14C /* Interrupts.cpp */; };
+		418F052226483C8300E1D14C /* HyperVICService.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 418F052026483C8300E1D14C /* HyperVICService.cpp */; };
+		418F052326483C8300E1D14C /* HyperVICService.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 418F052126483C8300E1D14C /* HyperVICService.hpp */; };
+		418F052C2648451200E1D14C /* HyperVShutdown.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 418F052A2648451200E1D14C /* HyperVShutdown.cpp */; };
+		418F052D2648451200E1D14C /* HyperVShutdown.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 418F052B2648451200E1D14C /* HyperVShutdown.hpp */; };
+		418F842C2648A3AD003F8520 /* libkmod.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 41BE4113263EDEA10018C52B /* libkmod.a */; };
+		418F84342648B07F003F8520 /* HyperVMouse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 418F84322648B07E003F8520 /* HyperVMouse.cpp */; };
+		418F84352648B07F003F8520 /* HyperVMouse.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 418F84332648B07E003F8520 /* HyperVMouse.hpp */; };
+		418F843D2648BA38003F8520 /* HyperVStorage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 418F843B2648BA38003F8520 /* HyperVStorage.cpp */; };
+		418F843E2648BA38003F8520 /* HyperVStorage.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 418F843C2648BA38003F8520 /* HyperVStorage.hpp */; };
+		419B88C2263F0169005A9977 /* Hypercalls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 419B88C1263F0169005A9977 /* Hypercalls.cpp */; };
+		419B88C5263F1F85005A9977 /* VMBus.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 419B88C4263F1F85005A9977 /* VMBus.cpp */; };
+		41BE411A263EDFAF0018C52B /* HyperVVMBusController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41BE4118263EDFAF0018C52B /* HyperVVMBusController.cpp */; };
+		41BE411B263EDFAF0018C52B /* HyperVVMBusController.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41BE4119263EDFAF0018C52B /* HyperVVMBusController.hpp */; };
+		41E2EC78263F894300BBE18F /* SynIC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41E2EC77263F894300BBE18F /* SynIC.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		410784702645FF17005894D4 /* HyperVVMBusInternal.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVVMBusInternal.hpp; sourceTree = "<group>"; };
+		41078472264603F1005894D4 /* VMBusChannel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = VMBusChannel.cpp; sourceTree = "<group>"; };
+		41225F3A2642086300574E86 /* SynICProcessor.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SynICProcessor.cpp; sourceTree = "<group>"; };
+		41225F3B2642086300574E86 /* SynICProcessor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SynICProcessor.h; sourceTree = "<group>"; };
+		41225F4226422D1600574E86 /* VMBus.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = VMBus.hpp; sourceTree = "<group>"; };
+		41225F4D2643993400574E86 /* HyperV.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperV.hpp; sourceTree = "<group>"; };
+		41225F4F2644C34300574E86 /* HyperVVMBusDevice.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVVMBusDevice.cpp; sourceTree = "<group>"; };
+		41225F502644C34300574E86 /* HyperVVMBusDevice.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVVMBusDevice.hpp; sourceTree = "<group>"; };
+		41225F552644D98500574E86 /* HyperVHeartbeat.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVHeartbeat.cpp; sourceTree = "<group>"; };
+		41225F562644D98500574E86 /* HyperVHeartbeat.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVHeartbeat.hpp; sourceTree = "<group>"; };
+		416E417E264A0D5D006DED6D /* HyperVStoragePrivate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVStoragePrivate.cpp; sourceTree = "<group>"; };
+		416E418D2651E42E006DED6D /* HyperVMousePrivate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVMousePrivate.cpp; sourceTree = "<group>"; };
+		416E429C265751CC006DED6D /* HyperVVMBusDevicePrivate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVVMBusDevicePrivate.cpp; sourceTree = "<group>"; };
+		416E429F265751D9006DED6D /* HyperVVMBusDeviceInternal.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVVMBusDeviceInternal.hpp; sourceTree = "<group>"; };
+		418219642648607600619C15 /* HyperVKeyboard.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVKeyboard.cpp; sourceTree = "<group>"; };
+		418219652648607600619C15 /* HyperVKeyboard.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVKeyboard.hpp; sourceTree = "<group>"; };
+		418219692648659B00619C15 /* HyperVKeyboardRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVKeyboardRegs.hpp; sourceTree = "<group>"; };
+		418F05152646ED3D00E1D14C /* Interrupts.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Interrupts.cpp; sourceTree = "<group>"; };
+		418F051D2647223E00E1D14C /* VMBusDriver.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = VMBusDriver.hpp; sourceTree = "<group>"; };
+		418F052026483C8300E1D14C /* HyperVICService.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVICService.cpp; sourceTree = "<group>"; };
+		418F052126483C8300E1D14C /* HyperVICService.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVICService.hpp; sourceTree = "<group>"; };
+		418F052726483CAE00E1D14C /* HyperVIC.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVIC.hpp; sourceTree = "<group>"; };
+		418F052A2648451200E1D14C /* HyperVShutdown.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVShutdown.cpp; sourceTree = "<group>"; };
+		418F052B2648451200E1D14C /* HyperVShutdown.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVShutdown.hpp; sourceTree = "<group>"; };
+		418F842E2648A885003F8520 /* HyperVADBMap.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVADBMap.hpp; sourceTree = "<group>"; };
+		418F84322648B07E003F8520 /* HyperVMouse.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVMouse.cpp; sourceTree = "<group>"; };
+		418F84332648B07E003F8520 /* HyperVMouse.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVMouse.hpp; sourceTree = "<group>"; };
+		418F84382648B108003F8520 /* HyperVMouseRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVMouseRegs.hpp; sourceTree = "<group>"; };
+		418F843B2648BA38003F8520 /* HyperVStorage.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVStorage.cpp; sourceTree = "<group>"; };
+		418F843C2648BA38003F8520 /* HyperVStorage.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVStorage.hpp; sourceTree = "<group>"; };
+		418F84412648BA88003F8520 /* HyperVStorageRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVStorageRegs.hpp; sourceTree = "<group>"; };
+		419B88BF263EEEEE005A9977 /* Registers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Registers.h; sourceTree = "<group>"; };
+		419B88C1263F0169005A9977 /* Hypercalls.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Hypercalls.cpp; sourceTree = "<group>"; };
+		419B88C4263F1F85005A9977 /* VMBus.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = VMBus.cpp; sourceTree = "<group>"; };
+		419B88C7263F2D8B005A9977 /* VMBusRegisters.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VMBusRegisters.h; sourceTree = "<group>"; };
+		41BE4104263EDE380018C52B /* MacHyperVSupport.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacHyperVSupport.kext; sourceTree = BUILT_PRODUCTS_DIR; };
+		41BE410B263EDE380018C52B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		41BE4113263EDEA10018C52B /* libkmod.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libkmod.a; path = MacKernelSDK/Library/x86_64/libkmod.a; sourceTree = "<group>"; };
+		41BE4118263EDFAF0018C52B /* HyperVVMBusController.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVVMBusController.cpp; sourceTree = "<group>"; };
+		41BE4119263EDFAF0018C52B /* HyperVVMBusController.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVVMBusController.hpp; sourceTree = "<group>"; };
+		41E2EC77263F894300BBE18F /* SynIC.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SynIC.cpp; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		41BE4101263EDE370018C52B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				418F842C2648A3AD003F8520 /* libkmod.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		41225F5A2645F53000574E86 /* VMBusDevice */ = {
+			isa = PBXGroup;
+			children = (
+				41225F4F2644C34300574E86 /* HyperVVMBusDevice.cpp */,
+				41225F502644C34300574E86 /* HyperVVMBusDevice.hpp */,
+				416E429C265751CC006DED6D /* HyperVVMBusDevicePrivate.cpp */,
+				416E429F265751D9006DED6D /* HyperVVMBusDeviceInternal.hpp */,
+			);
+			path = VMBusDevice;
+			sourceTree = "<group>";
+		};
+		418219632648605D00619C15 /* Keyboard */ = {
+			isa = PBXGroup;
+			children = (
+				418219642648607600619C15 /* HyperVKeyboard.cpp */,
+				418219652648607600619C15 /* HyperVKeyboard.hpp */,
+				418219692648659B00619C15 /* HyperVKeyboardRegs.hpp */,
+				418F842E2648A885003F8520 /* HyperVADBMap.hpp */,
+			);
+			path = Keyboard;
+			sourceTree = "<group>";
+		};
+		418F051F26483C3C00E1D14C /* IntegrationComponents */ = {
+			isa = PBXGroup;
+			children = (
+				418F052026483C8300E1D14C /* HyperVICService.cpp */,
+				418F052126483C8300E1D14C /* HyperVICService.hpp */,
+				418F052726483CAE00E1D14C /* HyperVIC.hpp */,
+				41225F552644D98500574E86 /* HyperVHeartbeat.cpp */,
+				41225F562644D98500574E86 /* HyperVHeartbeat.hpp */,
+				418F052A2648451200E1D14C /* HyperVShutdown.cpp */,
+				418F052B2648451200E1D14C /* HyperVShutdown.hpp */,
+			);
+			path = IntegrationComponents;
+			sourceTree = "<group>";
+		};
+		418F84312648B06E003F8520 /* Mouse */ = {
+			isa = PBXGroup;
+			children = (
+				418F84322648B07E003F8520 /* HyperVMouse.cpp */,
+				418F84332648B07E003F8520 /* HyperVMouse.hpp */,
+				418F84382648B108003F8520 /* HyperVMouseRegs.hpp */,
+				416E418D2651E42E006DED6D /* HyperVMousePrivate.cpp */,
+			);
+			path = Mouse;
+			sourceTree = "<group>";
+		};
+		418F843A2648B9AA003F8520 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				418F843B2648BA38003F8520 /* HyperVStorage.cpp */,
+				418F843C2648BA38003F8520 /* HyperVStorage.hpp */,
+				418F84412648BA88003F8520 /* HyperVStorageRegs.hpp */,
+				416E417E264A0D5D006DED6D /* HyperVStoragePrivate.cpp */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		41BE40FA263EDE370018C52B = {
+			isa = PBXGroup;
+			children = (
+				41BE4106263EDE380018C52B /* MacHyperVSupport */,
+				41BE4105263EDE380018C52B /* Products */,
+				41BE4112263EDEA10018C52B /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		41BE4105263EDE380018C52B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				41BE4104263EDE380018C52B /* MacHyperVSupport.kext */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		41BE4106263EDE380018C52B /* MacHyperVSupport */ = {
+			isa = PBXGroup;
+			children = (
+				41BE410B263EDE380018C52B /* Info.plist */,
+				418F051F26483C3C00E1D14C /* IntegrationComponents */,
+				418219632648605D00619C15 /* Keyboard */,
+				418F84312648B06E003F8520 /* Mouse */,
+				418F843A2648B9AA003F8520 /* Storage */,
+				41BE411E263EEAFF0018C52B /* VMBusController */,
+				41225F5A2645F53000574E86 /* VMBusDevice */,
+			);
+			path = MacHyperVSupport;
+			sourceTree = "<group>";
+		};
+		41BE4112263EDEA10018C52B /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				41BE4113263EDEA10018C52B /* libkmod.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		41BE411E263EEAFF0018C52B /* VMBusController */ = {
+			isa = PBXGroup;
+			children = (
+				419B88C1263F0169005A9977 /* Hypercalls.cpp */,
+				41225F4D2643993400574E86 /* HyperV.hpp */,
+				41BE4118263EDFAF0018C52B /* HyperVVMBusController.cpp */,
+				41BE4119263EDFAF0018C52B /* HyperVVMBusController.hpp */,
+				410784702645FF17005894D4 /* HyperVVMBusInternal.hpp */,
+				418F05152646ED3D00E1D14C /* Interrupts.cpp */,
+				419B88BF263EEEEE005A9977 /* Registers.h */,
+				41E2EC77263F894300BBE18F /* SynIC.cpp */,
+				41225F3A2642086300574E86 /* SynICProcessor.cpp */,
+				41225F3B2642086300574E86 /* SynICProcessor.h */,
+				419B88C4263F1F85005A9977 /* VMBus.cpp */,
+				41225F4226422D1600574E86 /* VMBus.hpp */,
+				41078472264603F1005894D4 /* VMBusChannel.cpp */,
+				419B88C7263F2D8B005A9977 /* VMBusRegisters.h */,
+				418F051D2647223E00E1D14C /* VMBusDriver.hpp */,
+			);
+			path = VMBusController;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		41BE40FF263EDE370018C52B /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				418F052326483C8300E1D14C /* HyperVICService.hpp in Headers */,
+				41BE411B263EDFAF0018C52B /* HyperVVMBusController.hpp in Headers */,
+				418219672648607600619C15 /* HyperVKeyboard.hpp in Headers */,
+				41225F522644C34300574E86 /* HyperVVMBusDevice.hpp in Headers */,
+				418F84352648B07F003F8520 /* HyperVMouse.hpp in Headers */,
+				41225F3D2642086300574E86 /* SynICProcessor.h in Headers */,
+				418F052D2648451200E1D14C /* HyperVShutdown.hpp in Headers */,
+				41225F582644D98500574E86 /* HyperVHeartbeat.hpp in Headers */,
+				418F843E2648BA38003F8520 /* HyperVStorage.hpp in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		41BE4103263EDE370018C52B /* MacHyperVSupport */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 41BE410E263EDE380018C52B /* Build configuration list for PBXNativeTarget "MacHyperVSupport" */;
+			buildPhases = (
+				41BE40FF263EDE370018C52B /* Headers */,
+				41BE4100263EDE370018C52B /* Sources */,
+				41BE4101263EDE370018C52B /* Frameworks */,
+				41BE4102263EDE370018C52B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MacHyperVSupport;
+			productName = MacHyperVSupport;
+			productReference = 41BE4104263EDE380018C52B /* MacHyperVSupport.kext */;
+			productType = "com.apple.product-type.kernel-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		41BE40FB263EDE370018C52B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1240;
+				TargetAttributes = {
+					41BE4103263EDE370018C52B = {
+						CreatedOnToolsVersion = 12.4;
+					};
+				};
+			};
+			buildConfigurationList = 41BE40FE263EDE370018C52B /* Build configuration list for PBXProject "MacHyperVSupport" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 41BE40FA263EDE370018C52B;
+			productRefGroup = 41BE4105263EDE380018C52B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				41BE4103263EDE370018C52B /* MacHyperVSupport */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		41BE4102263EDE370018C52B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		41BE4100263EDE370018C52B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				418F84342648B07F003F8520 /* HyperVMouse.cpp in Sources */,
+				419B88C5263F1F85005A9977 /* VMBus.cpp in Sources */,
+				418F052C2648451200E1D14C /* HyperVShutdown.cpp in Sources */,
+				418219662648607600619C15 /* HyperVKeyboard.cpp in Sources */,
+				418F05162646ED3D00E1D14C /* Interrupts.cpp in Sources */,
+				41225F512644C34300574E86 /* HyperVVMBusDevice.cpp in Sources */,
+				41225F3C2642086300574E86 /* SynICProcessor.cpp in Sources */,
+				419B88C2263F0169005A9977 /* Hypercalls.cpp in Sources */,
+				418F052226483C8300E1D14C /* HyperVICService.cpp in Sources */,
+				416E418E2651E42E006DED6D /* HyperVMousePrivate.cpp in Sources */,
+				41BE411A263EDFAF0018C52B /* HyperVVMBusController.cpp in Sources */,
+				416E4180264A0D5D006DED6D /* HyperVStoragePrivate.cpp in Sources */,
+				41E2EC78263F894300BBE18F /* SynIC.cpp in Sources */,
+				416E429D265751CC006DED6D /* HyperVVMBusDevicePrivate.cpp in Sources */,
+				418F843D2648BA38003F8520 /* HyperVStorage.cpp in Sources */,
+				41225F572644D98500574E86 /* HyperVHeartbeat.cpp in Sources */,
+				41078473264603F1005894D4 /* VMBusChannel.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		41BE410C263EDE380018C52B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				KERNEL_EXTENSION_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/MacKernelSDK/Headers";
+				KERNEL_FRAMEWORK_HEADERS = "$(PROJECT_DIR)/MacKernelSDK/Headers";
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		41BE410D263EDE380018C52B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				KERNEL_EXTENSION_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/MacKernelSDK/Headers";
+				KERNEL_FRAMEWORK_HEADERS = "$(PROJECT_DIR)/MacKernelSDK/Headers";
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		41BE410F263EDE380018C52B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = "$(MODULE_VERSION)";
+				INFOPLIST_FILE = MacHyperVSupport/Info.plist;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/MacKernelSDK/Library/x86_64",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				MARKETING_VERSION = "$(MODULE_VERSION)";
+				MODULE_NAME = fish.goldfish64.MacHyperVSupport;
+				MODULE_VERSION = 0.5;
+				PRODUCT_BUNDLE_IDENTIFIER = fish.goldfish64.MacHyperVSupport;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				RUN_CLANG_STATIC_ANALYZER = YES;
+				WRAPPER_EXTENSION = kext;
+			};
+			name = Debug;
+		};
+		41BE4110263EDE380018C52B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = "$(MODULE_VERSION)";
+				INFOPLIST_FILE = MacHyperVSupport/Info.plist;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/MacKernelSDK/Library/x86_64",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				MARKETING_VERSION = "$(MODULE_VERSION)";
+				MODULE_NAME = fish.goldfish64.MacHyperVSupport;
+				MODULE_VERSION = 0.5;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = fish.goldfish64.MacHyperVSupport;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				RUN_CLANG_STATIC_ANALYZER = YES;
+				WRAPPER_EXTENSION = kext;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		41BE40FE263EDE370018C52B /* Build configuration list for PBXProject "MacHyperVSupport" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41BE410C263EDE380018C52B /* Debug */,
+				41BE410D263EDE380018C52B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		41BE410E263EDE380018C52B /* Build configuration list for PBXNativeTarget "MacHyperVSupport" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41BE410F263EDE380018C52B /* Debug */,
+				41BE4110263EDE380018C52B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 41BE40FB263EDE370018C52B /* Project object */;
+}
