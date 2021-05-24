@@ -96,7 +96,7 @@ void HyperVMouse::handleDeviceInfo(HyperVMouseMessageInitialDeviceInfo *deviceIn
   //
   // Store HID descriptor.
   //
-  hidDescriptorLength = deviceInfo->hidDescriptor.hidDescriptorLengthLo | (deviceInfo->hidDescriptor.hidDescriptorLengthHi << 8);
+  hidDescriptorLength = deviceInfo->hidDescriptor.hidDescriptorLength;
   DBGLOG("HID descriptor is %u bytes", hidDescriptorLength);
   
   hidDescriptor = IOMalloc(hidDescriptorLength);

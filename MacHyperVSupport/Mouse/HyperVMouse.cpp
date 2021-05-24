@@ -76,6 +76,8 @@ void HyperVMouse::handleStop(IOService *provider) {
     hvDevice->closeChannel();
     hvDevice->release();
   }
+  
+  super::handleStop(provider);
 }
 
 OSString* HyperVMouse::newTransportString() const {

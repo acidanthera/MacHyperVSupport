@@ -8,8 +8,6 @@
 #ifndef HyperVMouseRegs_hpp
 #define HyperVMouseRegs_hpp
 
-#include <IOKit/usb/USB.h>
-
 #define kHyperVMouseRingBufferSize  (0x8000)
 
 #define kHyperVMouseInitTimeout     10000
@@ -20,6 +18,19 @@
 #define kHyperVMouseVersionMajor    2
 #define kHyperVMouseVersionMinor    0
 #define kHyperVMouseVersion         (kHyperVMouseVersionMinor | (kHyperVMouseVersionMajor << 16))
+
+//
+// HID descriptor
+//
+typedef struct __attribute__((packed)) {
+  UInt8       descLen;
+  UInt8       descType;
+  UInt16      descVersNum;
+  UInt8       hidCountryCode;
+  UInt8       hidNumDescriptors;
+  UInt8       hidDescriptorType;
+  UInt16      hidDescriptorLength;
+} HyperVHIDDescriptor;
 
 typedef enum : UInt32 {
   kHyperVPipeMessageTypeInvalid = 0,
@@ -78,7 +89,7 @@ typedef struct __attribute__((packed)) {
   HyperVMouseMessageHeader  header;
   
   HyperVMouseDeviceInfo     info;
-  IOUSBHIDDescriptor        hidDescriptor;
+  HyperVHIDDescriptor       hidDescriptor;
   UInt8                     hidDescriptorData[];
 } HyperVMouseMessageInitialDeviceInfo;
 
