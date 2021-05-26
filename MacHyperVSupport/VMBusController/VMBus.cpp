@@ -64,16 +64,16 @@ IOReturn HyperVVMBusController::sendVMBusMessageGated(VMBusChannelMessage *messa
   //
   // Hypercall message data must be page-aligned.
   //
-  HypercallPostMessage *hypercallMsg = (HypercallPostMessage*)vmbusMsgBuffer.buffer;
+  HyperVHypercallPostMessage *hypercallMsg = (HyperVHypercallPostMessage*)vmbusMsgBuffer.buffer;
   memset(hypercallMsg, 0, sizeof (*hypercallMsg));
   
-  hypercallMsg->connectionId  = VMBUS_CONNID_MESSAGE;
-  hypercallMsg->messageType   = HYPERV_MSGTYPE_CHANNEL;
+  hypercallMsg->connectionId  = kVMBusConnIdMessage;
+  hypercallMsg->messageType   = kHyperVMessageTypeChannel;
   hypercallMsg->size          = (UInt32) size;
   memcpy(&hypercallMsg->data[0], message, size);
   
   DBGLOG("Sending message of %u bytes", size);
-  bool result = hypercallPostMessage(vmbusMsgBuffer.physAddr) == HYPERCALL_STATUS_SUCCESS;
+  bool result = hypercallPostMessage(vmbusMsgBuffer.physAddr) == kHyperVStatusSuccess;
   if (!result) {
     return kIOReturnIOError;
   }
@@ -85,7 +85,7 @@ IOReturn HyperVVMBusController::sendVMBusMessageGated(VMBusChannelMessage *messa
     vmbusWaitForMessageType = *responseType;
     cmdGate->commandSleep(&cmdGateEvent);
     
-    HyperVMessage *newMsg = &cpuData.perCPUData[vmbusWaitMessageCpu].messages[VMBUS_SINT_MESSAGE];
+    HyperVMessage *newMsg = &cpuData.perCPUData[vmbusWaitMessageCpu].messages[kVMBusInterruptMessage];
     DBGLOG("Awoken from sleep, message type is %u with size %u", newMsg->type, newMsg->size);
    /* if (newMsg->size != VMBusMessageTypeTable[*responseType].size) {
       DBGLOG("Response size mismatch!");
@@ -93,7 +93,7 @@ IOReturn HyperVVMBusController::sendVMBusMessageGated(VMBusChannelMessage *messa
     }*/
     
     memcpy(responseMessage, &newMsg->data[0], VMBusMessageTypeTable[*responseType].size);
-    newMsg->type = HYPERV_MSGTYPE_NONE;
+    newMsg->type = kHyperVMessageTypeNone;
     sendSynICEOM(vmbusWaitMessageCpu);
   }
   
@@ -103,7 +103,7 @@ IOReturn HyperVVMBusController::sendVMBusMessageGated(VMBusChannelMessage *messa
 
 
 void HyperVVMBusController::completeVMBusMessage(UInt32 cpu) {
-  cpuData.perCPUData[cpu].messages[VMBUS_SINT_MESSAGE].type = HYPERV_MSGTYPE_NONE;
+  cpuData.perCPUData[cpu].messages[kVMBusInterruptMessage].type = kHyperVMessageTypeNone;
 }
 
 void HyperVVMBusController::processIncomingVMBusMessage(UInt32 cpu) {
@@ -112,8 +112,8 @@ void HyperVVMBusController::processIncomingVMBusMessage(UInt32 cpu) {
   //
   // Check if we are waiting for an incoming VMBus message.
   //
-  if (cpuData.perCPUData[cpu].messages[VMBUS_SINT_MESSAGE].type == VMBUS_CONNID_MESSAGE) {
-    VMBusChannelMessage *msg = (VMBusChannelMessage*) &cpuData.perCPUData[cpu].messages[VMBUS_SINT_MESSAGE].data[0];
+  if (cpuData.perCPUData[cpu].messages[kVMBusInterruptMessage].type == kVMBusConnIdMessage) {
+    VMBusChannelMessage *msg = (VMBusChannelMessage*) &cpuData.perCPUData[cpu].messages[kVMBusInterruptMessage].data[0];
     DBGLOG("Incoming VMBus message type %u on CPU %u", msg->header.type, cpu);
     
     if (vmbusWaitForMessageType != kVMBusChannelMessageTypeInvalid && vmbusWaitForMessageType == msg->header.type) {
@@ -155,7 +155,7 @@ bool HyperVVMBusController::connectVMBus() {
   
   DBGLOG("Message here");
   
-  DBGLOG("header %X %X %X", cpuData.perCPUData[0].messages[VMBUS_SINT_MESSAGE].type, resp.header.type, resp.supported);
+  DBGLOG("header %X %X %X", cpuData.perCPUData[0].messages[kVMBusInterruptMessage].type, resp.header.type, resp.supported);
 
   return true;
 }

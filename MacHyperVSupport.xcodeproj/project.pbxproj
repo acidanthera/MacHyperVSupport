@@ -68,10 +68,8 @@
 		418F843B2648BA38003F8520 /* HyperVStorage.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVStorage.cpp; sourceTree = "<group>"; };
 		418F843C2648BA38003F8520 /* HyperVStorage.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVStorage.hpp; sourceTree = "<group>"; };
 		418F84412648BA88003F8520 /* HyperVStorageRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVStorageRegs.hpp; sourceTree = "<group>"; };
-		419B88BF263EEEEE005A9977 /* Registers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Registers.h; sourceTree = "<group>"; };
 		419B88C1263F0169005A9977 /* Hypercalls.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Hypercalls.cpp; sourceTree = "<group>"; };
 		419B88C4263F1F85005A9977 /* VMBus.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = VMBus.cpp; sourceTree = "<group>"; };
-		419B88C7263F2D8B005A9977 /* VMBusRegisters.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VMBusRegisters.h; sourceTree = "<group>"; };
 		41BE4104263EDE380018C52B /* MacHyperVSupport.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacHyperVSupport.kext; sourceTree = BUILT_PRODUCTS_DIR; };
 		41BE410B263EDE380018C52B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		41BE4113263EDEA10018C52B /* libkmod.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libkmod.a; path = MacKernelSDK/Library/x86_64/libkmod.a; sourceTree = "<group>"; };
@@ -198,14 +196,12 @@
 				41BE4119263EDFAF0018C52B /* HyperVVMBusController.hpp */,
 				410784702645FF17005894D4 /* HyperVVMBusInternal.hpp */,
 				418F05152646ED3D00E1D14C /* Interrupts.cpp */,
-				419B88BF263EEEEE005A9977 /* Registers.h */,
 				41E2EC77263F894300BBE18F /* SynIC.cpp */,
 				41225F3A2642086300574E86 /* SynICProcessor.cpp */,
 				41225F3B2642086300574E86 /* SynICProcessor.h */,
 				419B88C4263F1F85005A9977 /* VMBus.cpp */,
 				41225F4226422D1600574E86 /* VMBus.hpp */,
 				41078472264603F1005894D4 /* VMBusChannel.cpp */,
-				419B88C7263F2D8B005A9977 /* VMBusRegisters.h */,
 				418F051D2647223E00E1D14C /* VMBusDriver.hpp */,
 			);
 			path = VMBusController;

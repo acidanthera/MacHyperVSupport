@@ -31,7 +31,7 @@ extern "C" void initSyncIC(void *cpuData) {
   // Get processor ID.
   //
   if (hvCPUData->supportsHvVpIndex) {
-    hvPerCpuData->virtualCPUID = rdmsr64(MSR_HV_VP_INDEX);
+    hvPerCpuData->virtualCPUID = rdmsr64(kHyperVMsrVPIndex);
   } else {
     hvPerCpuData->virtualCPUID = 0;
   }
@@ -39,27 +39,27 @@ extern "C" void initSyncIC(void *cpuData) {
   //
   // Configure SynIC message and event flag buffers.
   //
-  wrmsr64(MSR_HV_SIMP, MSR_HV_SIMP_ENABLE |
-          (rdmsr64(MSR_HV_SIMP) & MSR_HV_SIMP_RSVD_MASK) |
-          ((hvPerCpuData->messageDma.physAddr >> PAGE_SHIFT) << MSR_HV_SIMP_PGSHIFT));
-  wrmsr64(MSR_HV_SIEFP, MSR_HV_SIEFP_ENABLE |
-          (rdmsr64(MSR_HV_SIEFP) & MSR_HV_SIEFP_RSVD_MASK) |
-          ((hvPerCpuData->eventFlagsDma.physAddr >> PAGE_SHIFT) << MSR_HV_SIEFP_PGSHIFT));
+  wrmsr64(kHyperVMsrSimp, kHyperVMsrSimpEnable |
+          (rdmsr64(kHyperVMsrSimp) & kHyperVMsrSimpRsvdMask) |
+          ((hvPerCpuData->messageDma.physAddr >> PAGE_SHIFT) << kHyperVMsrSimpPageShift));
+  wrmsr64(kHyperVMsrSiefp, kHyperVMsrSiefpEnable |
+          (rdmsr64(kHyperVMsrSiefp) & kHyperVMsrSiefpRsvdMask) |
+          ((hvPerCpuData->eventFlagsDma.physAddr >> PAGE_SHIFT) << kHyperVMsrSiefpPageShift));
   
   //
   // Configure SynIC interrupt. We use the thermal interrupt on the LAPIC for this.
   //
-  wrmsr64(MSR_HV_SINT0 + VMBUS_SINT_MESSAGE,
+  wrmsr64(kHyperVMsrSInt0 + kVMBusInterruptMessage,
           hvCPUData->interruptVector |
-          (rdmsr64(MSR_HV_SINT0 + VMBUS_SINT_MESSAGE) & MSR_HV_SINT_RSVD_MASK));
-  wrmsr64(MSR_HV_SINT0 + VMBUS_SINT_TIMER,
+          (rdmsr64(kHyperVMsrSInt0 + kVMBusInterruptMessage) & kHyperVMsrSIntRsvdMask));
+  wrmsr64(kHyperVMsrSInt0 + kVMBusInterruptTimer,
           hvCPUData->interruptVector |
-          (rdmsr64(MSR_HV_SINT0 + VMBUS_SINT_TIMER) & MSR_HV_SINT_RSVD_MASK));
+          (rdmsr64(kHyperVMsrSInt0 + kVMBusInterruptTimer) & kHyperVMsrSIntRsvdMask));
   
   //
   // Enable the SynIC.
   //
-  wrmsr64(MSR_HV_SCONTROL, MSR_HV_SCTRL_ENABLE | (rdmsr64(MSR_HV_SCONTROL) & MSR_HV_SCTRL_RSVD_MASK));
+  wrmsr64(kHyperVMsrSyncICControl, kHyperVMsrSyncICControlEnable | (rdmsr64(kHyperVMsrSyncICControl) & kHyperVMsrSyncICControlRsvdMask));
 }
 
 bool HyperVVMBusController::allocateSynICBuffers() {
@@ -233,7 +233,7 @@ void HyperVVMBusController::sendSynICEOM(UInt32 cpu) {
   //
   // We should now be on the correct CPU, so send EOM.
   //
-  wrmsr64(MSR_HV_EOM, 0);
+  wrmsr64(kHyperVMsrEom, 0);
 }
 
 
@@ -245,9 +245,9 @@ void HyperVVMBusController::handleSynICInterrupt(OSObject *target, void *refCon,
   //
   // Handle timer messages.
   //
-  message = &cpuData.perCPUData[cpuIndex].messages[VMBUS_SINT_TIMER];
-  if (message->type == HYPERV_MSGTYPE_TIMER_EXPIRED) {
-    message->type = HYPERV_MSGTYPE_NONE;
+  message = &cpuData.perCPUData[cpuIndex].messages[kVMBusInterruptTimer];
+  if (message->type == kHyperVMessageTypeTimerExpired) {
+    message->type = kHyperVMessageTypeNone;
    cpuData.perCPUData[cpuIndex].synProc->triggerInterrupt();
   }
   
@@ -255,7 +255,7 @@ void HyperVVMBusController::handleSynICInterrupt(OSObject *target, void *refCon,
   // Handle channel event flags.
   //
   for (UInt32 i = 1; i <= vmbusChannelHighest; i++) {
-    if ((cpuData.perCPUData[cpuIndex].eventFlags[VMBUS_SINT_MESSAGE].flags[VMBUS_CHANNEL_EVENT_INDEX(i)] & VMBUS_CHANNEL_EVENT_MASK(i)) == 0 ||
+    if ((cpuData.perCPUData[cpuIndex].eventFlags[kVMBusInterruptMessage].flags[VMBUS_CHANNEL_EVENT_INDEX(i)] & VMBUS_CHANNEL_EVENT_MASK(i)) == 0 ||
         vmbusChannels[i].status != kVMBusChannelStatusOpen) {
       continue;
     }
@@ -263,7 +263,7 @@ void HyperVVMBusController::handleSynICInterrupt(OSObject *target, void *refCon,
     //
     // Clear event flag and trigger handler.
     //
-    cpuData.perCPUData[cpuIndex].eventFlags[VMBUS_SINT_MESSAGE].flags[VMBUS_CHANNEL_EVENT_INDEX(i)] &= ~VMBUS_CHANNEL_EVENT_MASK(i);
+    cpuData.perCPUData[cpuIndex].eventFlags[kVMBusInterruptMessage].flags[VMBUS_CHANNEL_EVENT_INDEX(i)] &= ~VMBUS_CHANNEL_EVENT_MASK(i);
     if (vectors[i].handler != NULL) {
       vectors[i].handler(vectors[i].target, vectors[i].refCon, vectors[i].nub, vectors[i].source);
     }
@@ -272,8 +272,8 @@ void HyperVVMBusController::handleSynICInterrupt(OSObject *target, void *refCon,
   //
   // Handle normal messages.
   //
-  message = &cpuData.perCPUData[cpuIndex].messages[VMBUS_SINT_MESSAGE];
-  if (message->type != HYPERV_MSGTYPE_NONE) {
+  message = &cpuData.perCPUData[cpuIndex].messages[kVMBusInterruptMessage];
+  if (message->type != kHyperVMessageTypeNone) {
     cpuData.perCPUData[cpuIndex].synProc->triggerInterrupt();
   }
 }

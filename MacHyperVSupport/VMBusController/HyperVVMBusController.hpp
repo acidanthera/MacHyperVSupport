@@ -21,9 +21,8 @@ extern "C" {
 #include <IOKit/IOBufferMemoryDescriptor.h>
 #include <IOKit/IOLocks.h>
 
-#include "Registers.h"
+#include "HyperV.hpp"
 #include "VMBus.hpp"
-#include "VMBusRegisters.h"
 #include "VMBusDriver.hpp"
 
 #include <IOKit/IOCommandGate.h>
@@ -32,7 +31,7 @@ extern "C" {
 
 #include "HyperVVMBusDevice.hpp"
 
-#include "HyperV.hpp"
+
 
 inline void
 guid_unparse(const uuid_t uu, uuid_string_t out)

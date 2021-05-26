@@ -10,6 +10,18 @@
 
 #include "HyperV.hpp"
 
+//
+// Default VMBus interrupt slots on SynIC for messages and timers.
+//
+#define kVMBusInterruptMessage  2
+#define kVMBusInterruptTimer    4
+
+//
+// Default VMBus connection IDs.
+//
+#define kVMBusConnIdMessage     1
+#define kVMBusConnIdEvent       2
+
 #define VMBUS_CHANNEL_EVENT_INDEX(chan) (chan / 8)
 #define VMBUS_CHANNEL_EVENT_MASK(chan)  (1 << (chan % 8))
 

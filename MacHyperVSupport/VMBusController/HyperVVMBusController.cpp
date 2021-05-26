@@ -24,8 +24,8 @@ extern const int version_minor;
 //
 // Hyper-V reported signature.
 //
-#define kHyperVGuestMinor         (((UInt64) version_minor) << MSR_HV_GUESTID_MINOR_VERSION_SHIFT)
-#define kHyperVGuestMajor         (((UInt64) version_major) << MSR_HV_GUESTID_MAJOR_VERSION_SHIFT)
+#define kHyperVGuestMinor         (((UInt64) version_minor) << kHyperVMsrGuestIDMinorVersionShift)
+#define kHyperVGuestMajor         (((UInt64) version_major) << kHyperVMsrGuestIDMajorVersionShift)
 #define kHyperVGuestSignature     (kHyperVGuestMinor | kHyperVGuestMajor)
 
 
@@ -48,19 +48,19 @@ bool HyperVVMBusController::identifyHyperV() {
   // Verify we are in fact on Hyper-V.
   //
   do {
-    do_cpuid(CPUID_LEAF_HV_MAXLEAF, regs);
+    do_cpuid(kHyperVCpuidMaxLeaf, regs);
     hvMaxLeaf = regs[eax];
-    if (hvMaxLeaf < CPUID_LEAF_HV_LIMITS) {
+    if (hvMaxLeaf < kHyperVCpuidLeafLimits) {
       break;
     }
     
-    do_cpuid(CPUID_LEAF_HV_INTERFACE, regs);
-    if (regs[eax] != CPUID_HV_IFACE_HYPERV) {
+    do_cpuid(kHyperVCpuidLeafInterface, regs);
+    if (regs[eax] != kHyperVCpuidLeafInterfaceSig) {
       break;
     }
     
-    do_cpuid(CPUID_LEAF_HV_FEATURES, regs);
-    if ((regs[eax] & CPUID_HV_MSR_HYPERCALL) == 0) {
+    do_cpuid(kHyperVCpuidLeafFeatures, regs);
+    if ((regs[eax] & kHyperVCpuidMsrHypercall) == 0) {
       break;
     }
     
@@ -79,13 +79,13 @@ bool HyperVVMBusController::identifyHyperV() {
   // Spec indicates we are supposed to indicate to Hyper-V what OS we are
   // before pulling the Hyper-V identity, but the FreeBSD drivers do this after.
   //
-  wrmsr64(MSR_HV_GUEST_OS_ID, kHyperVGuestSignature);//kHyperVGuestSignature);
+  wrmsr64(kHyperVMsrGuestID, kHyperVGuestSignature);
   DBGLOG("Reporting XNU %d.%d guest signature of 0x%llX to Hyper-V", version_major, version_minor, kHyperVGuestSignature);
   
   //
   // Get Hyper-V version.
   //
-  do_cpuid(CPUID_LEAF_HV_IDENTITY, regs);
+  do_cpuid(kHyperVCpuidLeafIdentity, regs);
   hvMajorVersion = regs[ebx] >> 16;
   SYSLOG("Starting on Hyper-V %d.%d.%d SP%d",
          hvMajorVersion, regs[ebx] & 0xFFFF, regs[eax], regs[ecx]);
@@ -127,17 +127,17 @@ bool HyperVVMBusController::identifyHyperV() {
          "\015NPIEP"        /* NPIEP */
          "\016HVDIS");      /* disabling hypervisor */
   
-  do_cpuid(CPUID_LEAF_HV_RECOMMENDS, regs);
+  do_cpuid(kHyperVCpuidLeafRecommends, regs);
   hvRecommends = regs[eax];
   DBGLOG("Hyper-V recommendations: 0x%X, max spinlock attempts: 0x%X",
          hvRecommends, regs[ebx]);
   
-  do_cpuid(CPUID_LEAF_HV_LIMITS, regs);
+  do_cpuid(kHyperVCpuidLeafLimits, regs);
   DBGLOG("Hyper-V max virtual CPUs: %u, max logical CPUs: %u, max interrupt vectors: %u",
          regs[eax], regs[ebx], regs[ecx]);
   
-  if (hvMaxLeaf >= CPUID_LEAF_HV_HWFEATURES) {
-    do_cpuid(CPUID_LEAF_HV_HWFEATURES, regs);
+  if (hvMaxLeaf >= kHyperVCpuidLeafHwFeatures) {
+    do_cpuid(kHyperVCpuidLeafHwFeatures, regs);
     DBGLOG("Hyper-V hardware features: 0x%X", regs[eax]);
   }
   
