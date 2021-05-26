@@ -116,7 +116,7 @@
 		<key>com.apple.iokit.IOHIDFamily</key>
 		<string>1.1</string>
 		<key>com.apple.iokit.IOSCSIParallelFamily</key>
-		<string>2.0.1</string>
+		<string>2.0.0</string>
 		<key>com.apple.kpi.bsd</key>
 		<string>8.0.0</string>
 		<key>com.apple.kpi.iokit</key>
