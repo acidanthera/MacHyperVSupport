@@ -200,7 +200,7 @@ void HyperVStorage::HandleInterruptRequest() {
 }
 
 SCSIInitiatorIdentifier HyperVStorage::ReportInitiatorIdentifier() {
-  return kHyperVStorageMaxLuns + 1;
+  return kHyperVStorageMaxLuns;
 }
 
 SCSIDeviceIdentifier HyperVStorage::ReportHighestSupportedDeviceID() {
