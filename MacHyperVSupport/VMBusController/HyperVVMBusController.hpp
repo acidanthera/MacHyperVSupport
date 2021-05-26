@@ -8,8 +8,11 @@
 #ifndef _HV_VMBUS_H_
 #define _HV_VMBUS_H_
 
+extern "C" {
 #include <i386/cpuid.h>
 #include <i386/proc_reg.h>
+#include <i386/pmCPU.h>
+}
 
 #include <IOKit/IOLib.h>
 #include <IOKit/IOService.h>
@@ -79,6 +82,9 @@ private:
   UInt32 hvFeatures3;
   UInt16 hvMajorVersion;
   UInt32 hvRecommends;
+  
+  pmCallBacks_t pmCallbacks;
+  IOSimpleLock *preemptionLock;
   
   void                *hypercallPage;
   IOMemoryDescriptor  *hypercallDesc;
@@ -185,14 +191,6 @@ public:
   bool initVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VMBusRingBuffer **txBuffer, UInt32 rxBufferSize, VMBusRingBuffer **rxBuffer);
   bool openVMBusChannel(UInt32 channelId);
   void signalVMBusChannel(UInt32 channelId);
-  
-  //
-  // IOInterruptController overrides.
-  //
-  virtual void initVector(IOInterruptVectorNumber vectorNumber, IOInterruptVector *vector);
-  
-  
-
 };
 
 #endif

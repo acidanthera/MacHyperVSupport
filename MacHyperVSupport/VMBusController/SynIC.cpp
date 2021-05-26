@@ -15,23 +15,11 @@
 //
 // External functions from mp.c
 //
-extern  unsigned int  real_ncpus;    /* real number of cpus */
-extern  unsigned int  max_ncpus;    /* max number of cpus */
-
-typedef uint32_t cpu_t;
-typedef volatile uint64_t cpumask_t;
-
-typedef enum { SYNC, ASYNC, NOSYNC } mp_sync_t;
-
-static inline cpumask_t cpu_to_cpumask(cpu_t cpu)
-{
-  return (cpu < max_ncpus) ? (1ULL << cpu) : 0;
-}
+extern unsigned int  real_ncpus;    /* real number of cpus */
 
 extern "C" {
   int  cpu_number(void);
   void mp_rendezvous_no_intrs(void (*action_func)(void*), void *arg);
-  cpu_t mp_cpus_call(cpumask_t cpus, mp_sync_t mode, void (*action_func)(void *), void *arg);
 }
 
 extern "C" void initSyncIC(void *cpuData) {
@@ -72,10 +60,6 @@ extern "C" void initSyncIC(void *cpuData) {
   // Enable the SynIC.
   //
   wrmsr64(MSR_HV_SCONTROL, MSR_HV_SCTRL_ENABLE | (rdmsr64(MSR_HV_SCONTROL) & MSR_HV_SCTRL_RSVD_MASK));
-}
-
-extern "C" void eomSyncIC(void *arg) {
-  wrmsr64(MSR_HV_EOM, 0);
 }
 
 bool HyperVVMBusController::allocateSynICBuffers() {
@@ -160,6 +144,19 @@ bool HyperVVMBusController::initSynIC() {
   workloop->addEventSource(cmdGate);
   
   //
+  // Get PM callbacks.
+  //
+  pmKextRegister(PM_DISPATCH_VERSION, NULL, &pmCallbacks);
+  if (pmCallbacks.LCPUtoProcessor == NULL || pmCallbacks.ThreadBind == NULL ) {
+    SYSLOG("PM callbacks are invalid");
+    return false;
+  }
+  preemptionLock = IOSimpleLockAlloc();
+  if (preemptionLock == NULL) {
+    return false;
+  }
+  
+  //
   // Allocate buffers for SynIC.
   //
   if (!allocateSynICBuffers()) {
@@ -209,7 +206,34 @@ bool HyperVVMBusController::initSynIC() {
 }
 
 void HyperVVMBusController::sendSynICEOM(UInt32 cpu) {
-  mp_cpus_call(cpu_to_cpumask(cpu), NOSYNC, eomSyncIC, NULL);
+  if (!IOSimpleLockTryLock(preemptionLock)) {
+    SYSLOG("Failed to disable preemption");
+    return;
+  }
+  
+  bool intsEnabled = ml_set_interrupts_enabled(false);
+  
+  do {
+    processor_t proc = pmCallbacks.LCPUtoProcessor(cpu);
+    if (proc == NULL) {
+      break;
+    }
+    
+    if (cpu != cpu_number()) {
+      DBGLOG("Changed from cpu %u to %u", cpu_number(), cpu);
+    }
+    pmCallbacks.ThreadBind(proc);
+
+    
+  } while (false);
+  
+  IOSimpleLockUnlock(preemptionLock);
+  ml_set_interrupts_enabled(intsEnabled);
+  
+  //
+  // We should now be on the correct CPU, so send EOM.
+  //
+  wrmsr64(MSR_HV_EOM, 0);
 }
 
 
