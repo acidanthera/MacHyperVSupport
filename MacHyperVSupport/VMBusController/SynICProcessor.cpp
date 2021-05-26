@@ -1,8 +1,8 @@
 //
 //  SynICProcessor.cpp
-//  MacHyperVServices
+//  Hyper-V SynIC per-processor interrupt handling
 //
-//  Created by John Davis on 5/4/21.
+//  Copyright © 2021 Goldfish64. All rights reserved.
 //
 
 #include "SynICProcessor.h"

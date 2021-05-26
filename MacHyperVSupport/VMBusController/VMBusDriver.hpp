@@ -1,12 +1,12 @@
 //
 //  VMBusDriver.hpp
-//  MacHyperVServices
+//  Hyper-V VMBus driver-side structures
 //
-//  Created by John Davis on 5/8/21.
+//  Copyright © 2021 Goldfish64. All rights reserved.
 //
 
-#ifndef VMBusDriver_h
-#define VMBusDriver_h
+#ifndef VMBusDriver_hpp
+#define VMBusDriver_hpp
 
 #include "VMBus.hpp"
 

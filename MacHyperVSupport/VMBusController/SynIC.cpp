@@ -1,7 +1,5 @@
 //
-//  Interrups.cpp
-//  MacHyperVServices
-//
+//  SynIC.cpp
 //  Hyper-V SynIC and interrupt handling
 //
 //  Copyright © 2021 Goldfish64. All rights reserved.

@@ -1,3 +1,10 @@
+//
+//  VMBus.cpp
+//  Hyper-V VMBus core logic
+//
+//  Copyright © 2021 Goldfish64. All rights reserved.
+//
+
 #include "HyperVVMBusController.hpp"
 #include "HyperVVMBusInternal.hpp"
 

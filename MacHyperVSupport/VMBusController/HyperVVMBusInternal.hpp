@@ -1,8 +1,8 @@
 //
 //  HyperVVMBusInternal.h
-//  MacHyperVServices
+//  Hyper-V VMBus controller
 //
-//  Created by John Davis on 5/7/21.
+//  Copyright © 2021 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperVVMBusInternal_hpp

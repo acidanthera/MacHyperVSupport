@@ -1,12 +1,12 @@
 //
 //  HyperVVMBus.hpp
-//  MacHyperVServices
+//  Hyper-V VMBus controller
 //
-//  Created by John Davis on 5/2/21.
+//  Copyright © 2021 Goldfish64. All rights reserved.
 //
 
-#ifndef _HV_VMBUS_H_
-#define _HV_VMBUS_H_
+#ifndef HyperVVMBusController_hpp
+#define HyperVVMBusController_hpp
 
 extern "C" {
 #include <i386/cpuid.h>

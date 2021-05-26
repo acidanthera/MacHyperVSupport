@@ -1,13 +1,12 @@
 //
 //  VMBusChannel.cpp
-//  MacHyperVServices
+//  Hyper-V VMBus channel logic
 //
-//  Created by John Davis on 5/7/21.
+//  Copyright © 2021 Goldfish64. All rights reserved.
 //
 
 #include "HyperVVMBusController.hpp"
 #include "HyperVVMBusInternal.hpp"
-
 
 bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
   //

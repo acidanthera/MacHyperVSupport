@@ -1,8 +1,8 @@
 //
-//  VMBus.h
-//  MacHyperVServices
+//  VMBus.hpp
+//  Hyper-V VMBus core logic
 //
-//  Created by John Davis on 5/4/21.
+//  Copyright © 2021 Goldfish64. All rights reserved.
 //
 
 #ifndef VMBus_hpp

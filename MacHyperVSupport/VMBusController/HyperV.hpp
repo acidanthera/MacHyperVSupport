@@ -1,8 +1,8 @@
 //
 //  HyperV.hpp
-//  MacHyperVServices
+//  Hyper-V register and structures header
 //
-//  Created by John Davis on 5/5/21.
+//  Copyright © 2021 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperV_hpp

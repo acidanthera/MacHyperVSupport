@@ -1,6 +1,12 @@
+//
+//  SynICProcessor.hpp
+//  Hyper-V SynIC per-processor interrupt handling
+//
+//  Copyright © 2021 Goldfish64. All rights reserved.
+//
 
-#ifndef _HV_SYNIC_PROCESSOR_H_
-#define _HV_SYNIC_PROCESSOR_H_
+#ifndef SynICProcessor_hpp
+#define SynICProcessor_hpp
 
 #include <IOKit/IOLib.h>
 #include <IOKit/IOInterruptEventSource.h>
@@ -11,10 +17,10 @@ class SynICProcessor : public OSObject {
   OSDeclareDefaultStructors(SynICProcessor)
   
 private:
-  UInt32 cpu;
-  HyperVVMBusController *vmbus;
-
-  IOInterruptEventSource *interruptEventSource;
+  UInt32                  cpu;
+  HyperVVMBusController   *vmbus;
+  IOInterruptEventSource  *interruptEventSource;
+  
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
   
 public:
