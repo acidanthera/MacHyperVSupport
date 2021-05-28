@@ -9,9 +9,13 @@
 #define HyperVStorage_hpp
 
 #include <IOKit/IOInterruptEventSource.h>
-#include <IOKit/scsi/spi/IOSCSIParallelInterfaceController.h>
 #include <IOKit/storage/IOStorageDeviceCharacteristics.h>
 #include <IOKit/IOKitKeys.h>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation"
+#include <IOKit/scsi/spi/IOSCSIParallelInterfaceController.h>
+#pragma clang diagnostic pop
 
 #include "HyperVVMBusDevice.hpp"
 #include "HyperVStorageRegs.hpp"
