@@ -5,7 +5,7 @@
 //  Copyright © 2021 Goldfish64. All rights reserved.
 //
 
-#include "SynICProcessor.h"
+#include "SynICProcessor.hpp"
 #include "HyperVVMBusController.hpp"
 
 OSDefineMetaClassAndStructors(SynICProcessor, OSObject);

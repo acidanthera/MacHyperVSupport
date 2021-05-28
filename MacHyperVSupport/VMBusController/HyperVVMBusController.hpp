@@ -15,6 +15,7 @@ extern "C" {
 }
 
 #include <IOKit/IOLib.h>
+#include <IOKit/IOCommandGate.h>
 #include <IOKit/IOService.h>
 #include <IOKit/IOInterruptController.h>
 #include <IOKit/IODMACommand.h>
@@ -24,10 +25,7 @@ extern "C" {
 #include "HyperV.hpp"
 #include "VMBus.hpp"
 #include "VMBusDriver.hpp"
-
-#include <IOKit/IOCommandGate.h>
-
-#include "SynICProcessor.h"
+#include "SynICProcessor.hpp"
 
 #include "HyperVVMBusDevice.hpp"
 

@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		41078473264603F1005894D4 /* VMBusChannel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41078472264603F1005894D4 /* VMBusChannel.cpp */; };
 		41225F3C2642086300574E86 /* SynICProcessor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41225F3A2642086300574E86 /* SynICProcessor.cpp */; };
-		41225F3D2642086300574E86 /* SynICProcessor.h in Headers */ = {isa = PBXBuildFile; fileRef = 41225F3B2642086300574E86 /* SynICProcessor.h */; };
+		41225F3D2642086300574E86 /* SynICProcessor.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41225F3B2642086300574E86 /* SynICProcessor.hpp */; };
 		41225F512644C34300574E86 /* HyperVVMBusDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41225F4F2644C34300574E86 /* HyperVVMBusDevice.cpp */; };
 		41225F522644C34300574E86 /* HyperVVMBusDevice.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41225F502644C34300574E86 /* HyperVVMBusDevice.hpp */; };
 		41225F572644D98500574E86 /* HyperVHeartbeat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41225F552644D98500574E86 /* HyperVHeartbeat.cpp */; };
@@ -39,7 +39,7 @@
 		410784702645FF17005894D4 /* HyperVVMBusInternal.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVVMBusInternal.hpp; sourceTree = "<group>"; };
 		41078472264603F1005894D4 /* VMBusChannel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = VMBusChannel.cpp; sourceTree = "<group>"; };
 		41225F3A2642086300574E86 /* SynICProcessor.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SynICProcessor.cpp; sourceTree = "<group>"; };
-		41225F3B2642086300574E86 /* SynICProcessor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SynICProcessor.h; sourceTree = "<group>"; };
+		41225F3B2642086300574E86 /* SynICProcessor.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SynICProcessor.hpp; sourceTree = "<group>"; };
 		41225F4226422D1600574E86 /* VMBus.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = VMBus.hpp; sourceTree = "<group>"; };
 		41225F4D2643993400574E86 /* HyperV.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperV.hpp; sourceTree = "<group>"; };
 		41225F4F2644C34300574E86 /* HyperVVMBusDevice.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVVMBusDevice.cpp; sourceTree = "<group>"; };
@@ -195,7 +195,7 @@
 				410784702645FF17005894D4 /* HyperVVMBusInternal.hpp */,
 				41E2EC77263F894300BBE18F /* SynIC.cpp */,
 				41225F3A2642086300574E86 /* SynICProcessor.cpp */,
-				41225F3B2642086300574E86 /* SynICProcessor.h */,
+				41225F3B2642086300574E86 /* SynICProcessor.hpp */,
 				419B88C4263F1F85005A9977 /* VMBus.cpp */,
 				41225F4226422D1600574E86 /* VMBus.hpp */,
 				41078472264603F1005894D4 /* VMBusChannel.cpp */,
@@ -216,7 +216,7 @@
 				418219672648607600619C15 /* HyperVKeyboard.hpp in Headers */,
 				41225F522644C34300574E86 /* HyperVVMBusDevice.hpp in Headers */,
 				418F84352648B07F003F8520 /* HyperVMouse.hpp in Headers */,
-				41225F3D2642086300574E86 /* SynICProcessor.h in Headers */,
+				41225F3D2642086300574E86 /* SynICProcessor.hpp in Headers */,
 				418F052D2648451200E1D14C /* HyperVShutdown.hpp in Headers */,
 				41225F582644D98500574E86 /* HyperVHeartbeat.hpp in Headers */,
 				418F843E2648BA38003F8520 /* HyperVStorage.hpp in Headers */,
