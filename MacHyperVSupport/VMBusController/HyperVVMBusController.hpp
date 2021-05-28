@@ -59,6 +59,8 @@ typedef struct {
   
   HyperVMessage           *messages;
   HyperVEventFlags        *eventFlags;
+  
+  HyperVDMABuffer         postMessageDma;
 } HyperVPerCPUData;
 
 typedef struct {
@@ -94,8 +96,7 @@ private:
   
   HyperVDMABuffer     vmbusMnf1;
   HyperVDMABuffer     vmbusMnf2;
-  
-  HyperVDMABuffer     vmbusMsgBuffer;
+
   //
   // Flag used for waiting for incoming message response.
   // 0 = disable.
@@ -131,7 +132,7 @@ private:
   bool initHypercalls();
   void destroyHypercalls();
   void freeHypercallPage();  
-  bool hypercallPostMessage(UInt64 msgAddr);
+  UInt32 hypercallPostMessage(UInt32 connectionId, HyperVMessageType messageType, void *data, UInt32 size);
   bool hypercallSignalEvent(UInt32 connectionId);
   
   //

@@ -16,7 +16,6 @@
 extern unsigned int  real_ncpus;    /* real number of cpus */
 
 extern "C" {
-  int  cpu_number(void);
   void mp_rendezvous_no_intrs(void (*action_func)(void*), void *arg);
 }
 
@@ -75,6 +74,9 @@ bool HyperVVMBusController::allocateSynICBuffers() {
       return false;
     }
     if (!allocateDmaBuffer(&cpuData.perCPUData[i].eventFlagsDma, PAGE_SIZE)) {
+      return false;
+    }
+    if (!allocateDmaBuffer(&cpuData.perCPUData[i].postMessageDma, sizeof (HypercallPostMessage))) {
       return false;
     }
     

@@ -196,10 +196,16 @@ typedef enum : UInt32 {
 //
 // This driver only uses HvPostMessage and HvSignalEvent.
 //
-#define kHypercallStatusSuccess     0x0000
+#define kHypercallStatusSuccess               0x0000
+#define kHypercallStatusInvalidParameter      0x0005
+#define kHypercallStatusInsufficientMemory    0x000B
+#define kHypercallStatusInvalidConnectionId   0x0012
+#define kHypercallStatusInsufficientBuffers   0x0033
 
 #define kHypercallTypePostMessage   0x0005C // Slow hypercall, memory-based
 #define kHypercallTypeSignalEvent   0x1005D // Fast hypercall, register-based
+
+#define kHypercallStatusMask        0xFFFF
 
 //
 // Message posting
@@ -212,8 +218,8 @@ typedef struct __attribute__((packed)) {
   UInt32              reserved;
   HyperVMessageType   messageType;
   UInt32              size;
-  UInt8               data[kHyperVMessageSize];
-} HyperVHypercallPostMessage;
+  UInt8               data[kHyperVMessageDataSizeMax];
+} HypercallPostMessage;
 
 typedef union {
   UInt8 value;

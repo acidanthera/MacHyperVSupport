@@ -40,8 +40,6 @@ bool HyperVVMBusController::allocateVMBusBuffers() {
   allocateDmaBuffer(&vmbusMnf1, PAGE_SIZE);
   allocateDmaBuffer(&vmbusMnf2, PAGE_SIZE);
   
-  allocateDmaBuffer(&vmbusMsgBuffer, PAGE_SIZE);
-  
   vmbusRxEventFlags = (UInt8*)vmbusEventFlags.buffer;
   vmbusTxEventFlags = (UInt8*)vmbusEventFlags.buffer + PAGE_SIZE / 2;
   
@@ -63,26 +61,49 @@ bool HyperVVMBusController::sendVMBusMessageWithSize(VMBusChannelMessage *messag
 }
 
 IOReturn HyperVVMBusController::sendVMBusMessageGated(VMBusChannelMessage *message, UInt32 *messageSize, VMBusChannelMessageType *responseType, VMBusChannelMessage *responseMessage) {
+  
+  UInt32 hvStatus = kHypercallStatusSuccess;
+  IOReturn returnStatus = kIOReturnSuccess;
+  bool postCompleted = false;
+  
   const VMBusMessageTypeTableEntry *msgEntry = &VMBusMessageTypeTable[message->header.type];
 
   UInt32 size = messageSize != NULL ? *messageSize : msgEntry->size;
   DBGLOG("Preparing to send message of type %u and %u bytes", msgEntry->type, size);
   
   //
-  // Hypercall message data must be page-aligned.
+  // Multiple hypercalls may fail due to lack of resources on the host
+  // side, just try again if that happens.
   //
-  HyperVHypercallPostMessage *hypercallMsg = (HyperVHypercallPostMessage*)vmbusMsgBuffer.buffer;
-  memset(hypercallMsg, 0, sizeof (*hypercallMsg));
+  for (int i = 0; i < kHyperVHypercallRetryCount; i++) {
+    DBGLOG("Sending message of %u bytes", size);
+    hvStatus = hypercallPostMessage(kVMBusConnIdMessage, kHyperVMessageTypeChannel, message, (UInt32) size);
+    
+    switch (hvStatus) {
+      case kHypercallStatusSuccess:
+        returnStatus = kIOReturnSuccess;
+        postCompleted = true;
+        break;
+        
+      case kHypercallStatusInsufficientMemory:
+      case kHypercallStatusInsufficientBuffers:
+        returnStatus = kIOReturnNoResources;
+        break;
+        
+      default:
+        returnStatus = kIOReturnIOError;
+        postCompleted = true;
+    }
+    
+    if (postCompleted) {
+      break;
+    }
+    IODelay(10);
+  }
   
-  hypercallMsg->connectionId  = kVMBusConnIdMessage;
-  hypercallMsg->messageType   = kHyperVMessageTypeChannel;
-  hypercallMsg->size          = (UInt32) size;
-  memcpy(&hypercallMsg->data[0], message, size);
-  
-  DBGLOG("Sending message of %u bytes", size);
-  bool result = hypercallPostMessage(vmbusMsgBuffer.physAddr);
-  if (!result) {
-    return kIOReturnIOError;
+  if (returnStatus != kIOReturnSuccess) {
+    DBGLOG("Hypercall failed with status 0x%X", hvStatus);
+    return returnStatus;
   }
   
   if (*responseType != kVMBusChannelMessageTypeInvalid) {

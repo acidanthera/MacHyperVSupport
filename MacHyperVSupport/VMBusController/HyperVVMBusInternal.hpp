@@ -20,4 +20,6 @@
 #define DBGLOG(str, ...) {}
 #endif
 
+extern "C" int cpu_number(void);
+
 #endif

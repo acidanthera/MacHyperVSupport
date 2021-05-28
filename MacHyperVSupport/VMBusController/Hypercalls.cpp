@@ -84,30 +84,33 @@ void HyperVVMBusController::freeHypercallPage() {
   }
 }
 
-bool HyperVVMBusController::hypercallPostMessage(UInt64 msgAddr) {
-  UInt64 status = kHypercallStatusSuccess;
+UInt32 HyperVVMBusController::hypercallPostMessage(UInt32 connectionId, HyperVMessageType messageType, void *data, UInt32 size) {
+  UInt64 status;
+  
+  if (size > kHyperVMessageSize) {
+    return kHypercallStatusInvalidParameter;
+  }
+
+  //
+  // Get per-CPU hypercall post message page.
+  //
+  HyperVDMABuffer *postPageBuffer = &cpuData.perCPUData[cpu_number()].postMessageDma;
+  
+  HypercallPostMessage *postMessage = (HypercallPostMessage*) postPageBuffer->buffer;
+  postMessage->connectionId = connectionId;
+  postMessage->reserved = 0;
+  postMessage->messageType = messageType;
+  postMessage->size = size;
+  memcpy(&postMessage->data[0], data, size);
   
   //
-  // Multiple hypercalls may fail due to lack of resources on the host
-  // side, just try again if that happens.
+  // Perform HvPostMessage hypercall.
   //
-  for (int i = 0; i < kHyperVHypercallRetryCount; i++) {
-    //
-    // Perform HvPostMessage hypercall.
-    //
-    asm volatile ("call *%3" : "=a" (status) : "c" (kHypercallTypePostMessage), "d" (msgAddr), "m" (hypercallPage));
-    if (status == kHypercallStatusSuccess) {
-      break;
-    }
-    
-    IODelay(10);
-  }
-  
-  if (status) {
-    DBGLOG("Failed hypercall status %u", status);
-  }
-  
-  return status == kHypercallStatusSuccess;
+  // During hypercall, the calling processor will be suspended until the hypercall returns.
+  // Linux disables preemption during this time, but unsure if that is needed due to the above.
+  //
+  asm volatile ("call *%3" : "=a" (status) : "c" (kHypercallTypePostMessage), "d" (postPageBuffer->physAddr), "m" (hypercallPage));
+  return status & kHypercallStatusMask;
 }
 
 bool HyperVVMBusController::hypercallSignalEvent(UInt32 connectionId) {
