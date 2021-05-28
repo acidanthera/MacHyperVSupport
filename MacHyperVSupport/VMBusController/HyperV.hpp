@@ -17,8 +17,7 @@
 
 #define HV_PAGEALIGN(a)         (((a) + (PAGE_SIZE - 1)) &~ (PAGE_SIZE - 1))
 
-#define kHyperVHypercallRetryCount  20
-
+#define kHyperVHypercallRetryCount  200
 
 
 #define LOG_PRINT(className, str, ...) logPrint(className, __FUNCTION__, str, ## __VA_ARGS__)
@@ -192,16 +191,15 @@ typedef enum : UInt32 {
   kHyperVMessageTypeTimerExpired  = 0x80000010
 } HyperVMessageType;
 
-/*
- * Hypercall status codes
- */
-#define HYPERCALL_STATUS_SUCCESS  0x0000
+//
+// Hypercall status codes and input values
+//
+// This driver only uses HvPostMessage and HvSignalEvent.
+//
+#define kHypercallStatusSuccess     0x0000
 
-/*
- * Hypercall input values
- */
-#define HYPERCALL_POST_MESSAGE    0x005c
-#define HYPERCALL_SIGNAL_EVENT    0x005d
+#define kHypercallTypePostMessage   0x0005C // Slow hypercall, memory-based
+#define kHypercallTypeSignalEvent   0x1005D // Fast hypercall, register-based
 
 //
 // Message posting

@@ -84,38 +84,38 @@ void HyperVVMBusController::freeHypercallPage() {
   }
 }
 
-UInt64 HyperVVMBusController::executeHypercallMem(UInt64 value, UInt64 inPhysAddr, UInt64 outPhysAddr) {
-  UInt64 status;
-  
-  asm volatile ("mov %0, %%r8" : : "r" (outPhysAddr): "r8");
-  asm volatile ("call *%3" : "=a" (status) : "c" (value), "d" (inPhysAddr), "m" (hypercallPage));
-  
-  return status;
-}
-
-UInt64 HyperVVMBusController::hypercallPostMessage(UInt64 msgAddr) {
-  UInt64 status = 0;
+bool HyperVVMBusController::hypercallPostMessage(UInt64 msgAddr) {
+  UInt64 status = kHypercallStatusSuccess;
   
   //
   // Multiple hypercalls may fail due to lack of resources on the host
   // side, just try again if that happens.
   //
   for (int i = 0; i < kHyperVHypercallRetryCount; i++) {
-    status = executeHypercallMem(HYPERCALL_POST_MESSAGE, msgAddr, 0);
-    if (status == HYPERCALL_STATUS_SUCCESS) {
+    //
+    // Perform HvPostMessage hypercall.
+    //
+    asm volatile ("call *%3" : "=a" (status) : "c" (kHypercallTypePostMessage), "d" (msgAddr), "m" (hypercallPage));
+    if (status == kHypercallStatusSuccess) {
       break;
     }
     
-    IODelay(5);
+    IODelay(10);
   }
   
   if (status) {
     DBGLOG("Failed hypercall status %u", status);
   }
   
-  return status;
+  return status == kHypercallStatusSuccess;
 }
 
-UInt64 HyperVVMBusController::hypercallSignalEvent(UInt64 addr) {
-  return executeHypercallMem(HYPERCALL_SIGNAL_EVENT, addr, 0);
+bool HyperVVMBusController::hypercallSignalEvent(UInt32 connectionId) {
+  UInt64 status;
+  
+  //
+  // Perform a fast version of HvSignalEvent hypercall.
+  //
+  asm volatile ("call *%3" : "=a" (status) : "c" (kHypercallTypeSignalEvent), "d" (connectionId), "m" (hypercallPage));
+  return status == kHypercallStatusSuccess;
 }

@@ -257,11 +257,7 @@ void HyperVVMBusController::signalVMBusChannel(UInt32 channelId) {
 //  vmbusTxEventFlags[VMBUS_CHANNEL_EVENT_INDEX(channelId)] |= VMBUS_CHANNEL_EVENT_MASK(channelId);
   
   //
-  // Notify Hyper-V of new data.
+  // Signal event for specified connection.
   //
-  HyperVMonitorNotificationParameter *parm = (HyperVMonitorNotificationParameter*)channel->eventBuffer.buffer;
-  parm->connectionId = channel->offerMessage.connectionId;
-  parm->eventFlagsOffset = 0;
-  parm->reserved = 0;
-  hypercallSignalEvent(channel->eventBuffer.physAddr);
+  hypercallSignalEvent(channel->offerMessage.connectionId);
 }

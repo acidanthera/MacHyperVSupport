@@ -132,11 +132,9 @@ private:
   //
   bool initHypercalls();
   void destroyHypercalls();
-  void freeHypercallPage();
-  UInt64 executeHypercallMem(UInt64 value, UInt64 inPhysAddr, UInt64 outPhysAddr);
-  
-  UInt64 hypercallPostMessage(UInt64 msgAddr);
-  UInt64 hypercallSignalEvent(UInt64 addr);
+  void freeHypercallPage();  
+  bool hypercallPostMessage(UInt64 msgAddr);
+  bool hypercallSignalEvent(UInt32 connectionId);
   
   //
   // SynIC and interrupts.

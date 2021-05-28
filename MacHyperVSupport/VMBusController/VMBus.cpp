@@ -80,7 +80,7 @@ IOReturn HyperVVMBusController::sendVMBusMessageGated(VMBusChannelMessage *messa
   memcpy(&hypercallMsg->data[0], message, size);
   
   DBGLOG("Sending message of %u bytes", size);
-  bool result = hypercallPostMessage(vmbusMsgBuffer.physAddr) == kHyperVStatusSuccess;
+  bool result = hypercallPostMessage(vmbusMsgBuffer.physAddr);
   if (!result) {
     return kIOReturnIOError;
   }
