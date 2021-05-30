@@ -278,7 +278,15 @@ void HyperVVMBusController::removeVMBusDevice(VMBusChannelMessageChannelRescindO
   DBGLOG("Channel %u has been removed", channelId);
 }
 
-OSDictionary* HyperVVMBusController::getVMBusDevicePropertyDictionary(VMBusChannel *channel) {
+bool HyperVVMBusController::registerVMBusDevice(VMBusChannel *channel) {
+  //
+  // Allocate and initialize child VMBus device object.
+  //
+  HyperVVMBusDevice *childDevice = OSTypeAlloc(HyperVVMBusDevice);
+  if (childDevice == NULL) {
+    return false;
+  }
+  
   //
   // Create property objects for channel information.
   //
@@ -287,7 +295,8 @@ OSDictionary* HyperVVMBusController::getVMBusDevicePropertyDictionary(VMBusChann
   if (devType == NULL || channelNumber == NULL) {
     OSSafeReleaseNULL(devType);
     OSSafeReleaseNULL(channelNumber);
-    return NULL;
+    childDevice->release();
+    return false;
   }
   
   //
@@ -301,7 +310,8 @@ OSDictionary* HyperVVMBusController::getVMBusDevicePropertyDictionary(VMBusChann
     OSSafeReleaseNULL(interruptSpecifiers);
     devType->release();
     channelNumber->release();
-    return NULL;
+    childDevice->release();
+    return false;
   }
   interruptControllers->setObject(interruptControllerName);
   
@@ -318,7 +328,8 @@ OSDictionary* HyperVVMBusController::getVMBusDevicePropertyDictionary(VMBusChann
     channelNumber->release();
     interruptControllers->release();
     interruptSpecifiers->release();
-    return NULL;
+    childDevice->release();
+    return false;
   }
   
   bool result = dict->setObject(kHyperVVMBusDeviceChannelTypeKey, devType) &&
@@ -333,33 +344,22 @@ OSDictionary* HyperVVMBusController::getVMBusDevicePropertyDictionary(VMBusChann
   
   if (!result) {
     dict->release();
-    return NULL;
-  }
-  return dict;
-}
-
-bool HyperVVMBusController::registerVMBusDevice(VMBusChannel *channel) {
-  //
-  // Allocate and initialize child VMBus device object.
-  //
-  HyperVVMBusDevice *childDevice = OSTypeAlloc(HyperVVMBusDevice);
-  if (childDevice == NULL) {
+    childDevice->release();
     return false;
   }
 
   //
-  // Add all device properties as a dictionary.
+  // Initialize and attach nub.
   //
-  OSDictionary *childDict = getVMBusDevicePropertyDictionary(channel);
-  if (childDict == NULL) {
+  result = childDevice->init(dict) && childDevice->attach(this);
+  dict->release();
+  
+  if (!result) {
     childDevice->release();
     return false;
   }
   
-  bool result = childDevice->init(childDict) && childDevice->attach(this);
-  if (result) {
-    childDevice->registerService();
-  }
+  childDevice->registerService();
   channel->deviceNub = childDevice;
 
   return true;

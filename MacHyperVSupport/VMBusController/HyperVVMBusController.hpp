@@ -156,7 +156,6 @@ private:
   bool scanVMBus();
   bool addVMBusDevice(VMBusChannelMessageChannelOffer *offerMessage);
   void removeVMBusDevice(VMBusChannelMessageChannelRescindOffer *rescindOfferMessage);
-  OSDictionary *getVMBusDevicePropertyDictionary(VMBusChannel *channel);
   bool registerVMBusDevice(VMBusChannel *channel);
   void cleanupVMBusDevice(VMBusChannel *channel);
   
