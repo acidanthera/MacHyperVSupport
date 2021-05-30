@@ -20,8 +20,6 @@
 #define kHyperVHypercallRetryCount  200
 
 
-#define LOG_PRINT(className, str, ...) logPrint(className, __FUNCTION__, str, ## __VA_ARGS__)
-
 #if DEBUG
 //
 // Debug logging function.

@@ -12,13 +12,8 @@
 
 #define super IOInterruptController
 
-#define SYSLOG(str, ...) LOG_PRINT("HyperVVMBusController", str, ## __VA_ARGS__)
-
-#ifdef DEBUG
-#define DBGLOG(str, ...) LOG_PRINT("HyperVVMBusController", str, ## __VA_ARGS__)
-#else
-#define DBGLOG(str, ...) {}
-#endif
+#define SYSLOG(str, ...) SYSLOG_PRINT("HyperVVMBusController", str, ## __VA_ARGS__)
+#define DBGLOG(str, ...) DBGLOG_PRINT("HyperVVMBusController", str, ## __VA_ARGS__)
 
 extern "C" int cpu_number(void);
 
