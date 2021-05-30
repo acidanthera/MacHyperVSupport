@@ -108,7 +108,7 @@ private:
   
   
   UInt32                  nextGpadlHandle;
-  IOLock                  *nextGpadlHandleLock;
+  IOSimpleLock            *nextGpadlHandleLock;
   VMBusChannel            vmbusChannels[kHyperVMaxChannels];
   UInt32                  vmbusChannelHighest;
   

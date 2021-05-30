@@ -195,7 +195,10 @@ bool HyperVVMBusController::scanVMBus() {
   //
   memset(vmbusChannels, 0, sizeof (vmbusChannels));
   nextGpadlHandle = kHyperVGpadlStartHandle;
-  nextGpadlHandleLock = IOLockAlloc();
+  nextGpadlHandleLock = IOSimpleLockAlloc();
+  if (nextGpadlHandleLock == NULL) {
+    return false;
+  }
   vmbusChannelHighest = 0;
   
   //

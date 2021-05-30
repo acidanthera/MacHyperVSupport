@@ -12,132 +12,166 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
   //
   // Get the next available GPADL handle.
   //
-  IOLockLock(nextGpadlHandleLock);
+  if (!IOSimpleLockTryLock(nextGpadlHandleLock)) {
+    SYSLOG("Failed to acquire GPADL handle lock");
+    return false;
+  }
+
   channel->gpadlHandle = nextGpadlHandle;
   nextGpadlHandle++;
-  IOLockUnlock(nextGpadlHandleLock);
+  IOSimpleLockUnlock(nextGpadlHandleLock);
   
+  //
+  // Maximum number of pages allowed is 8190 (8192 - 2 for TX and RX headers).
+  //
   UInt32 pageCount = (UInt32)(channel->dataBuffer.size >> PAGE_SHIFT);
+  if (pageCount > kHyperVMaxGpadlPages) {
+    SYSLOG("%u is above the maximum supported number of GPADL pages");
+    return false;
+  }
   
   DBGLOG("Configuring GPADL handle 0x%X for channel %u of %llu pages", channel->gpadlHandle, channel->offerMessage.channelId, pageCount);
   
   //
-  // For larger GPADL requests, one or more GPADL body messages are required.
+  // For larger GPADL requests, a GPADL header and one or more GPADL body messages are required.
+  // Otherwise we can use just the GPADL header.
   //
   UInt32 pfnSize = kHyperVMessageDataSizeMax -
     sizeof (VMBusChannelMessageGPADLHeader) - sizeof (HyperVGPARange);
-  UInt32 pfnCount = pfnSize / sizeof (UInt64);
+  UInt32 pageHeaderCount = pfnSize / sizeof (UInt64);
   
-  
-  DBGLOG("Total PFNs required: %u", pageCount);
-  if (pageCount > pfnCount) {
+  DBGLOG("Total GPADL PFNs required: %u, multiple messages required: %u", pageCount, pageCount > pageHeaderCount);
+  if (pageCount > pageHeaderCount) {
+    //
+    // Create GPADL header message.
+    //
     UInt32 messageSize = sizeof (VMBusChannelMessageGPADLHeader) +
-      sizeof (HyperVGPARange) + pfnCount * sizeof (UInt64);
+      sizeof (HyperVGPARange) + pageHeaderCount * sizeof (UInt64);
+
     VMBusChannelMessageGPADLHeader *gpadlHeader = (VMBusChannelMessageGPADLHeader*) IOMalloc(messageSize);
     if (gpadlHeader == NULL) {
+      SYSLOG("Failed to allocate GPADL header message");
       return false;
     }
     memset(gpadlHeader, 0, messageSize);
     
-    gpadlHeader->header.type = kVMBusChannelMessageTypeGPADLHeader;
-    gpadlHeader->channelId = channel->offerMessage.channelId;
-    gpadlHeader->gpadl = channel->gpadlHandle;
-    
-    gpadlHeader->rangeCount = 1;
-    gpadlHeader->rangeBufferLength = sizeof (HyperVGPARange) + pageCount * sizeof (UInt64); // Max page count is 8190
-    gpadlHeader->range[0].byteOffset = 0;
-    gpadlHeader->range[0].byteCount = (UInt32)channel->dataBuffer.size;
+    //
+    // Header will contain the first batch of GPADL PFNs.
+    //
+    gpadlHeader->header.type          = kVMBusChannelMessageTypeGPADLHeader;
+    gpadlHeader->channelId            = channel->offerMessage.channelId;
+    gpadlHeader->gpadl                = channel->gpadlHandle;
+    gpadlHeader->rangeCount           = kHyperVGpadlRangeCount;
+    gpadlHeader->rangeBufferLength    = sizeof (HyperVGPARange) + pageCount * sizeof (UInt64); // Max page count is 8190
+    gpadlHeader->range[0].byteOffset  = 0;
+    gpadlHeader->range[0].byteCount   = (UInt32)channel->dataBuffer.size;
+
     UInt64 physPageIndex = channel->dataBuffer.physAddr >> PAGE_SHIFT;
-    for (UInt32 i = 0; i < pfnCount; i++) {
+    for (UInt32 i = 0; i < pageHeaderCount; i++) {
       gpadlHeader->range[0].pfnArray[i] = physPageIndex;
-     // DBGLOG("GPADL PFN %u is %llu", i, physPageIndex);
       physPageIndex++;
     }
     
-    //VMBusChannelMessageGPADLCreated gpadlCreated;
+    //
+    // Send GPADL header message.
+    //
     bool result = sendVMBusMessageWithSize((VMBusChannelMessage*) gpadlHeader, messageSize);
     IOFree(gpadlHeader, messageSize);
+    if (!result) {
+      SYSLOG("Failed to send GPADL header message");
+      return false;
+    }
     
-    UInt64 pfnSum = pfnCount;
-    UInt64 pfnLeft = pageCount - pfnCount;
+    //
+    // Send rest of GPADL pages as body messages.
+    //
+    UInt32 pagesRemaining = pageCount - pageHeaderCount;
     
-    UInt64 pfnSize = kHyperVMessageDataSizeMax - sizeof (VMBusChannelMessageGPADLBody);
-    pfnCount = pfnSize / sizeof (UInt64);
-    
-    UInt64 pfnCurr;
-    while (pfnLeft) {
-      if (pfnLeft > pfnCount) {
-        pfnCurr = pfnCount;
+    UInt32 pagesBodyCount;
+    while (pagesRemaining > 0) {
+      if (pagesRemaining > kHyperVMaxGpadlBodyPfns) {
+        pagesBodyCount = kHyperVMaxGpadlBodyPfns;
       } else {
-        pfnCurr = pfnLeft;
+        pagesBodyCount = pagesRemaining;
       }
       
-      UInt32 messageSize = sizeof (VMBusChannelMessageGPADLBody) + pfnCurr * sizeof (UInt64);
+      UInt32 messageSize = (UInt32) (sizeof (VMBusChannelMessageGPADLBody) + pagesBodyCount * sizeof (UInt64));
       VMBusChannelMessageGPADLBody *gpadlBody = (VMBusChannelMessageGPADLBody*) IOMalloc(messageSize);
       if (gpadlBody == NULL) {
+        SYSLOG("Failed to allocate GPADL body message");
         return false;
       }
       memset(gpadlBody, 0, messageSize);
       
-      gpadlBody->header.type = kVMBusChannelMessageTypeGPADLBody;
-      gpadlBody->gpadl = channel->gpadlHandle;
-      for (UInt32 i = 0; i < pfnCurr; i++) {
-        gpadlBody->pfn[i] = physPageIndex;
-    //    DBGLOG("GPADL body PFN %u is %llu", i, physPageIndex);
+      gpadlBody->header.type  = kVMBusChannelMessageTypeGPADLBody;
+      gpadlBody->gpadl        = channel->gpadlHandle;
+      for (UInt32 i = 0; i < pagesBodyCount; i++) {
+        gpadlBody->pfn[i]     = physPageIndex;
         physPageIndex++;
       }
       
-
+      DBGLOG("Processed %u body pages, %u remaining", pagesBodyCount, pagesRemaining);
+      pagesRemaining -= pagesBodyCount;
       
-      
-      
-      
-      DBGLOG("Processed %u pfns, %u left", pfnCurr, pfnLeft);
-      pfnSum += pfnCurr;
-      pfnLeft -= pfnCurr;
-      
-      if (pfnLeft == 0) {
-        DBGLOG("Last one");
+      //
+      // Send body message.
+      // For the last one, we want to wait for the creation response.
+      //
+      if (pagesRemaining == 0) {
         VMBusChannelMessageGPADLCreated gpadlCreated;
-        sendVMBusMessageWithSize((VMBusChannelMessage*) gpadlBody, messageSize, kVMBusChannelMessageTypeGPADLCreated, (VMBusChannelMessage*) &gpadlCreated);
+        result = sendVMBusMessageWithSize((VMBusChannelMessage*) gpadlBody, messageSize, kVMBusChannelMessageTypeGPADLCreated, (VMBusChannelMessage*) &gpadlCreated);
         DBGLOG("GPADL creation response 0x%X for channel %u", gpadlCreated.status, channel->offerMessage.channelId);
+
+        if (!result && gpadlCreated.status != kHyperVStatusSuccess) {
+          SYSLOG("Failed to create GPADL for channel %u", channel->offerMessage.channelId);
+          
+          IOFree(gpadlBody, messageSize);
+          return false;
+        }
       } else {
-        sendVMBusMessageWithSize((VMBusChannelMessage*) gpadlBody, messageSize);
+        result = sendVMBusMessageWithSize((VMBusChannelMessage*) gpadlBody, messageSize);
       }
+
       IOFree(gpadlBody, messageSize);
+      if (!result) {
+        SYSLOG("Failed to send GPADL body message");
+        return false;
+      }
     }
+
   } else {
     //
     // Header message alone is sufficient.
     //
     UInt32 messageSize = sizeof (VMBusChannelMessageGPADLHeader) +
       sizeof (HyperVGPARange) + pageCount * sizeof (UInt64);
+
     VMBusChannelMessageGPADLHeader *gpadlHeader = (VMBusChannelMessageGPADLHeader*) IOMalloc(messageSize);
     if (gpadlHeader == NULL) {
+      SYSLOG("Failed to allocate GPADL header message");
       return false;
     }
     memset(gpadlHeader, 0, messageSize);
     
     //
-    // Populate GPADL body and PFNs.
+    // Header will contain all of the GPADL PFNs.
     //
-    gpadlHeader->header.type = kVMBusChannelMessageTypeGPADLHeader;
-    gpadlHeader->channelId = channel->offerMessage.channelId;
-    gpadlHeader->gpadl = channel->gpadlHandle;
-    
-    gpadlHeader->rangeCount = 1;
-    gpadlHeader->rangeBufferLength = sizeof (HyperVGPARange) + pageCount * sizeof (UInt64);
-    gpadlHeader->range[0].byteOffset = 0;
-    gpadlHeader->range[0].byteCount = (UInt32)channel->dataBuffer.size;
+    gpadlHeader->header.type          = kVMBusChannelMessageTypeGPADLHeader;
+    gpadlHeader->channelId            = channel->offerMessage.channelId;
+    gpadlHeader->gpadl                = channel->gpadlHandle;
+    gpadlHeader->rangeCount           = kHyperVGpadlRangeCount;
+    gpadlHeader->rangeBufferLength    = sizeof (HyperVGPARange) + pageCount * sizeof (UInt64);
+    gpadlHeader->range[0].byteOffset  = 0;
+    gpadlHeader->range[0].byteCount   = (UInt32)channel->dataBuffer.size;
+
     UInt64 physPageIndex = channel->dataBuffer.physAddr >> PAGE_SHIFT;
     for (UInt32 i = 0; i < pageCount; i++) {
       gpadlHeader->range[0].pfnArray[i] = physPageIndex;
-      DBGLOG("GPADL PFN %u is %llu", i, physPageIndex);
       physPageIndex++;
     }
     
     //
-    // Send GPADL header and wait for GPADL created message.
+    // Send GPADL header message, waiting for response.
     //
     VMBusChannelMessageGPADLCreated gpadlCreated;
     bool result = sendVMBusMessageWithSize((VMBusChannelMessage*) gpadlHeader, messageSize, kVMBusChannelMessageTypeGPADLCreated, (VMBusChannelMessage*) &gpadlCreated);
@@ -146,10 +180,12 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
     DBGLOG("GPADL creation response 0x%X for channel %u", gpadlCreated.status, channel->offerMessage.channelId);
     
     if (!result) {
+      SYSLOG("Failed to send GPADL header message");
+      return false;
+    } else if (gpadlCreated.status != kHyperVStatusSuccess) {
+      SYSLOG("Failed to create GPADL for channel %u", channel->offerMessage.channelId);
       return false;
     }
-    
-    
   }
   
   //
@@ -157,7 +193,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
   //
   channel->txBuffer = (VMBusRingBuffer*) channel->dataBuffer.buffer;
   channel->rxBuffer = (VMBusRingBuffer*) (((UInt8*)channel->dataBuffer.buffer) + PAGE_SIZE * channel->rxPageIndex);
-  channel->status = kVMBusChannelStatusGpadlConfigured;
+  channel->status   = kVMBusChannelStatusGpadlConfigured;
   return true;
 }
 

@@ -202,6 +202,9 @@ typedef struct __attribute__((packed)) {
   UInt32                    channelId;
 } VMBusChannelMessageChannelClose;
 
+#define kHyperVMaxGpadlPages    8192
+#define kHyperVGpadlRangeCount  1
+
 // kVMBusChannelMessageTypeGPADLHeader
 typedef struct __attribute__((packed)) {
   VMBusChannelMessageHeader header;
@@ -221,6 +224,9 @@ typedef struct __attribute__((packed)) {
   UInt32                    gpadl;
   UInt64                    pfn[];
 } VMBusChannelMessageGPADLBody;
+
+#define kHyperVMaxGpadlBodyPfns   ((kHyperVMessageDataSizeMax - \
+  sizeof (VMBusChannelMessageGPADLBody)) / sizeof (UInt64))
 
 // kVMBusChannelMessageTypeGPADLCreated
 typedef struct __attribute__((packed)) {
