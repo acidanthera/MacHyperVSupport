@@ -17,7 +17,7 @@
 
 #define HV_PAGEALIGN(a)         (((a) + (PAGE_SIZE - 1)) &~ (PAGE_SIZE - 1))
 
-#define kHyperVHypercallRetryCount  200
+#define kHyperVHypercallRetryCount  100
 
 
 #if DEBUG
@@ -198,7 +198,7 @@ typedef enum : UInt32 {
 #define kHypercallStatusInvalidParameter      0x0005
 #define kHypercallStatusInsufficientMemory    0x000B
 #define kHypercallStatusInvalidConnectionId   0x0012
-#define kHypercallStatusInsufficientBuffers   0x0033
+#define kHypercallStatusInsufficientBuffers   0x0013 // TLFS has this incorrectly as 0x33
 
 #define kHypercallTypePostMessage   0x0005C // Slow hypercall, memory-based
 #define kHypercallTypeSignalEvent   0x1005D // Fast hypercall, register-based

@@ -9,6 +9,8 @@
 #include "HyperVVMBusInternal.hpp"
 
 bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
+  UInt32 channelId = channel->offerMessage.channelId;
+  
   //
   // Get the next available GPADL handle.
   //
@@ -30,7 +32,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
     return false;
   }
   
-  DBGLOG("Configuring GPADL handle 0x%X for channel %u of %llu pages", channel->gpadlHandle, channel->offerMessage.channelId, pageCount);
+  DBGLOG("Configuring GPADL handle 0x%X for channel %u of %llu pages", channel->gpadlHandle, channelId, pageCount);
   
   //
   // For larger GPADL requests, a GPADL header and one or more GPADL body messages are required.
@@ -59,7 +61,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
     // Header will contain the first batch of GPADL PFNs.
     //
     gpadlHeader->header.type          = kVMBusChannelMessageTypeGPADLHeader;
-    gpadlHeader->channelId            = channel->offerMessage.channelId;
+    gpadlHeader->channelId            = channelId;
     gpadlHeader->gpadl                = channel->gpadlHandle;
     gpadlHeader->rangeCount           = kHyperVGpadlRangeCount;
     gpadlHeader->rangeBufferLength    = sizeof (HyperVGPARange) + pageCount * sizeof (UInt64); // Max page count is 8190
@@ -78,7 +80,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
     bool result = sendVMBusMessageWithSize((VMBusChannelMessage*) gpadlHeader, messageSize);
     IOFree(gpadlHeader, messageSize);
     if (!result) {
-      SYSLOG("Failed to send GPADL header message");
+      SYSLOG("Failed to send GPADL header message for channel %u", channelId);
       return false;
     }
     
@@ -98,7 +100,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
       UInt32 messageSize = (UInt32) (sizeof (VMBusChannelMessageGPADLBody) + pagesBodyCount * sizeof (UInt64));
       VMBusChannelMessageGPADLBody *gpadlBody = (VMBusChannelMessageGPADLBody*) IOMalloc(messageSize);
       if (gpadlBody == NULL) {
-        SYSLOG("Failed to allocate GPADL body message");
+        SYSLOG("Failed to allocate GPADL body message for channel %u", channelId);
         return false;
       }
       memset(gpadlBody, 0, messageSize);
@@ -110,7 +112,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
         physPageIndex++;
       }
       
-      DBGLOG("Processed %u body pages, %u remaining", pagesBodyCount, pagesRemaining);
+      DBGLOG("Processed %u body pages for for channel %u, %u remaining", pagesBodyCount, channelId, pagesRemaining);
       pagesRemaining -= pagesBodyCount;
       
       //
@@ -120,10 +122,10 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
       if (pagesRemaining == 0) {
         VMBusChannelMessageGPADLCreated gpadlCreated;
         result = sendVMBusMessageWithSize((VMBusChannelMessage*) gpadlBody, messageSize, kVMBusChannelMessageTypeGPADLCreated, (VMBusChannelMessage*) &gpadlCreated);
-        DBGLOG("GPADL creation response 0x%X for channel %u", gpadlCreated.status, channel->offerMessage.channelId);
+        DBGLOG("GPADL creation response 0x%X for channel %u", gpadlCreated.status, channelId);
 
         if (!result && gpadlCreated.status != kHyperVStatusSuccess) {
-          SYSLOG("Failed to create GPADL for channel %u", channel->offerMessage.channelId);
+          SYSLOG("Failed to create GPADL for channel %u", channelId);
           
           IOFree(gpadlBody, messageSize);
           return false;
@@ -134,7 +136,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
 
       IOFree(gpadlBody, messageSize);
       if (!result) {
-        SYSLOG("Failed to send GPADL body message");
+        SYSLOG("Failed to send GPADL body message for channel %u", channelId);
         return false;
       }
     }
@@ -148,7 +150,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
 
     VMBusChannelMessageGPADLHeader *gpadlHeader = (VMBusChannelMessageGPADLHeader*) IOMalloc(messageSize);
     if (gpadlHeader == NULL) {
-      SYSLOG("Failed to allocate GPADL header message");
+      SYSLOG("Failed to allocate GPADL header message for channel %u", channelId);
       return false;
     }
     memset(gpadlHeader, 0, messageSize);
@@ -157,7 +159,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
     // Header will contain all of the GPADL PFNs.
     //
     gpadlHeader->header.type          = kVMBusChannelMessageTypeGPADLHeader;
-    gpadlHeader->channelId            = channel->offerMessage.channelId;
+    gpadlHeader->channelId            = channelId;
     gpadlHeader->gpadl                = channel->gpadlHandle;
     gpadlHeader->rangeCount           = kHyperVGpadlRangeCount;
     gpadlHeader->rangeBufferLength    = sizeof (HyperVGPARange) + pageCount * sizeof (UInt64);
@@ -177,7 +179,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
     bool result = sendVMBusMessageWithSize((VMBusChannelMessage*) gpadlHeader, messageSize, kVMBusChannelMessageTypeGPADLCreated, (VMBusChannelMessage*) &gpadlCreated);
     IOFree(gpadlHeader, messageSize);
     
-    DBGLOG("GPADL creation response 0x%X for channel %u", gpadlCreated.status, channel->offerMessage.channelId);
+    DBGLOG("GPADL creation response 0x%X for channel %u", gpadlCreated.status, channelId);
     
     if (!result) {
       SYSLOG("Failed to send GPADL header message");

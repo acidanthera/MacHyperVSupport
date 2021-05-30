@@ -104,7 +104,7 @@ IOReturn HyperVVMBusController::sendVMBusMessageGated(VMBusChannelMessage *messa
   }
   
   if (returnStatus != kIOReturnSuccess) {
-    DBGLOG("Hypercall failed with status 0x%X", hvStatus);
+    SYSLOG("Hypercall message type 0x%X failed with status 0x%X", msgEntry->type, hvStatus);
     return returnStatus;
   }
   
