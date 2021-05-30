@@ -44,7 +44,7 @@ extern "C" void initSyncIC(void *cpuData) {
           ((hvPerCpuData->eventFlagsDma.physAddr >> PAGE_SHIFT) << kHyperVMsrSiefpPageShift));
   
   //
-  // Configure SynIC interrupt. We use the thermal interrupt on the LAPIC for this.
+  // Configure SynIC interrupt using the interrupt specified in ACPI for the VMBus device.
   //
   wrmsr64(kHyperVMsrSInt0 + kVMBusInterruptMessage,
           hvCPUData->interruptVector |
@@ -206,29 +206,38 @@ bool HyperVVMBusController::initSynIC() {
 }
 
 void HyperVVMBusController::sendSynICEOM(UInt32 cpu) {
-  if (!IOSimpleLockTryLock(preemptionLock)) {
-    SYSLOG("Failed to disable preemption");
+  //
+  // Only EOM if there is a pending message.
+  //
+  cpuData.perCPUData[cpu].messages[kVMBusInterruptMessage].type = kHyperVMessageTypeNone;
+  if (!cpuData.perCPUData[cpu].messages[kVMBusInterruptMessage].flags.messagePending) {
     return;
   }
   
-  bool intsEnabled = ml_set_interrupts_enabled(false);
-  
-  do {
-    processor_t proc = pmCallbacks.LCPUtoProcessor(cpu);
-    if (proc == NULL) {
-      break;
+  //
+  // Change to desired CPU if needed.
+  //
+  if (cpu != cpu_number()) {
+    if (!IOSimpleLockTryLock(preemptionLock)) {
+      SYSLOG("Failed to disable preemption");
+      return;
     }
     
-    if (cpu != cpu_number()) {
-      DBGLOG("Changed from cpu %u to %u", cpu_number(), cpu);
-    }
-    pmCallbacks.ThreadBind(proc);
-
+    bool intsEnabled = ml_set_interrupts_enabled(false);
     
-  } while (false);
-  
-  IOSimpleLockUnlock(preemptionLock);
-  ml_set_interrupts_enabled(intsEnabled);
+    do {
+      processor_t proc = pmCallbacks.LCPUtoProcessor(cpu);
+      if (proc == NULL) {
+        break;
+      }
+      
+      pmCallbacks.ThreadBind(proc);
+    } while (false);
+    
+    IOSimpleLockUnlock(preemptionLock);
+    ml_set_interrupts_enabled(intsEnabled);
+    DBGLOG("Changed to cpu %u", cpu_number());
+  }
   
   //
   // We should now be on the correct CPU, so send EOM.
@@ -248,7 +257,11 @@ void HyperVVMBusController::handleSynICInterrupt(OSObject *target, void *refCon,
   message = &cpuData.perCPUData[cpuIndex].messages[kVMBusInterruptTimer];
   if (message->type == kHyperVMessageTypeTimerExpired) {
     message->type = kHyperVMessageTypeNone;
-   cpuData.perCPUData[cpuIndex].synProc->triggerInterrupt();
+    
+    if (message->flags.messagePending) {
+      wrmsr64(kHyperVMsrEom, 0);
+    }
+   //cpuData.perCPUData[cpuIndex].synProc->triggerInterrupt();
   }
   
   //

@@ -236,15 +236,15 @@ typedef union {
 } HyperVPortId;
 
 typedef struct __attribute__((packed)) {
-  HyperVMessageType   type;
-  UInt8               size;
-  HyperVMessageFlags  flags;
-  UInt16              reserved;
+  volatile HyperVMessageType    type;
+  UInt8                         size;
+  volatile HyperVMessageFlags   flags;
+  UInt16                        reserved;
   union {
-    UInt64            sender;
-    HyperVPortId      portId;
+    UInt64                      sender;
+    HyperVPortId                portId;
   };
-  UInt8               data[kHyperVMessageDataSizeMax];
+  UInt8                         data[kHyperVMessageDataSizeMax];
 } HyperVMessage;
 
 //

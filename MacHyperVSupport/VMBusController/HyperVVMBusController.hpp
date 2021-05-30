@@ -27,10 +27,6 @@ extern "C" {
 #include "VMBusDriver.hpp"
 #include "SynICProcessor.hpp"
 
-#include "HyperVVMBusDevice.hpp"
-
-
-
 inline void
 guid_unparse(const uuid_t uu, uuid_string_t out)
 {
@@ -103,6 +99,7 @@ private:
   //
   UInt8               vmbusWaitForMessageType;
   UInt32              vmbusWaitMessageCpu;
+  HyperVMessage       vmbusWaitMessage;
   
   IOWorkLoop              *workloop;
   IOCommandGate           *cmdGate;
@@ -155,12 +152,13 @@ private:
   bool sendVMBusMessage(VMBusChannelMessage *message, VMBusChannelMessageType responseType = kVMBusChannelMessageTypeInvalid, VMBusChannelMessage *response = NULL);
   bool sendVMBusMessageWithSize(VMBusChannelMessage *message, UInt32 messageSize, VMBusChannelMessageType responseType = kVMBusChannelMessageTypeInvalid, VMBusChannelMessage *response = NULL);
   IOReturn sendVMBusMessageGated(VMBusChannelMessage *message, UInt32 *messageSize, VMBusChannelMessageType *responseType, VMBusChannelMessage *response);
-  void completeVMBusMessage(UInt32 cpu);
   bool connectVMBus();
   bool scanVMBus();
-  bool addVMBusChannelInfo(VMBusChannelMessageChannelOffer *offerMessage);
+  bool addVMBusDevice(VMBusChannelMessageChannelOffer *offerMessage);
+  void removeVMBusDevice(VMBusChannelMessageChannelRescindOffer *rescindOfferMessage);
   OSDictionary *getVMBusDevicePropertyDictionary(VMBusChannel *channel);
   bool registerVMBusDevice(VMBusChannel *channel);
+  void cleanupVMBusDevice(VMBusChannel *channel);
   
   //
   // Private VMBus channel management.

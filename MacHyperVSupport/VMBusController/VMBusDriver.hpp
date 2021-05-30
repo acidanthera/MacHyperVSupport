@@ -10,6 +10,8 @@
 
 #include "VMBus.hpp"
 
+class HyperVVMBusDevice;
+
 #define kVMBusArrayInitialChildrenCount        10
 #define kHyperVVMBusInterruptControllerName   "HyperVVMBusInterruptController"
 
@@ -61,6 +63,10 @@ typedef struct {
   VMBusRingBuffer                 *txBuffer;
   VMBusRingBuffer                 *rxBuffer;
   
+  //
+  // I/O Kit nub for VMBus device.
+  //
+  HyperVVMBusDevice               *deviceNub;
 } VMBusChannel;
 
 #endif

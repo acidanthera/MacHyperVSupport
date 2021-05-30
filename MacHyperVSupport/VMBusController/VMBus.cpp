@@ -8,6 +8,8 @@
 #include "HyperVVMBusController.hpp"
 #include "HyperVVMBusInternal.hpp"
 
+#include "HyperVVMBusDevice.hpp"
+
 const VMBusMessageTypeTableEntry
 VMBusMessageTypeTable[kVMBusChannelMessageTypeMax] = {
   { kVMBusChannelMessageTypeInvalid, 0 },
@@ -112,30 +114,24 @@ IOReturn HyperVVMBusController::sendVMBusMessageGated(VMBusChannelMessage *messa
     //
     vmbusWaitForMessageType = *responseType;
     cmdGate->commandSleep(&cmdGateEvent);
-    
-    HyperVMessage *newMsg = &cpuData.perCPUData[vmbusWaitMessageCpu].messages[kVMBusInterruptMessage];
-    DBGLOG("Awoken from sleep, message type is %u with size %u", newMsg->type, newMsg->size);
-   /* if (newMsg->size != VMBusMessageTypeTable[*responseType].size) {
-      DBGLOG("Response size mismatch!");
-      return kIOReturnIOError;
-    }*/
-    
-    memcpy(responseMessage, &newMsg->data[0], VMBusMessageTypeTable[*responseType].size);
-    newMsg->type = kHyperVMessageTypeNone;
-    sendSynICEOM(vmbusWaitMessageCpu);
+
+    DBGLOG("Awoken from sleep, message type is %u with size %u", vmbusWaitMessage.type, vmbusWaitMessage.size);    
+    memcpy(responseMessage, vmbusWaitMessage.data, VMBusMessageTypeTable[*responseType].size);
   }
   
   return kIOReturnSuccess;
 }
 
-
-
-void HyperVVMBusController::completeVMBusMessage(UInt32 cpu) {
-  cpuData.perCPUData[cpu].messages[kVMBusInterruptMessage].type = kHyperVMessageTypeNone;
-}
-
 void HyperVVMBusController::processIncomingVMBusMessage(UInt32 cpu) {
-  DBGLOG("CPU %u has a message", cpu);
+  //
+  // Sometimes the interrupt will fire for the same message, and by the time this
+  // handler is invoked for that second interrupt, the message will be cleared.
+  //
+  if (cpuData.perCPUData[cpu].messages[kVMBusInterruptMessage].type == kHyperVMessageTypeNone) {
+    return;
+  }
+  
+  DBGLOG("CPU %u has a message (type %u)", cpu, cpuData.perCPUData[cpu].messages[kVMBusInterruptMessage].type);
   
   //
   // Check if we are waiting for an incoming VMBus message.
@@ -145,10 +141,15 @@ void HyperVVMBusController::processIncomingVMBusMessage(UInt32 cpu) {
     DBGLOG("Incoming VMBus message type %u on CPU %u", msg->header.type, cpu);
     
     if (vmbusWaitForMessageType != kVMBusChannelMessageTypeInvalid && vmbusWaitForMessageType == msg->header.type) {
-   //   cmdGate->commandWakeup(&command_complete);
       DBGLOG("Woke for response %u", vmbusWaitForMessageType);
-      vmbusWaitMessageCpu     = cpu;
       vmbusWaitForMessageType = kVMBusChannelMessageTypeInvalid;
+      
+      //
+      // Store message response.
+      //
+      memcpy(&vmbusWaitMessage, &cpuData.perCPUData[cpu].messages[kVMBusInterruptMessage], sizeof (vmbusWaitMessage));
+      sendSynICEOM(cpu);
+      
       cmdGate->commandWakeup(&cmdGateEvent);
       return;
     }
@@ -157,14 +158,16 @@ void HyperVVMBusController::processIncomingVMBusMessage(UInt32 cpu) {
     // Add offered channels to array.
     //
     if (msg->header.type == kVMBusChannelMessageTypeChannelOffer) {
-      addVMBusChannelInfo((VMBusChannelMessageChannelOffer*) msg);
+      addVMBusDevice((VMBusChannelMessageChannelOffer*) msg);
     } else if (msg->header.type == kVMBusChannelMessageTypeRescindChannelOffer) {
-      VMBusChannelMessageChannelRescindOffer *rOffer = (VMBusChannelMessageChannelRescindOffer*)msg;
-      DBGLOG("Channel %u offer is now taken back!", rOffer->channelId);
+      removeVMBusDevice((VMBusChannelMessageChannelRescindOffer*) msg);
+    } else {
+      DBGLOG("Unknown message type %u", msg->header.type);
     }
-    
-    completeVMBusMessage(cpu);
     sendSynICEOM(cpu);
+    
+  } else if (cpuData.perCPUData[cpu].messages[kVMBusInterruptMessage].type == kVMBusConnIdEvent) {
+    DBGLOG("Incoming VMBus event on CPU %u", cpu);
   }
 }
 
@@ -180,8 +183,6 @@ bool HyperVVMBusController::connectVMBus() {
   
   VMBusChannelMessageConnectResponse resp;
   sendVMBusMessage((VMBusChannelMessage*) &connectMsg, kVMBusChannelMessageTypeConnectResponse, (VMBusChannelMessage*) &resp);
-  
-  DBGLOG("Message here");
   
   DBGLOG("header %X %X %X", cpuData.perCPUData[0].messages[kVMBusInterruptMessage].type, resp.header.type, resp.supported);
 
@@ -211,51 +212,67 @@ bool HyperVVMBusController::scanVMBus() {
   bool result = sendVMBusMessage(&chanReqMsg, kVMBusChannelMessageTypeRequestChannelsDone, &resp);
   DBGLOG("VMBus scan completed");
   
-  //
-  // Initialize the children.
-  //
-  for (int i = 0; i <= vmbusChannelHighest; i++) {
-    if (vmbusChannels[i].status == kVMBusChannelStatusNotPresent) {
-      continue;
-    }
-    
-    if (!registerVMBusDevice(&vmbusChannels[i])) {
-      DBGLOG("Failed to register channel %u", i);
-      return false; // TODO: cleanup
-    }
-    
-    DBGLOG("Registered channel %u (%s)", i, vmbusChannels[i].typeGuidString);
-    DBGLOG("Channel %u flags 0x%X, MIMO size %u bytes, pipe mode 0x%X", i,
-           vmbusChannels[i].offerMessage.flags, vmbusChannels[i].offerMessage.mmioSizeMegabytes,
-           vmbusChannels[i].offerMessage.pipe.mode);
-    DBGLOG("Channel %u mon id %u, monitor alloc %u, dedicated int %u, conn ID %u", i,
-           vmbusChannels[i].offerMessage.monitorId, vmbusChannels[i].offerMessage.monitorAllocated,
-           vmbusChannels[i].offerMessage.dedicatedInterrupt, vmbusChannels[i].offerMessage.connectionId);
-  }
-  
   return result;
 }
 
-bool HyperVVMBusController::addVMBusChannelInfo(VMBusChannelMessageChannelOffer *offerMessage) {
+bool HyperVVMBusController::addVMBusDevice(VMBusChannelMessageChannelOffer *offerMessage) {
   //
   // Add offer message to channel array.
   //
-  if (offerMessage->channelId >= kHyperVMaxChannels || vmbusChannels[offerMessage->channelId].status != kVMBusChannelStatusNotPresent) {
+  UInt32 channelId = offerMessage->channelId;
+  if (channelId >= kHyperVMaxChannels || vmbusChannels[channelId].status != kVMBusChannelStatusNotPresent) {
+    DBGLOG("Channel %u is invalid or already present", channelId);
     return false;
   }
   
-  if (vmbusChannelHighest < offerMessage->channelId) {
-    vmbusChannelHighest = offerMessage->channelId;
+  if (vmbusChannelHighest < channelId) {
+    vmbusChannelHighest = channelId;
   }
   
   //
   // Copy offer message and create GUID type string.
   //
-  memcpy(&vmbusChannels[offerMessage->channelId].offerMessage, offerMessage, sizeof (VMBusChannelMessageChannelOffer));
-  guid_unparse(offerMessage->type, vmbusChannels[offerMessage->channelId].typeGuidString);
-  vmbusChannels[offerMessage->channelId].status = kVMBusChannelStatusClosed;
+  memcpy(&vmbusChannels[channelId].offerMessage, offerMessage, sizeof (VMBusChannelMessageChannelOffer));
+  guid_unparse(offerMessage->type, vmbusChannels[channelId].typeGuidString);
+  vmbusChannels[channelId].status = kVMBusChannelStatusClosed;
+  
+  if (!registerVMBusDevice(&vmbusChannels[channelId])) {
+    DBGLOG("Failed to register channel %u", channelId);
+    cleanupVMBusDevice(&vmbusChannels[channelId]);
+    return false;
+  }
+  
+  DBGLOG("Registered channel %u (%s)", channelId, vmbusChannels[channelId].typeGuidString);
+  DBGLOG("Channel %u flags 0x%X, MIMO size %u bytes, pipe mode 0x%X", channelId,
+         vmbusChannels[channelId].offerMessage.flags, vmbusChannels[channelId].offerMessage.mmioSizeMegabytes,
+         vmbusChannels[channelId].offerMessage.pipe.mode);
+  DBGLOG("Channel %u mon id %u, monitor alloc %u, dedicated int %u, conn ID %u", channelId,
+         vmbusChannels[channelId].offerMessage.monitorId, vmbusChannels[channelId].offerMessage.monitorAllocated,
+         vmbusChannels[channelId].offerMessage.dedicatedInterrupt, vmbusChannels[channelId].offerMessage.connectionId);
 
   return true;
+}
+
+void HyperVVMBusController::removeVMBusDevice(VMBusChannelMessageChannelRescindOffer *rescindOfferMessage) {
+  UInt32 channelId = rescindOfferMessage->channelId;
+  if (channelId >= kHyperVMaxChannels || vmbusChannels[channelId].status == kVMBusChannelStatusNotPresent) {
+    DBGLOG("Channel %u is invalid or is not active", channelId);
+    return;
+  }
+  
+  DBGLOG("Removing channel %u", channelId);
+  
+  //
+  // Notify nub to terminate.
+  //
+  if (vmbusChannels[channelId].deviceNub != NULL) {
+    vmbusChannels[channelId].deviceNub->terminate();
+    vmbusChannels[channelId].deviceNub->release();
+    vmbusChannels[channelId].deviceNub = NULL;
+  }
+
+  cleanupVMBusDevice(&vmbusChannels[channelId]);
+  DBGLOG("Channel %u has been removed", channelId);
 }
 
 OSDictionary* HyperVVMBusController::getVMBusDevicePropertyDictionary(VMBusChannel *channel) {
@@ -340,7 +357,11 @@ bool HyperVVMBusController::registerVMBusDevice(VMBusChannel *channel) {
   if (result) {
     childDevice->registerService();
   }
-  childDevice->release();
+  channel->deviceNub = childDevice;
 
   return true;
+}
+
+void HyperVVMBusController::cleanupVMBusDevice(VMBusChannel *channel) {
+  channel->status = kVMBusChannelStatusNotPresent;
 }
