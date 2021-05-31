@@ -60,6 +60,9 @@ jobs:
       - name: CI Bootstrap
         run: |
           src=$(/usr/bin/curl -Lfs https://raw.githubusercontent.com/acidanthera/ocbuild/master/ci-bootstrap.sh) && eval "$src" || exit 1
+      - name: Lilu Bootstrap
+        run: |
+          src=$(/usr/bin/curl -Lfs https://raw.githubusercontent.com/acidanthera/Lilu/master/Lilu/Scripts/bootstrap.sh) && eval "$src" || exit 1
 
       - run: xcodebuild analyze -quiet -scheme MacHyperVSupport -configuration Debug CLANG_ANALYZER_OUTPUT=plist-html CLANG_ANALYZER_OUTPUT_DIR="$(pwd)/clang-analyze" && [ "$(find clang-analyze -name "*.html")" = "" ]
       - run: xcodebuild analyze -quiet -scheme MacHyperVSupport -configuration Release CLANG_ANALYZER_OUTPUT=plist-html CLANG_ANALYZER_OUTPUT_DIR="$(pwd)/clang-analyze" && [ "$(find clang-analyze -name "*.html")" = "" ]
@@ -79,6 +82,9 @@ jobs:
   #    - name: CI Bootstrap
   #      run: |
   #       src=$(/usr/bin/curl -Lfs https://raw.githubusercontent.com/acidanthera/ocbuild/master/ci-bootstrap.sh) && eval "$src" || exit 1
+  #    - name: Lilu Bootstrap
+  #      run: |
+  #       src=$(/usr/bin/curl -Lfs https://raw.githubusercontent.com/acidanthera/Lilu/master/Lilu/Scripts/bootstrap.sh) && eval "$src" || exit 1
 
   #    - name: Run Coverity
   #      run: |
