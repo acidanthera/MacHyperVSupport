@@ -163,7 +163,6 @@ private:
   // Private VMBus channel management.
   //
   bool configureVMBusChannelGpadl(VMBusChannel *channel);
-  void destroyVMBusChannelGpadl(VMBusChannel *channel);
   bool configureVMBusChannel(VMBusChannel *channel);
   
 public:
@@ -184,6 +183,8 @@ public:
   bool initVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VMBusRingBuffer **txBuffer, UInt32 rxBufferSize, VMBusRingBuffer **rxBuffer);
   bool openVMBusChannel(UInt32 channelId);
   void signalVMBusChannel(UInt32 channelId);
+  void closeVMBusChannel(UInt32 channelId);
+  void freeVMBusChannel(UInt32 channelId);
 };
 
 #endif

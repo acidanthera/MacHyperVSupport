@@ -25,7 +25,7 @@ VMBusMessageTypeTable[kVMBusChannelMessageTypeMax] = {
   { kVMBusChannelMessageTypeGPADLCreated, sizeof (VMBusChannelMessageGPADLCreated) },
   { kVMBusChannelMessageTypeGPADLTeardown, sizeof (VMBusChannelMessageGPADLTeardown) },
   { kVMBusChannelMessageTypeGPADLTeardownResponse, sizeof (VMBusChannelMessageGPADLTeardownResponse) },
-  { kVMBusChannelMessageTypeChannelFree, 0 },
+  { kVMBusChannelMessageTypeChannelFree, sizeof (VMBusChannelMessageChannelFree) },
   { kVMBusChannelMessageTypeConnect, sizeof (VMBusChannelMessageConnect) },
   { kVMBusChannelMessageTypeConnectResponse, sizeof (VMBusChannelMessageConnectResponse) },
   { kVMBusChannelMessageTypeDisconnect, sizeof (VMBusChannelMessage) }
@@ -273,9 +273,7 @@ void HyperVVMBusController::removeVMBusDevice(VMBusChannelMessageChannelRescindO
     vmbusChannels[channelId].deviceNub->release();
     vmbusChannels[channelId].deviceNub = NULL;
   }
-
-  cleanupVMBusDevice(&vmbusChannels[channelId]);
-  DBGLOG("Channel %u has been removed", channelId);
+  DBGLOG("Channel %u has been asked to terminate", channelId);
 }
 
 bool HyperVVMBusController::registerVMBusDevice(VMBusChannel *channel) {

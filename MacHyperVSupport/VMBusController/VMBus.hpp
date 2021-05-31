@@ -241,7 +241,7 @@ typedef struct __attribute__((packed)) {
 typedef struct __attribute__((packed)) {
   VMBusChannelMessageHeader header;
 
-  UInt32                    channelRelid;
+  UInt32                    channelId;
   UInt32                    gpadl;
 } VMBusChannelMessageGPADLTeardown;
 
@@ -250,6 +250,12 @@ typedef struct __attribute__((packed)) {
   VMBusChannelMessageHeader header;
   UInt32                    gpadl;
 } VMBusChannelMessageGPADLTeardownResponse;
+
+// kVMBusChannelMessageTypeChannelFree
+typedef struct __attribute__((packed)) {
+  VMBusChannelMessageHeader header;
+  UInt32                    channelId;
+} VMBusChannelMessageChannelFree;
 
 // kVMBusChannelMessageTypeConnect
 typedef struct __attribute__((packed)) {

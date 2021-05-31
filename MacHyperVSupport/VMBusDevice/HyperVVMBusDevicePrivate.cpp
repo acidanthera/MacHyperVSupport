@@ -48,6 +48,12 @@ bool HyperVVMBusDevice::setupInterrupt() {
 }
 
 void HyperVVMBusDevice::teardownInterrupt() {
+  if (childInterruptSource != NULL) {
+    childInterruptSource->disable();
+    workLoop->removeEventSource(childInterruptSource);
+    childInterruptSource = NULL;
+  }
+  
   if (interruptSource == NULL) {
     return;
   }
@@ -66,21 +72,18 @@ void HyperVVMBusDevice::teardownInterrupt() {
 }
 
 void HyperVVMBusDevice::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
- // DBGLOG("Interrupt");
-  
+  //
+  // If there is a command in progress, handle that.
+  //
   if (commandSleeping) {
     commandSleeping = false;
     commandGate->commandWakeup(&commandLock);
+
   } else {
-  //  DBGLOG("Raising child int");
     if (childInterruptSource != NULL) {
       childInterruptSource->interruptOccurred(0, 0, 0);
     }
   }
-  
-
-  
- // DBGLOG("Interrupt done");
 }
 
 IOReturn HyperVVMBusDevice::doRequestGated(HyperVVMBusDeviceRequest *request) {

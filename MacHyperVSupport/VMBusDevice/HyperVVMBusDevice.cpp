@@ -40,9 +40,13 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
 }
 
 void HyperVVMBusDevice::detach(IOService *provider) {
+  //
+  // Close and free channel.
+  //
   if (channelIsOpen) {
     closeChannel();
   }
+  vmbusProvider->freeVMBusChannel(channelId);
   
   super::detach(provider);
 }
@@ -70,22 +74,31 @@ bool HyperVVMBusDevice::openChannel(UInt32 txSize, UInt32 rxSize, OSObject *owne
     childInterruptSource->enable();
   }
   
-  vmbusProvider->initVMBusChannel(channelId, txBufferSize, &txBuffer, rxBufferSize, &rxBuffer);
-  vmbusProvider->openVMBusChannel(channelId);
+  //
+  // Open channel.
+  //
+  if (!vmbusProvider->initVMBusChannel(channelId, txBufferSize, &txBuffer, rxBufferSize, &rxBuffer)) {
+    teardownInterrupt();
+    return false;
+  }
   
+  if (!vmbusProvider->openVMBusChannel(channelId)) {
+    vmbusProvider->closeVMBusChannel(channelId);
+    teardownInterrupt();
+    return false;
+  }
+  
+  channelIsOpen = true;
   return true;
 }
 
 void HyperVVMBusDevice::closeChannel() {
-  
-  if (childInterruptSource != NULL) {
-    childInterruptSource->disable();
-    workLoop->removeEventSource(childInterruptSource);
-    childInterruptSource = NULL;
-  }
-  
-  // TODO: close channel.
+  //
+  // Close channel and stop interrupts.
+  //
+  vmbusProvider->closeVMBusChannel(channelId);
   teardownInterrupt();
+  channelIsOpen = false;
 }
 
 IOReturn HyperVVMBusDevice::doRequest(HyperVVMBusDeviceRequest *request) {

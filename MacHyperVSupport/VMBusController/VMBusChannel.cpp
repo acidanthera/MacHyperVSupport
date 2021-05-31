@@ -176,7 +176,8 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
     // Send GPADL header message, waiting for response.
     //
     VMBusChannelMessageGPADLCreated gpadlCreated;
-    bool result = sendVMBusMessageWithSize((VMBusChannelMessage*) gpadlHeader, messageSize, kVMBusChannelMessageTypeGPADLCreated, (VMBusChannelMessage*) &gpadlCreated);
+    bool result = sendVMBusMessageWithSize((VMBusChannelMessage*) gpadlHeader,
+                                           messageSize, kVMBusChannelMessageTypeGPADLCreated, (VMBusChannelMessage*) &gpadlCreated);
     IOFree(gpadlHeader, messageSize);
     
     DBGLOG("GPADL creation response 0x%X for channel %u", gpadlCreated.status, channelId);
@@ -283,7 +284,7 @@ bool HyperVVMBusController::openVMBusChannel(UInt32 channelId) {
   // Incoming interrupts may begin before this function returns.
   //
   VMBusChannel *channel = &vmbusChannels[channelId];
-  return configureVMBusChannel (channel);
+  return configureVMBusChannel(channel);
 }
 
 void HyperVVMBusController::signalVMBusChannel(UInt32 channelId) {
@@ -298,4 +299,81 @@ void HyperVVMBusController::signalVMBusChannel(UInt32 channelId) {
   // Signal event for specified connection.
   //
   hypercallSignalEvent(channel->offerMessage.connectionId);
+}
+
+void HyperVVMBusController::closeVMBusChannel(UInt32 channelId) {
+  VMBusChannel *channel = &vmbusChannels[channelId];
+
+  bool channelIsOpen = channel->status == kVMBusChannelStatusOpen;
+  bool result = true;
+  
+  //
+  // Prevent any further interrupts from reaching the VMBus device nub.
+  //
+  channel->status = kVMBusChannelStatusClosed;
+  
+  //
+  // Close channel.
+  //
+  if (channelIsOpen) {
+    VMBusChannelMessageChannelClose closeMsg;
+    closeMsg.header.type      = kVMBusChannelMessageTypeChannelClose;
+    closeMsg.header.reserved  = 0;
+    closeMsg.channelId        = channelId;
+    
+    result = sendVMBusMessage((VMBusChannelMessage*) &closeMsg);
+    if (!result) {
+      SYSLOG("Failed to send channel close message for channel %u", channelId);
+    }
+    DBGLOG("Channel %u is now closed", channelId);
+  }
+  
+  //
+  // Teardown GPADL.
+  //
+  VMBusChannelMessageGPADLTeardown gpadlTeardownMsg;
+  gpadlTeardownMsg.header.type      = kVMBusChannelMessageTypeGPADLTeardown;
+  gpadlTeardownMsg.header.reserved  = 0;
+  gpadlTeardownMsg.channelId        = channelId;
+  gpadlTeardownMsg.gpadl            = channel->gpadlHandle;
+  
+  VMBusChannelMessageGPADLTeardownResponse gpadlTeardownResponseMsg;
+  result = sendVMBusMessage((VMBusChannelMessage*) &gpadlTeardownMsg,
+                            kVMBusChannelMessageTypeGPADLTeardownResponse, (VMBusChannelMessage*) &gpadlTeardownResponseMsg);
+  if (!result) {
+    SYSLOG("Failed to send GPADL teardown message");
+  }
+  DBGLOG("GPADL torn down for channel %u", channelId);
+  
+  //
+  // Free ring buffers.
+  //
+  channel->rxPageIndex = 0;
+  channel->txBuffer = NULL;
+  channel->rxBuffer = NULL;
+  
+  //
+  // Allocate channel ring buffers.
+  //
+  freeDmaBuffer(&channel->dataBuffer);
+  freeDmaBuffer(&channel->eventBuffer);
+}
+
+void HyperVVMBusController::freeVMBusChannel(UInt32 channelId) {
+  VMBusChannel *channel = &vmbusChannels[channelId];
+  
+  //
+  // Free channel ID to be reused later on by Hyper-V.
+  //
+  VMBusChannelMessageChannelFree freeMsg;
+  freeMsg.header.type      = kVMBusChannelMessageTypeChannelFree;
+  freeMsg.header.reserved  = 0;
+  freeMsg.channelId        = channelId;
+  
+  bool result = sendVMBusMessage((VMBusChannelMessage*) &freeMsg);
+  if (!result) {
+    SYSLOG("Failed to send channel free message for channel %u", channelId);
+  }
+  DBGLOG("Channel %u is now freed", channelId);
+  channel->status = kVMBusChannelStatusNotPresent;
 }
