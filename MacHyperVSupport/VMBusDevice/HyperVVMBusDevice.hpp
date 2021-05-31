@@ -24,6 +24,7 @@ typedef struct {
   void            *sendData;
   UInt32          sendDataLength;
   VMBusPacketType sendPacketType;
+  UInt64          transactionId;
   bool            responseRequired;
   
   VMBusPacketMultiPageBuffer  *multiPageBuffer;
@@ -50,10 +51,10 @@ private:
   IOInterruptEventSource  *interruptSource;
   IOInterruptEventSource  *childInterruptSource;
   
-  VMBusRingBuffer   *txBuffer;
-  UInt32            txBufferSize;
-  VMBusRingBuffer   *rxBuffer;
-  UInt32            rxBufferSize;
+  VMBusRingBuffer         *txBuffer;
+  UInt32                  txBufferSize;
+  VMBusRingBuffer         *rxBuffer;
+  UInt32                  rxBufferSize;
 
   bool setupInterrupt();
   void teardownInterrupt();
@@ -65,6 +66,12 @@ private:
   UInt32 copyPacketDataFromRingBuffer(UInt32 readIndex, UInt32 readLength, void *data, UInt32 dataLength);
   UInt32 copyPacketDataToRingBuffer(UInt32 writeIndex, void *data, UInt32 length);
   UInt32 zeroPacketDataToRingBuffer(UInt32 writeIndex, UInt32 length);
+  
+  inline UInt32 getAvailableTxSpace() {
+    return (txBuffer->writeIndex >= txBuffer->readIndex) ?
+      (txBufferSize - (txBuffer->writeIndex - txBuffer->readIndex)) :
+      (txBuffer->readIndex - txBuffer->writeIndex);
+  }
 
 public:
   
@@ -73,7 +80,6 @@ public:
   //
   virtual bool attach(IOService *provider) APPLE_KEXT_OVERRIDE;
   virtual void detach(IOService *provider) APPLE_KEXT_OVERRIDE;
-  //virtual IOWorkLoop *getWorkLoop() const APPLE_KEXT_OVERRIDE;
   
   //
   // General functions.

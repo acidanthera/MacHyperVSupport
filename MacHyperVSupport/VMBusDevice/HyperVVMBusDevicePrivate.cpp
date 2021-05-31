@@ -105,38 +105,48 @@ IOReturn HyperVVMBusDevice::doRequestGated(HyperVVMBusDeviceRequest *request) {
     //
     if (request->sendPacketType == kVMBusPacketTypeDataUsingGPADirect) {
       if (request->multiPageBuffer != NULL) {
-        pktHeader = (VMBusPacketHeader*) request->multiPageBuffer;
+        pktHeader       = (VMBusPacketHeader*) request->multiPageBuffer;
         pktHeaderLength = request->multiPageBufferLength;
         
-        request->multiPageBuffer->reserved = 0;
+        request->multiPageBuffer->reserved   = 0;
         request->multiPageBuffer->rangeCount = 1;
       } else {
         return kIOReturnBadArgument;
       }
       
     } else {
-      pktHeader = &pktHeaderStack;
+      pktHeader       = &pktHeaderStack;
       pktHeaderLength = sizeof (pktHeaderStack);
     }
-    pktHeader->type = request->sendPacketType;
-    pktHeader->flags = request->responseRequired ? kVMBusPacketResponseRequired : 0;
-    pktHeader->transactionId = 0xFFE55;
+    pktHeader->type           = request->sendPacketType;
+    pktHeader->flags          = request->responseRequired ? kVMBusPacketResponseRequired : 0;
+    pktHeader->transactionId  = request->transactionId;
     
-    UInt32 pktTotalLength = pktHeaderLength + request->sendDataLength;
-    UInt32 pktTotalLengthAligned = HV_PACKETALIGN(pktTotalLength);
+    UInt32 pktTotalLength         = pktHeaderLength + request->sendDataLength;
+    UInt32 pktTotalLengthAligned  = HV_PACKETALIGN(pktTotalLength);
+    
+    UInt32 writeIndexOld      = txBuffer->writeIndex;
+    UInt32 writeIndexNew      = writeIndexOld;
+    UInt64 writeIndexShifted  = ((UInt64)writeIndexOld) << 32;
+    
+    //
+    // Ensure there is space for the packet.
+    //
+    // We cannot end up with read index == write index after the write, as that would indicate an empty buffer.
+    //
+    if (getAvailableTxSpace() <= pktTotalLengthAligned) {
+      SYSLOG("Packet is too large for buffer (TXR: %X, TXW: %X)", txBuffer->readIndex, txBuffer->writeIndex);
+      return kIOReturnNoResources;
+    }
     
     pktHeader->headerLength = pktHeaderLength >> kVMBusPacketSizeShift;
     pktHeader->totalLength = pktTotalLength >> kVMBusPacketSizeShift;
     
-    UInt32 writeIndexOld = txBuffer->writeIndex;
-    UInt32 writeIndexNew = writeIndexOld;
-    UInt64 writeIndexShifted = ((UInt64)writeIndexOld) << 32;
-    
     //
     // Copy header, data, padding, and index to this packet.
     //
-   // DBGLOG("Packet type %u, flags %u, header length %u, total length %u, pad %u",
-   //        pktHeader->type, pktHeader->flags, pktHeaderLength, pktTotalLength, pktTotalLengthAligned - pktTotalLength);
+    // DBGLOG("Packet type %u, flags %u, header length %u, total length %u, pad %u",
+    //        pktHeader->type, pktHeader->flags, pktHeaderLength, pktTotalLength, pktTotalLengthAligned - pktTotalLength);
     writeIndexNew = copyPacketDataToRingBuffer(writeIndexNew, pktHeader, pktHeaderLength);
     writeIndexNew = copyPacketDataToRingBuffer(writeIndexNew, request->sendData, request->sendDataLength);
     writeIndexNew = zeroPacketDataToRingBuffer(writeIndexNew, pktTotalLengthAligned - pktTotalLength);
@@ -186,8 +196,8 @@ IOReturn HyperVVMBusDevice::doRequestGated(HyperVVMBusDeviceRequest *request) {
     UInt32 packetHeaderLength = pktHeader.headerLength << kVMBusPacketSizeShift;
     UInt32 packetTotalLength = pktHeader.totalLength << kVMBusPacketSizeShift;
     UInt32 packetDataLength = packetTotalLength - packetHeaderLength;
-   // DBGLOG("Packet type %u, flags %u, header length %u, total length %u", pktHeader.type, pktHeader.flags, packetHeaderLength, packetTotalLength);
-   // DBGLOG("RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
+    //DBGLOG("Packet type %u, flags %u, trans %u, header length %u, total length %u", pktHeader.type, pktHeader.flags, pktHeader.transactionId, packetHeaderLength, packetTotalLength);
+    //DBGLOG("RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
     
     UInt32 actualReadLength = packetDataLength;
     if (request->responseDataLength < packetDataLength) {
@@ -208,7 +218,7 @@ IOReturn HyperVVMBusDevice::doRequestGated(HyperVVMBusDeviceRequest *request) {
     readIndexNew = copyPacketDataFromRingBuffer(readIndexNew, sizeof (readIndexShifted), &readIndexShifted, sizeof (readIndexShifted));
     
     rxBuffer->readIndex = readIndexNew;
-   // DBGLOG("New RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
+    // DBGLOG("New RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
     
     //
     // If there is more data to be read, and we returned from an interrupt, raise child interrupt.
@@ -229,9 +239,9 @@ UInt32 HyperVVMBusDevice::copyPacketDataFromRingBuffer(UInt32 readIndex, UInt32 
   //
   if (dataLength > rxBufferSize - readIndex) {
     UInt32 fragmentLength = rxBufferSize - readIndex;
-    DBGLOG("Overflow %u", fragmentLength);
+    DBGLOG("RX wraparound by %u bytes", fragmentLength);
     memcpy(data, &rxBuffer->buffer[readIndex], fragmentLength);
-    memcpy((UInt8*)data + fragmentLength, rxBuffer->buffer, dataLength - fragmentLength);
+    memcpy((UInt8*) data + fragmentLength, rxBuffer->buffer, dataLength - fragmentLength);
   } else {
     memcpy(data, &rxBuffer->buffer[readIndex], dataLength);
   }
@@ -245,9 +255,9 @@ UInt32 HyperVVMBusDevice::copyPacketDataToRingBuffer(UInt32 writeIndex, void *da
   //
   if (length > txBufferSize - writeIndex) {
     UInt32 fragmentLength = txBufferSize - writeIndex;
-    DBGLOG("Overflow %u", fragmentLength);
+    DBGLOG("TX wraparound by %u bytes", fragmentLength);
     memcpy(&txBuffer->buffer[writeIndex], data, fragmentLength);
-    memcpy(txBuffer->buffer, (UInt8*)data + fragmentLength, length - fragmentLength);
+    memcpy(txBuffer->buffer, (UInt8*) data + fragmentLength, length - fragmentLength);
   } else {
     memcpy(&txBuffer->buffer[writeIndex], data, length);
   }
@@ -261,7 +271,7 @@ UInt32 HyperVVMBusDevice::zeroPacketDataToRingBuffer(UInt32 writeIndex, UInt32 l
   //
   if (length > txBufferSize - writeIndex) {
     UInt32 fragmentLength = txBufferSize - writeIndex;
-    DBGLOG("Overflow %u", fragmentLength);
+    DBGLOG("TX wraparound by %u bytes", fragmentLength);
     memset(&txBuffer->buffer[writeIndex], 0, fragmentLength);
     memset(txBuffer->buffer, 0, length - fragmentLength);
   } else {
