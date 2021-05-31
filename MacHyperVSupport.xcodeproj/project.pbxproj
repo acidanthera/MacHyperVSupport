@@ -33,6 +33,9 @@
 		41BE411A263EDFAF0018C52B /* HyperVVMBusController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41BE4118263EDFAF0018C52B /* HyperVVMBusController.cpp */; };
 		41BE411B263EDFAF0018C52B /* HyperVVMBusController.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41BE4119263EDFAF0018C52B /* HyperVVMBusController.hpp */; };
 		41E2EC78263F894300BBE18F /* SynIC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41E2EC77263F894300BBE18F /* SynIC.cpp */; };
+		41F2E39D26656F8700CE26CE /* Headers in Resources */ = {isa = PBXBuildFile; fileRef = 41F2E39B26656F8600CE26CE /* Headers */; };
+		41F2E39E26656F8700CE26CE /* Library in Resources */ = {isa = PBXBuildFile; fileRef = 41F2E39C26656F8600CE26CE /* Library */; };
+		41F2E3A22665800B00CE26CE /* PlatformSupport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E3A12665800B00CE26CE /* PlatformSupport.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -74,6 +77,9 @@
 		41BE4118263EDFAF0018C52B /* HyperVVMBusController.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVVMBusController.cpp; sourceTree = "<group>"; };
 		41BE4119263EDFAF0018C52B /* HyperVVMBusController.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVVMBusController.hpp; sourceTree = "<group>"; };
 		41E2EC77263F894300BBE18F /* SynIC.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SynIC.cpp; sourceTree = "<group>"; };
+		41F2E39B26656F8600CE26CE /* Headers */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Headers; path = Lilu.kext/Contents/Resources/Headers; sourceTree = "<group>"; };
+		41F2E39C26656F8600CE26CE /* Library */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Library; path = Lilu.kext/Contents/Resources/Library; sourceTree = "<group>"; };
+		41F2E3A12665800B00CE26CE /* PlatformSupport.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformSupport.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -149,6 +155,7 @@
 		41BE40FA263EDE370018C52B = {
 			isa = PBXGroup;
 			children = (
+				41F2E39A26656F7100CE26CE /* SDK */,
 				41BE4106263EDE380018C52B /* MacHyperVSupport */,
 				41BE4105263EDE380018C52B /* Products */,
 				41BE4112263EDEA10018C52B /* Frameworks */,
@@ -193,6 +200,7 @@
 				41BE4118263EDFAF0018C52B /* HyperVVMBusController.cpp */,
 				41BE4119263EDFAF0018C52B /* HyperVVMBusController.hpp */,
 				410784702645FF17005894D4 /* HyperVVMBusInternal.hpp */,
+				41F2E3A12665800B00CE26CE /* PlatformSupport.cpp */,
 				41E2EC77263F894300BBE18F /* SynIC.cpp */,
 				41225F3A2642086300574E86 /* SynICProcessor.cpp */,
 				41225F3B2642086300574E86 /* SynICProcessor.hpp */,
@@ -202,6 +210,15 @@
 				418F051D2647223E00E1D14C /* VMBusDriver.hpp */,
 			);
 			path = VMBusController;
+			sourceTree = "<group>";
+		};
+		41F2E39A26656F7100CE26CE /* SDK */ = {
+			isa = PBXGroup;
+			children = (
+				41F2E39B26656F8600CE26CE /* Headers */,
+				41F2E39C26656F8600CE26CE /* Library */,
+			);
+			name = SDK;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -281,6 +298,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				41F2E39E26656F8700CE26CE /* Library in Resources */,
+				41F2E39D26656F8700CE26CE /* Headers in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -316,6 +335,7 @@
 				419B88C5263F1F85005A9977 /* VMBus.cpp in Sources */,
 				418F052C2648451200E1D14C /* HyperVShutdown.cpp in Sources */,
 				418219662648607600619C15 /* HyperVKeyboard.cpp in Sources */,
+				41F2E3A22665800B00CE26CE /* PlatformSupport.cpp in Sources */,
 				41225F512644C34300574E86 /* HyperVVMBusDevice.cpp in Sources */,
 				41225F3C2642086300574E86 /* SynICProcessor.cpp in Sources */,
 				419B88C2263F0169005A9977 /* Hypercalls.cpp in Sources */,
@@ -386,6 +406,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "${PROJECT_DIR}/Lilu.kext/Contents/Resources";
 				KERNEL_EXTENSION_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/MacKernelSDK/Headers";
 				KERNEL_FRAMEWORK_HEADERS = "$(PROJECT_DIR)/MacKernelSDK/Headers";
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
@@ -442,6 +463,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "${PROJECT_DIR}/Lilu.kext/Contents/Resources";
 				KERNEL_EXTENSION_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/MacKernelSDK/Headers";
 				KERNEL_FRAMEWORK_HEADERS = "$(PROJECT_DIR)/MacKernelSDK/Headers";
 				MACOSX_DEPLOYMENT_TARGET = 10.6;

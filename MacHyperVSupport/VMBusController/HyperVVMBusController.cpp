@@ -176,7 +176,6 @@ void HyperVVMBusController::freeDmaBuffer(HyperVDMABuffer *dmaBuf) {
   memset(dmaBuf, 0, sizeof (*dmaBuf));
 }
 
-
 bool HyperVVMBusController::start(IOService *provider) {
   if (!super::start(provider)) {
     return false;
@@ -197,6 +196,13 @@ bool HyperVVMBusController::start(IOService *provider) {
   //
   getPlatform()->removeProperty(kIOPlatformMapperPresentKey);
   IOMapperDisabler::disableMapper();
+  
+  //
+  // Lilu is used for certain functions of child devices, register patcher callback.
+  //
+  lilu.onPatcherLoad([](void *user, KernelPatcher &patcher) {
+    static_cast<HyperVVMBusController *>(user)->onLiluPatcherLoad(patcher);
+  }, this);
   
   //
   // Setup hypercalls.

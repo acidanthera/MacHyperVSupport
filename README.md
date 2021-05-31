@@ -7,6 +7,7 @@ Hyper-V integration services for macOS. Requires a Generation 2 virtual machine 
 
 #### Supported Hyper-V devices and services
 - Heartbeat
+- Guest shutdown
 - Synthetic mouse
 - Synthetic keyboard
 - Synthetic SCSI controller

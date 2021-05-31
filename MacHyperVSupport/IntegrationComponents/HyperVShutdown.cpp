@@ -12,12 +12,16 @@
 #define SYSLOG(str, ...) SYSLOG_PRINT("HyperVShutdown", str, ## __VA_ARGS__)
 #define DBGLOG(str, ...) DBGLOG_PRINT("HyperVShutdown", str, ## __VA_ARGS__)
 
-extern "C" int reboot_kernel(int, char *);
-
 OSDefineMetaClassAndStructors(HyperVShutdown, super);
 
 bool HyperVShutdown::start(IOService *provider) {
   if (!super::start(provider)) {
+    return false;
+  }
+  
+  vmbusControllerProvider = OSDynamicCast(HyperVVMBusController, hvDevice->getProvider());
+  if (vmbusControllerProvider == NULL) {
+    super::stop(provider);
     return false;
   }
   
@@ -39,13 +43,15 @@ void HyperVShutdown::processMessage() {
     return;
   }
   
+  bool doShutdown = false;
+  
   switch (shutdownMsg.header.type) {
     case kVMBusICMessageTypeNegotiate:
       createNegotiationResponse(&shutdownMsg.negotiate, 3, 3);
       break;
       
     case kVMBusICMessageTypeShutdown:
-      handleShutdown(&shutdownMsg.shutdown);
+      doShutdown = handleShutdown(&shutdownMsg.shutdown);
       break;
       
     default:
@@ -64,13 +70,20 @@ void HyperVShutdown::processMessage() {
   request.sendPacketType = kVMBusPacketTypeDataInband;
   
   hvDevice->doRequest(&request);
+
+  if (doShutdown) {
+    SYSLOG("Shutting down system");
+    vmbusControllerProvider->shutdownSystem();
+  }
 }
 
-void HyperVShutdown::handleShutdown(VMBusICMessageShutdownData *shutdownData) {
-  SYSLOG("Shutdown request received, flags 0x%X, reason 0x%X", shutdownData->flags, shutdownData->reason);
+bool HyperVShutdown::handleShutdown(VMBusICMessageShutdownData *shutdownData) {
+  DBGLOG("Shutdown request received: flags 0x%X, reason 0x%X", shutdownData->flags, shutdownData->reason);
   
   //
-  // Shutdown currently not supported.
+  // Report back to Hyper-V if we can shutdown system.
   //
-  shutdownData->header.status = kHyperVStatusFail;
+  bool result = vmbusControllerProvider->canShutdownSystem();
+  shutdownData->header.status = result ? kHyperVStatusSuccess : kHyperVStatusFail;
+  return result;
 }

@@ -113,6 +113,8 @@
 	<string>Copyright © 2021 Goldfish64. All rights reserved.</string>
 	<key>OSBundleLibraries</key>
 	<dict>
+    <key>as.vit9696.Lilu</key>
+    <string>1.4.7</string>
 		<key>com.apple.iokit.IOHIDFamily</key>
 		<string>1.1</string>
 		<key>com.apple.iokit.IOSCSIParallelFamily</key>
