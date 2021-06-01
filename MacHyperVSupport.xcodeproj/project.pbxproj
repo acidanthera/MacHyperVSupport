@@ -33,9 +33,43 @@
 		41BE411A263EDFAF0018C52B /* HyperVVMBusController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41BE4118263EDFAF0018C52B /* HyperVVMBusController.cpp */; };
 		41BE411B263EDFAF0018C52B /* HyperVVMBusController.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41BE4119263EDFAF0018C52B /* HyperVVMBusController.hpp */; };
 		41E2EC78263F894300BBE18F /* SynIC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41E2EC77263F894300BBE18F /* SynIC.cpp */; };
-		41F2E39D26656F8700CE26CE /* Headers in Resources */ = {isa = PBXBuildFile; fileRef = 41F2E39B26656F8600CE26CE /* Headers */; };
-		41F2E39E26656F8700CE26CE /* Library in Resources */ = {isa = PBXBuildFile; fileRef = 41F2E39C26656F8600CE26CE /* Library */; };
-		41F2E3A22665800B00CE26CE /* PlatformSupport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E3A12665800B00CE26CE /* PlatformSupport.cpp */; };
+		41F2E3F42665B42200CE26CE /* kern_config.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3D32665B42100CE26CE /* kern_config.hpp */; };
+		41F2E3F52665B42200CE26CE /* hde64.h in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3D42665B42100CE26CE /* hde64.h */; };
+		41F2E3F62665B42200CE26CE /* kern_time.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3D52665B42100CE26CE /* kern_time.hpp */; };
+		41F2E3F72665B42200CE26CE /* kern_nvram.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3D62665B42100CE26CE /* kern_nvram.hpp */; };
+		41F2E3F82665B42200CE26CE /* kern_cpu.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3D72665B42100CE26CE /* kern_cpu.hpp */; };
+		41F2E3F92665B42200CE26CE /* kern_devinfo.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3D82665B42100CE26CE /* kern_devinfo.hpp */; };
+		41F2E3FA2665B42200CE26CE /* kern_efi.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3D92665B42100CE26CE /* kern_efi.hpp */; };
+		41F2E3FB2665B42200CE26CE /* kern_policy.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3DA2665B42100CE26CE /* kern_policy.hpp */; };
+		41F2E3FC2665B42200CE26CE /* kern_user.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3DB2665B42100CE26CE /* kern_user.hpp */; };
+		41F2E3FD2665B42200CE26CE /* plugin_start.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3DC2665B42100CE26CE /* plugin_start.hpp */; };
+		41F2E3FE2665B42200CE26CE /* kern_iokit.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3DD2665B42100CE26CE /* kern_iokit.hpp */; };
+		41F2E3FF2665B42200CE26CE /* kern_crypto.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3DE2665B42100CE26CE /* kern_crypto.hpp */; };
+		41F2E4002665B42200CE26CE /* kern_mach.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3DF2665B42100CE26CE /* kern_mach.hpp */; };
+		41F2E4012665B42200CE26CE /* kern_version.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3E02665B42200CE26CE /* kern_version.hpp */; };
+		41F2E4022665B42200CE26CE /* kern_compression.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3E12665B42200CE26CE /* kern_compression.hpp */; };
+		41F2E4032665B42200CE26CE /* kern_file.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3E22665B42200CE26CE /* kern_file.hpp */; };
+		41F2E4042665B42200CE26CE /* kern_rtc.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3E32665B42200CE26CE /* kern_rtc.hpp */; };
+		41F2E4052665B42200CE26CE /* kern_disasm.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3E42665B42200CE26CE /* kern_disasm.hpp */; };
+		41F2E4062665B42200CE26CE /* capstone.h in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3E62665B42200CE26CE /* capstone.h */; };
+		41F2E4072665B42200CE26CE /* mips.h in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3E72665B42200CE26CE /* mips.h */; };
+		41F2E4082665B42200CE26CE /* sparc.h in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3E82665B42200CE26CE /* sparc.h */; };
+		41F2E4092665B42200CE26CE /* systemz.h in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3E92665B42200CE26CE /* systemz.h */; };
+		41F2E40A2665B42200CE26CE /* arm.h in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3EA2665B42200CE26CE /* arm.h */; };
+		41F2E40B2665B42200CE26CE /* x86.h in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3EB2665B42200CE26CE /* x86.h */; };
+		41F2E40C2665B42200CE26CE /* ppc.h in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3EC2665B42200CE26CE /* ppc.h */; };
+		41F2E40D2665B42200CE26CE /* arm64.h in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3ED2665B42200CE26CE /* arm64.h */; };
+		41F2E40E2665B42200CE26CE /* xcore.h in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3EE2665B42200CE26CE /* xcore.h */; };
+		41F2E40F2665B42200CE26CE /* platform.h in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3EF2665B42200CE26CE /* platform.h */; };
+		41F2E4102665B42200CE26CE /* kern_patcher.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3F02665B42200CE26CE /* kern_patcher.hpp */; };
+		41F2E4112665B42200CE26CE /* kern_compat.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3F12665B42200CE26CE /* kern_compat.hpp */; };
+		41F2E4122665B42200CE26CE /* kern_api.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3F22665B42200CE26CE /* kern_api.hpp */; };
+		41F2E4132665B42200CE26CE /* kern_util.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3F32665B42200CE26CE /* kern_util.hpp */; };
+		41F2E41D2665B42900CE26CE /* build.tool in Resources */ = {isa = PBXBuildFile; fileRef = 41F2E4182665B42900CE26CE /* build.tool */; };
+		41F2E4202665B42900CE26CE /* plugin_start.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E41B2665B42900CE26CE /* plugin_start.cpp */; };
+		41F2E4282665B4C100CE26CE /* kern_start.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E4272665B4C100CE26CE /* kern_start.cpp */; };
+		41F2E42D2665B64D00CE26CE /* HyperVPlatformProvider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E42B2665B64D00CE26CE /* HyperVPlatformProvider.cpp */; };
+		41F2E42E2665B64D00CE26CE /* HyperVPlatformProvider.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E42C2665B64D00CE26CE /* HyperVPlatformProvider.hpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -77,9 +111,46 @@
 		41BE4118263EDFAF0018C52B /* HyperVVMBusController.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVVMBusController.cpp; sourceTree = "<group>"; };
 		41BE4119263EDFAF0018C52B /* HyperVVMBusController.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVVMBusController.hpp; sourceTree = "<group>"; };
 		41E2EC77263F894300BBE18F /* SynIC.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SynIC.cpp; sourceTree = "<group>"; };
-		41F2E39B26656F8600CE26CE /* Headers */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Headers; path = Lilu.kext/Contents/Resources/Headers; sourceTree = "<group>"; };
-		41F2E39C26656F8600CE26CE /* Library */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Library; path = Lilu.kext/Contents/Resources/Library; sourceTree = "<group>"; };
-		41F2E3A12665800B00CE26CE /* PlatformSupport.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformSupport.cpp; sourceTree = "<group>"; };
+		41F2E3D32665B42100CE26CE /* kern_config.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_config.hpp; sourceTree = "<group>"; };
+		41F2E3D42665B42100CE26CE /* hde64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hde64.h; sourceTree = "<group>"; };
+		41F2E3D52665B42100CE26CE /* kern_time.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_time.hpp; sourceTree = "<group>"; };
+		41F2E3D62665B42100CE26CE /* kern_nvram.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_nvram.hpp; sourceTree = "<group>"; };
+		41F2E3D72665B42100CE26CE /* kern_cpu.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_cpu.hpp; sourceTree = "<group>"; };
+		41F2E3D82665B42100CE26CE /* kern_devinfo.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_devinfo.hpp; sourceTree = "<group>"; };
+		41F2E3D92665B42100CE26CE /* kern_efi.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_efi.hpp; sourceTree = "<group>"; };
+		41F2E3DA2665B42100CE26CE /* kern_policy.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_policy.hpp; sourceTree = "<group>"; };
+		41F2E3DB2665B42100CE26CE /* kern_user.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_user.hpp; sourceTree = "<group>"; };
+		41F2E3DC2665B42100CE26CE /* plugin_start.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = plugin_start.hpp; sourceTree = "<group>"; };
+		41F2E3DD2665B42100CE26CE /* kern_iokit.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_iokit.hpp; sourceTree = "<group>"; };
+		41F2E3DE2665B42100CE26CE /* kern_crypto.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_crypto.hpp; sourceTree = "<group>"; };
+		41F2E3DF2665B42100CE26CE /* kern_mach.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_mach.hpp; sourceTree = "<group>"; };
+		41F2E3E02665B42200CE26CE /* kern_version.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_version.hpp; sourceTree = "<group>"; };
+		41F2E3E12665B42200CE26CE /* kern_compression.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_compression.hpp; sourceTree = "<group>"; };
+		41F2E3E22665B42200CE26CE /* kern_file.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_file.hpp; sourceTree = "<group>"; };
+		41F2E3E32665B42200CE26CE /* kern_rtc.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_rtc.hpp; sourceTree = "<group>"; };
+		41F2E3E42665B42200CE26CE /* kern_disasm.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_disasm.hpp; sourceTree = "<group>"; };
+		41F2E3E62665B42200CE26CE /* capstone.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = capstone.h; sourceTree = "<group>"; };
+		41F2E3E72665B42200CE26CE /* mips.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mips.h; sourceTree = "<group>"; };
+		41F2E3E82665B42200CE26CE /* sparc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sparc.h; sourceTree = "<group>"; };
+		41F2E3E92665B42200CE26CE /* systemz.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = systemz.h; sourceTree = "<group>"; };
+		41F2E3EA2665B42200CE26CE /* arm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = arm.h; sourceTree = "<group>"; };
+		41F2E3EB2665B42200CE26CE /* x86.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = x86.h; sourceTree = "<group>"; };
+		41F2E3EC2665B42200CE26CE /* ppc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ppc.h; sourceTree = "<group>"; };
+		41F2E3ED2665B42200CE26CE /* arm64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = arm64.h; sourceTree = "<group>"; };
+		41F2E3EE2665B42200CE26CE /* xcore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xcore.h; sourceTree = "<group>"; };
+		41F2E3EF2665B42200CE26CE /* platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = platform.h; sourceTree = "<group>"; };
+		41F2E3F02665B42200CE26CE /* kern_patcher.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_patcher.hpp; sourceTree = "<group>"; };
+		41F2E3F12665B42200CE26CE /* kern_compat.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_compat.hpp; sourceTree = "<group>"; };
+		41F2E3F22665B42200CE26CE /* kern_api.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_api.hpp; sourceTree = "<group>"; };
+		41F2E3F32665B42200CE26CE /* kern_util.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_util.hpp; sourceTree = "<group>"; };
+		41F2E4172665B42900CE26CE /* entry64.S */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = entry64.S; sourceTree = "<group>"; };
+		41F2E4182665B42900CE26CE /* build.tool */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = build.tool; sourceTree = "<group>"; };
+		41F2E4192665B42900CE26CE /* entry32.S */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = entry32.S; sourceTree = "<group>"; };
+		41F2E41A2665B42900CE26CE /* wrappers.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; path = wrappers.inc; sourceTree = "<group>"; };
+		41F2E41B2665B42900CE26CE /* plugin_start.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = plugin_start.cpp; sourceTree = "<group>"; };
+		41F2E4272665B4C100CE26CE /* kern_start.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = kern_start.cpp; sourceTree = "<group>"; };
+		41F2E42B2665B64D00CE26CE /* HyperVPlatformProvider.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVPlatformProvider.cpp; sourceTree = "<group>"; };
+		41F2E42C2665B64D00CE26CE /* HyperVPlatformProvider.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVPlatformProvider.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -155,7 +226,7 @@
 		41BE40FA263EDE370018C52B = {
 			isa = PBXGroup;
 			children = (
-				41F2E39A26656F7100CE26CE /* SDK */,
+				41F2E3D12665B41200CE26CE /* LiluSDK */,
 				41BE4106263EDE380018C52B /* MacHyperVSupport */,
 				41BE4105263EDE380018C52B /* Products */,
 				41BE4112263EDEA10018C52B /* Frameworks */,
@@ -174,9 +245,11 @@
 			isa = PBXGroup;
 			children = (
 				41BE410B263EDE380018C52B /* Info.plist */,
+				41F2E4272665B4C100CE26CE /* kern_start.cpp */,
 				418F051F26483C3C00E1D14C /* IntegrationComponents */,
 				418219632648605D00619C15 /* Keyboard */,
 				418F84312648B06E003F8520 /* Mouse */,
+				41F2E42A2665B61800CE26CE /* PlatformProvider */,
 				418F843A2648B9AA003F8520 /* Storage */,
 				41BE411E263EEAFF0018C52B /* VMBusController */,
 				41225F5A2645F53000574E86 /* VMBusDevice */,
@@ -200,7 +273,6 @@
 				41BE4118263EDFAF0018C52B /* HyperVVMBusController.cpp */,
 				41BE4119263EDFAF0018C52B /* HyperVVMBusController.hpp */,
 				410784702645FF17005894D4 /* HyperVVMBusInternal.hpp */,
-				41F2E3A12665800B00CE26CE /* PlatformSupport.cpp */,
 				41E2EC77263F894300BBE18F /* SynIC.cpp */,
 				41225F3A2642086300574E86 /* SynICProcessor.cpp */,
 				41225F3B2642086300574E86 /* SynICProcessor.hpp */,
@@ -212,13 +284,91 @@
 			path = VMBusController;
 			sourceTree = "<group>";
 		};
-		41F2E39A26656F7100CE26CE /* SDK */ = {
+		41F2E3D12665B41200CE26CE /* LiluSDK */ = {
 			isa = PBXGroup;
 			children = (
-				41F2E39B26656F8600CE26CE /* Headers */,
-				41F2E39C26656F8600CE26CE /* Library */,
+				41F2E3D22665B42100CE26CE /* Headers */,
+				41F2E4152665B42900CE26CE /* Library */,
 			);
-			name = SDK;
+			name = LiluSDK;
+			sourceTree = "<group>";
+		};
+		41F2E3D22665B42100CE26CE /* Headers */ = {
+			isa = PBXGroup;
+			children = (
+				41F2E3D32665B42100CE26CE /* kern_config.hpp */,
+				41F2E3D42665B42100CE26CE /* hde64.h */,
+				41F2E3D52665B42100CE26CE /* kern_time.hpp */,
+				41F2E3D62665B42100CE26CE /* kern_nvram.hpp */,
+				41F2E3D72665B42100CE26CE /* kern_cpu.hpp */,
+				41F2E3D82665B42100CE26CE /* kern_devinfo.hpp */,
+				41F2E3D92665B42100CE26CE /* kern_efi.hpp */,
+				41F2E3DA2665B42100CE26CE /* kern_policy.hpp */,
+				41F2E3DB2665B42100CE26CE /* kern_user.hpp */,
+				41F2E3DC2665B42100CE26CE /* plugin_start.hpp */,
+				41F2E3DD2665B42100CE26CE /* kern_iokit.hpp */,
+				41F2E3DE2665B42100CE26CE /* kern_crypto.hpp */,
+				41F2E3DF2665B42100CE26CE /* kern_mach.hpp */,
+				41F2E3E02665B42200CE26CE /* kern_version.hpp */,
+				41F2E3E12665B42200CE26CE /* kern_compression.hpp */,
+				41F2E3E22665B42200CE26CE /* kern_file.hpp */,
+				41F2E3E32665B42200CE26CE /* kern_rtc.hpp */,
+				41F2E3E42665B42200CE26CE /* kern_disasm.hpp */,
+				41F2E3E52665B42200CE26CE /* capstone */,
+				41F2E3F02665B42200CE26CE /* kern_patcher.hpp */,
+				41F2E3F12665B42200CE26CE /* kern_compat.hpp */,
+				41F2E3F22665B42200CE26CE /* kern_api.hpp */,
+				41F2E3F32665B42200CE26CE /* kern_util.hpp */,
+			);
+			name = Headers;
+			path = Lilu.kext/Contents/Resources/Headers;
+			sourceTree = "<group>";
+		};
+		41F2E3E52665B42200CE26CE /* capstone */ = {
+			isa = PBXGroup;
+			children = (
+				41F2E3E62665B42200CE26CE /* capstone.h */,
+				41F2E3E72665B42200CE26CE /* mips.h */,
+				41F2E3E82665B42200CE26CE /* sparc.h */,
+				41F2E3E92665B42200CE26CE /* systemz.h */,
+				41F2E3EA2665B42200CE26CE /* arm.h */,
+				41F2E3EB2665B42200CE26CE /* x86.h */,
+				41F2E3EC2665B42200CE26CE /* ppc.h */,
+				41F2E3ED2665B42200CE26CE /* arm64.h */,
+				41F2E3EE2665B42200CE26CE /* xcore.h */,
+				41F2E3EF2665B42200CE26CE /* platform.h */,
+			);
+			path = capstone;
+			sourceTree = "<group>";
+		};
+		41F2E4152665B42900CE26CE /* Library */ = {
+			isa = PBXGroup;
+			children = (
+				41F2E4162665B42900CE26CE /* wrappers */,
+				41F2E41B2665B42900CE26CE /* plugin_start.cpp */,
+			);
+			name = Library;
+			path = Lilu.kext/Contents/Resources/Library;
+			sourceTree = "<group>";
+		};
+		41F2E4162665B42900CE26CE /* wrappers */ = {
+			isa = PBXGroup;
+			children = (
+				41F2E4172665B42900CE26CE /* entry64.S */,
+				41F2E4182665B42900CE26CE /* build.tool */,
+				41F2E4192665B42900CE26CE /* entry32.S */,
+				41F2E41A2665B42900CE26CE /* wrappers.inc */,
+			);
+			path = wrappers;
+			sourceTree = "<group>";
+		};
+		41F2E42A2665B61800CE26CE /* PlatformProvider */ = {
+			isa = PBXGroup;
+			children = (
+				41F2E42B2665B64D00CE26CE /* HyperVPlatformProvider.cpp */,
+				41F2E42C2665B64D00CE26CE /* HyperVPlatformProvider.hpp */,
+			);
+			path = PlatformProvider;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -228,15 +378,49 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				41F2E4112665B42200CE26CE /* kern_compat.hpp in Headers */,
+				41F2E40A2665B42200CE26CE /* arm.h in Headers */,
+				41F2E42E2665B64D00CE26CE /* HyperVPlatformProvider.hpp in Headers */,
+				41F2E3F92665B42200CE26CE /* kern_devinfo.hpp in Headers */,
+				41F2E3F52665B42200CE26CE /* hde64.h in Headers */,
+				41F2E40D2665B42200CE26CE /* arm64.h in Headers */,
+				41F2E4082665B42200CE26CE /* sparc.h in Headers */,
+				41F2E40F2665B42200CE26CE /* platform.h in Headers */,
 				418F052326483C8300E1D14C /* HyperVICService.hpp in Headers */,
+				41F2E40C2665B42200CE26CE /* ppc.h in Headers */,
+				41F2E4012665B42200CE26CE /* kern_version.hpp in Headers */,
+				41F2E4132665B42200CE26CE /* kern_util.hpp in Headers */,
+				41F2E3FF2665B42200CE26CE /* kern_crypto.hpp in Headers */,
+				41F2E3F62665B42200CE26CE /* kern_time.hpp in Headers */,
+				41F2E3FB2665B42200CE26CE /* kern_policy.hpp in Headers */,
 				41BE411B263EDFAF0018C52B /* HyperVVMBusController.hpp in Headers */,
+				41F2E3FE2665B42200CE26CE /* kern_iokit.hpp in Headers */,
+				41F2E4102665B42200CE26CE /* kern_patcher.hpp in Headers */,
+				41F2E40B2665B42200CE26CE /* x86.h in Headers */,
+				41F2E3FD2665B42200CE26CE /* plugin_start.hpp in Headers */,
+				41F2E4062665B42200CE26CE /* capstone.h in Headers */,
+				41F2E3F42665B42200CE26CE /* kern_config.hpp in Headers */,
+				41F2E3F72665B42200CE26CE /* kern_nvram.hpp in Headers */,
 				418219672648607600619C15 /* HyperVKeyboard.hpp in Headers */,
 				41225F522644C34300574E86 /* HyperVVMBusDevice.hpp in Headers */,
+				41F2E40E2665B42200CE26CE /* xcore.h in Headers */,
+				41F2E4072665B42200CE26CE /* mips.h in Headers */,
 				418F84352648B07F003F8520 /* HyperVMouse.hpp in Headers */,
 				41225F3D2642086300574E86 /* SynICProcessor.hpp in Headers */,
+				41F2E4032665B42200CE26CE /* kern_file.hpp in Headers */,
 				418F052D2648451200E1D14C /* HyperVShutdown.hpp in Headers */,
+				41F2E3FC2665B42200CE26CE /* kern_user.hpp in Headers */,
 				41225F582644D98500574E86 /* HyperVHeartbeat.hpp in Headers */,
+				416FA016265C9F1A00ACC91C /* UEFIGraphicsFB.h in Headers */,
+				41F2E4052665B42200CE26CE /* kern_disasm.hpp in Headers */,
+				41F2E4022665B42200CE26CE /* kern_compression.hpp in Headers */,
+				41F2E3FA2665B42200CE26CE /* kern_efi.hpp in Headers */,
+				41F2E4122665B42200CE26CE /* kern_api.hpp in Headers */,
+				41F2E3F82665B42200CE26CE /* kern_cpu.hpp in Headers */,
 				418F843E2648BA38003F8520 /* HyperVStorage.hpp in Headers */,
+				41F2E4042665B42200CE26CE /* kern_rtc.hpp in Headers */,
+				41F2E4092665B42200CE26CE /* systemz.h in Headers */,
+				41F2E4002665B42200CE26CE /* kern_mach.hpp in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -298,8 +482,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				41F2E39E26656F8700CE26CE /* Library in Resources */,
-				41F2E39D26656F8700CE26CE /* Headers in Resources */,
+				41F2E41D2665B42900CE26CE /* build.tool in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -331,11 +514,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				41F2E4202665B42900CE26CE /* plugin_start.cpp in Sources */,
+				41F2E4282665B4C100CE26CE /* kern_start.cpp in Sources */,
 				418F84342648B07F003F8520 /* HyperVMouse.cpp in Sources */,
 				419B88C5263F1F85005A9977 /* VMBus.cpp in Sources */,
 				418F052C2648451200E1D14C /* HyperVShutdown.cpp in Sources */,
 				418219662648607600619C15 /* HyperVKeyboard.cpp in Sources */,
-				41F2E3A22665800B00CE26CE /* PlatformSupport.cpp in Sources */,
 				41225F512644C34300574E86 /* HyperVVMBusDevice.cpp in Sources */,
 				41225F3C2642086300574E86 /* SynICProcessor.cpp in Sources */,
 				419B88C2263F0169005A9977 /* Hypercalls.cpp in Sources */,
@@ -346,6 +530,7 @@
 				41E2EC78263F894300BBE18F /* SynIC.cpp in Sources */,
 				416E429D265751CC006DED6D /* HyperVVMBusDevicePrivate.cpp in Sources */,
 				418F843D2648BA38003F8520 /* HyperVStorage.cpp in Sources */,
+				41F2E42D2665B64D00CE26CE /* HyperVPlatformProvider.cpp in Sources */,
 				41225F572644D98500574E86 /* HyperVHeartbeat.cpp in Sources */,
 				41078473264603F1005894D4 /* VMBusChannel.cpp in Sources */,
 			);
@@ -483,6 +668,11 @@
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = "$(MODULE_VERSION)";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"MODULE_VERSION=$(MODULE_VERSION)",
+					"PRODUCT_NAME=$(PRODUCT_NAME)",
+				);
 				INFOPLIST_FILE = MacHyperVSupport/Info.plist;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -490,6 +680,8 @@
 				);
 				MARKETING_VERSION = "$(MODULE_VERSION)";
 				MODULE_NAME = fish.goldfish64.MacHyperVSupport;
+				MODULE_START = "$(PRODUCT_NAME)_kern_start";
+				MODULE_STOP = "$(PRODUCT_NAME)_kern_stop";
 				MODULE_VERSION = 0.5;
 				PRODUCT_BUNDLE_IDENTIFIER = fish.goldfish64.MacHyperVSupport;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -508,6 +700,11 @@
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = "$(MODULE_VERSION)";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"MODULE_VERSION=$(MODULE_VERSION)",
+					"PRODUCT_NAME=$(PRODUCT_NAME)",
+				);
 				INFOPLIST_FILE = MacHyperVSupport/Info.plist;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -515,6 +712,8 @@
 				);
 				MARKETING_VERSION = "$(MODULE_VERSION)";
 				MODULE_NAME = fish.goldfish64.MacHyperVSupport;
+				MODULE_START = "$(PRODUCT_NAME)_kern_start";
+				MODULE_STOP = "$(PRODUCT_NAME)_kern_stop";
 				MODULE_VERSION = 0.5;
 				PRODUCT_BUNDLE_IDENTIFIER = fish.goldfish64.MacHyperVSupport;
 				PRODUCT_NAME = "$(TARGET_NAME)";

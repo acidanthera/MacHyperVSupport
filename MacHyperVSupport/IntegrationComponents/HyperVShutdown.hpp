@@ -14,8 +14,6 @@ class HyperVShutdown : public HyperVICService {
   OSDeclareDefaultStructors(HyperVShutdown);
   
 private:
-  HyperVVMBusController *vmbusControllerProvider;
-
   bool handleShutdown(VMBusICMessageShutdownData *shutdownData);
   
 protected:

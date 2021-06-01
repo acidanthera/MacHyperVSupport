@@ -12,22 +12,11 @@
 #include <IOKit/IOMapper.h>
 
 //
-// Major kernel version.
-//
-extern const int version_major;
-
-//
-// Minor kernel version.
-//
-extern const int version_minor;
-
-//
 // Hyper-V reported signature.
 //
-#define kHyperVGuestMinor         (((UInt64) version_minor) << kHyperVMsrGuestIDMinorVersionShift)
-#define kHyperVGuestMajor         (((UInt64) version_major) << kHyperVMsrGuestIDMajorVersionShift)
+#define kHyperVGuestMinor         (((UInt64) getKernelMinorVersion()) << kHyperVMsrGuestIDMinorVersionShift)
+#define kHyperVGuestMajor         (((UInt64) getKernelVersion()) << kHyperVMsrGuestIDMajorVersionShift)
 #define kHyperVGuestSignature     (kHyperVGuestMinor | kHyperVGuestMajor)
-
 
 OSDefineMetaClassAndStructors(HyperVVMBusController, super);
 
@@ -80,7 +69,7 @@ bool HyperVVMBusController::identifyHyperV() {
   // before pulling the Hyper-V identity, but the FreeBSD drivers do this after.
   //
   wrmsr64(kHyperVMsrGuestID, kHyperVGuestSignature);
-  DBGLOG("Reporting XNU %d.%d guest signature of 0x%llX to Hyper-V", version_major, version_minor, kHyperVGuestSignature);
+  DBGLOG("Reporting XNU %d.%d guest signature of 0x%llX to Hyper-V", getKernelVersion(), getKernelMinorVersion(), kHyperVGuestSignature);
   
   //
   // Get Hyper-V version.
@@ -196,13 +185,6 @@ bool HyperVVMBusController::start(IOService *provider) {
   //
   getPlatform()->removeProperty(kIOPlatformMapperPresentKey);
   IOMapperDisabler::disableMapper();
-  
-  //
-  // Lilu is used for certain functions of child devices, register patcher callback.
-  //
-  lilu.onPatcherLoad([](void *user, KernelPatcher &patcher) {
-    static_cast<HyperVVMBusController *>(user)->onLiluPatcherLoad(patcher);
-  }, this);
   
   //
   // Setup hypercalls.

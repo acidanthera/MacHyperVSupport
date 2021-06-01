@@ -6,6 +6,7 @@
 //
 
 #include "HyperVShutdown.hpp"
+#include "HyperVPlatformProvider.hpp"
 
 #define super HyperVICService
 
@@ -16,12 +17,6 @@ OSDefineMetaClassAndStructors(HyperVShutdown, super);
 
 bool HyperVShutdown::start(IOService *provider) {
   if (!super::start(provider)) {
-    return false;
-  }
-  
-  vmbusControllerProvider = OSDynamicCast(HyperVVMBusController, hvDevice->getProvider());
-  if (vmbusControllerProvider == NULL) {
-    super::stop(provider);
     return false;
   }
   
@@ -73,7 +68,7 @@ void HyperVShutdown::processMessage() {
 
   if (doShutdown) {
     SYSLOG("Shutting down system");
-    vmbusControllerProvider->shutdownSystem();
+    HyperVPlatformProvider::getInstance()->shutdownSystem();
   }
 }
 
@@ -83,7 +78,12 @@ bool HyperVShutdown::handleShutdown(VMBusICMessageShutdownData *shutdownData) {
   //
   // Report back to Hyper-V if we can shutdown system.
   //
-  bool result = vmbusControllerProvider->canShutdownSystem();
+  bool result = false;
+  HyperVPlatformProvider *provider = HyperVPlatformProvider::getInstance();
+  if (provider != NULL) {
+    result = provider->canShutdownSystem();
+  }
+  
   shutdownData->header.status = result ? kHyperVStatusSuccess : kHyperVStatusFail;
   return result;
 }
