@@ -11,6 +11,33 @@
 #include <IOKit/IOPlatformExpert.h>
 
 //
+// PM versions.
+//
+// Versions 10.7.0 and above are all the same 102.
+//
+#define kPMDispatchVersion10_6_0    17
+#define kPMDispatchVersion10_6_1    17
+#define kPMDispatchVersion10_6_2    18
+#define kPMDispatchVersion10_6_3    19
+#define kPMDispatchVersion10_6_4    20
+#define kPMDispatchVersion10_6_5    21
+#define kPMDispatchVersion10_6_6    21
+#define kPMDispatchVersion10_6_7    21
+#define kPMDispatchVersion10_6_8    23
+
+static UInt32 pmVersionsSnowLeopard[] = {
+  kPMDispatchVersion10_6_0,
+  kPMDispatchVersion10_6_1,
+  kPMDispatchVersion10_6_2,
+  kPMDispatchVersion10_6_3,
+  kPMDispatchVersion10_6_4,
+  kPMDispatchVersion10_6_5,
+  kPMDispatchVersion10_6_6,
+  kPMDispatchVersion10_6_7,
+  kPMDispatchVersion10_6_8
+};
+
+//
 // External functions from mp.c
 //
 extern unsigned int  real_ncpus;    /* real number of cpus */
@@ -146,7 +173,14 @@ bool HyperVVMBusController::initSynIC() {
   //
   // Get PM callbacks.
   //
-  pmKextRegister(PM_DISPATCH_VERSION, NULL, &pmCallbacks);
+  UInt32 pmVersion = PM_DISPATCH_VERSION;
+  if (getKernelVersion() == KernelVersion::SnowLeopard) {
+    if (getKernelMinorVersion() < arrsize(pmVersionsSnowLeopard)) {
+      pmVersion = pmVersionsSnowLeopard[getKernelMinorVersion()];
+    }
+  }
+  
+  pmKextRegister(pmVersion, NULL, &pmCallbacks);
   if (pmCallbacks.LCPUtoProcessor == NULL || pmCallbacks.ThreadBind == NULL ) {
     SYSLOG("PM callbacks are invalid");
     return false;
