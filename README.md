@@ -1,7 +1,7 @@
 MacHyperVSupport
 ================
 
-[![Build Status](https://github.com/acidanthera/MacHyperVSupport/workflows/CI/badge.svg?branch=master)](https://github.com/acidanthera/MacHyperVSupport/actions)
+[![Build Status](https://github.com/acidanthera/MacHyperVSupport/workflows/CI/badge.svg?branch=master)](https://github.com/acidanthera/MacHyperVSupport/actions) [![Scan Status](https://scan.coverity.com/projects/23212/badge.svg?flat=1)](https://scan.coverity.com/projects/23212)
 
 Hyper-V integration services for macOS. Requires a Generation 2 virtual machine on Windows 8.1 or higher.
 
