@@ -28,7 +28,7 @@ Hyper-V integration services for macOS. Requires a Generation 2 virtual machine 
   - `ProvideCurrentCpuInfo` - required for proper TSC/FSB values and CPU topology values.
 - [Lilu](https://github.com/acidanthera/Lilu) is required for patching and library functions
 - Installer images can either be passed in from USB hard disks, or converted from a DMG to a VHDX image using `qemu-img`:
-  - `qemu-img convert -f raw -O vhdx Installer.dmg Installer.vhdx`
+  - `qemu-img convert -f dmg -O vhdx Installer.dmg Installer.vhdx`
 
 #### Credits
 - [Apple](https://www.apple.com) for macOS
