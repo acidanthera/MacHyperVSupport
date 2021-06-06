@@ -64,8 +64,8 @@
 		</dict>
 		<key>HyperVMouse</key>
 		<dict>
-      		<key>AbsoluteAxisBoundsRemovalPercentage</key>
-            <integer>0</integer>
+	  		<key>AbsoluteAxisBoundsRemovalPercentage</key>
+			<integer>0</integer>
 			<key>CFBundleIdentifier</key>
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>IOClass</key>
@@ -92,7 +92,7 @@
 			<integer>1569</integer>
 			<key>VendorID</key>
 			<integer>1118</integer>
-        </dict>
+		</dict>
 		<key>HyperVPCIProviderGen2</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
