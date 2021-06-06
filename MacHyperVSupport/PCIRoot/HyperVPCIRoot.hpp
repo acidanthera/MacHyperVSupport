@@ -11,11 +11,6 @@
 #include "HyperV.hpp"
 #include <IOKit/pci/IOPCIBridge.h>
 
-#define super IOPCIBridge
-
-#define SYSLOG(str, ...) SYSLOG_PRINT("HyperVPCIRoot", str, ## __VA_ARGS__)
-#define DBGLOG(str, ...) DBGLOG_PRINT("HyperVPCIRoot", str, ## __VA_ARGS__)
-
 class HyperVPCIRoot : public IOPCIBridge {
   OSDeclareDefaultStructors(HyperVPCIRoot);
   
@@ -24,7 +19,11 @@ private:
   
   inline bool setConfigSpace(IOPCIAddressSpace space, UInt8 offset);
   
+  IOPCIBridge *pciBridges[256];
+  
 public:
+  static bool registerChildPCIBridge(IOPCIBridge *pciBridge);
+  
   //
   // IOService overrides.
   //

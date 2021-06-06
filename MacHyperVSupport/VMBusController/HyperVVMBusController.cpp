@@ -180,6 +180,13 @@ bool HyperVVMBusController::start(IOService *provider) {
   }
   
   //
+  // Disable I/O mapper.
+  // With no PCI bus, the system will stall at waitForSystemMapper().
+  //
+  getPlatform()->removeProperty(kIOPlatformMapperPresentKey);
+  IOMapperDisabler::disableMapper();
+  
+  //
   // Wait for HyperVPCIRoot to get registered.
   //
   // On certain macOS versions, there must be an IOPCIBridge class with an
@@ -204,12 +211,7 @@ bool HyperVVMBusController::start(IOService *provider) {
   pciService->release();
   DBGLOG("HyperVPCIRoot is now loaded");
   
-  //
-  // Disable I/O mapper.
-  // With no PCI bus, the system will stall at waitForSystemMapper().
-  //
-  getPlatform()->removeProperty(kIOPlatformMapperPresentKey);
-  IOMapperDisabler::disableMapper();
+
   
   //
   // Setup hypercalls.

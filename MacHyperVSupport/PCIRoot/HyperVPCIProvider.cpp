@@ -6,8 +6,21 @@
 //
 
 #include "HyperVPCIProvider.hpp"
+#include <IOKit/IODeviceTreeSupport.h>
 
 OSDefineMetaClassAndStructors(HyperVPCIProvider, super);
+
+IOService* HyperVPCIProvider::probe(IOService *provider, SInt32 *score) {
+  IORegistryEntry *pciEntry = IORegistryEntry::fromPath("/PCI0@0", gIODTPlane);
+  if (pciEntry != NULL) {
+    DBGLOG("Existing PCI bus found (Gen1 VM), will not start");
+    
+    pciEntry->release();
+    return NULL;
+  }
+  
+  return this;
+}
 
 bool HyperVPCIProvider::start(IOService *provider) {
   //

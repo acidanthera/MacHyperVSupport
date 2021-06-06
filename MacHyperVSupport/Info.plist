@@ -20,6 +20,20 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>IOKitPersonalities</key>
 	<dict>
+		<key>HyperVGraphics</key>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>IOClass</key>
+			<string>HyperVGraphics</string>
+			<key>IOPropertyMatch</key>
+			<dict>
+				<key>HVType</key>
+				<string>da0a7802-e377-4aac-8e77-0558eb1073f8</string>
+			</dict>
+			<key>IOProviderClass</key>
+			<string>HyperVVMBusDevice</string>
+		</dict>
 		<key>HyperVHeartbeat</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
@@ -62,7 +76,16 @@
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
 		</dict>
-		<key>HyperVPCIRoot</key>
+		<key>HyperVPCIProviderGen2</key>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>IOClass</key>
+			<string>HyperVPCIProvider</string>
+			<key>IOProviderClass</key>
+			<string>AppleACPIPlatformExpert</string>
+		</dict>
+		<key>HyperVPCIRootGen1</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
@@ -74,6 +97,15 @@
 			<integer>10000</integer>
 			<key>IOProviderClass</key>
 			<string>IOACPIPlatformDevice</string>
+		</dict>
+		<key>HyperVPCIRootGen2</key>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>IOClass</key>
+			<string>HyperVPCIRoot</string>
+			<key>IOProviderClass</key>
+			<string>HyperVPCIProvider</string>
 		</dict>
 		<key>HyperVShutdown</key>
 		<dict>

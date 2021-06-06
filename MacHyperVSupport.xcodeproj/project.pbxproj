@@ -76,8 +76,6 @@
 		41F2E44C2666F37B00CE26CE /* HyperVPCIProvider.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E44A2666F37B00CE26CE /* HyperVPCIProvider.hpp */; };
 		41F2E45C26683B2C00CE26CE /* HyperVPCIRoot.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E45A26683B2B00CE26CE /* HyperVPCIRoot.cpp */; };
 		41F2E45D26683B2C00CE26CE /* HyperVPCIRoot.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E45B26683B2C00CE26CE /* HyperVPCIRoot.hpp */; };
-		41F2E46226683B9900CE26CE /* HyperVPCIRootShim.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E46026683B9900CE26CE /* HyperVPCIRootShim.cpp */; };
-		41F2E46326683B9900CE26CE /* HyperVPCIRootShim.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E46126683B9900CE26CE /* HyperVPCIRootShim.hpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -165,8 +163,6 @@
 		41F2E44A2666F37B00CE26CE /* HyperVPCIProvider.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVPCIProvider.hpp; sourceTree = "<group>"; };
 		41F2E45A26683B2B00CE26CE /* HyperVPCIRoot.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVPCIRoot.cpp; sourceTree = "<group>"; };
 		41F2E45B26683B2C00CE26CE /* HyperVPCIRoot.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVPCIRoot.hpp; sourceTree = "<group>"; };
-		41F2E46026683B9900CE26CE /* HyperVPCIRootShim.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVPCIRootShim.cpp; sourceTree = "<group>"; };
-		41F2E46126683B9900CE26CE /* HyperVPCIRootShim.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVPCIRootShim.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -405,8 +401,6 @@
 				41F2E44A2666F37B00CE26CE /* HyperVPCIProvider.hpp */,
 				41F2E45A26683B2B00CE26CE /* HyperVPCIRoot.cpp */,
 				41F2E45B26683B2C00CE26CE /* HyperVPCIRoot.hpp */,
-				41F2E46026683B9900CE26CE /* HyperVPCIRootShim.cpp */,
-				41F2E46126683B9900CE26CE /* HyperVPCIRootShim.hpp */,
 			);
 			path = PCIRoot;
 			sourceTree = "<group>";
@@ -443,7 +437,6 @@
 				41F2E4062665B42200CE26CE /* capstone.h in Headers */,
 				41F2E3F42665B42200CE26CE /* kern_config.hpp in Headers */,
 				41F2E3F72665B42200CE26CE /* kern_nvram.hpp in Headers */,
-				41F2E46326683B9900CE26CE /* HyperVPCIRootShim.hpp in Headers */,
 				418219672648607600619C15 /* HyperVKeyboard.hpp in Headers */,
 				41225F522644C34300574E86 /* HyperVVMBusDevice.hpp in Headers */,
 				41F2E40E2665B42200CE26CE /* xcore.h in Headers */,
@@ -572,7 +565,6 @@
 				41BE411A263EDFAF0018C52B /* HyperVVMBusController.cpp in Sources */,
 				416E4180264A0D5D006DED6D /* HyperVStoragePrivate.cpp in Sources */,
 				41F2E43C2666E6A100CE26CE /* HyperVGraphics.cpp in Sources */,
-				41F2E46226683B9900CE26CE /* HyperVPCIRootShim.cpp in Sources */,
 				41E2EC78263F894300BBE18F /* SynIC.cpp in Sources */,
 				416E429D265751CC006DED6D /* HyperVVMBusDevicePrivate.cpp in Sources */,
 				41F2E44B2666F37B00CE26CE /* HyperVPCIProvider.cpp in Sources */,

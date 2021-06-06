@@ -22,6 +22,12 @@ class HyperVGraphics : public IOPCIBridge {
   OSDeclareDefaultStructors(HyperVGraphics);
   
 private:
+  IOSimpleLock *pciLock;
+  UInt8 fakePCIDeviceSpace[256];
+  
+  void fillFakePCIDeviceSpace();
+  
+  PE_Video consoleInfo;
   
 public:
   //
@@ -32,15 +38,14 @@ public:
   //
   // IOPCIBridge overrides.
   //
-  IODeviceMemory *ioDeviceMemory() APPLE_KEXT_OVERRIDE { DBGLOG("start");return NULL; }
-  UInt32 configRead32(IOPCIAddressSpace space, UInt8 offset) APPLE_KEXT_OVERRIDE {
-    DBGLOG("configRead32 bus %u func %u offset %u", space.es.busNum, space.es.functionNum, offset);
-    return 0xFFFFFFFF; }
-  void configWrite32(IOPCIAddressSpace space, UInt8 offset, UInt32 data) APPLE_KEXT_OVERRIDE { }
-  UInt16 configRead16(IOPCIAddressSpace space, UInt8 offset) APPLE_KEXT_OVERRIDE {  DBGLOG("configRead16 bus %u func %u offset %u", space.es.busNum, space.es.functionNum, offset);return 0xFFFF; }
-  void configWrite16(IOPCIAddressSpace space, UInt8 offset, UInt16 data) APPLE_KEXT_OVERRIDE { }
-  UInt8 configRead8(IOPCIAddressSpace space, UInt8 offset) APPLE_KEXT_OVERRIDE { DBGLOG("configRead8 bus %u func %u offset %u", space.es.busNum, space.es.functionNum, offset); return 0xFF; }
-  void configWrite8(IOPCIAddressSpace space, UInt8 offset, UInt8 data) APPLE_KEXT_OVERRIDE { }
+  virtual bool configure(IOService *provider) APPLE_KEXT_OVERRIDE;
+  IODeviceMemory *ioDeviceMemory() APPLE_KEXT_OVERRIDE { DBGLOG("start"); return NULL; }
+  UInt32 configRead32(IOPCIAddressSpace space, UInt8 offset) APPLE_KEXT_OVERRIDE;
+  void configWrite32(IOPCIAddressSpace space, UInt8 offset, UInt32 data) APPLE_KEXT_OVERRIDE;
+  UInt16 configRead16(IOPCIAddressSpace space, UInt8 offset) APPLE_KEXT_OVERRIDE;
+  void configWrite16(IOPCIAddressSpace space, UInt8 offset, UInt16 data) APPLE_KEXT_OVERRIDE;
+  UInt8 configRead8(IOPCIAddressSpace space, UInt8 offset) APPLE_KEXT_OVERRIDE;
+  void configWrite8(IOPCIAddressSpace space, UInt8 offset, UInt8 data) APPLE_KEXT_OVERRIDE;
 
   IOPCIAddressSpace getBridgeSpace() APPLE_KEXT_OVERRIDE {
     DBGLOG("start");

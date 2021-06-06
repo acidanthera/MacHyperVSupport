@@ -23,6 +23,7 @@ public:
   //
   // IOService overrides.
   //
+  virtual IOService *probe(IOService *provider, SInt32 *score) APPLE_KEXT_OVERRIDE;
   virtual bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
 };
 

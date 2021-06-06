@@ -9,6 +9,11 @@
 #include <architecture/i386/pio.h>
 #include <IOKit/acpi/IOACPIPlatformDevice.h>
 
+#define super IOPCIBridge
+
+#define SYSLOG(str, ...) SYSLOG_PRINT("HyperVPCIRoot", str, ## __VA_ARGS__)
+#define DBGLOG(str, ...) DBGLOG_PRINT("HyperVPCIRoot", str, ## __VA_ARGS__)
+
 OSDefineMetaClassAndStructors(HyperVPCIRoot, super);
 
 typedef struct __attribute__((packed)) {
@@ -33,15 +38,51 @@ inline bool HyperVPCIRoot::setConfigSpace(IOPCIAddressSpace space, UInt8 offset)
   return true;
 }
 
+bool HyperVPCIRoot::registerChildPCIBridge(IOPCIBridge *pciBridge) {
+  //
+  // Locate root PCI bus instance.
+  //
+  OSDictionary *pciMatching = IOService::serviceMatching("HyperVPCIRoot");
+  if (pciMatching == NULL) {
+    SYSLOG("Failed to create HyperVPCIRoot matching dictionary");
+    return NULL;
+  }
+  
+  OSIterator *pciIterator = IOService::getMatchingServices(pciMatching);
+  if (pciIterator == NULL) {
+    SYSLOG("Failed to create HyperVPCIRoot matching iterator");
+    return NULL;
+  }
+  
+  pciIterator->reset();
+  HyperVPCIRoot *pciInstance = OSDynamicCast(HyperVPCIRoot, pciIterator->getNextObject());
+  pciIterator->release();
+  
+  UInt8 busNum = pciBridge->firstBusNum();
+  if (busNum != pciBridge->lastBusNum()) {
+    return false;
+  }
+  
+  if (pciInstance->pciBridges[busNum] != NULL) {
+    return false;
+  }
+  
+  DBGLOG("Bus %u registered", busNum);
+  pciInstance->pciBridges[busNum] = pciBridge;
+  return true;
+}
+
 bool HyperVPCIRoot::start(IOService *provider) {
   pciLock = IOSimpleLockAlloc();
+  
+  memset(pciBridges, 0, sizeof (pciBridges));
+  
+  pciBridges[0] = NULL;
   
   if (!super::start(provider)) {
     SYSLOG("Dummy PCI bridge failed to initialize");
     return false;
   }
-  
-  
   
   DBGLOG("Dummy PCI bridge initialized");
   return true;
@@ -49,50 +90,45 @@ bool HyperVPCIRoot::start(IOService *provider) {
 
 bool HyperVPCIRoot::configure(IOService *provider) {
   //
-  // Add memory ranges.
+  // Add memory ranges from ACPI.
   //
-  //UInt32 i = provider->getDeviceMemoryCount();
-  //DBGLOG("%u memory count", i);
-  for (int i = 0; i < provider->getDeviceMemoryCount(); i++) {
-    IODeviceMemory *devMem = provider->getDeviceMemoryWithIndex(i);
-    DBGLOG("devmem %u: 0x%X size %X", i, devMem->getPhysicalAddress(), devMem->getLength());
-  }
-  
   OSData *acpiAddressSpaces = OSDynamicCast(OSData, provider->getProperty("acpi-address-spaces"));
-  
-  AppleACPIRange *acpiRanges = (AppleACPIRange*) acpiAddressSpaces->getBytesNoCopy();
-  UInt32 acpiRangeCount = acpiAddressSpaces->getLength() / sizeof (AppleACPIRange);
-  
-  /*UInt8 *dat = (UInt8*) acpiAddressSpaces->getBytesNoCopy();
-  for (int i = 0; i < acpiAddressSpaces->getLength(); i++) {
-    IOLog(" %X", dat[i]);
-  }*/
-  
-  for (int i = 0; i < acpiRangeCount; i++) {
-    DBGLOG("type %u, min %llX, max %llX, len %llX", acpiRanges[i].type, acpiRanges[i].min, acpiRanges[i].max, acpiRanges[i].length);
-    if (acpiRanges[i].type == 1) {
-      addBridgeIORange(acpiRanges[i].min, acpiRanges[i].length);
-    } else if (acpiRanges[i].type == 0) {
-      addBridgeMemoryRange(acpiRanges[i].min, acpiRanges[i].length, true);
+  if (acpiAddressSpaces != NULL) {
+    AppleACPIRange *acpiRanges = (AppleACPIRange*) acpiAddressSpaces->getBytesNoCopy();
+    UInt32 acpiRangeCount = acpiAddressSpaces->getLength() / sizeof (AppleACPIRange);
+    
+    for (int i = 0; i < acpiRangeCount; i++) {
+      DBGLOG("type %u, min %llX, max %llX, len %llX", acpiRanges[i].type, acpiRanges[i].min, acpiRanges[i].max, acpiRanges[i].length);
+      if (acpiRanges[i].type == 1) {
+        addBridgeIORange(acpiRanges[i].min, acpiRanges[i].length);
+      } else if (acpiRanges[i].type == 0) {
+        addBridgeMemoryRange(acpiRanges[i].min, acpiRanges[i].length, true);
+      }
     }
   }
-  
-  //IOACPIPlatformDevice *dev = OSDynamicCast(IOACPIPlatformDevice, provider);
- // dev->ioWrite8(<#UInt16 offset#>, <#UInt8 value#>)
-
   
   return super::configure(provider);
 }
 
 UInt32 HyperVPCIRoot::configRead32(IOPCIAddressSpace space, UInt8 offset) {
-  DBGLOG("Bus: %u, device: %u, function: %u", space.es.busNum, space.es.deviceNum, space.es.functionNum);
+  DBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
   UInt32 data;
   IOInterruptState ints;
   
+  if (pciBridges[space.es.busNum] != NULL) {
+    return pciBridges[space.es.busNum]->configRead32(space, offset);
+  }
+  
+
+  
   ints = IOSimpleLockLockDisableInterrupt(pciLock);
   if (setConfigSpace(space, offset)) {
     data = inl(0xCFC);
+  }
+  
+  if (offset == kIOPCIConfigurationOffsetBaseAddress0) {
+    DBGLOG("gonna read BAR0 %X", data);
   }
   
   IOSimpleLockUnlockEnableInterrupt(pciLock, ints);
@@ -100,23 +136,35 @@ UInt32 HyperVPCIRoot::configRead32(IOPCIAddressSpace space, UInt8 offset) {
 }
 
 void HyperVPCIRoot::configWrite32(IOPCIAddressSpace space, UInt8 offset, UInt32 data) {
-  DBGLOG("Bus: %u, device: %u, function: %u", space.es.busNum, space.es.deviceNum, space.es.functionNum);
+  DBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
   IOInterruptState ints;
+  
+  if (pciBridges[space.es.busNum] != NULL) {
+    pciBridges[space.es.busNum]->configWrite32(space, offset, data);
+  }
   
   ints = IOSimpleLockLockDisableInterrupt(pciLock);
   if (setConfigSpace(space, offset)) {
     outl(0xCFC, data);
   }
   
+  if (offset == kIOPCIConfigurationOffsetBaseAddress0) {
+    DBGLOG("wrote BAR0 %X", data);
+  }
+  
   IOSimpleLockUnlockEnableInterrupt(pciLock, ints);
 }
 
 UInt16 HyperVPCIRoot::configRead16(IOPCIAddressSpace space, UInt8 offset) {
-  DBGLOG("Bus: %u, device: %u, function: %u", space.es.busNum, space.es.deviceNum, space.es.functionNum);
+  DBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
   UInt16 data;
   IOInterruptState ints;
+  
+  if (pciBridges[space.es.busNum] != NULL) {
+    return pciBridges[space.es.busNum]->configRead16(space, offset);
+  }
   
   ints = IOSimpleLockLockDisableInterrupt(pciLock);
   if (setConfigSpace(space, offset)) {
@@ -128,9 +176,13 @@ UInt16 HyperVPCIRoot::configRead16(IOPCIAddressSpace space, UInt8 offset) {
 }
 
 void HyperVPCIRoot::configWrite16(IOPCIAddressSpace space, UInt8 offset, UInt16 data) {
-  DBGLOG("Bus: %u, device: %u, function: %u", space.es.busNum, space.es.deviceNum, space.es.functionNum);
+  DBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
   IOInterruptState ints;
+  
+  if (pciBridges[space.es.busNum] != NULL) {
+    pciBridges[space.es.busNum]->configWrite16(space, offset, data);
+  }
   
   ints = IOSimpleLockLockDisableInterrupt(pciLock);
   if (setConfigSpace(space, offset)) {
@@ -141,10 +193,14 @@ void HyperVPCIRoot::configWrite16(IOPCIAddressSpace space, UInt8 offset, UInt16 
 }
 
 UInt8 HyperVPCIRoot::configRead8(IOPCIAddressSpace space, UInt8 offset) {
-  DBGLOG("Bus: %u, device: %u, function: %u", space.es.busNum, space.es.deviceNum, space.es.functionNum);
+  DBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
   UInt8 data;
   IOInterruptState ints;
+  
+  if (pciBridges[space.es.busNum] != NULL) {
+    return pciBridges[space.es.busNum]->configRead8(space, offset);
+  }
   
   ints = IOSimpleLockLockDisableInterrupt(pciLock);
   if (setConfigSpace(space, offset)) {
@@ -156,9 +212,13 @@ UInt8 HyperVPCIRoot::configRead8(IOPCIAddressSpace space, UInt8 offset) {
 }
 
 void HyperVPCIRoot::configWrite8(IOPCIAddressSpace space, UInt8 offset, UInt8 data) {
-  DBGLOG("Bus: %u, device: %u, function: %u", space.es.busNum, space.es.deviceNum, space.es.functionNum);
+  DBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
   IOInterruptState ints;
+  
+  if (pciBridges[space.es.busNum] != NULL) {
+    pciBridges[space.es.busNum]->configWrite8(space, offset, data);
+  }
   
   ints = IOSimpleLockLockDisableInterrupt(pciLock);
   if (setConfigSpace(space, offset)) {
