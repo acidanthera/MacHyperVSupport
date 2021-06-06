@@ -64,6 +64,8 @@
 		</dict>
 		<key>HyperVMouse</key>
 		<dict>
+      		<key>AbsoluteAxisBoundsRemovalPercentage</key>
+            <integer>0</integer>
 			<key>CFBundleIdentifier</key>
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>IOClass</key>
@@ -76,6 +78,21 @@
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
 		</dict>
+		<key>HyperVMouseHID</key>
+		<dict>
+			<key>AbsoluteAxisBoundsRemovalPercentage</key>
+			<integer>0</integer>
+			<key>CFBundleIdentifier</key>
+			<string>com.apple.iokit.IOHIDFamily</string>
+			<key>IOClass</key>
+			<string>IOHIDEventDriver</string>
+			<key>IOProviderClass</key>
+			<string>IOHIDInterface</string>
+			<key>ProductID</key>
+			<integer>1569</integer>
+			<key>VendorID</key>
+			<integer>1118</integer>
+        </dict>
 		<key>HyperVPCIProviderGen2</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
