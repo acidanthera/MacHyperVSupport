@@ -67,29 +67,29 @@ jobs:
       - run: xcodebuild analyze -quiet -scheme MacHyperVSupport -configuration Debug CLANG_ANALYZER_OUTPUT=plist-html CLANG_ANALYZER_OUTPUT_DIR="$(pwd)/clang-analyze" && [ "$(find clang-analyze -name "*.html")" = "" ]
       - run: xcodebuild analyze -quiet -scheme MacHyperVSupport -configuration Release CLANG_ANALYZER_OUTPUT=plist-html CLANG_ANALYZER_OUTPUT_DIR="$(pwd)/clang-analyze" && [ "$(find clang-analyze -name "*.html")" = "" ]
 
-  #analyze-coverity:
-  #  name: Analyze Coverity
-  #  runs-on: macos-latest
-  #  env:
-  #    JOB_TYPE: COVERITY
-  #  if: github.repository_owner == 'acidanthera' && github.event_name != 'pull_request'
-  #  steps:
-  #    - uses: actions/checkout@v2
-  #    - uses: actions/checkout@v2
-  #      with:
-  #        repository: acidanthera/MacKernelSDK
-  #        path: MacKernelSDK
-  #    - name: CI Bootstrap
-  #      run: |
-  #       src=$(/usr/bin/curl -Lfs https://raw.githubusercontent.com/acidanthera/ocbuild/master/ci-bootstrap.sh) && eval "$src" || exit 1
-  #    - name: Lilu Bootstrap
-  #      run: |
-  #       src=$(/usr/bin/curl -Lfs https://raw.githubusercontent.com/acidanthera/Lilu/master/Lilu/Scripts/bootstrap.sh) && eval "$src" || exit 1
+  analyze-coverity:
+    name: Analyze Coverity
+    runs-on: macos-latest
+    env:
+      JOB_TYPE: COVERITY
+    if: github.repository_owner == 'acidanthera' && github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+        with:
+          repository: acidanthera/MacKernelSDK
+          path: MacKernelSDK
+      - name: CI Bootstrap
+        run: |
+         src=$(/usr/bin/curl -Lfs https://raw.githubusercontent.com/acidanthera/ocbuild/master/ci-bootstrap.sh) && eval "$src" || exit 1
+      - name: Lilu Bootstrap
+        run: |
+         src=$(/usr/bin/curl -Lfs https://raw.githubusercontent.com/acidanthera/Lilu/master/Lilu/Scripts/bootstrap.sh) && eval "$src" || exit 1
 
-  #    - name: Run Coverity
-  #      run: |
-  #        src=$(/usr/bin/curl -Lfs https://raw.githubusercontent.com/acidanthera/ocbuild/master/coverity/covstrap.sh) && eval "$src" || exit 1
-  #      env:
-  #        COVERITY_SCAN_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
-  #        COVERITY_SCAN_EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL }}
-  #        COVERITY_BUILD_COMMAND: xcodebuild -configuration Release
+      - name: Run Coverity
+        run: |
+          src=$(/usr/bin/curl -Lfs https://raw.githubusercontent.com/acidanthera/ocbuild/master/coverity/covstrap.sh) && eval "$src" || exit 1
+        env:
+          COVERITY_SCAN_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+          COVERITY_SCAN_EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL }}
+          COVERITY_BUILD_COMMAND: xcodebuild -configuration Release

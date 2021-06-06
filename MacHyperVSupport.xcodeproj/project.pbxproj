@@ -65,7 +65,6 @@
 		41F2E4112665B42200CE26CE /* kern_compat.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3F12665B42200CE26CE /* kern_compat.hpp */; };
 		41F2E4122665B42200CE26CE /* kern_api.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3F22665B42200CE26CE /* kern_api.hpp */; };
 		41F2E4132665B42200CE26CE /* kern_util.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3F32665B42200CE26CE /* kern_util.hpp */; };
-		41F2E41D2665B42900CE26CE /* build.tool in Resources */ = {isa = PBXBuildFile; fileRef = 41F2E4182665B42900CE26CE /* build.tool */; };
 		41F2E4202665B42900CE26CE /* plugin_start.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E41B2665B42900CE26CE /* plugin_start.cpp */; };
 		41F2E4282665B4C100CE26CE /* kern_start.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E4272665B4C100CE26CE /* kern_start.cpp */; };
 		41F2E42D2665B64D00CE26CE /* HyperVPlatformProvider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E42B2665B64D00CE26CE /* HyperVPlatformProvider.cpp */; };
@@ -470,7 +469,6 @@
 				41BE40FF263EDE370018C52B /* Headers */,
 				41BE4100263EDE370018C52B /* Sources */,
 				41BE4101263EDE370018C52B /* Frameworks */,
-				41BE4102263EDE370018C52B /* Resources */,
 				41F2E38D265F154B00CE26CE /* Archive */,
 			);
 			buildRules = (
@@ -512,17 +510,6 @@
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXResourcesBuildPhase section */
-		41BE4102263EDE370018C52B /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				41F2E41D2665B42900CE26CE /* build.tool in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
 		41F2E38D265F154B00CE26CE /* Archive */ = {
