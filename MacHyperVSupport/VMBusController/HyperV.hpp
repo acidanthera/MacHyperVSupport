@@ -20,6 +20,9 @@
 #define kHyperVHypercallRetryCount  100
 
 
+#define kHyperVPCIBusSyntheticGraphics    0xFB
+#define kHyperVPCIBusDummy                0xFE
+
 #if DEBUG
 //
 // Debug logging function.

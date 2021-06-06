@@ -187,6 +187,33 @@ bool HyperVVMBusController::start(IOService *provider) {
   IOMapperDisabler::disableMapper();
   
   //
+  // Wait for HyperVPCIRoot to get registered.
+  //
+  // On certain macOS versions, there must be an IOPCIBridge class with an
+  // IOACPIPlatformDevice parent, otherwise the system will panic.
+  // This IOPCIBridge class must be loaded first.
+  //
+  OSDictionary *pciMatching = IOService::serviceMatching("HyperVPCIRoot");
+  if (pciMatching == NULL) {
+    SYSLOG("Failed to create HyperVPCIRoot matching dictionary");
+    super::stop(provider);
+    return false;
+  }
+  
+  DBGLOG("Waiting for HyperVPCIRoot");
+  IOService *pciService = waitForMatchingService(pciMatching);
+  pciMatching->release();
+  if (pciService == NULL) {
+    SYSLOG("Failed to locate HyperVPCIRoot");
+    super::stop(provider);
+    return false;
+  }
+  pciService->release();
+  DBGLOG("HyperVPCIRoot is now loaded");
+  
+
+  
+  //
   // Setup hypercalls.
   //
   initHypercalls();
