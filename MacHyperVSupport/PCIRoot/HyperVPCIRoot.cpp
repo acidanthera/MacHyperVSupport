@@ -58,6 +58,11 @@ bool HyperVPCIRoot::registerChildPCIBridge(IOPCIBridge *pciBridge) {
   HyperVPCIRoot *pciInstance = OSDynamicCast(HyperVPCIRoot, pciIterator->getNextObject());
   pciIterator->release();
   
+  if (pciInstance == NULL) {
+    SYSLOG("Failed to locate HyperVPCIRoot instance");
+    return false;
+  }
+  
   UInt8 busNum = pciBridge->firstBusNum();
   if (busNum != pciBridge->lastBusNum()) {
     return false;
@@ -75,9 +80,10 @@ bool HyperVPCIRoot::registerChildPCIBridge(IOPCIBridge *pciBridge) {
 bool HyperVPCIRoot::start(IOService *provider) {
   pciLock = IOSimpleLockAlloc();
   
+  //
+  // First bridge represents ourselves and will be NULL.
+  //
   memset(pciBridges, 0, sizeof (pciBridges));
-  
-  pciBridges[0] = NULL;
   
   if (!super::start(provider)) {
     SYSLOG("Dummy PCI bridge failed to initialize");

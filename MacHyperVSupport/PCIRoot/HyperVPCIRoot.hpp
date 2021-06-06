@@ -15,11 +15,11 @@ class HyperVPCIRoot : public IOPCIBridge {
   OSDeclareDefaultStructors(HyperVPCIRoot);
   
 private:
-  IOSimpleLock *pciLock;
+  IOSimpleLock *pciLock = NULL;
   
   inline bool setConfigSpace(IOPCIAddressSpace space, UInt8 offset);
   
-  IOPCIBridge *pciBridges[256];
+  IOPCIBridge *pciBridges[256] {};
   
 public:
   static bool registerChildPCIBridge(IOPCIBridge *pciBridge);

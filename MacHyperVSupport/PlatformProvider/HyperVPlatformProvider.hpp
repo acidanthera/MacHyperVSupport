@@ -36,13 +36,13 @@ private:
   // Shutdown functions.
   //
   bool isShuttingDown = false;
-  mach_vm_address_t origReboot {};
+  mach_vm_address_t origReboot = 0;
   static int reboot(proc_t proc, reboot_args *args, __unused int32_t *retval);
   
   //
   // IOPlatformExpert::setConsoleInfo wrapping
   //
-  mach_vm_address_t setConsoleInfoAddr;
+  mach_vm_address_t setConsoleInfoAddr = 0;
   uint64_t setConsoleInfoOrg[2] {};
   static IOReturn wrapSetConsoleInfo(IOPlatformExpert *that, PE_Video * consoleInfo, unsigned int op);
   
