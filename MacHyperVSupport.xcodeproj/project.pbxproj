@@ -708,7 +708,7 @@
 				MODULE_NAME = fish.goldfish64.MacHyperVSupport;
 				MODULE_START = "$(PRODUCT_NAME)_kern_start";
 				MODULE_STOP = "$(PRODUCT_NAME)_kern_stop";
-				MODULE_VERSION = 0.5;
+				MODULE_VERSION = 0.6;
 				PRODUCT_BUNDLE_IDENTIFIER = fish.goldfish64.MacHyperVSupport;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RUN_CLANG_STATIC_ANALYZER = YES;
@@ -740,7 +740,7 @@
 				MODULE_NAME = fish.goldfish64.MacHyperVSupport;
 				MODULE_START = "$(PRODUCT_NAME)_kern_start";
 				MODULE_STOP = "$(PRODUCT_NAME)_kern_stop";
-				MODULE_VERSION = 0.5;
+				MODULE_VERSION = 0.6;
 				PRODUCT_BUNDLE_IDENTIFIER = fish.goldfish64.MacHyperVSupport;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RUN_CLANG_STATIC_ANALYZER = YES;
