@@ -26,7 +26,7 @@ PluginConfiguration ADDPR(config) {
   NULL,
   0,
   KernelVersion::SnowLeopard,
-  KernelVersion::BigSur,
+  KernelVersion::Monterey,
   []() {
     HyperVPlatformProvider::getInstance();
   }
