@@ -109,7 +109,13 @@ UInt32 HyperVVMBusController::hypercallPostMessage(UInt32 connectionId, HyperVMe
   // During hypercall, the calling processor will be suspended until the hypercall returns.
   // Linux disables preemption during this time, but unsure if that is needed due to the above.
   //
+#if defined (__i386__)
+  asm volatile ("call *%5" : "=A" (status) : "d" (0), "a" (kHypercallTypePostMessage), "b" (0), "c" ((uint32_t) postPageBuffer->physAddr), "m" (hypercallPage));
+#elif defined(__x86_64__)
   asm volatile ("call *%3" : "=a" (status) : "c" (kHypercallTypePostMessage), "d" (postPageBuffer->physAddr), "m" (hypercallPage));
+#else
+#error Unsupported arch
+#endif
   return status & kHypercallStatusMask;
 }
 
@@ -119,6 +125,12 @@ bool HyperVVMBusController::hypercallSignalEvent(UInt32 connectionId) {
   //
   // Perform a fast version of HvSignalEvent hypercall.
   //
+#if defined (__i386__)
+  asm volatile ("call *%5" : "=A" (status) : "d" (0), "a" (kHypercallTypeSignalEvent), "b" (0), "c" (connectionId), "m" (hypercallPage));
+#elif defined(__x86_64__)
   asm volatile ("call *%3" : "=a" (status) : "c" (kHypercallTypeSignalEvent), "d" (connectionId), "m" (hypercallPage));
+#else
+#error Unsupported arch
+#endif
   return status == kHypercallStatusSuccess;
 }

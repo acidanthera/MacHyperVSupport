@@ -6,3 +6,4 @@ build
 xcshareddata
 Lilu.kext
 /MacKernelSDK
+/clang32

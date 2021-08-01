@@ -45,7 +45,13 @@ void HyperVPlatformProvider::init() {
     lilu_os_memcpy(setConsoleInfoOrg, (void *)setConsoleInfoAddr, sizeof(setConsoleInfoOrg));
 
     // Patch to call wrapper.
+#if defined(__i386__)
+    uint64_t patched[2] {0x25FF | ((setConsoleInfoAddr + 8) << 16), (uint32_t)wrapSetConsoleInfo};
+#elif defined(__x86_64__)
     uint64_t patched[2] {0x0225FF, (uintptr_t)wrapSetConsoleInfo};
+#else
+#error Unsupported arch
+#endif
     if (MachInfo::setKernelWriting(true, KernelPatcher::kernelWriteLock) == KERN_SUCCESS) {
       lilu_os_memcpy((void *)setConsoleInfoAddr, patched, sizeof(patched));
       MachInfo::setKernelWriting(false, KernelPatcher::kernelWriteLock);
@@ -78,7 +84,13 @@ IOReturn HyperVPlatformProvider::wrapSetConsoleInfo(IOPlatformExpert *that, PE_V
   
   // Patch again if kPEBaseAddressChange was not the operation.
   if (op != kPEBaseAddressChange) {
+#if defined(__i386__)
+    uint64_t patched[2] {0x25FF | ((instance->setConsoleInfoAddr + 8) << 16), (uint32_t)wrapSetConsoleInfo};
+#elif defined(__x86_64__)
     uint64_t patched[2] {0x0225FF, (uintptr_t)wrapSetConsoleInfo};
+#else
+#error Unsupported arch
+#endif
     if (MachInfo::setKernelWriting(true, KernelPatcher::kernelWriteLock) == KERN_SUCCESS) {
       lilu_os_memcpy((void *)instance->setConsoleInfoAddr, patched, sizeof(patched));
       MachInfo::setKernelWriting(false, KernelPatcher::kernelWriteLock);

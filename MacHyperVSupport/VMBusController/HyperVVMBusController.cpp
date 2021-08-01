@@ -31,7 +31,7 @@ struct IOMapperDisabler : public IOMapper {
 
 bool HyperVVMBusController::identifyHyperV() {
   bool isHyperV = false;
-  UInt32 regs[4];
+  uint32_t regs[4];
   
   //
   // Verify we are in fact on Hyper-V.
