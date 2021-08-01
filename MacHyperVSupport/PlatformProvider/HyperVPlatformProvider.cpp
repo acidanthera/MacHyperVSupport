@@ -51,7 +51,7 @@ void HyperVPlatformProvider::init() {
       MachInfo::setKernelWriting(false, KernelPatcher::kernelWriteLock);
     }
     
-    DBGLOG("Patched IOPlatformExper::setConsoleInfo");
+    DBGLOG("Patched IOPlatformExpert::setConsoleInfo");
   }
 }
 

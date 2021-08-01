@@ -45,13 +45,13 @@ bool HyperVPCIRoot::registerChildPCIBridge(IOPCIBridge *pciBridge) {
   OSDictionary *pciMatching = IOService::serviceMatching("HyperVPCIRoot");
   if (pciMatching == NULL) {
     SYSLOG("Failed to create HyperVPCIRoot matching dictionary");
-    return NULL;
+    return false;
   }
   
   OSIterator *pciIterator = IOService::getMatchingServices(pciMatching);
   if (pciIterator == NULL) {
     SYSLOG("Failed to create HyperVPCIRoot matching iterator");
-    return NULL;
+    return false;
   }
   
   pciIterator->reset();
