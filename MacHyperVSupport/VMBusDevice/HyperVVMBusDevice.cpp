@@ -89,6 +89,7 @@ bool HyperVVMBusDevice::openChannel(UInt32 txSize, UInt32 rxSize, OSObject *owne
   }
   
   channelIsOpen = true;
+  DBGLOG("Opened channel for %u", channelId);
   return true;
 }
 

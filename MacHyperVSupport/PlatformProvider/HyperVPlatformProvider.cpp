@@ -27,15 +27,13 @@ void HyperVPlatformProvider::init() {
   //
   // Lilu is used for certain functions of child devices, register patcher callback.
   //
-  lilu.onPatcherLoad([](void *user, KernelPatcher &patcher) {
+  lilu.onPatcherLoadForce([](void *user, KernelPatcher &patcher) {
     static_cast<HyperVPlatformProvider *>(user)->onLiluPatcherLoad(patcher);
   }, this);
 
   //
   // Patch setConsoleInfo to call our wrapper function instead.
   // 10.6 to 10.12 may pass garbage data to setConsoleInfo from IOPCIConfigurator::configure().
-  //
-  // FIXME: This will need to be adapted for 32-bit support.
   //
   KernelVersion kernelVersion = getKernelVersion();
   if (kernelVersion >= KernelVersion::SnowLeopard && kernelVersion <= KernelVersion::Sierra) {

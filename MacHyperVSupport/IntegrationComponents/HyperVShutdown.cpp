@@ -85,5 +85,8 @@ bool HyperVShutdown::handleShutdown(VMBusICMessageShutdownData *shutdownData) {
   }
   
   shutdownData->header.status = result ? kHyperVStatusSuccess : kHyperVStatusFail;
+  if (!result) {
+    SYSLOG("Platform does not support shutdown");
+  }
   return result;
 }
