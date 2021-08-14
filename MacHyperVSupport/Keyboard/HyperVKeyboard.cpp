@@ -28,26 +28,9 @@ bool HyperVKeyboard::start(IOService *provider) {
   hvDevice->retain();
   
   //
-  // Configure interrupt source.
-  //
-  /*interruptSource = IOInterruptEventSource::interruptEventSource(this,
-                                                                 OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVKeyboard::handleInterrupt),
-                                                                 provider, 0);
-  if (interruptSource == NULL) {
-    super::stop(provider);
-    return false;
-  }
-  getWorkLoop()->addEventSource(interruptSource);
-  interruptSource->enable();*/
-  
-  hvDevice->retain();
-  
-  //
   // Configure the channel.
   //
   if (!hvDevice->openChannel(kHyperVKeyboardRingBufferSize, kHyperVKeyboardRingBufferSize, this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVKeyboard::handleInterrupt))) {
-    interruptSource->disable();
-    interruptSource->release();
     super::stop(provider);
     return false;
   }
@@ -55,7 +38,6 @@ bool HyperVKeyboard::start(IOService *provider) {
   connectKeyboard();
   
   SYSLOG("Initialized Hyper-V Synthetic Keyboard");
-  
   return true;
 }
 
@@ -65,8 +47,6 @@ bool HyperVKeyboard::connectKeyboard() {
   HyperVKeyboardMessageProtocolRequest requestMsg;
   requestMsg.header.type = kHyperVKeyboardMessageTypeProtocolRequest;
   requestMsg.versionRequested = kHyperVKeyboardVersion;
-  
- // hvDevice->writePacket(&requestMsg, sizeof (requestMsg));
   
   HyperVVMBusDeviceRequest request;
   request.sendData = &requestMsg;
@@ -88,11 +68,6 @@ UInt32 HyperVKeyboard::interfaceID() {
   return NX_EVS_DEVICE_INTERFACE_ADB;
 }
 
-/*IOReturn HyperVKeyboard::message(UInt32 type, IOService* provider, void* argument) {
-  DBGLOG("MESSAGE %u", type);
-  return super::message(type, provider, argument);
-}*/
-
 inline UInt32 getKeyCode(HyperVKeyboardMessageKeystroke *keyEvent) {
   UInt8 keyCode = PS2ToADBMapStock[keyEvent->makeCode + (keyEvent->isE0 ? kADBConverterExStart : 0)];
   
@@ -100,42 +75,29 @@ inline UInt32 getKeyCode(HyperVKeyboardMessageKeystroke *keyEvent) {
 }
 
 void HyperVKeyboard::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
- // DBGLOG("Interrupt!");
-  
   UInt8 data[1024];
-  HyperVKeyboardMessageProtocolResponse *responesMsg = (HyperVKeyboardMessageProtocolResponse*)data;
+  HyperVKeyboardMessageProtocolResponse *responseMsg = (HyperVKeyboardMessageProtocolResponse*)data;
   HyperVKeyboardMessageKeystroke        *eventMsg = (HyperVKeyboardMessageKeystroke*)data;
   
   HyperVVMBusDeviceRequest request = { 0 };
-  request.responseData = responesMsg;
+  request.responseData = responseMsg;
   do {
     request.responseDataLength = sizeof(data);
     
     hvDevice->doRequest(&request);
-    
-   // hvDevice->readPacket(responesMsg, &dataSize);
     if (request.responseDataLength == 0) {
-     // DBGLOG("Done");
       return;
     }
-    switch (responesMsg->header.type) {
+    switch (responseMsg->header.type) {
       case kHyperVKeyboardMessageTypeProtocolResponse:
-        DBGLOG("Keyboard protocol status %u %u", responesMsg->header.type, responesMsg->status);
+        DBGLOG("Keyboard protocol status %u %u", responseMsg->header.type, responseMsg->status);
         break;
         
       case kHyperVKeyboardMessageTypeEvent:
-       // DBGLOG("Keyboard event %u %X %X", eventMsg->header.type, eventMsg->makeCode, eventMsg->flags);
-        
         UInt64 time;
         clock_get_uptime(&time);
         
         dispatchKeyboardEvent(getKeyCode(eventMsg), !eventMsg->isBreak, *(AbsoluteTime*)&time);
-        
-        //toggle = !toggle;
-     //   dispatchKeyboardEvent(0x0C, toggle, *(AbsoluteTime*)&time);
-        //dispatchKeyEvent (eventMsg);
-        
-        
         break;
         
       default:
