@@ -26,6 +26,8 @@ private:
   
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
   
+  bool connectNetwork();
+  
 public:
   //
   // IOService overrides.

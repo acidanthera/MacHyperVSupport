@@ -35,10 +35,8 @@ bool HyperVNetwork::start(IOService *provider) {
     return false;
   }
   
+  connectNetwork();
+  
   SYSLOG("Initialized Hyper-V Synthetic Networking");
   return true;
-}
-
-void HyperVNetwork::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
-  DBGLOG("Interrupt");
 }
