@@ -93,6 +93,20 @@
 			<key>VendorID</key>
 			<integer>1118</integer>
 		</dict>
+		<key>HyperVNetwork</key>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>IOClass</key>
+			<string>HyperVNetwork</string>
+			<key>IOPropertyMatch</key>
+			<dict>
+				<key>HVType</key>
+				<string>f8615163-df3e-46c5-913f-f2d2f965ed0e</string>
+			</dict>
+			<key>IOProviderClass</key>
+			<string>HyperVVMBusDevice</string>
+		</dict>
 		<key>HyperVPCIProviderGen2</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
