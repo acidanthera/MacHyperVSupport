@@ -8,7 +8,7 @@
 #include "HyperVVMBusController.hpp"
 #include "HyperVVMBusInternal.hpp"
 
-bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
+bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel, HyperVDMABuffer *buffer, UInt32 *gpadlHandle) {
   UInt32 channelId = channel->offerMessage.channelId;
   
   //
@@ -19,20 +19,20 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
     return false;
   }
 
-  channel->gpadlHandle = nextGpadlHandle;
+  *gpadlHandle = nextGpadlHandle;
   nextGpadlHandle++;
   IOSimpleLockUnlock(nextGpadlHandleLock);
   
   //
   // Maximum number of pages allowed is 8190 (8192 - 2 for TX and RX headers).
   //
-  UInt32 pageCount = (UInt32)(channel->dataBuffer.size >> PAGE_SHIFT);
+  UInt32 pageCount = (UInt32)(buffer->size >> PAGE_SHIFT);
   if (pageCount > kHyperVMaxGpadlPages) {
     SYSLOG("%u is above the maximum supported number of GPADL pages");
     return false;
   }
   
-  DBGLOG("Configuring GPADL handle 0x%X for channel %u of %llu pages", channel->gpadlHandle, channelId, pageCount);
+  DBGLOG("Configuring GPADL handle 0x%X for channel %u of %llu pages", *gpadlHandle, channelId, pageCount);
   
   //
   // For larger GPADL requests, a GPADL header and one or more GPADL body messages are required.
@@ -62,13 +62,13 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
     //
     gpadlHeader->header.type          = kVMBusChannelMessageTypeGPADLHeader;
     gpadlHeader->channelId            = channelId;
-    gpadlHeader->gpadl                = channel->gpadlHandle;
+    gpadlHeader->gpadl                = *gpadlHandle;
     gpadlHeader->rangeCount           = kHyperVGpadlRangeCount;
     gpadlHeader->rangeBufferLength    = sizeof (HyperVGPARange) + pageCount * sizeof (UInt64); // Max page count is 8190
     gpadlHeader->range[0].byteOffset  = 0;
-    gpadlHeader->range[0].byteCount   = (UInt32)channel->dataBuffer.size;
+    gpadlHeader->range[0].byteCount   = (UInt32)buffer->size;
 
-    UInt64 physPageIndex = channel->dataBuffer.physAddr >> PAGE_SHIFT;
+    UInt64 physPageIndex = buffer->physAddr >> PAGE_SHIFT;
     for (UInt32 i = 0; i < pageHeaderCount; i++) {
       gpadlHeader->range[0].pfnArray[i] = physPageIndex;
       physPageIndex++;
@@ -106,7 +106,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
       memset(gpadlBody, 0, messageSize);
       
       gpadlBody->header.type  = kVMBusChannelMessageTypeGPADLBody;
-      gpadlBody->gpadl        = channel->gpadlHandle;
+      gpadlBody->gpadl        = *gpadlHandle;
       for (UInt32 i = 0; i < pagesBodyCount; i++) {
         gpadlBody->pfn[i]     = physPageIndex;
         physPageIndex++;
@@ -160,7 +160,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
     //
     gpadlHeader->header.type          = kVMBusChannelMessageTypeGPADLHeader;
     gpadlHeader->channelId            = channelId;
-    gpadlHeader->gpadl                = channel->gpadlHandle;
+    gpadlHeader->gpadl                = *gpadlHandle;
     gpadlHeader->rangeCount           = kHyperVGpadlRangeCount;
     gpadlHeader->rangeBufferLength    = sizeof (HyperVGPARange) + pageCount * sizeof (UInt64);
     gpadlHeader->range[0].byteOffset  = 0;
@@ -190,13 +190,6 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel) {
       return false;
     }
   }
-  
-  //
-  // Configure TX and RX buffer pointers.
-  //
-  channel->txBuffer = (VMBusRingBuffer*) channel->dataBuffer.buffer;
-  channel->rxBuffer = (VMBusRingBuffer*) (((UInt8*)channel->dataBuffer.buffer) + PAGE_SIZE * channel->rxPageIndex);
-  channel->status   = kVMBusChannelStatusGpadlConfigured;
   return true;
 }
 
@@ -207,7 +200,7 @@ bool HyperVVMBusController::configureVMBusChannel(VMBusChannel *channel) {
   openMsg.header.type                     = kVMBusChannelMessageTypeChannelOpen;
   openMsg.openId                          = channel->offerMessage.channelId;
   openMsg.channelId                       = channel->offerMessage.channelId;
-  openMsg.ringBufferGpadlHandle           = channel->gpadlHandle;
+  openMsg.ringBufferGpadlHandle           = channel->dataGpadlHandle;
   openMsg.downstreamRingBufferPageOffset  = channel->rxPageIndex;
   openMsg.targetCpu                       = 0;
   
@@ -263,9 +256,16 @@ bool HyperVVMBusController::initVMBusChannel(UInt32 channelId, UInt32 txBufferSi
   //
   // Configure GPADL for channel.
   //
-  if (!configureVMBusChannelGpadl(channel)) {
+  if (!configureVMBusChannelGpadl(channel, &channel->dataBuffer, &channel->dataGpadlHandle)) {
     return false;
   }
+  
+  //
+  // Configure TX and RX buffer pointers.
+  //
+  channel->txBuffer = (VMBusRingBuffer*) channel->dataBuffer.buffer;
+  channel->rxBuffer = (VMBusRingBuffer*) (((UInt8*)channel->dataBuffer.buffer) + PAGE_SIZE * channel->rxPageIndex);
+  channel->status   = kVMBusChannelStatusGpadlConfigured;
   
   *txBuffer = channel->txBuffer;
   *rxBuffer = channel->rxBuffer;
@@ -335,7 +335,7 @@ void HyperVVMBusController::closeVMBusChannel(UInt32 channelId) {
   gpadlTeardownMsg.header.type      = kVMBusChannelMessageTypeGPADLTeardown;
   gpadlTeardownMsg.header.reserved  = 0;
   gpadlTeardownMsg.channelId        = channelId;
-  gpadlTeardownMsg.gpadl            = channel->gpadlHandle;
+  gpadlTeardownMsg.gpadl            = channel->dataGpadlHandle;
   
   VMBusChannelMessageGPADLTeardownResponse gpadlTeardownResponseMsg;
   result = sendVMBusMessage((VMBusChannelMessage*) &gpadlTeardownMsg,
@@ -376,4 +376,15 @@ void HyperVVMBusController::freeVMBusChannel(UInt32 channelId) {
   }
   DBGLOG("Channel %u is now freed", channelId);
   channel->status = kVMBusChannelStatusNotPresent;
+}
+
+bool HyperVVMBusController::initVMBusChannelGpadl(UInt32 channelId, UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer) {
+  VMBusChannel *channel = &vmbusChannels[channelId];
+  
+  HyperVDMABuffer buf;
+  allocateDmaBuffer(&buf, bufferSize);
+  
+  configureVMBusChannelGpadl(channel, &buf, gpadlHandle);
+  *buffer = buf.buffer;
+  return true;
 }

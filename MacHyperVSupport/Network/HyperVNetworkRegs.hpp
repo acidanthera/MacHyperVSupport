@@ -10,6 +10,16 @@
 
 #define kHyperVNetworkRingBufferSize (16 * PAGE_SIZE)
 
+#define kHyperVNetworkNDISVersion60001    0x00060001
+#define kHyperVNetworkNDISVersion6001E    0x0006001E
+
+#define kHyperVNetworkReceiveBufferSize         (1024 * 1024 * 16)
+#define kHyperVNetworkReceiveBufferSizeLegacy   (1024 * 1024 * 15)
+#define kHyperVNetworkSendBufferSize            (1024 * 1024 * 15)
+
+#define kHyperVNetworkReceiveBufferID           0xCAFE
+#define kHyperVNetworkSendBufferID              0x0000
+
 //
 // Protocol versions.
 //
@@ -96,7 +106,7 @@ typedef union __attribute__((packed)) {
 //
 
 //
-// Send NDIS version to Hyper-V
+// Send NDIS version to Hyper-V.
 //
 typedef struct __attribute__((packed)) {
   UInt32 major;
@@ -221,9 +231,12 @@ typedef union __attribute__((packed)) {
 // Main message structure.
 //
 typedef struct __attribute__((packed)) {
-  HyperVNetworkMessageType    messageType;
-  HyperVNetworkMessageInit    init;
-  HyperVNetworkV1Message      v1;
+  HyperVNetworkMessageType messageType;
+  union {
+    HyperVNetworkMessageInit    init;
+    HyperVNetworkV1Message      v1;
+  } __attribute__((packed));
+  UInt8 padd[sizeof (HyperVNetworkMessageInit)]; // TODO: required for now for some reason, otherwise Hyper-V rejects message
 } HyperVNetworkMessage;
 
 #endif /* HyperVNetworkRegs_h */

@@ -9,6 +9,7 @@
 #define HyperVNetwork_hpp
 
 #include "HyperVVMBusDevice.hpp"
+#include "HyperVNetworkRegs.hpp"
 
 #define super IOService
 
@@ -24,9 +25,24 @@ private:
   //
   HyperVVMBusDevice       *hvDevice;
   
+  HyperVNetworkProtocolVersion  netVersion;
+  UInt32                        receiveBufferSize;
+  UInt32                        receiveGpadlHandle;
+  void                          *receiveBuffer;
+  
+  UInt32                        sendBufferSize;
+  UInt32                        sendGpadlHandle;
+  void                          *sendBuffer;
+  UInt32                        sendSectionSize;
+  UInt32                        sendSectionCount;
+  
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
   
+  
+  bool negotiateProtocol(HyperVNetworkProtocolVersion protocolVersion);
+  bool initBuffers();
   bool connectNetwork();
+
   
 public:
   //

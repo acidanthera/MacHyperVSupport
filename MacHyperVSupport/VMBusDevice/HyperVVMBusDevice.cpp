@@ -102,6 +102,10 @@ void HyperVVMBusDevice::closeChannel() {
   channelIsOpen = false;
 }
 
+bool HyperVVMBusDevice::createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer) {
+  return vmbusProvider->initVMBusChannelGpadl(channelId, bufferSize, gpadlHandle, buffer);
+}
+
 IOReturn HyperVVMBusDevice::doRequest(HyperVVMBusDeviceRequest *request) {
   return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::doRequestGated), request);
 }

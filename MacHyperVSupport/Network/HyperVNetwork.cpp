@@ -6,7 +6,6 @@
 //
 
 #include "HyperVNetwork.hpp"
-#include "HyperVNetworkRegs.hpp"
 
 OSDefineMetaClassAndStructors(HyperVNetwork, super);
 

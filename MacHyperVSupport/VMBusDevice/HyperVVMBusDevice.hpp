@@ -86,6 +86,7 @@ public:
   //
   bool openChannel(UInt32 txSize, UInt32 rxSize, OSObject *owner = NULL, IOInterruptEventAction intAction = NULL);
   void closeChannel();
+  bool createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer);
 
   IOReturn doRequest(HyperVVMBusDeviceRequest *request);
 };

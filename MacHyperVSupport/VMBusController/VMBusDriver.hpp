@@ -51,7 +51,7 @@ typedef struct {
   //
   // Unique GPADL handle for this channel.
   //
-  UInt32                          gpadlHandle;
+  UInt32                          dataGpadlHandle;
   HyperVDMABuffer                 dataBuffer;
   HyperVDMABuffer                 eventBuffer;
   
