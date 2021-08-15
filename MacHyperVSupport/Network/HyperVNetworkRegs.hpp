@@ -20,6 +20,9 @@
 #define kHyperVNetworkReceiveBufferID           0xCAFE
 #define kHyperVNetworkSendBufferID              0x0000
 
+#define kHyperVNetworkRNDISVersionMajor         0x0001
+#define kHyperVNetworkRNDISVersionMinor         0x0000
+
 //
 // Protocol versions.
 //
@@ -192,8 +195,7 @@ typedef struct {
 //
 typedef struct __attribute__((packed)) {
   //
-  // Specified by RNDIS. RNDIS assumes there are two different
-  // communication channels, but Hyper-V only uses one.
+  // Specified by RNDIS. RNDIS uses 0 for DATA, and 1 for CONTROL.
   //
   UInt32 channelType;
 
@@ -238,5 +240,49 @@ typedef struct __attribute__((packed)) {
   } __attribute__((packed));
   UInt8 padd[sizeof (HyperVNetworkMessageInit)]; // TODO: required for now for some reason, otherwise Hyper-V rejects message
 } HyperVNetworkMessage;
+
+//
+// RNDIS messages.
+//
+
+//
+// Initialization message.
+//
+typedef struct {
+  UInt32 requestId;
+  UInt32 majorVersion;
+  UInt32 minorVersion;
+  UInt32 maxTransferSize;
+} HyperVNetworkRNDISMessageInitializeRequest;
+
+//
+// Initialization complete message.
+//
+typedef struct {
+  UInt32 requestId;
+  UInt32 status;
+  UInt32 majorVersion;
+  UInt32 minorVersion;
+  UInt32 devFlags;
+  UInt32 medium;
+  UInt32 maxPacketsPerMessage;
+  UInt32 maxTransferSize;
+  UInt32 packetAlignmentFactor;
+  UInt32 afListOffset;
+  UInt32 afListSize;
+} HyperVNetworkRNDISMessageInitializeComplete;
+
+//
+// Main message structure.
+//
+typedef struct {
+  UInt32 msgType;
+  UInt32 msgLength;
+  
+  union {
+    HyperVNetworkRNDISMessageInitializeRequest    initRequest;
+    HyperVNetworkRNDISMessageInitializeComplete   initComplete;
+  };
+} HyperVNetworkRNDISMessage;
 
 #endif /* HyperVNetworkRegs_h */

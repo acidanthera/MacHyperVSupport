@@ -9,6 +9,45 @@
 
 void HyperVNetwork::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
   DBGLOG("Interrupt");
+  
+  HyperVNetworkMessage netMsg;
+  memset(&netMsg, 0, sizeof (netMsg));
+
+  HyperVVMBusDeviceRequest request;
+  request.sendData = NULL;
+  request.responseRequired = false;
+  request.sendDataLength = 0;
+  request.responseData = &netMsg;
+  request.responseDataLength = sizeof (netMsg);
+  request.sendPacketType = kVMBusPacketTypeDataInband;
+  
+  hvDevice->doRequest(&request);
+  DBGLOG("type %X", netMsg.messageType);
+}
+
+bool HyperVNetwork::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size) {
+  IOBufferMemoryDescriptor  *bufDesc;
+  
+  //
+  // Create DMA buffer with required specifications and get physical address.
+  //
+  bufDesc = IOBufferMemoryDescriptor::inTaskWithPhysicalMask(kernel_task,
+                                                             kIODirectionInOut | kIOMemoryPhysicallyContiguous | kIOMapInhibitCache | kIOMemoryMapperNone,
+                                                             size, 0xFFFFFFFFFFFFF000ULL);
+  if (bufDesc == NULL) {
+    SYSLOG("Failed to allocate DMA buffer memory of %u bytes", size);
+    return false;
+  }
+  bufDesc->prepare();
+  
+  dmaBuf->bufDesc  = bufDesc;
+  dmaBuf->physAddr = bufDesc->getPhysicalAddress();
+  dmaBuf->buffer   = bufDesc->getBytesNoCopy();
+  dmaBuf->size     = size;
+  
+  memset(dmaBuf->buffer, 0, dmaBuf->size);
+  DBGLOG("Mapped buffer of %u bytes to 0x%llX", dmaBuf->size, dmaBuf->physAddr);
+  return true;
 }
 
 bool HyperVNetwork::negotiateProtocol(HyperVNetworkProtocolVersion protocolVersion) {
@@ -19,15 +58,8 @@ bool HyperVNetwork::negotiateProtocol(HyperVNetworkProtocolVersion protocolVersi
   netMsg.init.initVersion.maxProtocolVersion = protocolVersion;
   netMsg.init.initVersion.minProtocolVersion = protocolVersion;
 
-  HyperVVMBusDeviceRequest request;
-  request.sendData = &netMsg;
-  request.responseRequired = true;
-  request.sendDataLength = sizeof (netMsg);
-  request.responseData = &netMsg;
-  request.responseDataLength = sizeof (netMsg);
-  request.sendPacketType = kVMBusPacketTypeDataInband;
-
-  if (hvDevice->doRequest(&request) != kIOReturnSuccess) {
+  UInt32 msgSize = sizeof (netMsg);
+  if (hvDevice->sendMessage(&netMsg, sizeof (netMsg), kVMBusPacketTypeDataInband, 0, true, &netMsg, &msgSize) != kIOReturnSuccess) {
     SYSLOG("failed to send protocol negotiation message");
     return false;
   }
@@ -61,15 +93,8 @@ bool HyperVNetwork::initBuffers() {
   netMsg.v1.sendReceiveBuffer.gpadlHandle = receiveGpadlHandle;
   netMsg.v1.sendReceiveBuffer.id = kHyperVNetworkReceiveBufferID;
   
-  HyperVVMBusDeviceRequest request;
-  request.sendData = &netMsg;
-  request.responseRequired = true;
-  request.sendDataLength = sizeof (netMsg);
-  request.responseData = &netMsg;
-  request.responseDataLength = sizeof (netMsg);
-  request.sendPacketType = kVMBusPacketTypeDataInband;
-
-  if (hvDevice->doRequest(&request) != kIOReturnSuccess) {
+  UInt32 respLength = sizeof (netMsg);
+  if (hvDevice->sendMessage(&netMsg, sizeof (netMsg), kVMBusPacketTypeDataInband, 0, true, &netMsg, &respLength) != kIOReturnSuccess) {
     SYSLOG("Failed to send receive buffer configuration message");
     return false;
   }
@@ -91,15 +116,9 @@ bool HyperVNetwork::initBuffers() {
   netMsg.messageType = kHyperVNetworkMessageTypeV1SendSendBuffer;
   netMsg.v1.sendSendBuffer.gpadlHandle = sendGpadlHandle;
   netMsg.v1.sendSendBuffer.id = kHyperVNetworkSendBufferID;
-  
-  request.sendData = &netMsg;
-  request.responseRequired = true;
-  request.sendDataLength = sizeof (netMsg);
-  request.responseData = &netMsg;
-  request.responseDataLength = sizeof (netMsg);
-  request.sendPacketType = kVMBusPacketTypeDataInband;
 
-  if (hvDevice->doRequest(&request) != kIOReturnSuccess) {
+  respLength = sizeof (netMsg);
+  if (hvDevice->sendMessage(&netMsg, sizeof (netMsg), kVMBusPacketTypeDataInband, 0, true, &netMsg, &respLength) != kIOReturnSuccess) {
     SYSLOG("Failed to send send buffer configuration message");
     return false;
   }
@@ -132,14 +151,7 @@ bool HyperVNetwork::connectNetwork() {
   netMsg.v1.sendNDISVersion.major = (ndisVersion & 0xFFFF0000) >> 16;
   netMsg.v1.sendNDISVersion.minor = ndisVersion & 0x0000FFFF;
   
-  HyperVVMBusDeviceRequest request;
-  request.sendData = &netMsg;
-  request.responseRequired = false;
-  request.sendDataLength = sizeof (netMsg);
-  request.responseData = NULL;
-  request.sendPacketType = kVMBusPacketTypeDataInband;
-
-  if (hvDevice->doRequest(&request) != kIOReturnSuccess) {
+  if (hvDevice->sendMessage(&netMsg, sizeof (netMsg), kVMBusPacketTypeDataInband, 0) != kIOReturnSuccess) {
     SYSLOG("failed to send NDIS version");
     return false;
   }
@@ -148,5 +160,35 @@ bool HyperVNetwork::connectNetwork() {
     kHyperVNetworkReceiveBufferSize : kHyperVNetworkReceiveBufferSizeLegacy;
   sendBufferSize = kHyperVNetworkSendBufferSize;
   initBuffers();
+  
+  HyperVDMABuffer reqBuf;
+  
+  allocateDmaBuffer(&reqBuf, PAGE_SIZE);
+  
+  HyperVNetworkRNDISMessage *req = (HyperVNetworkRNDISMessage*)reqBuf.buffer;
+  req->msgType = 2;
+  req->msgLength = sizeof(HyperVNetworkRNDISMessageInitializeRequest) + 8;
+  
+  req->initRequest.majorVersion = 1;
+  req->initRequest.minorVersion = 0;
+  req->initRequest.maxTransferSize = 0x400;
+  
+  VMBusSinglePageBuffer pb2;
+  pb2.length = req->msgLength;
+  pb2.offset = 0;
+  pb2.pfn = reqBuf.physAddr >> PAGE_SHIFT;
+  
+  memset(&netMsg, 0, sizeof (netMsg));
+  netMsg.messageType = kHyperVNetworkMessageTypeV1SendRNDISPacket;
+  netMsg.v1.sendRNDISPacket.channelType = 1;
+  netMsg.v1.sendRNDISPacket.sendBufferSectionIndex = -1;
+  netMsg.v1.sendRNDISPacket.sendBufferSectionSize = 0;
+  
+  UInt32 respSize = sizeof (netMsg);
+  
+  hvDevice->sendMessageSinglePageBuffers(&netMsg, sizeof (netMsg), 0, &pb2, 1, true, &netMsg, &respSize);
+  
+  DBGLOG("status rndis %X %X", netMsg.messageType, netMsg.v1.sendRNDISPacketComplete.status);
+  
   return true;
 }

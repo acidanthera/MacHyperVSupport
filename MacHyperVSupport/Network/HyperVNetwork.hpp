@@ -42,6 +42,7 @@ private:
   bool negotiateProtocol(HyperVNetworkProtocolVersion protocolVersion);
   bool initBuffers();
   bool connectNetwork();
+  bool allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size);
 
   
 public:
