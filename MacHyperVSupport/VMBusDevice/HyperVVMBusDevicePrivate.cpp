@@ -86,7 +86,7 @@ void HyperVVMBusDevice::handleInterrupt(OSObject *owner, IOInterruptEventSource 
   }
 }
 
-IOReturn HyperVVMBusDevice::doRequestGated(HyperVVMBusDeviceRequest *request) {
+IOReturn HyperVVMBusDevice::doRequestGated(HyperVVMBusDeviceRequest *request, void *pageBufferData, UInt32 *pageBufferLength) {
   //
   // If there is data to send, send it first.
   //
@@ -104,16 +104,12 @@ IOReturn HyperVVMBusDevice::doRequestGated(HyperVVMBusDeviceRequest *request) {
     // GPA direct packets and other buffer packets have a variable length.
     //
     if (request->sendPacketType == kVMBusPacketTypeDataUsingGPADirect) {
-      if (request->multiPageBuffer != NULL) {
-        pktHeader       = (VMBusPacketHeader*) request->multiPageBuffer;
-        pktHeaderLength = request->multiPageBufferLength;
-        
-        request->multiPageBuffer->reserved   = 0;
-        request->multiPageBuffer->rangeCount = 1;
+      if (pageBufferData != NULL) {
+        pktHeader       = (VMBusPacketHeader*) pageBufferData;
+        pktHeaderLength = *pageBufferLength;
       } else {
         return kIOReturnBadArgument;
       }
-      
     } else {
       pktHeader       = &pktHeaderStack;
       pktHeaderLength = sizeof (pktHeaderStack);

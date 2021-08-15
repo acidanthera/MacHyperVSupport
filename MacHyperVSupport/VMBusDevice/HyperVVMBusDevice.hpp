@@ -61,7 +61,7 @@ private:
   
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
   
-  IOReturn doRequestGated(HyperVVMBusDeviceRequest *request);
+  IOReturn doRequestGated(HyperVVMBusDeviceRequest *request, void *pageBufferData, UInt32 *pageBufferLength);
   
   UInt32 copyPacketDataFromRingBuffer(UInt32 readIndex, UInt32 readLength, void *data, UInt32 dataLength);
   UInt32 copyPacketDataToRingBuffer(UInt32 writeIndex, void *data, UInt32 length);
@@ -89,6 +89,12 @@ public:
   bool createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer);
 
   IOReturn doRequest(HyperVVMBusDeviceRequest *request);
+  
+  IOReturn sendMessage(void *message, UInt32 messageLength, VMBusPacketType type, UInt64 transactionId,
+                       bool responseRequired = false, void *response = NULL, UInt32 *responseLength = NULL);
+  IOReturn sendMessageSinglePageBuffers(void *message, UInt32 messageLength, UInt64 transactionId,
+                                        VMBusSinglePageBuffer pageBuffers[], UInt32 pageBufferCount,
+                                        bool responseRequired = false, void *response = NULL, UInt32 *responseLength = NULL);
 };
 
 #endif
