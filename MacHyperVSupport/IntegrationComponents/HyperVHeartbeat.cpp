@@ -21,26 +21,29 @@ bool HyperVHeartbeat::start(IOService *provider) {
   return super::start(provider);
 }
 
-void HyperVHeartbeat::processMessage() {
+bool HyperVHeartbeat::processMessage() {
   VMBusICMessageHeartbeat heartbeatMsg;
-  
-  HyperVVMBusDeviceRequest request = { 0 };
-  request.responseData = &heartbeatMsg;
-  request.responseDataLength = sizeof (heartbeatMsg);
-  
+
   //
   // Ignore errors and the acknowledgement interrupt (no data to read).
   //
-  if (hvDevice->doRequest(&request) != kIOReturnSuccess || request.responseDataLength == 0) {
-    return;
+  UInt32 pktDataLength;
+  if (!hvDevice->nextInbandPacketAvailable(&pktDataLength) || pktDataLength > sizeof (heartbeatMsg)) {
+    return false;
   }
-  
+
+  //
+  // Read and parse inbound inband packet.
+  //
+  if (hvDevice->readInbandPacket(&heartbeatMsg, sizeof (heartbeatMsg), NULL) != kIOReturnSuccess) {
+    return false;
+  }
   switch (heartbeatMsg.header.type) {
     case kVMBusICMessageTypeNegotiate:
       firstHeartbeatReceived = false;
       createNegotiationResponse(&heartbeatMsg.negotiate, 3, 3);
       break;
-      
+
     case kVMBusICMessageTypeHeartbeat:
       //
       // Increment sequence.
@@ -48,27 +51,23 @@ void HyperVHeartbeat::processMessage() {
       //
       //DBGLOG("Got heartbeat, seq = %u", heartbeatMsg.heartbeat.sequence);
       heartbeatMsg.heartbeat.sequence++;
-      
+
       if (!firstHeartbeatReceived) {
         firstHeartbeatReceived = true;
         SYSLOG("Initialized Hyper-V Heartbeat");
       }
       break;
-      
+
     default:
       DBGLOG("Unknown heartbeat message type %u", heartbeatMsg.header.type);
       heartbeatMsg.header.status = kHyperVStatusFail;
       break;
   }
-  
+
+  //
+  // Send response back to Hyper-V. The packet size will always be the same as the original inbound one.
+  //
   heartbeatMsg.header.flags = kVMBusICFlagTransaction | kVMBusICFlagResponse;
-  
-  UInt32 sendLength = request.responseDataLength;
-  
-  request = { 0 };
-  request.sendData = &heartbeatMsg;
-  request.sendDataLength = sendLength;
-  request.sendPacketType = kVMBusPacketTypeDataInband;
-  
-  hvDevice->doRequest(&request);
+  hvDevice->writeInbandPacket(&heartbeatMsg, pktDataLength, false, 0);
+  return true;
 }

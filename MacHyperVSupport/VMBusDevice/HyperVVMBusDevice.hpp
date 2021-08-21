@@ -66,6 +66,8 @@ private:
   IOReturn nextPacketAvailableGated(VMBusPacketType *type, UInt32 *packetHeaderLength, UInt32 *packetTotalLength);
   IOReturn doRequestGated(HyperVVMBusDeviceRequest *request, void *pageBufferData, UInt32 *pageBufferLength);
   IOReturn readRawPacketGated(void *buffer, UInt32 *bufferLength);
+  IOReturn readInbandPacketGated(void *buffer, UInt32 *bufferLength, UInt64 *transactionId);
+  IOReturn writeInbandPacketGated(void *buffer, UInt32 *bufferLength, bool *responseRequired, UInt64 *transactionId);
   
   UInt32 copyPacketDataFromRingBuffer(UInt32 readIndex, UInt32 readLength, void *data, UInt32 dataLength);
   UInt32 seekPacketDataFromRingBuffer(UInt32 readIndex, UInt32 readLength);
@@ -99,8 +101,13 @@ public:
   // Messages.
   //
   bool nextPacketAvailable(VMBusPacketType *type, UInt32 *packetHeaderLength, UInt32 *packetTotalLength);
+  bool nextInbandPacketAvailable(UInt32 *packetDataLength);
+  
   IOReturn doRequest(HyperVVMBusDeviceRequest *request);
   IOReturn readRawPacket(void *buffer, UInt32 bufferLength);
+  IOReturn readInbandPacket(void *buffer, UInt32 bufferLength, UInt64 *transactionId);
+  
+  IOReturn writeInbandPacket(void *buffer, UInt32 bufferLength, bool responseRequired, UInt64 transactionId);
   
   IOReturn sendMessage(void *message, UInt32 messageLength, VMBusPacketType type, UInt64 transactionId,
                        bool responseRequired = false, void *response = NULL, UInt32 *responseLength = NULL);

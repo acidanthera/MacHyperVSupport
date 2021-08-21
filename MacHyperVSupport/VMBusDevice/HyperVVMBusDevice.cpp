@@ -111,12 +111,45 @@ bool HyperVVMBusDevice::nextPacketAvailable(VMBusPacketType *type, UInt32 *packe
                                 type, packetHeaderLength, packetTotalLength) == kIOReturnSuccess;
 }
 
+bool HyperVVMBusDevice::nextInbandPacketAvailable(UInt32 *packetDataLength) {
+  VMBusPacketType pktType;
+  UInt32 pktHeaderLength;
+  UInt32 pktTotalLength;
+  
+  if (packetDataLength == NULL) {
+    return false;
+  }
+
+  bool result = commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::nextPacketAvailableGated),
+                                       &pktType, &pktHeaderLength, &pktTotalLength) == kIOReturnSuccess;
+  
+  if (result) {
+    if (pktType == kVMBusPacketTypeDataInband) {
+      *packetDataLength = pktTotalLength - pktHeaderLength;
+    } else {
+      result = false;
+    }
+  }
+  return result;
+}
+
 IOReturn HyperVVMBusDevice::doRequest(HyperVVMBusDeviceRequest *request) {
   return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::doRequestGated), request, NULL, NULL);
 }
 
 IOReturn HyperVVMBusDevice::readRawPacket(void *buffer, UInt32 bufferLength) {
-  return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::readRawPacketGated), buffer, &bufferLength);
+  return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::readRawPacketGated),
+                                buffer, &bufferLength);
+}
+
+IOReturn HyperVVMBusDevice::readInbandPacket(void *buffer, UInt32 bufferLength, UInt64 *transactionId) {
+  return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::readInbandPacketGated),
+                                buffer, &bufferLength, transactionId);
+}
+
+IOReturn HyperVVMBusDevice::writeInbandPacket(void *buffer, UInt32 bufferLength, bool responseRequired, UInt64 transactionId) {
+  return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::writeInbandPacketGated),
+                                buffer, &bufferLength, &responseRequired, &transactionId);
 }
 
 IOReturn HyperVVMBusDevice::sendMessage(void *message, UInt32 messageLength, VMBusPacketType type, UInt64 transactionId,

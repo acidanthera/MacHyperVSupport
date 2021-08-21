@@ -12,13 +12,13 @@
 
 class HyperVShutdown : public HyperVICService {
   OSDeclareDefaultStructors(HyperVShutdown);
-  
+
 private:
   bool handleShutdown(VMBusICMessageShutdownData *shutdownData);
-  
+
 protected:
-  void processMessage() APPLE_KEXT_OVERRIDE;
-  
+  bool processMessage() APPLE_KEXT_OVERRIDE;
+
 public:
   //
   // IOService overrides.

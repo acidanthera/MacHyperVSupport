@@ -250,7 +250,7 @@ typedef struct __attribute__((packed)) {
 
 #define kHyperVNetworkRNDISVersionMajor         0x0001
 #define kHyperVNetworkRNDISVersionMinor         0x0000
-#define kHyperVNetworkRNDISMaxTransferSize      0x400
+#define kHyperVNetworkRNDISMaxTransferSize      0x4000
 
 #define kHyperVNetworkRNDISMessageTypeCompletion  0x80000000
 

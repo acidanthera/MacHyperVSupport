@@ -263,10 +263,6 @@ IOReturn HyperVVMBusDevice::readRawPacketGated(void *buffer, UInt32 *bufferLengt
     return kIOReturnNotFound;
   }
   
-  if (*bufferLength < sizeof (VMBusPacketHeader)) {
-    return kIOReturnNoResources;
-  }
-  
   //
   // Read packet header.
   //
@@ -275,11 +271,11 @@ IOReturn HyperVVMBusDevice::readRawPacketGated(void *buffer, UInt32 *bufferLengt
   
   UInt32 packetHeaderLength = pktHeader.headerLength << kVMBusPacketSizeShift;
   UInt32 packetTotalLength = pktHeader.totalLength << kVMBusPacketSizeShift;
-  MSGDBG("RAW Packet type %u, flags %u, trans %u, header length %u, total length %u", pktHeader.type, pktHeader.flags, pktHeader.transactionId, packetHeaderLength, packetTotalLength);
-  MSGDBG("RAW RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
+  MSGDBG("RAW packet type %u, flags %u, trans %u, header length %u, total length %u", pktHeader.type, pktHeader.flags, pktHeader.transactionId, packetHeaderLength, packetTotalLength);
+  MSGDBG("RAW old RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
   
   if (*bufferLength < packetTotalLength) {
-    MSGDBG("RAW Buffer too small, %u < %u", *bufferLength, packetTotalLength);
+    MSGDBG("RAW buffer too small, %u < %u", *bufferLength, packetTotalLength);
     return kIOReturnNoResources;
   }
   
@@ -293,8 +289,108 @@ IOReturn HyperVVMBusDevice::readRawPacketGated(void *buffer, UInt32 *bufferLengt
   readIndexNew = copyPacketDataFromRingBuffer(readIndexNew, sizeof (readIndexShifted), &readIndexShifted, sizeof (readIndexShifted));
   
   rxBuffer->readIndex = readIndexNew;
-  MSGDBG("RAW New RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
+  MSGDBG("RAW new RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
+  return kIOReturnSuccess;
+}
+
+IOReturn HyperVVMBusDevice::readInbandPacketGated(void *buffer, UInt32 *bufferLength, UInt64 *transactionId) {
+  //
+  // No data to read.
+  //
+  if (rxBuffer->readIndex == rxBuffer->writeIndex) {
+    return kIOReturnNotFound;
+  }
   
+  //
+  // Read packet header and verify it's inband.
+  //
+  UInt32 readIndexNew = rxBuffer->readIndex;
+  VMBusPacketHeader pktHeader;
+  readIndexNew = copyPacketDataFromRingBuffer(readIndexNew, sizeof (VMBusPacketHeader), &pktHeader, sizeof (VMBusPacketHeader));
+  if (pktHeader.type != kVMBusPacketTypeDataInband) {
+    MSGDBG("INBAND attempted to read non-inband packet");
+    return kIOReturnUnsupported;
+  }
+  
+  UInt32 packetHeaderLength = pktHeader.headerLength << kVMBusPacketSizeShift;
+  UInt32 packetTotalLength = pktHeader.totalLength << kVMBusPacketSizeShift;
+  UInt32 packetDataLength = packetTotalLength - packetHeaderLength;
+  MSGDBG("INBAND packet type %u, flags %u, trans %u, header length %u, total length %u", pktHeader.type, pktHeader.flags, pktHeader.transactionId, packetHeaderLength, packetTotalLength);
+  MSGDBG("INBAND old RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
+  
+  if (*bufferLength < packetDataLength) {
+    MSGDBG("INBAND buffer too small, %u < %u", *bufferLength, packetDataLength);
+    return kIOReturnNoResources;
+  }
+  
+  if (transactionId != NULL) {
+    *transactionId = pktHeader.transactionId;
+  }
+  
+  //
+  // Read inband packet data.
+  //
+  readIndexNew = copyPacketDataFromRingBuffer(readIndexNew, packetDataLength, buffer, packetDataLength);
+  
+  UInt64 readIndexShifted;
+  readIndexNew = copyPacketDataFromRingBuffer(readIndexNew, sizeof (readIndexShifted), &readIndexShifted, sizeof (readIndexShifted));
+  
+  rxBuffer->readIndex = readIndexNew;
+  MSGDBG("INBAND new RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
+  return kIOReturnSuccess;
+}
+
+IOReturn HyperVVMBusDevice::writeInbandPacketGated(void *buffer, UInt32 *bufferLength, bool *responseRequired, UInt64 *transactionId) {
+  //
+  // Create inband packet header.
+  // Sizes are represented as 8 byte units.
+  //
+  VMBusPacketHeader pktHeader;
+  pktHeader.type                = kVMBusPacketTypeDataInband;
+  pktHeader.flags               = *responseRequired ? kVMBusPacketResponseRequired : 0;
+  pktHeader.transactionId       = *transactionId;
+  
+  UInt32 pktHeaderLength        = sizeof (pktHeader);
+  UInt32 pktTotalLength         = pktHeaderLength + *bufferLength;
+  UInt32 pktTotalLengthAligned  = HV_PACKETALIGN(pktTotalLength);
+  
+  UInt32 writeIndexOld          = txBuffer->writeIndex;
+  UInt32 writeIndexNew          = writeIndexOld;
+  UInt64 writeIndexShifted      = ((UInt64)writeIndexOld) << 32;
+  
+  //
+  // Ensure there is space for the packet.
+  //
+  // We cannot end up with read index == write index after the write, as that would indicate an empty buffer.
+  //
+  if (getAvailableTxSpace() <= pktTotalLengthAligned) {
+    SYSLOG("INBAND packet is too large for buffer (TXR: %X, TXW: %X)", txBuffer->readIndex, txBuffer->writeIndex);
+    return kIOReturnNoResources;
+  }
+  
+  pktHeader.headerLength  = pktHeaderLength >> kVMBusPacketSizeShift;
+  pktHeader.totalLength   = pktTotalLength >> kVMBusPacketSizeShift;
+  
+  //
+  // Copy header, data, padding, and index to this packet.
+  //
+  MSGDBG("INBAND packet type %u, flags %u, header length %u, total length %u, pad %u",
+          pktHeader.type, pktHeader.flags, pktHeaderLength, pktTotalLength, pktTotalLengthAligned - pktTotalLength);
+  writeIndexNew = copyPacketDataToRingBuffer(writeIndexNew, &pktHeader, pktHeaderLength);
+  writeIndexNew = copyPacketDataToRingBuffer(writeIndexNew, buffer, *bufferLength);
+  writeIndexNew = zeroPacketDataToRingBuffer(writeIndexNew, pktTotalLengthAligned - pktTotalLength);
+  writeIndexNew = copyPacketDataToRingBuffer(writeIndexNew, &writeIndexShifted, sizeof (writeIndexShifted));
+  MSGDBG("INBAND TX read index %X, new TX write index %X", txBuffer->readIndex, writeIndexNew);
+  
+  //
+  // Update write index and notify Hyper-V if needed.
+  //
+  MSGDBG("INBAND TX imask %X, channel ID %u", txBuffer->interruptMask, channelId);
+  txBuffer->writeIndex = writeIndexNew;
+  if (txBuffer->interruptMask == 0) {
+    vmbusProvider->signalVMBusChannel(channelId);
+  }
+  MSGDBG("INBAND TX read index %X, new TX write index %X", txBuffer->readIndex, txBuffer->writeIndex);
   return kIOReturnSuccess;
 }
 

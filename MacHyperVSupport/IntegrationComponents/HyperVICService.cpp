@@ -98,5 +98,5 @@ bool HyperVICService::createNegotiationResponse(VMBusICMessageNegotiate *negMsg,
 }
 
 void HyperVICService::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
-  processMessage();
+  while (processMessage());
 }

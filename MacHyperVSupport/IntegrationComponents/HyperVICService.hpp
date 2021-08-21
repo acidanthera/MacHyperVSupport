@@ -25,7 +25,7 @@ private:
 protected:
   HyperVVMBusDevice *hvDevice;
   
-  virtual void processMessage() = 0;
+  virtual bool processMessage() = 0;
   
   bool createNegotiationResponse(VMBusICMessageNegotiate *negMsg, UInt32 fwVersion, UInt32 msgVersion);
   

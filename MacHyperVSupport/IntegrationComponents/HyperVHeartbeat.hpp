@@ -12,13 +12,13 @@
 
 class HyperVHeartbeat : public HyperVICService {
   OSDeclareDefaultStructors(HyperVHeartbeat);
-  
+
 private:
   bool firstHeartbeatReceived;
-  
+
 protected:
-  void processMessage() APPLE_KEXT_OVERRIDE;
-  
+  bool processMessage() APPLE_KEXT_OVERRIDE;
+
 public:
   //
   // IOService overrides.
