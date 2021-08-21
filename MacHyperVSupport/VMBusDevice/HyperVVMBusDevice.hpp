@@ -55,15 +55,20 @@ private:
   UInt32                  txBufferSize;
   VMBusRingBuffer         *rxBuffer;
   UInt32                  rxBufferSize;
+  
+  bool                    debugPackets = false;
 
   bool setupInterrupt();
   void teardownInterrupt();
   
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
   
+  IOReturn nextPacketAvailableGated(VMBusPacketType *type, UInt32 *packetHeaderLength, UInt32 *packetTotalLength);
   IOReturn doRequestGated(HyperVVMBusDeviceRequest *request, void *pageBufferData, UInt32 *pageBufferLength);
+  IOReturn readRawPacketGated(void *buffer, UInt32 *bufferLength);
   
   UInt32 copyPacketDataFromRingBuffer(UInt32 readIndex, UInt32 readLength, void *data, UInt32 dataLength);
+  UInt32 seekPacketDataFromRingBuffer(UInt32 readIndex, UInt32 readLength);
   UInt32 copyPacketDataToRingBuffer(UInt32 writeIndex, void *data, UInt32 length);
   UInt32 zeroPacketDataToRingBuffer(UInt32 writeIndex, UInt32 length);
   
@@ -84,11 +89,18 @@ public:
   //
   // General functions.
   //
+  void setDebugMessagePrinting(bool enabled) { debugPackets = enabled; }
   bool openChannel(UInt32 txSize, UInt32 rxSize, OSObject *owner = NULL, IOInterruptEventAction intAction = NULL);
   void closeChannel();
   bool createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer);
 
+  
+  //
+  // Messages.
+  //
+  bool nextPacketAvailable(VMBusPacketType *type, UInt32 *packetHeaderLength, UInt32 *packetTotalLength);
   IOReturn doRequest(HyperVVMBusDeviceRequest *request);
+  IOReturn readRawPacket(void *buffer, UInt32 bufferLength);
   
   IOReturn sendMessage(void *message, UInt32 messageLength, VMBusPacketType type, UInt64 transactionId,
                        bool responseRequired = false, void *response = NULL, UInt32 *responseLength = NULL);

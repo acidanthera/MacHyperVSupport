@@ -106,8 +106,17 @@ bool HyperVVMBusDevice::createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle
   return vmbusProvider->initVMBusChannelGpadl(channelId, bufferSize, gpadlHandle, buffer);
 }
 
+bool HyperVVMBusDevice::nextPacketAvailable(VMBusPacketType *type, UInt32 *packetHeaderLength, UInt32 *packetTotalLength) {
+  return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::nextPacketAvailableGated),
+                                type, packetHeaderLength, packetTotalLength) == kIOReturnSuccess;
+}
+
 IOReturn HyperVVMBusDevice::doRequest(HyperVVMBusDeviceRequest *request) {
   return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::doRequestGated), request, NULL, NULL);
+}
+
+IOReturn HyperVVMBusDevice::readRawPacket(void *buffer, UInt32 bufferLength) {
+  return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::readRawPacketGated), buffer, &bufferLength);
 }
 
 IOReturn HyperVVMBusDevice::sendMessage(void *message, UInt32 messageLength, VMBusPacketType type, UInt64 transactionId,

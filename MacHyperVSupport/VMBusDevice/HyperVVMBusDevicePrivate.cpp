@@ -41,10 +41,12 @@ bool HyperVVMBusDevice::setupInterrupt() {
     OSSafeReleaseNULL(commandGate);
     OSSafeReleaseNULL(workLoop);
     
-    return false;
+    interruptSource = NULL;
+    commandGate = NULL;
+    workLoop = NULL;
   }
   
-  return true;
+  return initialized;
 }
 
 void HyperVVMBusDevice::teardownInterrupt() {
@@ -84,6 +86,30 @@ void HyperVVMBusDevice::handleInterrupt(OSObject *owner, IOInterruptEventSource 
       childInterruptSource->interruptOccurred(0, 0, 0);
     }
   }
+}
+
+IOReturn HyperVVMBusDevice::nextPacketAvailableGated(VMBusPacketType *type, UInt32 *packetHeaderLength, UInt32 *packetTotalLength) {
+  //
+  // No data to read.
+  //
+  if (rxBuffer->readIndex == rxBuffer->writeIndex) {
+    return kIOReturnNotFound;
+  }
+  
+  VMBusPacketHeader pktHeader;
+  copyPacketDataFromRingBuffer(rxBuffer->readIndex, sizeof (VMBusPacketHeader), &pktHeader, sizeof (VMBusPacketHeader));
+
+  if (type != NULL) {
+    *type = pktHeader.type;
+  }
+  if (packetHeaderLength != NULL) {
+    *packetHeaderLength = pktHeader.headerLength << kVMBusPacketSizeShift;
+  }
+  if (packetTotalLength != NULL) {
+    *packetTotalLength = pktHeader.totalLength << kVMBusPacketSizeShift;
+  }
+  
+  return kIOReturnSuccess;
 }
 
 IOReturn HyperVVMBusDevice::doRequestGated(HyperVVMBusDeviceRequest *request, void *pageBufferData, UInt32 *pageBufferLength) {
@@ -229,13 +255,56 @@ IOReturn HyperVVMBusDevice::doRequestGated(HyperVVMBusDeviceRequest *request, vo
   return kIOReturnSuccess;
 }
 
+IOReturn HyperVVMBusDevice::readRawPacketGated(void *buffer, UInt32 *bufferLength) {
+  //
+  // No data to read.
+  //
+  if (rxBuffer->readIndex == rxBuffer->writeIndex) {
+    return kIOReturnNotFound;
+  }
+  
+  if (*bufferLength < sizeof (VMBusPacketHeader)) {
+    return kIOReturnNoResources;
+  }
+  
+  //
+  // Read packet header.
+  //
+  VMBusPacketHeader pktHeader;
+  copyPacketDataFromRingBuffer(rxBuffer->readIndex, sizeof (VMBusPacketHeader), &pktHeader, sizeof (VMBusPacketHeader));
+  
+  UInt32 packetHeaderLength = pktHeader.headerLength << kVMBusPacketSizeShift;
+  UInt32 packetTotalLength = pktHeader.totalLength << kVMBusPacketSizeShift;
+  MSGDBG("RAW Packet type %u, flags %u, trans %u, header length %u, total length %u", pktHeader.type, pktHeader.flags, pktHeader.transactionId, packetHeaderLength, packetTotalLength);
+  MSGDBG("RAW RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
+  
+  if (*bufferLength < packetTotalLength) {
+    MSGDBG("RAW Buffer too small, %u < %u", *bufferLength, packetTotalLength);
+    return kIOReturnNoResources;
+  }
+  
+  //
+  // Read raw packet.
+  //
+  UInt32 readIndexNew = rxBuffer->readIndex;
+  readIndexNew = copyPacketDataFromRingBuffer(readIndexNew, packetTotalLength, buffer, packetTotalLength);
+  
+  UInt64 readIndexShifted;
+  readIndexNew = copyPacketDataFromRingBuffer(readIndexNew, sizeof (readIndexShifted), &readIndexShifted, sizeof (readIndexShifted));
+  
+  rxBuffer->readIndex = readIndexNew;
+  MSGDBG("RAW New RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
+  
+  return kIOReturnSuccess;
+}
+
 UInt32 HyperVVMBusDevice::copyPacketDataFromRingBuffer(UInt32 readIndex, UInt32 readLength, void *data, UInt32 dataLength) {
   //
   // Check for wraparound.
   //
   if (dataLength > rxBufferSize - readIndex) {
     UInt32 fragmentLength = rxBufferSize - readIndex;
-    DBGLOG("RX wraparound by %u bytes", fragmentLength);
+    MSGDBG("RX wraparound by %u bytes", fragmentLength);
     memcpy(data, &rxBuffer->buffer[readIndex], fragmentLength);
     memcpy((UInt8*) data + fragmentLength, rxBuffer->buffer, dataLength - fragmentLength);
   } else {
@@ -245,13 +314,17 @@ UInt32 HyperVVMBusDevice::copyPacketDataFromRingBuffer(UInt32 readIndex, UInt32 
   return (readIndex + readLength) % rxBufferSize;
 }
 
+UInt32 HyperVVMBusDevice::seekPacketDataFromRingBuffer(UInt32 readIndex, UInt32 readLength) {
+  return (readIndex + readLength) % rxBufferSize;
+}
+
 UInt32 HyperVVMBusDevice::copyPacketDataToRingBuffer(UInt32 writeIndex, void *data, UInt32 length) {
   //
   // Check for wraparound.
   //
   if (length > txBufferSize - writeIndex) {
     UInt32 fragmentLength = txBufferSize - writeIndex;
-    DBGLOG("TX wraparound by %u bytes", fragmentLength);
+    MSGDBG("TX wraparound by %u bytes", fragmentLength);
     memcpy(&txBuffer->buffer[writeIndex], data, fragmentLength);
     memcpy(txBuffer->buffer, (UInt8*) data + fragmentLength, length - fragmentLength);
   } else {
@@ -267,7 +340,7 @@ UInt32 HyperVVMBusDevice::zeroPacketDataToRingBuffer(UInt32 writeIndex, UInt32 l
   //
   if (length > txBufferSize - writeIndex) {
     UInt32 fragmentLength = txBufferSize - writeIndex;
-    DBGLOG("TX wraparound by %u bytes", fragmentLength);
+    MSGDBG("TX wraparound by %u bytes", fragmentLength);
     memset(&txBuffer->buffer[writeIndex], 0, fragmentLength);
     memset(txBuffer->buffer, 0, length - fragmentLength);
   } else {
