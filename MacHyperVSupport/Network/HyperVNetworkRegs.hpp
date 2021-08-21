@@ -17,12 +17,6 @@
 #define kHyperVNetworkReceiveBufferSizeLegacy   (1024 * 1024 * 15)
 #define kHyperVNetworkSendBufferSize            (1024 * 1024 * 15)
 
-#define kHyperVNetworkReceiveBufferID           0xCAFE
-#define kHyperVNetworkSendBufferID              0x0000
-
-#define kHyperVNetworkRNDISVersionMajor         0x0001
-#define kHyperVNetworkRNDISVersionMinor         0x0000
-
 //
 // Protocol versions.
 //
@@ -189,6 +183,11 @@ typedef struct {
   UInt16 id;
 } HyperVNetworkV1MessageRevokeSendBuffer;
 
+typedef enum : UInt32 {
+  kHyperVNetworkRNDISChannelTypeData      = 0,
+  kHyperVNetworkRNDISChannelTypeControl   = 1
+} HyperVNetworkRNDISChannelType;
+
 //
 // Message used to send an RNDIS packet to the other end of the channel.
 // This message is used by both Hyper-V and the VM.
@@ -196,8 +195,9 @@ typedef struct {
 typedef struct __attribute__((packed)) {
   //
   // Specified by RNDIS. RNDIS uses 0 for DATA, and 1 for CONTROL.
+  // Ethernet packets are typically data, all other non-Ethernet packets are control.
   //
-  UInt32 channelType;
+  HyperVNetworkRNDISChannelType channelType;
 
   //
   // Used to specify what data is to be sent from the send buffer.
@@ -245,6 +245,24 @@ typedef struct __attribute__((packed)) {
 // RNDIS messages.
 //
 
+#define kHyperVNetworkReceiveBufferID           0xCAFE
+#define kHyperVNetworkSendBufferID              0x0000
+
+#define kHyperVNetworkRNDISVersionMajor         0x0001
+#define kHyperVNetworkRNDISVersionMinor         0x0000
+
+#define kHyperVNetworkRNDISMessageTypeCompletion  0x80000000
+
+typedef enum : UInt32 {
+  kHyperVNetworkRNDISMessageTypePacket          = 0x1,
+  kHyperVNetworkRNDISMessageTypeInit            = 0x2,
+  kHyperVNetworkRNDISMessageTypeInitComplete    = (kHyperVNetworkRNDISMessageTypeInit | kHyperVNetworkRNDISMessageTypeCompletion),
+  
+  kHyperVNetworkRNDISMessageTypeSet             = 0x5,
+  kHyperVNetworkRNDISMessageTypeSetComplete     = (kHyperVNetworkRNDISMessageTypeSet | kHyperVNetworkRNDISMessageTypeCompletion)
+  
+} HyperVNetworkRNDISMessageType;
+
 //
 // Initialization message.
 //
@@ -273,15 +291,37 @@ typedef struct {
 } HyperVNetworkRNDISMessageInitializeComplete;
 
 //
+// Set request message.
+//
+typedef struct {
+  UInt32 requestId;
+  UInt32 oid;
+  UInt32 infoBufferLength;
+  UInt32 infoBufferOffset;
+  UInt32 deviceVcHandle;
+} HyperVNetworkRNDISMessageSetRequest;
+
+//
+// Set complete message.
+//
+typedef struct {
+  UInt32 requestId;
+  UInt32 status;
+} HyperVNetworkRNDISMessageSetComplete;
+
+//
 // Main message structure.
 //
 typedef struct {
-  UInt32 msgType;
-  UInt32 msgLength;
+  HyperVNetworkRNDISMessageType msgType;
+  UInt32                        msgLength;
   
   union {
+    UInt32                                        requestId;
     HyperVNetworkRNDISMessageInitializeRequest    initRequest;
     HyperVNetworkRNDISMessageInitializeComplete   initComplete;
+    HyperVNetworkRNDISMessageSetRequest           setRequest;
+    HyperVNetworkRNDISMessageSetComplete          setComplete;
   };
 } HyperVNetworkRNDISMessage;
 

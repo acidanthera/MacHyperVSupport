@@ -386,6 +386,21 @@ typedef struct __attribute__((packed)) {
   UInt64            transactionId;
 } VMBusPacketHeader;
 
+typedef struct __attribute__((packed)) {
+  UInt32 count;
+  UInt32 offset;
+} VMBusTransferPageRange;
+
+typedef struct __attribute__((packed)) {
+  VMBusPacketHeader       header;
+  
+  UInt16                  transferPagesetId;
+  UInt8                   senderOwnsSets;
+  UInt8                   reserved;
+  UInt32                  rangeCount;
+  VMBusTransferPageRange  ranges[1];
+} VMBusPacketTransferPages;
+
 #define kVMBusMaxPageBufferCount    32
 
 //
