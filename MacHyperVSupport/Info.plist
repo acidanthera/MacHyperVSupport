@@ -64,7 +64,7 @@
 		</dict>
 		<key>HyperVMouse</key>
 		<dict>
-      		<key>AbsoluteAxisBoundsRemovalPercentage</key>
+			<key>AbsoluteAxisBoundsRemovalPercentage</key>
 			<integer>0</integer>
 			<key>CFBundleIdentifier</key>
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>

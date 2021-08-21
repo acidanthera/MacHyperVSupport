@@ -105,7 +105,7 @@ HyperVNetworkRNDISRequest* HyperVNetwork::allocateRNDISRequest() {
   rndisRequest->isSleeping = false;
   rndisRequest->memDescriptor = bufDesc;
   rndisRequest->messagePhysicalAddress = bufDesc->getPhysicalAddress();
-  DBGLOG("Mapped RNDIS request buffer to 0x%llX", rndisRequest->messagePhysicalAddress);
+  DBGLOG("Mapped RNDIS request buffer to phys 0x%llX", rndisRequest->messagePhysicalAddress);
   
   return rndisRequest;
 }
