@@ -130,9 +130,12 @@ IOReturn HyperVVMBusDevice::doRequestGated(HyperVVMBusDeviceRequest *request, vo
     // GPA direct packets and other buffer packets have a variable length.
     //
     if (request->sendPacketType == kVMBusPacketTypeDataUsingGPADirect) {
-      if (pageBufferData != NULL) {
-        pktHeader       = (VMBusPacketHeader*) pageBufferData;
-        pktHeaderLength = *pageBufferLength;
+      if (request->multiPageBuffer != NULL) {
+             pktHeader       = (VMBusPacketHeader*) request->multiPageBuffer;
+             pktHeaderLength = request->multiPageBufferLength;
+
+             request->multiPageBuffer->reserved   = 0;
+             request->multiPageBuffer->rangeCount = 1;
       } else {
         return kIOReturnBadArgument;
       }
