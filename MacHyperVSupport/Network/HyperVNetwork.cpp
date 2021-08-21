@@ -25,6 +25,7 @@ bool HyperVNetwork::start(IOService *provider) {
     return false;
   }
   hvDevice->retain();
+  hvDevice->setDebugMessagePrinting(true);
   
   //
   // Configure the channel.
@@ -33,6 +34,8 @@ bool HyperVNetwork::start(IOService *provider) {
     super::stop(provider);
     return false;
   }
+  
+  rndisLock = IOLockAlloc();
   
   connectNetwork();
   
