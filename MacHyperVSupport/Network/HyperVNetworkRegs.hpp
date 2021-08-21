@@ -254,13 +254,19 @@ typedef struct __attribute__((packed)) {
 #define kHyperVNetworkRNDISMessageTypeCompletion  0x80000000
 
 typedef enum : UInt32 {
-  kHyperVNetworkRNDISMessageTypePacket          = 0x1,
-  kHyperVNetworkRNDISMessageTypeInit            = 0x2,
-  kHyperVNetworkRNDISMessageTypeInitComplete    = (kHyperVNetworkRNDISMessageTypeInit | kHyperVNetworkRNDISMessageTypeCompletion),
-  
-  kHyperVNetworkRNDISMessageTypeSet             = 0x5,
-  kHyperVNetworkRNDISMessageTypeSetComplete     = (kHyperVNetworkRNDISMessageTypeSet | kHyperVNetworkRNDISMessageTypeCompletion)
-  
+  kHyperVNetworkRNDISMessageTypePacket            = 0x1,
+  kHyperVNetworkRNDISMessageTypeInit              = 0x2,
+  kHyperVNetworkRNDISMessageTypeInitComplete      = (kHyperVNetworkRNDISMessageTypeInit | kHyperVNetworkRNDISMessageTypeCompletion),
+  kHyperVNetworkRNDISMessageTypeHalt              = 0x3,
+  kHyperVNetworkRNDISMessageTypeQuery             = 0x4,
+  kHyperVNetworkRNDISMessageTypeQueryComplete     = (kHyperVNetworkRNDISMessageTypeQuery | kHyperVNetworkRNDISMessageTypeCompletion),
+  kHyperVNetworkRNDISMessageTypeSet               = 0x5,
+  kHyperVNetworkRNDISMessageTypeSetComplete       = (kHyperVNetworkRNDISMessageTypeSet | kHyperVNetworkRNDISMessageTypeCompletion),
+  kHyperVNetworkRNDISMessageTypeReset             = 0x6,
+  kHyperVNetworkRNDISMessageTypeResetComplete     = (kHyperVNetworkRNDISMessageTypeReset | kHyperVNetworkRNDISMessageTypeCompletion),
+  kHyperVNetworkRNDISMessageTypeIndicate          = 0x7,
+  kHyperVNetworkRNDISMessageTypeKeepalive         = 0x8,
+  kHyperVNetworkRNDISMessageTypeKeepaliveComplete = (kHyperVNetworkRNDISMessageTypeKeepalive | kHyperVNetworkRNDISMessageTypeCompletion)
 } HyperVNetworkRNDISMessageType;
 
 //
@@ -291,14 +297,98 @@ typedef struct {
 } HyperVNetworkRNDISMessageInitializeComplete;
 
 //
-// Set request message.
+// OID definitions.
+//
+typedef enum : UInt32 {
+  // Required general OIDs.
+  kHyperVNetworkRNDISOIDGeneralSupportedList                = 0x10101,
+  kHyperVNetworkRNDISOIDGeneralHardwareStatus               = 0x10102,
+  kHyperVNetworkRNDISOIDGeneralMediaSupported               = 0x10103,
+  kHyperVNetworkRNDISOIDGeneralMediaInUse                   = 0x10104,
+  kHyperVNetworkRNDISOIDGeneralMaximumLookahead             = 0x10105,
+  kHyperVNetworkRNDISOIDGeneralMaximumFrameSize             = 0x10106,
+  kHyperVNetworkRNDISOIDGeneralLinkSpeed                    = 0x10107,
+  kHyperVNetworkRNDISOIDGeneralTransmitBufferSpace          = 0x10108,
+  kHyperVNetworkRNDISOIDGeneralReceiveBufferSpace           = 0x10109,
+  kHyperVNetworkRNDISOIDGeneralTransmitBlockSize            = 0x1010A,
+  kHyperVNetworkRNDISOIDGeneralReceiveBlockSize             = 0x1010B,
+  kHyperVNetworkRNDISOIDGeneralVendorId                     = 0x1010C,
+  kHyperVNetworkRNDISOIDGeneralVendorDescription            = 0x1010D,
+  kHyperVNetworkRNDISOIDGeneralCurrentPacketFilter          = 0x1010E,
+  kHyperVNetworkRNDISOIDGeneralCurrentLookahead             = 0x1010F,
+  kHyperVNetworkRNDISOIDGeneralDriverVersion                = 0x10110,
+  kHyperVNetworkRNDISOIDGeneralMaximumTotalSize             = 0x10111,
+  kHyperVNetworkRNDISOIDGeneralProtocolOptions              = 0x10112,
+  kHyperVNetworkRNDISOIDGeneralMACOptions                   = 0x10113,
+  kHyperVNetworkRNDISOIDGeneralMediaConnectStatus           = 0x10114,
+  kHyperVNetworkRNDISOIDGeneralMaximumSendPackets           = 0x10115,
+  kHyperVNetworkRNDISOIDGeneralVendorDriverVersion          = 0x10116,
+  kHyperVNetworkRNDISOIDGeneralSupportedGUIDs               = 0x10117,
+  kHyperVNetworkRNDISOIDGeneralNetworkLayerAddresses        = 0x10118,
+  kHyperVNetworkRNDISOIDGeneralTransportHeaderOffset        = 0x10119,
+  kHyperVNetworkRNDISOIDGeneralPhysicalMedium               = 0x10202,
+  kHyperVNetworkRNDISOIDGeneralMachineName                  = 0x1021A,
+  kHyperVNetworkRNDISOIDGeneralRNDISConfigParameter         = 0x1021B,
+  kHyperVNetworkRNDISOIDGeneralVLANId                       = 0x1021C,
+  
+  // Optional general OIDs.
+  kHyperVNetworkRNDISOIDGeneralMediaCapabilities            = 0x10201,
+  
+  // Required statistics OIDs.
+  kHyperVNetworkRNDISOIDGeneralTransmitOk                   = 0x20101,
+  kHyperVNetworkRNDISOIDGeneralReceiveOk                    = 0x20102,
+  kHyperVNetworkRNDISOIDGeneralTransmitError                = 0x20103,
+  kHyperVNetworkRNDISOIDGeneralReceiveError                 = 0x20104,
+  kHyperVNetworkRNDISOIDGeneralReceiveNoBuffer              = 0x20105,
+  
+  // 802.3 Ethernet OIDs.
+  kHyperVNetworkRNDISOIDEthernetPermanentAddress            = 0x1010101,
+  kHyperVNetworkRNDISOIDEthernetCurrentAddress              = 0x1010102,
+  kHyperVNetworkRNDISOIDEthernetMulticastList               = 0x1010103,
+  kHyperVNetworkRNDISOIDEthernetMaximumListSize             = 0x1010104,
+  kHyperVNetworkRNDISOIDEthernetMACOptions                  = 0x1010105,
+  kHyperVNetworkRNDISOIDEthernetReceiveErrorAlignment       = 0x1020101,
+  kHyperVNetworkRNDISOIDEthernetTransmitOneCollision        = 0x1020102,
+  kHyperVNetworkRNDISOIDEthernetTransmitMoreCollisions      = 0x1020103,
+  kHyperVNetworkRNDISOIDEthernetTransmitDeferred            = 0x1020201,
+  kHyperVNetworkRNDISOIDEthernetTransmitMaxCollisions       = 0x1020202,
+  kHyperVNetworkRNDISOIDEthernetReceiveOverrun              = 0x1020203,
+  kHyperVNetworkRNDISOIDEthernetTransmitUnderrun            = 0x1020204,
+  kHyperVNetworkRNDISOIDEthernetTransmitHeartbeatFailure    = 0x1020205,
+  kHyperVNetworkRNDISOIDEthernetTransmitTimesCRSLost        = 0x1020206,
+  kHyperVNetworkRNDISOIDEthernetTransmitLateCollision       = 0x1020207
+} HyperVNetworkRNDISOID;
+
+//
+// Query request message.
+//
+typedef struct {
+  UInt32                requestId;
+  HyperVNetworkRNDISOID oid;
+  UInt32                infoBufferLength;
+  UInt32                infoBufferOffset;
+  UInt32                deviceVcHandle;
+} HyperVNetworkRNDISMessageQueryRequest;
+
+//
+// Query complete message.
 //
 typedef struct {
   UInt32 requestId;
-  UInt32 oid;
+  UInt32 status;
   UInt32 infoBufferLength;
   UInt32 infoBufferOffset;
-  UInt32 deviceVcHandle;
+} HyperVNetworkRNDISMessageQueryComplete;
+
+//
+// Set request message.
+//
+typedef struct {
+  UInt32                requestId;
+  HyperVNetworkRNDISOID oid;
+  UInt32                infoBufferLength;
+  UInt32                infoBufferOffset;
+  UInt32                deviceVcHandle;
 } HyperVNetworkRNDISMessageSetRequest;
 
 //
@@ -308,6 +398,45 @@ typedef struct {
   UInt32 requestId;
   UInt32 status;
 } HyperVNetworkRNDISMessageSetComplete;
+
+//
+// Reset request message.
+//
+typedef struct {
+  UInt32 reserved;
+} HyperVNetworkRNDISMessageResetRequest;
+
+//
+// Reset request message.
+//
+typedef struct {
+  UInt32 status;
+  UInt32 addressingReset;
+} HyperVNetworkRNDISMessageResetComplete;
+
+//
+// Indicate status message.
+//
+typedef struct {
+  UInt32 status;
+  UInt32 statusBufferLength;
+  UInt32 statusBufferOffset;
+} HyperVNetworkRNDISMessageIndicateStatus;
+
+//
+// Keep alive request message.
+//
+typedef struct {
+  UInt32 requestId;
+} HyperVNetworkRNDISMessageKeepaliveRequest;
+
+//
+// Keep alive complete message.
+//
+typedef struct {
+  UInt32 requestId;
+  UInt32 status;
+} HyperVNetworkRNDISMessageKeepaliveComplete;
 
 //
 // Main message structure.
@@ -320,8 +449,15 @@ typedef struct {
     UInt32                                        requestId;
     HyperVNetworkRNDISMessageInitializeRequest    initRequest;
     HyperVNetworkRNDISMessageInitializeComplete   initComplete;
+    HyperVNetworkRNDISMessageQueryRequest         queryRequest;
+    HyperVNetworkRNDISMessageQueryComplete        queryComplete;
     HyperVNetworkRNDISMessageSetRequest           setRequest;
     HyperVNetworkRNDISMessageSetComplete          setComplete;
+    HyperVNetworkRNDISMessageResetRequest         resetRequest;
+    HyperVNetworkRNDISMessageResetComplete        resetComplete;
+    HyperVNetworkRNDISMessageIndicateStatus       indicateStatus;
+    HyperVNetworkRNDISMessageKeepaliveRequest     keepaliveRequest;
+    HyperVNetworkRNDISMessageKeepaliveComplete    keepaliveComplete;
   };
 } HyperVNetworkRNDISMessage;
 
