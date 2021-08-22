@@ -13,14 +13,14 @@ bool HyperVMouse::handleStart(IOService *provider) {
   if (!super::handleStart(provider)) {
     return false;
   }
-  
+
   //
   // HIDDefaultBehavior needs to be set to Mouse for the device to
   // get exposed as a mouse to userspace.
   //
   DBGLOG("Initializing Hyper-V Synthetic Mouse");
   setProperty("HIDDefaultBehavior", "Mouse");
-  
+
   //
   // Get parent VMBus device object.
   //
@@ -29,7 +29,7 @@ bool HyperVMouse::handleStart(IOService *provider) {
     return false;
   }
   hvDevice->retain();
-  
+
   //
   // Configure the channel.
   //
@@ -37,38 +37,38 @@ bool HyperVMouse::handleStart(IOService *provider) {
                              this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVMouse::handleInterrupt))) {
     return false;
   }
-  
+
   if (!setupMouse()) {
     SYSLOG("Failed to set up device");
     return false;
   }
-  
+
   for (int i = 0; i < kHyperVMouseInitTimeout; i++) {
     if (hidDescriptorValid) {
       DBGLOG("Device info packet is now valid");
       break;
     }
-    
+
     IODelay(10);
   }
-  
+
   if (hidDescriptorValid) {
     SYSLOG("Initialized Hyper-V Synthetic Mouse");
   } else {
     SYSLOG("Timed out getting device info");
   }
-  
+
   return hidDescriptorValid;
 }
 
 void HyperVMouse::handleStop(IOService *provider) {
   DBGLOG("Hyper-V Mouse is stopping");
-  
+
   if (hidDescriptor != NULL) {
     IOFree(hidDescriptor, hidDescriptorLength);
     hidDescriptor = NULL;
   }
-  
+
   //
   // Close channel and remove interrupt sources.
   //
@@ -76,7 +76,7 @@ void HyperVMouse::handleStop(IOService *provider) {
     hvDevice->closeChannel();
     hvDevice->release();
   }
-  
+
   super::handleStop(provider);
 }
 
@@ -114,4 +114,3 @@ IOReturn HyperVMouse::newReportDescriptor(IOMemoryDescriptor **descriptor) const
   *descriptor = bufferDesc;
   return kIOReturnSuccess;
 }
-
