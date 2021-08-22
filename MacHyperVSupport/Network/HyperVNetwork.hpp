@@ -19,6 +19,8 @@
 #define SYSLOG(str, ...) SYSLOG_PRINT("HyperVNetwork", str, ## __VA_ARGS__)
 #define DBGLOG(str, ...) DBGLOG_PRINT("HyperVNetwork", str, ## __VA_ARGS__)
 
+#define MBit 1000000
+
 typedef struct HyperVNetworkRNDISRequest {
   HyperVNetworkRNDISMessage message;
   UInt8                     messageOverflow[PAGE_SIZE];
@@ -60,6 +62,10 @@ private:
   IOEthernetInterface           *ethInterface;
   IOEthernetAddress             ethAddress;
   
+  bool                          isLinkUp = false;
+  OSDictionary                  *mediumDict;
+  UInt32                        currentMediumIndex;
+  
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
   
   
@@ -86,7 +92,10 @@ private:
   //
   // Private
   //
+  void addNetworkMedium(UInt32 index, UInt32 type, UInt32 speed);
+  void createMediumDictionary();
   bool readMACAddress();
+  void updateLinkState(HyperVNetworkRNDISMessageIndicateStatus *indicateStatus);
   
 public:
   //

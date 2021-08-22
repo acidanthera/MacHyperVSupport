@@ -64,6 +64,10 @@ bool HyperVNetwork::processRNDISPacket(UInt8 *data, UInt32 dataLength) {
       IOLog("\n");
       break;
       
+    case kHyperVNetworkRNDISMessageTypeIndicate:
+      updateLinkState(&rndisPkt->indicateStatus);
+      break;
+      
     default:
       break;
   }

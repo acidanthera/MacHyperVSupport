@@ -254,7 +254,13 @@ typedef struct __attribute__((packed)) {
 
 #define kHyperVNetworkRNDISMessageTypeCompletion  0x80000000
 
-#define kHyperVNetworkRNDISStatusSuccess        0x0
+typedef enum : UInt32 {
+  kHyperVNetworkRNDISStatusSuccess              = 0x0,
+  kHyperVNetworkRNDISStatusMediaConnect         = 0x4001000B,
+  kHyperVNetworkRNDISStatusMediaDisconnect      = 0x4001000C,
+  kHyperVNetworkRNDISStatusLinkSpeedChange      = 0x40010013,
+  kHyperVNetworkRNDISStatusNetworkChange        = 0x40010018
+} HyperVNetworkRNDISStatus;
 
 typedef enum : UInt32 {
   kHyperVNetworkRNDISMessageTypePacket            = 0x1,
@@ -286,17 +292,17 @@ typedef struct {
 // Initialization complete message.
 //
 typedef struct {
-  UInt32 requestId;
-  UInt32 status;
-  UInt32 majorVersion;
-  UInt32 minorVersion;
-  UInt32 devFlags;
-  UInt32 medium;
-  UInt32 maxPacketsPerMessage;
-  UInt32 maxTransferSize;
-  UInt32 packetAlignmentFactor;
-  UInt32 afListOffset;
-  UInt32 afListSize;
+  UInt32                    requestId;
+  HyperVNetworkRNDISStatus  status;
+  UInt32                    majorVersion;
+  UInt32                    minorVersion;
+  UInt32                    devFlags;
+  UInt32                    medium;
+  UInt32                    maxPacketsPerMessage;
+  UInt32                    maxTransferSize;
+  UInt32                    packetAlignmentFactor;
+  UInt32                    afListOffset;
+  UInt32                    afListSize;
 } HyperVNetworkRNDISMessageInitializeComplete;
 
 //
@@ -362,6 +368,11 @@ typedef enum : UInt32 {
   kHyperVNetworkRNDISOIDEthernetTransmitLateCollision       = 0x1020207
 } HyperVNetworkRNDISOID;
 
+typedef enum : UInt32 {
+  kHyperVNetworkRNDISLinkStateConnected,
+  kHyperVNetworkRNDISLinkStateDisconnted
+} HyperVNetworkRNDISLinkState;
+
 //
 // Query request message.
 //
@@ -377,10 +388,10 @@ typedef struct {
 // Query complete message.
 //
 typedef struct {
-  UInt32 requestId;
-  UInt32 status;
-  UInt32 infoBufferLength;
-  UInt32 infoBufferOffset;
+  UInt32                    requestId;
+  HyperVNetworkRNDISStatus  status;
+  UInt32                    infoBufferLength;
+  UInt32                    infoBufferOffset;
 } HyperVNetworkRNDISMessageQueryComplete;
 
 //
@@ -398,8 +409,8 @@ typedef struct {
 // Set complete message.
 //
 typedef struct {
-  UInt32 requestId;
-  UInt32 status;
+  UInt32                    requestId;
+  HyperVNetworkRNDISStatus  status;
 } HyperVNetworkRNDISMessageSetComplete;
 
 //
@@ -413,17 +424,17 @@ typedef struct {
 // Reset request message.
 //
 typedef struct {
-  UInt32 status;
-  UInt32 addressingReset;
+  HyperVNetworkRNDISStatus  status;
+  UInt32                    addressingReset;
 } HyperVNetworkRNDISMessageResetComplete;
 
 //
 // Indicate status message.
 //
 typedef struct {
-  UInt32 status;
-  UInt32 statusBufferLength;
-  UInt32 statusBufferOffset;
+  HyperVNetworkRNDISStatus  status;
+  UInt32                    statusBufferLength;
+  UInt32                    statusBufferOffset;
 } HyperVNetworkRNDISMessageIndicateStatus;
 
 //
@@ -437,8 +448,8 @@ typedef struct {
 // Keep alive complete message.
 //
 typedef struct {
-  UInt32 requestId;
-  UInt32 status;
+  UInt32                    requestId;
+  HyperVNetworkRNDISStatus  status;
 } HyperVNetworkRNDISMessageKeepaliveComplete;
 
 //

@@ -32,7 +32,19 @@ void HyperVNetwork::handleInterrupt(OSObject *owner, IOInterruptEventSource *sen
         break;
         
       case kVMBusPacketTypeCompletion:
+        //
+        // Copy response data.
+        //
+        memcpy(vmbusRequests->responseData, (UInt8*)buf + headersize, totalsize - headersize);
         
+        //
+        // Wakeup sleeping thread.
+        //
+        IOLockLock(vmbusRequests->lock);
+        vmbusRequests->isSleeping = false;
+        IOLockUnlock(vmbusRequests->lock);
+        IOLockWakeup(vmbusRequests->lock, &vmbusRequests->isSleeping, true);
+        break;
       default:
         break;
     }
@@ -187,11 +199,104 @@ bool HyperVNetwork::connectNetwork() {
   
   initializeRNDIS();
   
-  UInt8 mac[6];
-  UInt32 size = sizeof(mac);
-  
-  queryRNDISOID(kHyperVNetworkRNDISOIDEthernetPermanentAddress, mac, &size);
-  DBGLOG("RNDIS MAC %X:%X:%X:%X:%X:%X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  readMACAddress();
+  updateLinkState(NULL);
   
   return true;
+}
+
+void HyperVNetwork::addNetworkMedium(UInt32 index, UInt32 type, UInt32 speed) {
+  IONetworkMedium *medium = IONetworkMedium::medium(type, speed * MBit, 0, index);
+  if (medium != NULL) {
+    IONetworkMedium::addMedium(mediumDict, medium);
+    medium->release();
+  }
+}
+
+void HyperVNetwork::createMediumDictionary() {
+  //
+  // Create medium dictionary with all possible speeds.
+  //
+  mediumDict = OSDictionary::withCapacity(1);
+  
+  addNetworkMedium(0, kIOMediumEthernetAuto, 0);
+  
+  publishMediumDictionary(mediumDict);
+}
+
+bool HyperVNetwork::readMACAddress() {
+  UInt32 macSize = sizeof (ethAddress.bytes);
+  if (!queryRNDISOID(kHyperVNetworkRNDISOIDEthernetPermanentAddress, (void *)ethAddress.bytes, &macSize)) {
+    SYSLOG("Failed to get MAC address");
+    return false;
+  }
+  
+  DBGLOG("MAC address is %02X:%02X:%02X:%02X:%02X:%02X",
+         ethAddress.bytes[0], ethAddress.bytes[1], ethAddress.bytes[2],
+         ethAddress.bytes[3], ethAddress.bytes[4], ethAddress.bytes[5]);
+  return true;
+}
+
+void HyperVNetwork::updateLinkState(HyperVNetworkRNDISMessageIndicateStatus *indicateStatus) {
+  //
+  // Pull initial link state from OID.
+  //
+  if (indicateStatus == NULL) {
+    HyperVNetworkRNDISLinkState linkState;
+    UInt32 linkStateSize = sizeof (linkState);
+    if (!queryRNDISOID(kHyperVNetworkRNDISOIDGeneralMediaConnectStatus, &linkState, &linkStateSize)) {
+      SYSLOG("Failed to get link state");
+      return;
+    }
+
+    DBGLOG("Link state is initially %s", linkState == kHyperVNetworkRNDISLinkStateConnected ? "up" : "down");
+    isLinkUp = linkState == kHyperVNetworkRNDISLinkStateConnected;
+    if (isLinkUp) {
+      setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive, 0);
+    } else {
+      setLinkStatus(kIONetworkLinkValid, 0);
+    }
+    return;
+  }
+
+  //
+  // Handle media and link speed changes.
+  //
+  DBGLOG("Indicate status of 0x%X, buffer off 0x%X of %u bytes received",
+         indicateStatus->status, indicateStatus->statusBufferOffset, indicateStatus->statusBufferLength);
+  switch (indicateStatus->status) {
+    case kHyperVNetworkRNDISStatusLinkSpeedChange:
+      DBGLOG("Link has changed speeds");
+      break;
+
+    case kHyperVNetworkRNDISStatusMediaConnect:
+      if (!isLinkUp) {
+        DBGLOG("Link is coming up");
+        setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive, 0);
+        isLinkUp = true;
+      }
+      break;
+
+    case kHyperVNetworkRNDISStatusMediaDisconnect:
+      if (isLinkUp) {
+        DBGLOG("Link is going down");
+        setLinkStatus(kIONetworkLinkValid, 0);
+        isLinkUp = false;
+      }
+      break;
+
+    case kHyperVNetworkRNDISStatusNetworkChange:
+      if (isLinkUp) {
+        //
+        // Do a link up and down to force a refresh in the OS.
+        //
+        DBGLOG("Link has changed networks");
+        setLinkStatus(kIONetworkLinkValid, 0);
+        setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive, 0);
+      }
+      break;
+
+    default:
+      break;
+  }
 }

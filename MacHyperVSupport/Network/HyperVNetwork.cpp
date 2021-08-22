@@ -38,6 +38,7 @@ bool HyperVNetwork::start(IOService *provider) {
   rndisLock = IOLockAlloc();
   
   connectNetwork();
+  createMediumDictionary();
   
   //
   // Attach network interface.
