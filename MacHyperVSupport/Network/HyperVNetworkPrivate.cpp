@@ -14,12 +14,14 @@ void HyperVNetwork::handleInterrupt(OSObject *owner, IOInterruptEventSource *sen
   UInt32 headersize;
   UInt32 totalsize;
   
+  void *responseBuffer;
+  UInt32 responseLength;
+  
   while (true) {
     if (!hvDevice->nextPacketAvailable(&type, &headersize, &totalsize)) {
       DBGLOG("last one");
       break;
     }
-    DBGLOG("Packet type %X, header size %X, total size %X", type, headersize, totalsize);
     
     void *buf = IOMalloc(totalsize);
     hvDevice->readRawPacket(buf, totalsize);
@@ -32,18 +34,11 @@ void HyperVNetwork::handleInterrupt(OSObject *owner, IOInterruptEventSource *sen
         break;
         
       case kVMBusPacketTypeCompletion:
-        //
-        // Copy response data.
-        //
-        memcpy(vmbusRequests->responseData, (UInt8*)buf + headersize, totalsize - headersize);
         
-        //
-        // Wakeup sleeping thread.
-        //
-        IOLockLock(vmbusRequests->lock);
-        vmbusRequests->isSleeping = false;
-        IOLockUnlock(vmbusRequests->lock);
-        IOLockWakeup(vmbusRequests->lock, &vmbusRequests->isSleeping, true);
+        if (hvDevice->getPendingTransaction(((VMBusPacketHeader*)buf)->transactionId, &responseBuffer, &responseLength)) {
+          memcpy(responseBuffer, (UInt8*)buf + headersize, responseLength);
+          hvDevice->wakeTransaction(((VMBusPacketHeader*)buf)->transactionId);
+        }
         break;
       default:
         break;

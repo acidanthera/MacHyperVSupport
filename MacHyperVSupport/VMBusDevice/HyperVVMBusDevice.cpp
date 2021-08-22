@@ -36,6 +36,9 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
   snprintf(channelLocation, sizeof (channelLocation), "%x", channelId);
   setLocation(channelLocation);
   
+  vmbusRequestsLock = IOLockAlloc();
+  vmbusTransLock = IOLockAlloc();
+  
   return true;
 }
 
@@ -47,6 +50,9 @@ void HyperVVMBusDevice::detach(IOService *provider) {
     closeChannel();
   }
   vmbusProvider->freeVMBusChannel(channelId);
+  
+  IOLockFree(vmbusRequestsLock);
+  IOLockFree(vmbusTransLock);
   
   super::detach(provider);
 }
@@ -133,6 +139,14 @@ bool HyperVVMBusDevice::nextInbandPacketAvailable(UInt32 *packetDataLength) {
   return result;
 }
 
+UInt64 HyperVVMBusDevice::getNextTransId() {
+  IOLockLock(vmbusTransLock);
+  UInt64 value = vmbusTransId;
+  vmbusTransId++;
+  IOLockUnlock(vmbusTransLock);
+  return value;
+}
+
 IOReturn HyperVVMBusDevice::doRequest(HyperVVMBusDeviceRequest *request) {
   return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::doRequestGated), request, NULL, NULL);
 }
@@ -152,13 +166,35 @@ IOReturn HyperVVMBusDevice::writeRawPacket(void *buffer, UInt32 bufferLength) {
                                 NULL, NULL, buffer, &bufferLength);
 }
 
-IOReturn HyperVVMBusDevice::writeInbandPacket(void *buffer, UInt32 bufferLength, bool responseRequired, UInt64 transactionId) {
-  return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::writeInbandPacketGated),
+IOReturn HyperVVMBusDevice::writeInbandPacket(void *buffer, UInt32 bufferLength, bool responseRequired,
+                                              void *responseBuffer, UInt32 responseBufferLength) {
+  UInt64 transactionId = getNextTransId();
+  HyperVVMBusDeviceRequestNew req;
+  req.isSleeping = true;
+  req.lock = IOLockAlloc();
+  req.responseData = responseBuffer;
+  req.responseDataLength = responseBufferLength;
+  req.transactionId = transactionId;
+  
+  if (responseBuffer != NULL) {
+    addPacketRequest(&req);
+  }
+  
+  IOReturn status = commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::writeInbandPacketGated),
                                 buffer, &bufferLength, &responseRequired, &transactionId);
+  if (responseBuffer != NULL) {
+    if (status == kIOReturnSuccess) {
+      sleepPacketRequest(&req);
+    } else {
+      wakeTransaction(transactionId);
+    }
+  }
+  return status;
 }
 
-IOReturn HyperVVMBusDevice::writeGPADirectSinglePagePacket(void *buffer, UInt32 bufferLength, bool responseRequired, UInt64 transactionId,
-                                                           VMBusSinglePageBuffer pageBuffers[], UInt32 pageBufferCount) {
+IOReturn HyperVVMBusDevice::writeGPADirectSinglePagePacket(void *buffer, UInt32 bufferLength, bool responseRequired,
+                                                           VMBusSinglePageBuffer pageBuffers[], UInt32 pageBufferCount,
+                                                           void *responseBuffer, UInt32 responseBufferLength) {
   if (pageBufferCount > kVMBusMaxPageBufferCount) {
     return kIOReturnNoResources;
   }
@@ -166,6 +202,7 @@ IOReturn HyperVVMBusDevice::writeGPADirectSinglePagePacket(void *buffer, UInt32 
   //
   // Create packet for page buffers.
   //
+  UInt64 transactionId = getNextTransId();
   VMBusPacketSinglePageBuffer pagePacket;
   UInt32 pagePacketLength = sizeof (VMBusPacketSinglePageBuffer) -
     ((kVMBusMaxPageBufferCount - pageBufferCount) * sizeof (VMBusSinglePageBuffer));
@@ -183,9 +220,29 @@ IOReturn HyperVVMBusDevice::writeGPADirectSinglePagePacket(void *buffer, UInt32 
     pagePacket.ranges[i].offset = pageBuffers[i].offset;
     pagePacket.ranges[i].pfn    = pageBuffers[i].pfn;
   }
+  
+  HyperVVMBusDeviceRequestNew req;
+  req.isSleeping = true;
+  req.lock = IOLockAlloc();
+  req.responseData = responseBuffer;
+  req.responseDataLength = responseBufferLength;
+  req.transactionId = transactionId;
+  
+  if (responseBuffer != NULL) {
+    addPacketRequest(&req);
+  }
 
-  return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::writeRawPacketGated),
+  IOReturn status = commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::writeRawPacketGated),
                                 &pagePacket, &pagePacketLength, buffer, &bufferLength);
+  
+  if (responseBuffer != NULL) {
+    if (status == kIOReturnSuccess) {
+      sleepPacketRequest(&req);
+    } else {
+      wakeTransaction(transactionId);
+    }
+  }
+  return status;
 }
 
 IOReturn HyperVVMBusDevice::sendMessage(void *message, UInt32 messageLength, VMBusPacketType type, UInt64 transactionId,
@@ -252,4 +309,57 @@ IOReturn HyperVVMBusDevice::sendMessageSinglePageBuffers(void *message, UInt32 m
     *responseLength = request.responseDataLength;
   }
   return status;
+}
+
+bool HyperVVMBusDevice::getPendingTransaction(UInt64 transactionId, void **buffer, UInt32 *bufferLength) {
+  IOLockLock(vmbusRequestsLock);
+
+  HyperVVMBusDeviceRequestNew *current = vmbusRequests;
+  while (current != NULL) {
+    if (current->transactionId == transactionId) {
+      MSGDBG("Found transaction %u", transactionId);
+
+      *buffer       = current->responseData;
+      *bufferLength = current->responseDataLength;
+      IOLockUnlock(vmbusRequestsLock);
+      return true;
+    }
+    current = current->next;
+  }
+
+  IOLockUnlock(vmbusRequestsLock);
+  return false;
+}
+
+void HyperVVMBusDevice::wakeTransaction(UInt64 transactionId) {
+  IOLockLock(vmbusRequestsLock);
+
+  HyperVVMBusDeviceRequestNew *current  = vmbusRequests;
+  HyperVVMBusDeviceRequestNew *previous = NULL;
+  while (current != NULL) {
+    if (current->transactionId == transactionId) {
+      MSGDBG("Waking transaction %u", transactionId);
+
+      //
+      // Remove from linked list.
+      //
+      if (previous != NULL) {
+        previous->next = current->next;
+      } else {
+        vmbusRequests = current->next;
+      }
+      IOLockUnlock(vmbusRequestsLock);
+
+      //
+      // Wake sleeping thread.
+      //
+      IOLockLock(current->lock);
+      current->isSleeping = false;
+      IOLockUnlock(current->lock);
+      IOLockWakeup(current->lock, &current->isSleeping, true);
+      return;
+    }
+    current = current->next;
+  }
+  IOLockUnlock(vmbusRequestsLock);
 }

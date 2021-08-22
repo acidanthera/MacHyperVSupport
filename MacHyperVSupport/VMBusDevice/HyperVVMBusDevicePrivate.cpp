@@ -98,6 +98,8 @@ IOReturn HyperVVMBusDevice::nextPacketAvailableGated(VMBusPacketType *type, UInt
   
   VMBusPacketHeader pktHeader;
   copyPacketDataFromRingBuffer(rxBuffer->readIndex, sizeof (VMBusPacketHeader), &pktHeader, sizeof (VMBusPacketHeader));
+  MSGDBG("Packet type %X, header size %X, total size %X",
+         pktHeader.type, pktHeader.headerLength << kVMBusPacketSizeShift, pktHeader.totalLength << kVMBusPacketSizeShift);
 
   if (type != NULL) {
     *type = pktHeader.type;
@@ -490,4 +492,26 @@ UInt32 HyperVVMBusDevice::zeroPacketDataToRingBuffer(UInt32 writeIndex, UInt32 l
   }
   
   return (writeIndex + length) % txBufferSize;
+}
+
+void HyperVVMBusDevice::addPacketRequest(HyperVVMBusDeviceRequestNew *vmbusRequest) {
+  IOLockLock(vmbusRequestsLock);
+  if (vmbusRequests == NULL) {
+    vmbusRequests = vmbusRequest;
+    vmbusRequests->next = NULL;
+  } else {
+    vmbusRequest->next = vmbusRequests;
+    vmbusRequests = vmbusRequest;
+  }
+  IOLockUnlock(vmbusRequestsLock);
+}
+
+void HyperVVMBusDevice::sleepPacketRequest(HyperVVMBusDeviceRequestNew *vmbusRequest) {
+  MSGDBG("Sleeping transaction %u", vmbusRequest->transactionId);
+  IOLockLock(vmbusRequest->lock);
+  while (vmbusRequest->isSleeping) {
+    IOLockSleep(vmbusRequest->lock, &vmbusRequest->isSleeping, THREAD_INTERRUPTIBLE);
+  }
+  IOLockUnlock(vmbusRequest->lock);
+  MSGDBG("Woken transaction %u after sleep", vmbusRequest->transactionId);
 }

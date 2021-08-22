@@ -41,11 +41,9 @@ typedef struct HyperVVMBusDeviceRequestNew {
   IOLock                    *lock;
   bool                      isSleeping;
   
-  void *sendData;
-  UInt32 sendDataLength;
-  
-  void *responseData;
-  UInt32 responseDataLength;
+  UInt64          transactionId;
+  void            *responseData;
+  UInt32          responseDataLength;
 } HyperVVMBusDeviceRequestNew;
 
 class HyperVVMBusDevice : public IOService {
@@ -68,6 +66,11 @@ private:
   VMBusRingBuffer         *rxBuffer;
   UInt32                  rxBufferSize;
   
+  HyperVVMBusDeviceRequestNew   *vmbusRequests = NULL;
+  IOLock                        *vmbusRequestsLock;
+  UInt64                        vmbusTransId = 0;
+  IOLock                        *vmbusTransLock;
+  
   bool                    debugPackets = false;
 
   bool setupInterrupt();
@@ -86,6 +89,9 @@ private:
   UInt32 seekPacketDataFromRingBuffer(UInt32 readIndex, UInt32 readLength);
   UInt32 copyPacketDataToRingBuffer(UInt32 writeIndex, void *data, UInt32 length);
   UInt32 zeroPacketDataToRingBuffer(UInt32 writeIndex, UInt32 length);
+  
+  void addPacketRequest(HyperVVMBusDeviceRequestNew *vmbusRequest);
+  void sleepPacketRequest(HyperVVMBusDeviceRequestNew *vmbusRequest);
   
   inline UInt32 getAvailableTxSpace() {
     return (txBuffer->writeIndex >= txBuffer->readIndex) ?
@@ -115,21 +121,28 @@ public:
   //
   bool nextPacketAvailable(VMBusPacketType *type, UInt32 *packetHeaderLength, UInt32 *packetTotalLength);
   bool nextInbandPacketAvailable(UInt32 *packetDataLength);
+  UInt64 getNextTransId();
   
   IOReturn doRequest(HyperVVMBusDeviceRequest *request);
   IOReturn readRawPacket(void *buffer, UInt32 bufferLength);
   IOReturn readInbandPacket(void *buffer, UInt32 bufferLength, UInt64 *transactionId);
   
   IOReturn writeRawPacket(void *buffer, UInt32 bufferLength);
-  IOReturn writeInbandPacket(void *buffer, UInt32 bufferLength, bool responseRequired, UInt64 transactionId);
-  IOReturn writeGPADirectSinglePagePacket(void *buffer, UInt32 bufferLength, bool responseRequired, UInt64 transactionId,
-                                          VMBusSinglePageBuffer pageBuffers[], UInt32 pageBufferCount);
+  IOReturn writeInbandPacket(void *buffer, UInt32 bufferLength, bool responseRequired,
+                             void *responseBuffer = NULL, UInt32 responseBufferLength = 0);
+  IOReturn writeGPADirectSinglePagePacket(void *buffer, UInt32 bufferLength, bool responseRequired,
+                                          VMBusSinglePageBuffer pageBuffers[], UInt32 pageBufferCount,
+                                          void *responseBuffer = NULL, UInt32 responseBufferLength = 0);
   
   IOReturn sendMessage(void *message, UInt32 messageLength, VMBusPacketType type, UInt64 transactionId,
                        bool responseRequired = false, void *response = NULL, UInt32 *responseLength = NULL);
   IOReturn sendMessageSinglePageBuffers(void *message, UInt32 messageLength, UInt64 transactionId,
                                         VMBusSinglePageBuffer pageBuffers[], UInt32 pageBufferCount,
                                         bool responseRequired = false, void *response = NULL, UInt32 *responseLength = NULL);
+  bool getPendingTransaction(UInt64 transactionId, void **buffer, UInt32 *bufferLength);
+  void wakeTransaction(UInt64 transactionId);
+  
+  
 };
 
 #endif

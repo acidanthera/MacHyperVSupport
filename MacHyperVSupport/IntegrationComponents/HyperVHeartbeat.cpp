@@ -68,6 +68,6 @@ bool HyperVHeartbeat::processMessage() {
   // Send response back to Hyper-V. The packet size will always be the same as the original inbound one.
   //
   heartbeatMsg.header.flags = kVMBusICFlagTransaction | kVMBusICFlagResponse;
-  hvDevice->writeInbandPacket(&heartbeatMsg, pktDataLength, false, 0);
+  hvDevice->writeInbandPacket(&heartbeatMsg, pktDataLength, false);
   return true;
 }
