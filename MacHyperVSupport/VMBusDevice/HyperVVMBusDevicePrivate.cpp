@@ -273,10 +273,10 @@ IOReturn HyperVVMBusDevice::readRawPacketGated(void *buffer, UInt32 *bufferLengt
   //
   VMBusPacketHeader pktHeader;
   copyPacketDataFromRingBuffer(rxBuffer->readIndex, sizeof (VMBusPacketHeader), &pktHeader, sizeof (VMBusPacketHeader));
-  
-  UInt32 packetHeaderLength = pktHeader.headerLength << kVMBusPacketSizeShift;
+
   UInt32 packetTotalLength = pktHeader.totalLength << kVMBusPacketSizeShift;
-  MSGDBG("RAW packet type %u, flags %u, trans %u, header length %u, total length %u", pktHeader.type, pktHeader.flags, pktHeader.transactionId, packetHeaderLength, packetTotalLength);
+  MSGDBG("RAW packet type %u, flags %u, trans %u, header length %u, total length %u", pktHeader.type, pktHeader.flags,
+         pktHeader.transactionId,pktHeader.headerLength << kVMBusPacketSizeShift, packetTotalLength);
   MSGDBG("RAW old RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
   
   if (*bufferLength < packetTotalLength) {
