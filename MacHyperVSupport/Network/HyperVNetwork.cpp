@@ -39,6 +39,19 @@ bool HyperVNetwork::start(IOService *provider) {
   
   connectNetwork();
   
+  //
+  // Attach network interface.
+  //
+  if (!attachInterface((IONetworkInterface **)&ethInterface, false)) {
+    return false;
+  }
+  ethInterface->registerService();
+  
   SYSLOG("Initialized Hyper-V Synthetic Networking");
   return true;
+}
+
+IOReturn HyperVNetwork::getHardwareAddress(IOEthernetAddress *addrP) {
+  *addrP = ethAddress;
+  return kIOReturnSuccess;
 }

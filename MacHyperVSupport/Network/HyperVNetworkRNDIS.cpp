@@ -143,9 +143,18 @@ bool HyperVNetwork::sendRNDISMessage(HyperVNetworkRNDISRequest *rndisRequest, bo
   netMsg.v1.sendRNDISPacket.sendBufferSectionIndex = -1;
   netMsg.v1.sendRNDISPacket.sendBufferSectionSize = 0;
   
-  UInt32 respSize = sizeof (netMsg);
+  //UInt32 respSize = sizeof (netMsg);
   rndisRequest->isSleeping = true;
   rndisRequest->message.requestId = getNextRNDISTransId();
+  
+  HyperVVMBusDeviceRequestNew vmRequest;
+  vmRequest.lock = IOLockAlloc();
+  vmRequest.isSleeping = true;
+  vmRequest.next = NULL;
+  vmRequest.sendData = &netMsg;
+  vmRequest.sendDataLength = sizeof (netMsg);
+  vmRequest.responseData = &netMsg;
+  vmRequest.responseDataLength = sizeof (netMsg);
   
   //
   // Add to linked list.
@@ -155,9 +164,20 @@ bool HyperVNetwork::sendRNDISMessage(HyperVNetworkRNDISRequest *rndisRequest, bo
     rndisRequests = rndisRequest;
   else
     rndisRequests->next = rndisRequest;
+  
+  vmbusRequests = &vmRequest;
   IOLockUnlock(rndisLock);
   
-  hvDevice->sendMessageSinglePageBuffers(&netMsg, sizeof (netMsg), 0, &pageBuffer, 1, true, &netMsg, &respSize);
+  hvDevice->writeGPADirectSinglePagePacket(&netMsg, sizeof (netMsg), true, 0, &pageBuffer, 1);
+  
+  IOLockLock(vmRequest.lock);
+  while (vmRequest.isSleeping) {
+    IOLockSleep(vmRequest.lock, &vmRequest.isSleeping, THREAD_INTERRUPTIBLE);
+  }
+  IOLockUnlock(vmRequest.lock);
+  DBGLOG("woke after vmbus");
+  
+  //hvDevice->sendMessageSinglePageBuffers(&netMsg, sizeof (netMsg), 0, &pageBuffer, 1, true, &netMsg, &respSize);
   
   IOLockLock(rndisRequest->lock);
   while (rndisRequest->isSleeping) {

@@ -147,9 +147,45 @@ IOReturn HyperVVMBusDevice::readInbandPacket(void *buffer, UInt32 bufferLength, 
                                 buffer, &bufferLength, transactionId);
 }
 
+IOReturn HyperVVMBusDevice::writeRawPacket(void *buffer, UInt32 bufferLength) {
+  return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::writeRawPacketGated),
+                                NULL, NULL, buffer, &bufferLength);
+}
+
 IOReturn HyperVVMBusDevice::writeInbandPacket(void *buffer, UInt32 bufferLength, bool responseRequired, UInt64 transactionId) {
   return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::writeInbandPacketGated),
                                 buffer, &bufferLength, &responseRequired, &transactionId);
+}
+
+IOReturn HyperVVMBusDevice::writeGPADirectSinglePagePacket(void *buffer, UInt32 bufferLength, bool responseRequired, UInt64 transactionId,
+                                                           VMBusSinglePageBuffer pageBuffers[], UInt32 pageBufferCount) {
+  if (pageBufferCount > kVMBusMaxPageBufferCount) {
+    return kIOReturnNoResources;
+  }
+
+  //
+  // Create packet for page buffers.
+  //
+  VMBusPacketSinglePageBuffer pagePacket;
+  UInt32 pagePacketLength = sizeof (VMBusPacketSinglePageBuffer) -
+    ((kVMBusMaxPageBufferCount - pageBufferCount) * sizeof (VMBusSinglePageBuffer));
+
+  pagePacket.header.type          = kVMBusPacketTypeDataUsingGPADirect;
+  pagePacket.header.headerLength  = pagePacketLength >> kVMBusPacketSizeShift;
+  pagePacket.header.totalLength   = (pagePacketLength + bufferLength) >> kVMBusPacketSizeShift;
+  pagePacket.header.flags         = responseRequired ? kVMBusPacketResponseRequired : 0;
+  pagePacket.header.transactionId = transactionId;
+
+  pagePacket.reserved             = 0;
+  pagePacket.rangeCount           = pageBufferCount;
+  for (int i = 0; i < pagePacket.rangeCount; i++) {
+    pagePacket.ranges[i].length = pageBuffers[i].length;
+    pagePacket.ranges[i].offset = pageBuffers[i].offset;
+    pagePacket.ranges[i].pfn    = pageBuffers[i].pfn;
+  }
+
+  return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::writeRawPacketGated),
+                                &pagePacket, &pagePacketLength, buffer, &bufferLength);
 }
 
 IOReturn HyperVVMBusDevice::sendMessage(void *message, UInt32 messageLength, VMBusPacketType type, UInt64 transactionId,

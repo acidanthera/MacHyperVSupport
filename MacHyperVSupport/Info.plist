@@ -195,6 +195,8 @@
 		<string>1.0.0d1</string>
 		<key>com.apple.iokit.IOHIDFamily</key>
 		<string>1.1</string>
+		<key>com.apple.iokit.IONetworkingFamily</key>
+		<string>1.5.0</string>
 		<key>com.apple.iokit.IOPCIFamily</key>
 		<string>1.0.0b1</string>
 		<key>com.apple.iokit.IOSCSIParallelFamily</key>

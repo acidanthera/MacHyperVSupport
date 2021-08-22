@@ -36,6 +36,18 @@ typedef struct {
   bool            ignoreLargePackets;
 } HyperVVMBusDeviceRequest;
 
+typedef struct HyperVVMBusDeviceRequestNew {
+  HyperVVMBusDeviceRequestNew *next;
+  IOLock                    *lock;
+  bool                      isSleeping;
+  
+  void *sendData;
+  UInt32 sendDataLength;
+  
+  void *responseData;
+  UInt32 responseDataLength;
+} HyperVVMBusDeviceRequestNew;
+
 class HyperVVMBusDevice : public IOService {
   OSDeclareDefaultStructors(HyperVVMBusDevice);
   
@@ -67,6 +79,7 @@ private:
   IOReturn doRequestGated(HyperVVMBusDeviceRequest *request, void *pageBufferData, UInt32 *pageBufferLength);
   IOReturn readRawPacketGated(void *buffer, UInt32 *bufferLength);
   IOReturn readInbandPacketGated(void *buffer, UInt32 *bufferLength, UInt64 *transactionId);
+  IOReturn writeRawPacketGated(void *header, UInt32 *headerLength, void *buffer, UInt32 *bufferLength);
   IOReturn writeInbandPacketGated(void *buffer, UInt32 *bufferLength, bool *responseRequired, UInt64 *transactionId);
   
   UInt32 copyPacketDataFromRingBuffer(UInt32 readIndex, UInt32 readLength, void *data, UInt32 dataLength);
@@ -107,7 +120,10 @@ public:
   IOReturn readRawPacket(void *buffer, UInt32 bufferLength);
   IOReturn readInbandPacket(void *buffer, UInt32 bufferLength, UInt64 *transactionId);
   
+  IOReturn writeRawPacket(void *buffer, UInt32 bufferLength);
   IOReturn writeInbandPacket(void *buffer, UInt32 bufferLength, bool responseRequired, UInt64 transactionId);
+  IOReturn writeGPADirectSinglePagePacket(void *buffer, UInt32 bufferLength, bool responseRequired, UInt64 transactionId,
+                                          VMBusSinglePageBuffer pageBuffers[], UInt32 pageBufferCount);
   
   IOReturn sendMessage(void *message, UInt32 messageLength, VMBusPacketType type, UInt64 transactionId,
                        bool responseRequired = false, void *response = NULL, UInt32 *responseLength = NULL);

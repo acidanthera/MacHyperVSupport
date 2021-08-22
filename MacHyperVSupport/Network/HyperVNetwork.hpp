@@ -8,10 +8,13 @@
 #ifndef HyperVNetwork_hpp
 #define HyperVNetwork_hpp
 
+#include <IOKit/network/IOEthernetController.h>
+#include <IOKit/network/IOEthernetInterface.h>
+
 #include "HyperVVMBusDevice.hpp"
 #include "HyperVNetworkRegs.hpp"
 
-#define super IOService
+#define super IOEthernetController
 
 #define SYSLOG(str, ...) SYSLOG_PRINT("HyperVNetwork", str, ## __VA_ARGS__)
 #define DBGLOG(str, ...) DBGLOG_PRINT("HyperVNetwork", str, ## __VA_ARGS__)
@@ -28,7 +31,7 @@ typedef struct HyperVNetworkRNDISRequest {
   mach_vm_address_t         messagePhysicalAddress;
 } HyperVNetworkRNDISRequest;
 
-class HyperVNetwork : public IOService {
+class HyperVNetwork : public IOEthernetController {
   OSDeclareDefaultStructors(HyperVNetwork);
 
 private:
@@ -52,6 +55,10 @@ private:
   UInt32                        rndisTransId = 0;
   
   HyperVNetworkRNDISRequest     *rndisRequests;
+  HyperVVMBusDeviceRequestNew   *vmbusRequests;
+  
+  IOEthernetInterface           *ethInterface;
+  IOEthernetAddress             ethAddress;
   
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
   
@@ -61,6 +68,7 @@ private:
   bool connectNetwork();
   
   void handleRNDISRanges(VMBusPacketTransferPages *pktPages, UInt32 headerSize, UInt32 pktSize);
+  void handleCompletion();
 
   bool processRNDISPacket(UInt8 *data, UInt32 dataLength);
   
@@ -75,11 +83,21 @@ private:
   bool initializeRNDIS();
   bool queryRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 *valueSize);
   
+  //
+  // Private
+  //
+  bool readMACAddress();
+  
 public:
   //
   // IOService overrides.
   //
   virtual bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
+  
+  //
+  // IOEthernetController overrides.
+  //
+  IOReturn getHardwareAddress(IOEthernetAddress *addrP) APPLE_KEXT_OVERRIDE;
 };
 
 #endif /* HyperVNetwork_hpp */

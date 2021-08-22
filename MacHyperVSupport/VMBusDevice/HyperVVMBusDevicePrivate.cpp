@@ -343,6 +343,49 @@ IOReturn HyperVVMBusDevice::readInbandPacketGated(void *buffer, UInt32 *bufferLe
   return kIOReturnSuccess;
 }
 
+IOReturn HyperVVMBusDevice::writeRawPacketGated(void *header, UInt32 *headerLength, void *buffer, UInt32 *bufferLength) {
+  UInt32 pktHeaderLength        = headerLength != NULL ? *headerLength : 0;
+  UInt32 pktTotalLength         = pktHeaderLength + *bufferLength;
+  UInt32 pktTotalLengthAligned  = HV_PACKETALIGN(pktTotalLength);
+  
+  UInt32 writeIndexOld          = txBuffer->writeIndex;
+  UInt32 writeIndexNew          = writeIndexOld;
+  UInt64 writeIndexShifted      = ((UInt64)writeIndexOld) << 32;
+  
+  //
+  // Ensure there is space for the packet.
+  //
+  // We cannot end up with read index == write index after the write, as that would indicate an empty buffer.
+  //
+  if (getAvailableTxSpace() <= pktTotalLengthAligned) {
+    SYSLOG("RAW packet is too large for buffer (TXR: %X, TXW: %X)", txBuffer->readIndex, txBuffer->writeIndex);
+    return kIOReturnNoResources;
+  }
+  
+  //
+  // Copy header, data, padding, and index to this packet.
+  //
+  MSGDBG("RAW packet header length %u, total length %u, pad %u", pktHeaderLength, pktTotalLength, pktTotalLengthAligned - pktTotalLength);
+  if (header != NULL && headerLength != NULL) {
+    writeIndexNew = copyPacketDataToRingBuffer(writeIndexNew, header, *headerLength);
+  }
+  writeIndexNew = copyPacketDataToRingBuffer(writeIndexNew, buffer, *bufferLength);
+  writeIndexNew = zeroPacketDataToRingBuffer(writeIndexNew, pktTotalLengthAligned - pktTotalLength);
+  writeIndexNew = copyPacketDataToRingBuffer(writeIndexNew, &writeIndexShifted, sizeof (writeIndexShifted));
+  MSGDBG("RAW TX read index %X, new TX write index %X", txBuffer->readIndex, writeIndexNew);
+  
+  //
+  // Update write index and notify Hyper-V if needed.
+  //
+  MSGDBG("RAW TX imask %X, channel ID %u", txBuffer->interruptMask, channelId);
+  txBuffer->writeIndex = writeIndexNew;
+  if (txBuffer->interruptMask == 0) {
+    vmbusProvider->signalVMBusChannel(channelId);
+  }
+  MSGDBG("RAW TX read index %X, new TX write index %X", txBuffer->readIndex, txBuffer->writeIndex);
+  return kIOReturnSuccess;
+}
+
 IOReturn HyperVVMBusDevice::writeInbandPacketGated(void *buffer, UInt32 *bufferLength, bool *responseRequired, UInt64 *transactionId) {
   //
   // Create inband packet header.
