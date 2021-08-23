@@ -369,7 +369,8 @@ void HyperVVMBusDevice::wakeTransaction(UInt64 transactionId) {
       IOLockWakeup(current->lock, &current->isSleeping, true);
       return;
     }
-    current = current->next;
+    previous  = current;
+    current   = current->next;
   }
   IOLockUnlock(vmbusRequestsLock);
 }
