@@ -36,6 +36,16 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
   snprintf(channelLocation, sizeof (channelLocation), "%x", channelId);
   setLocation(channelLocation);
   
+  //
+  // built-in required for some devices, like networking.
+  //
+  UInt8 builtInBytes = 0;
+  OSData *builtInData = OSData::withBytes(&builtInBytes, sizeof (builtInBytes));
+  if (builtInData != NULL) {
+    setProperty("built-in", builtInData);
+    builtInData->release();
+  }
+
   vmbusRequestsLock = IOLockAlloc();
   vmbusTransLock = IOLockAlloc();
   
