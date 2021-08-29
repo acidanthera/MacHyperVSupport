@@ -69,6 +69,7 @@ private:
   HyperVVMBusDeviceRequestNew   *vmbusRequests = NULL;
   IOLock                        *vmbusRequestsLock;
   UInt64                        vmbusTransId = 0;
+  UInt64                        vmbusMaxAutoTransId = UINT64_MAX;
   IOLock                        *vmbusTransLock;
   
   bool                    debugPackets = false;
@@ -111,7 +112,7 @@ public:
   // General functions.
   //
   void setDebugMessagePrinting(bool enabled) { debugPackets = enabled; }
-  bool openChannel(UInt32 txSize, UInt32 rxSize, OSObject *owner = NULL, IOInterruptEventAction intAction = NULL);
+  bool openChannel(UInt32 txSize, UInt32 rxSize, OSObject *owner = NULL, IOInterruptEventAction intAction = NULL, UInt64 maxAutoTransId = UINT64_MAX);
   void closeChannel();
   bool createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer);
 
@@ -130,6 +131,8 @@ public:
   IOReturn writeRawPacket(void *buffer, UInt32 bufferLength);
   IOReturn writeInbandPacket(void *buffer, UInt32 bufferLength, bool responseRequired,
                              void *responseBuffer = NULL, UInt32 responseBufferLength = 0);
+  IOReturn writeInbandPacketWithTransactionId(void *buffer, UInt32 bufferLength, UInt64 transactionId, bool responseRequired,
+                                              void *responseBuffer = NULL, UInt32 responseBufferLength = 0);
   IOReturn writeGPADirectSinglePagePacket(void *buffer, UInt32 bufferLength, bool responseRequired,
                                           VMBusSinglePageBuffer pageBuffers[], UInt32 pageBufferCount,
                                           void *responseBuffer = NULL, UInt32 responseBufferLength = 0);
@@ -139,6 +142,11 @@ public:
   IOReturn sendMessageSinglePageBuffers(void *message, UInt32 messageLength, UInt64 transactionId,
                                         VMBusSinglePageBuffer pageBuffers[], UInt32 pageBufferCount,
                                         bool responseRequired = false, void *response = NULL, UInt32 *responseLength = NULL);
+  IOReturn sendMessageMultiPageBuffer(void *message, UInt32 messageLength, UInt64 transactionId,
+                                      VMBusMultiPageBuffer *multiPageBuffer, UInt32 multiPageBufferLength,
+                                      bool responseRequired = false, void *response = NULL, UInt32 *responseLength = NULL);
+  
+  
   bool getPendingTransaction(UInt64 transactionId, void **buffer, UInt32 *bufferLength);
   void wakeTransaction(UInt64 transactionId);
   

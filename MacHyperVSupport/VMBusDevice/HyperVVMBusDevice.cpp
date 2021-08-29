@@ -67,7 +67,7 @@ void HyperVVMBusDevice::detach(IOService *provider) {
   super::detach(provider);
 }
 
-bool HyperVVMBusDevice::openChannel(UInt32 txSize, UInt32 rxSize, OSObject *owner, IOInterruptEventAction intAction) {
+bool HyperVVMBusDevice::openChannel(UInt32 txSize, UInt32 rxSize, OSObject *owner, IOInterruptEventAction intAction, UInt64 maxAutoTransId) {
   if (channelIsOpen) {
     return true;
   }
@@ -93,6 +93,7 @@ bool HyperVVMBusDevice::openChannel(UInt32 txSize, UInt32 rxSize, OSObject *owne
   //
   // Open channel.
   //
+  vmbusMaxAutoTransId = maxAutoTransId;
   if (!vmbusProvider->initVMBusChannel(channelId, txBufferSize, &txBuffer, rxBufferSize, &rxBuffer)) {
     teardownInterrupt();
     return false;
@@ -153,6 +154,9 @@ UInt64 HyperVVMBusDevice::getNextTransId() {
   IOLockLock(vmbusTransLock);
   UInt64 value = vmbusTransId;
   vmbusTransId++;
+  if (vmbusTransId > vmbusMaxAutoTransId) {
+    vmbusTransId = 0;
+  }
   IOLockUnlock(vmbusTransLock);
   return value;
 }
@@ -178,7 +182,11 @@ IOReturn HyperVVMBusDevice::writeRawPacket(void *buffer, UInt32 bufferLength) {
 
 IOReturn HyperVVMBusDevice::writeInbandPacket(void *buffer, UInt32 bufferLength, bool responseRequired,
                                               void *responseBuffer, UInt32 responseBufferLength) {
-  UInt64 transactionId = getNextTransId();
+  return writeInbandPacketWithTransactionId(buffer, bufferLength, getNextTransId(), responseRequired, responseBuffer, responseBufferLength);
+}
+
+IOReturn HyperVVMBusDevice::writeInbandPacketWithTransactionId(void *buffer, UInt32 bufferLength, UInt64 transactionId,
+                                                               bool responseRequired, void *responseBuffer, UInt32 responseBufferLength) {
   HyperVVMBusDeviceRequestNew req;
   req.isSleeping = true;
   req.lock = IOLockAlloc();

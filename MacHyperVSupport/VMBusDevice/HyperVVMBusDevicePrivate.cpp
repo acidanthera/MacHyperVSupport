@@ -275,8 +275,8 @@ IOReturn HyperVVMBusDevice::readRawPacketGated(void *buffer, UInt32 *bufferLengt
   copyPacketDataFromRingBuffer(rxBuffer->readIndex, sizeof (VMBusPacketHeader), &pktHeader, sizeof (VMBusPacketHeader));
 
   UInt32 packetTotalLength = pktHeader.totalLength << kVMBusPacketSizeShift;
-  MSGDBG("RAW packet type %u, flags %u, trans %u, header length %u, total length %u", pktHeader.type, pktHeader.flags,
-         pktHeader.transactionId,pktHeader.headerLength << kVMBusPacketSizeShift, packetTotalLength);
+  MSGDBG("RAW packet type %u, flags %u, trans %llu, header length %u, total length %u", pktHeader.type, pktHeader.flags,
+         pktHeader.transactionId, pktHeader.headerLength << kVMBusPacketSizeShift, packetTotalLength);
   MSGDBG("RAW old RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
   
   if (*bufferLength < packetTotalLength) {
@@ -422,8 +422,9 @@ IOReturn HyperVVMBusDevice::writeInbandPacketGated(void *buffer, UInt32 *bufferL
   //
   // Copy header, data, padding, and index to this packet.
   //
-  MSGDBG("INBAND packet type %u, flags %u, header length %u, total length %u, pad %u",
-          pktHeader.type, pktHeader.flags, pktHeaderLength, pktTotalLength, pktTotalLengthAligned - pktTotalLength);
+  MSGDBG("INBAND packet type %u, flags %u, trans %llu, header length %u, total length %u, pad %u",
+         pktHeader.type, pktHeader.flags, pktHeader.transactionId,
+         pktHeaderLength, pktTotalLength, pktTotalLengthAligned - pktTotalLength);
   writeIndexNew = copyPacketDataToRingBuffer(writeIndexNew, &pktHeader, pktHeaderLength);
   writeIndexNew = copyPacketDataToRingBuffer(writeIndexNew, buffer, *bufferLength);
   writeIndexNew = zeroPacketDataToRingBuffer(writeIndexNew, pktTotalLengthAligned - pktTotalLength);
