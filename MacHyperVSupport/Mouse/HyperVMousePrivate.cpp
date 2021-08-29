@@ -8,7 +8,7 @@
 #include "HyperVMouse.hpp"
 
 void HyperVMouse::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
-  UInt8 dataStack[128];
+  UInt8 data128[128];
 
   do {
     //
@@ -21,8 +21,8 @@ void HyperVMouse::handleInterrupt(OSObject *owner, IOInterruptEventSource *sende
       break;
     }
 
-    if (pktDataLength <= sizeof (dataStack)) {
-      message = (HyperVMousePipeIncomingMessage*)dataStack;
+    if (pktDataLength <= sizeof (data128)) {
+      message = (HyperVMousePipeIncomingMessage*)data128;
     } else {
       DBGLOG("Allocating large packet of %u bytes", pktDataLength);
       message = (HyperVMousePipeIncomingMessage*)IOMalloc(pktDataLength);
@@ -56,7 +56,7 @@ void HyperVMouse::handleInterrupt(OSObject *owner, IOInterruptEventSource *sende
     //
     // Free allocated packet if needed.
     //
-    if (pktDataLength > sizeof (dataStack)) {
+    if (pktDataLength > sizeof (data128)) {
       IOFree(message, pktDataLength);
     }
   } while (true);
