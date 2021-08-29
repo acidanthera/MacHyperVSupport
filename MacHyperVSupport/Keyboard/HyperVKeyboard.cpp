@@ -91,7 +91,7 @@ void HyperVKeyboard::handleInterrupt(OSObject *owner, IOInterruptEventSource *se
     //
     // Read next packet.
     //
-    if (hvDevice->readInbandPacket((void *)message, pktDataLength, NULL) == kIOReturnSuccess) {
+    if (hvDevice->readInbandCompletionPacket((void *)message, pktDataLength, NULL) == kIOReturnSuccess) {
       switch (message->header.type) {
         case kHyperVKeyboardMessageTypeProtocolResponse:
           DBGLOG("Keyboard protocol status %u %u", message->protocolResponse.header.type, message->protocolResponse.status);

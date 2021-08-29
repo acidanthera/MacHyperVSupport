@@ -20,31 +20,15 @@
 #define kHyperVVMBusDeviceChannelInstanceKey  "HVInstance"
 #define kHyperVVMBusDeviceChannelIDKey        "HVChannel"
 
-typedef struct {
-  void            *sendData;
-  UInt32          sendDataLength;
-  VMBusPacketType sendPacketType;
-  UInt64          transactionId;
-  bool            responseRequired;
-  
-  VMBusPacketMultiPageBuffer  *multiPageBuffer;
-  UInt32                      multiPageBufferLength;
-  
-  void            *responseData;
-  UInt32          responseDataLength;
-  
-  bool            ignoreLargePackets;
-} HyperVVMBusDeviceRequest;
-
-typedef struct HyperVVMBusDeviceRequestNew {
-  HyperVVMBusDeviceRequestNew *next;
+typedef struct HyperVVMBusDeviceRequest {
+  HyperVVMBusDeviceRequest  *next;
   IOLock                    *lock;
   bool                      isSleeping;
   
-  UInt64          transactionId;
-  void            *responseData;
-  UInt32          responseDataLength;
-} HyperVVMBusDeviceRequestNew;
+  UInt64                    transactionId;
+  void                      *responseData;
+  UInt32                    responseDataLength;
+} HyperVVMBusDeviceRequest;
 
 class HyperVVMBusDevice : public IOService {
   OSDeclareDefaultStructors(HyperVVMBusDevice);
@@ -66,7 +50,7 @@ private:
   VMBusRingBuffer         *rxBuffer;
   UInt32                  rxBufferSize;
   
-  HyperVVMBusDeviceRequestNew   *vmbusRequests = NULL;
+  HyperVVMBusDeviceRequest      *vmbusRequests = NULL;
   IOLock                        *vmbusRequestsLock;
   UInt64                        vmbusTransId = 0;
   UInt64                        vmbusMaxAutoTransId = UINT64_MAX;
@@ -83,9 +67,7 @@ private:
                                bool responseRequired, void *responseBuffer, UInt32 responseBufferLength);
   
   IOReturn nextPacketAvailableGated(VMBusPacketType *type, UInt32 *packetHeaderLength, UInt32 *packetTotalLength);
-  IOReturn doRequestGated(HyperVVMBusDeviceRequest *request, void *pageBufferData, UInt32 *pageBufferLength);
-  IOReturn readRawPacketGated(void *buffer, UInt32 *bufferLength);
-  IOReturn readInbandPacketGated(void *buffer, UInt32 *bufferLength, UInt64 *transactionId);
+  IOReturn readRawPacketGated(void *header, UInt32 *headerLength, void *buffer, UInt32 *bufferLength);
   IOReturn writeRawPacketGated(void *header, UInt32 *headerLength, void *buffer, UInt32 *bufferLength);
   IOReturn writeInbandPacketGated(void *buffer, UInt32 *bufferLength, bool *responseRequired, UInt64 *transactionId);
   
@@ -94,8 +76,8 @@ private:
   UInt32 copyPacketDataToRingBuffer(UInt32 writeIndex, void *data, UInt32 length);
   UInt32 zeroPacketDataToRingBuffer(UInt32 writeIndex, UInt32 length);
   
-  void addPacketRequest(HyperVVMBusDeviceRequestNew *vmbusRequest);
-  void sleepPacketRequest(HyperVVMBusDeviceRequestNew *vmbusRequest);
+  void addPacketRequest(HyperVVMBusDeviceRequest *vmbusRequest);
+  void sleepPacketRequest(HyperVVMBusDeviceRequest *vmbusRequest);
   
   inline UInt32 getAvailableTxSpace() {
     return (txBuffer->writeIndex >= txBuffer->readIndex) ?
@@ -127,9 +109,8 @@ public:
   bool nextInbandPacketAvailable(UInt32 *packetDataLength);
   UInt64 getNextTransId();
   
-  IOReturn doRequest(HyperVVMBusDeviceRequest *request);
   IOReturn readRawPacket(void *buffer, UInt32 bufferLength);
-  IOReturn readInbandPacket(void *buffer, UInt32 bufferLength, UInt64 *transactionId);
+  IOReturn readInbandCompletionPacket(void *buffer, UInt32 bufferLength, UInt64 *transactionId = NULL);
   
   IOReturn writeRawPacket(void *buffer, UInt32 bufferLength);
   IOReturn writeInbandPacket(void *buffer, UInt32 bufferLength, bool responseRequired,
@@ -139,6 +120,9 @@ public:
   IOReturn writeGPADirectSinglePagePacket(void *buffer, UInt32 bufferLength, bool responseRequired,
                                           VMBusSinglePageBuffer pageBuffers[], UInt32 pageBufferCount,
                                           void *responseBuffer = NULL, UInt32 responseBufferLength = 0);
+  IOReturn writeGPADirectMultiPagePacket(void *buffer, UInt32 bufferLength, bool responseRequired,
+                                         VMBusPacketMultiPageBuffer *pagePacket, UInt32 pagePacketLength,
+                                         void *responseBuffer = NULL, UInt32 responseBufferLength = 0);
   IOReturn writeCompletionPacketWithTransactionId(void *buffer, UInt32 bufferLength, UInt64 transactionId, bool responseRequired);
   
   

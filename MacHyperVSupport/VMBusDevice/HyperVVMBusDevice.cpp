@@ -161,18 +161,28 @@ UInt64 HyperVVMBusDevice::getNextTransId() {
   return value;
 }
 
-IOReturn HyperVVMBusDevice::doRequest(HyperVVMBusDeviceRequest *request) {
-  return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::doRequestGated), request, NULL, NULL);
-}
-
 IOReturn HyperVVMBusDevice::readRawPacket(void *buffer, UInt32 bufferLength) {
   return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::readRawPacketGated),
-                                buffer, &bufferLength);
+                                NULL, NULL, buffer, &bufferLength);
 }
 
-IOReturn HyperVVMBusDevice::readInbandPacket(void *buffer, UInt32 bufferLength, UInt64 *transactionId) {
-  return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::readInbandPacketGated),
-                                buffer, &bufferLength, transactionId);
+IOReturn HyperVVMBusDevice::readInbandCompletionPacket(void *buffer, UInt32 bufferLength, UInt64 *transactionId) {
+  VMBusPacketHeader pktHeader;
+  UInt32 pktHeaderSize = sizeof (pktHeader);
+  
+  IOReturn status = commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::readRawPacketGated),
+                                           &pktHeader, &pktHeaderSize, buffer, &bufferLength);
+  if (status == kIOReturnSuccess) {
+    if (pktHeader.type != kVMBusPacketTypeDataInband && pktHeader.type != kVMBusPacketTypeCompletion) {
+      MSGDBG("INBAND COMP attempted to read non-inband or non-completion packet");
+      return kIOReturnUnsupported;
+    }
+    
+    if (transactionId != NULL) {
+      *transactionId = pktHeader.transactionId;
+    }
+  }
+  return status;
 }
 
 IOReturn HyperVVMBusDevice::writeRawPacket(void *buffer, UInt32 bufferLength) {
@@ -198,7 +208,7 @@ IOReturn HyperVVMBusDevice::writeGPADirectSinglePagePacket(void *buffer, UInt32 
   }
 
   //
-  // Create packet for page buffers.
+  // Create packet for single page buffers.
   //
   UInt64 transactionId = getNextTransId();
   VMBusPacketSinglePageBuffer pagePacket;
@@ -219,19 +229,67 @@ IOReturn HyperVVMBusDevice::writeGPADirectSinglePagePacket(void *buffer, UInt32 
     pagePacket.ranges[i].pfn    = pageBuffers[i].pfn;
   }
   
-  HyperVVMBusDeviceRequestNew req;
-  req.isSleeping = true;
-  req.lock = IOLockAlloc();
-  req.responseData = responseBuffer;
-  req.responseDataLength = responseBufferLength;
-  req.transactionId = transactionId;
+  MSGDBG("SP Packet type %u, flags %u, trans %llu, header length %u, total length %u, page count %u",
+         pagePacket.header.type, pagePacket.header.flags, pagePacket.header.transactionId,
+         pagePacket.header.headerLength, pagePacket.header.totalLength, pageBufferCount);
   
+  HyperVVMBusDeviceRequest req;
   if (responseBuffer != NULL) {
+    req.isSleeping = true;
+    req.lock = IOLockAlloc();
+    req.responseData = responseBuffer;
+    req.responseDataLength = responseBufferLength;
+    req.transactionId = transactionId;
     addPacketRequest(&req);
   }
 
   IOReturn status = commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::writeRawPacketGated),
                                 &pagePacket, &pagePacketLength, buffer, &bufferLength);
+  
+  if (responseBuffer != NULL) {
+    if (status == kIOReturnSuccess) {
+      sleepPacketRequest(&req);
+    } else {
+      wakeTransaction(transactionId);
+    }
+  }
+  return status;
+}
+
+IOReturn HyperVVMBusDevice::writeGPADirectMultiPagePacket(void *buffer, UInt32 bufferLength, bool responseRequired,
+                                                          VMBusPacketMultiPageBuffer *pagePacket, UInt32 pagePacketLength,
+                                                          void *responseBuffer, UInt32 responseBufferLength) {
+  //
+  // For multi-page buffers, the packet header itself is passed to this function.
+  // Ensure general header fields are set.
+  //
+  UInt64 transactionId = getNextTransId();
+
+  pagePacket->header.type           = kVMBusPacketTypeDataUsingGPADirect;
+  pagePacket->header.headerLength   = pagePacketLength >> kVMBusPacketSizeShift;
+  pagePacket->header.totalLength    = (pagePacketLength + bufferLength) >> kVMBusPacketSizeShift;
+  pagePacket->header.flags          = responseRequired ? kVMBusPacketResponseRequired : 0;
+  pagePacket->header.transactionId  = transactionId;
+
+  pagePacket->reserved              = 0;
+  pagePacket->rangeCount            = 1;
+  
+  MSGDBG("MP Packet type %u, flags %u, trans %llu, header length %u, total length %u",
+         pagePacket->header.type, pagePacket->header.flags, pagePacket->header.transactionId,
+         pagePacket->header.headerLength, pagePacket->header.totalLength);
+  
+  HyperVVMBusDeviceRequest req;
+  if (responseBuffer != NULL) {
+    req.isSleeping = true;
+    req.lock = IOLockAlloc();
+    req.responseData = responseBuffer;
+    req.responseDataLength = responseBufferLength;
+    req.transactionId = transactionId;
+    addPacketRequest(&req);
+  }
+
+  IOReturn status = commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::writeRawPacketGated),
+                                pagePacket, &pagePacketLength, buffer, &bufferLength);
   
   if (responseBuffer != NULL) {
     if (status == kIOReturnSuccess) {
@@ -250,7 +308,7 @@ IOReturn HyperVVMBusDevice::writeCompletionPacketWithTransactionId(void *buffer,
 bool HyperVVMBusDevice::getPendingTransaction(UInt64 transactionId, void **buffer, UInt32 *bufferLength) {
   IOLockLock(vmbusRequestsLock);
 
-  HyperVVMBusDeviceRequestNew *current = vmbusRequests;
+  HyperVVMBusDeviceRequest *current = vmbusRequests;
   while (current != NULL) {
     if (current->transactionId == transactionId) {
       MSGDBG("Found transaction %u", transactionId);
@@ -270,8 +328,8 @@ bool HyperVVMBusDevice::getPendingTransaction(UInt64 transactionId, void **buffe
 void HyperVVMBusDevice::wakeTransaction(UInt64 transactionId) {
   IOLockLock(vmbusRequestsLock);
 
-  HyperVVMBusDeviceRequestNew *current  = vmbusRequests;
-  HyperVVMBusDeviceRequestNew *previous = NULL;
+  HyperVVMBusDeviceRequest *current  = vmbusRequests;
+  HyperVVMBusDeviceRequest *previous = NULL;
   while (current != NULL) {
     if (current->transactionId == transactionId) {
       MSGDBG("Waking transaction %u", transactionId);

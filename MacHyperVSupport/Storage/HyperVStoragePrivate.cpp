@@ -9,21 +9,9 @@
 
 IOReturn HyperVStorage::executeCommand(HyperVStoragePacket *packet, bool checkCompletion) {
   //
-  // Create request for inband data with a direct response.
-  //
-  HyperVVMBusDeviceRequest request;
-  request.sendData = packet;
-  request.sendDataLength = sizeof (*packet) - packetSizeDelta;
-  request.sendPacketType = kVMBusPacketTypeDataInband;
-  request.responseRequired = true;
-  
-  request.responseData = packet;
-  request.responseDataLength = sizeof (*packet);
-  
-  //
   // Send packet and get response.
   //
-  IOReturn status = hvDevice->doRequest(&request);
+  IOReturn status = hvDevice->writeInbandPacket(packet, sizeof (*packet) - packetSizeDelta, true, packet, sizeof (*packet));
   if (status != kIOReturnSuccess) {
     return status;
   }
@@ -44,29 +32,40 @@ void HyperVStorage::handleInterrupt(OSObject *owner, IOInterruptEventSource *sen
  // DBGLOG("Interrupt!");
   
   HyperVStoragePacket packet;
+
+  VMBusPacketType type;
+  UInt32 headersize;
+  UInt32 totalsize;
   
-  HyperVVMBusDeviceRequest request;
-  request.sendData = NULL;
-  request.responseData = &packet;
-  request.responseDataLength = sizeof (packet);
+  void *responseBuffer;
+  UInt32 responseLength;
   
- // UInt32 dataSize = sizeof(packet);
-  
- // hvDevice->readPacket(&packet, &dataSize);
-  hvDevice->doRequest(&request);
-  
-  switch (packet.operation) {
-    case kHyperVStoragePacketOperationCompleteIO:
-      completeIO(&packet);
+  while (true) {
+    if (!hvDevice->nextPacketAvailable(&type, &headersize, &totalsize)) {
       break;
-      
-    case kHyperVStoragePacketOperationEnumerateBus:
-    case kHyperVStoragePacketOperationRemoveDevice:
-      panic("SCSI device hotplug is not supported\n");
-      break;
-      
-    default:
-      break;
+    }
+    
+    UInt64 transactionId;
+    hvDevice->readInbandCompletionPacket(&packet, sizeof (packet), &transactionId);
+    
+    switch (packet.operation) {
+      case kHyperVStoragePacketOperationCompleteIO:
+        if (hvDevice->getPendingTransaction(transactionId, &responseBuffer, &responseLength)) {
+          memcpy(responseBuffer, &packet, sizeof (packet));
+          hvDevice->wakeTransaction(transactionId);
+        } else {
+          completeIO(&packet);
+        }
+        break;
+        
+      case kHyperVStoragePacketOperationEnumerateBus:
+      case kHyperVStoragePacketOperationRemoveDevice:
+        panic("SCSI device hotplug is not supported\n");
+        break;
+        
+      default:
+        break;
+    }
   }
 }
 
@@ -120,13 +119,13 @@ void HyperVStorage::completeIO(HyperVStoragePacket *packet) {
   }
 }
 
-bool HyperVStorage::prepareDataTransfer(SCSIParallelTaskIdentifier parallelRequest, HyperVVMBusDeviceRequest *request) {
+bool HyperVStorage::prepareDataTransfer(SCSIParallelTaskIdentifier parallelRequest, VMBusPacketMultiPageBuffer **pagePacket, UInt32 *pagePacketLength) {
   //
   // Get DMA command and page buffer for this task.
   //
   IODMACommand *dmaCmd = GetDMACommand(parallelRequest);
-  request->multiPageBuffer = (VMBusPacketMultiPageBuffer*) GetHBADataPointer(parallelRequest);
-  if (dmaCmd == NULL || request->multiPageBuffer == NULL) {
+  *pagePacket = (VMBusPacketMultiPageBuffer*) GetHBADataPointer(parallelRequest);
+  if (dmaCmd == NULL || *pagePacket == NULL) {
     return false;
   }
   
@@ -153,8 +152,8 @@ bool HyperVStorage::prepareDataTransfer(SCSIParallelTaskIdentifier parallelReque
   //
   // Populate PFNs in page buffer.
   //
-  request->multiPageBuffer->range.length = (UInt32) bufferLength;
-  request->multiPageBuffer->range.offset = 0;
+  (*pagePacket)->range.length = (UInt32) bufferLength;
+  (*pagePacket)->range.offset = 0;
   
   for (int i = 0; i < numSegs; i++) {
     if (i != 0 && i != (numSegs - 1)) {
@@ -163,10 +162,10 @@ bool HyperVStorage::prepareDataTransfer(SCSIParallelTaskIdentifier parallelReque
       }
     }
     
-    request->multiPageBuffer->range.pfns[i] = segs64[i].fIOVMAddr >> PAGE_SHIFT;
+    (*pagePacket)->range.pfns[i] = segs64[i].fIOVMAddr >> PAGE_SHIFT;
   }
   
-  request->multiPageBufferLength = sizeof (VMBusPacketMultiPageBuffer) + (sizeof (UInt64) * numSegs);
+  *pagePacketLength = sizeof (VMBusPacketMultiPageBuffer) + (sizeof (UInt64) * numSegs);
   return true;
 }
 

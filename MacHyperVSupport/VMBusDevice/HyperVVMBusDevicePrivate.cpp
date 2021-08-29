@@ -113,7 +113,7 @@ IOReturn HyperVVMBusDevice::writePacketInternal(void *buffer, UInt32 bufferLengt
          pktHeader.type, pktHeader.flags, pktHeader.transactionId,
          pktHeaderLength, pktTotalLength);
   
-  HyperVVMBusDeviceRequestNew req;
+  HyperVVMBusDeviceRequest req;
   if (responseBuffer != NULL) {
     req.isSleeping = true;
     req.lock = IOLockAlloc();
@@ -162,153 +162,7 @@ IOReturn HyperVVMBusDevice::nextPacketAvailableGated(VMBusPacketType *type, UInt
   return kIOReturnSuccess;
 }
 
-IOReturn HyperVVMBusDevice::doRequestGated(HyperVVMBusDeviceRequest *request, void *pageBufferData, UInt32 *pageBufferLength) {
-  //
-  // If there is data to send, send it first.
-  //
-  if (request->sendData != NULL && request->sendDataLength != 0) {
-    //
-    // Create packet header.
-    // Sizes are represented as 8 byte units.
-    //
-    VMBusPacketHeader *pktHeader;
-    VMBusPacketHeader pktHeaderStack;
-    UInt32 pktHeaderLength;
-    
-    //
-    // In-band packets have a fixed length.
-    // GPA direct packets and other buffer packets have a variable length.
-    //
-    if (request->sendPacketType == kVMBusPacketTypeDataUsingGPADirect) {
-      if (request->multiPageBuffer != NULL) {
-             pktHeader       = (VMBusPacketHeader*) request->multiPageBuffer;
-             pktHeaderLength = request->multiPageBufferLength;
-
-             request->multiPageBuffer->reserved   = 0;
-             request->multiPageBuffer->rangeCount = 1;
-      } else {
-        return kIOReturnBadArgument;
-      }
-    } else {
-      pktHeader       = &pktHeaderStack;
-      pktHeaderLength = sizeof (pktHeaderStack);
-    }
-    pktHeader->type           = request->sendPacketType;
-    pktHeader->flags          = request->responseRequired ? kVMBusPacketResponseRequired : 0;
-    pktHeader->transactionId  = request->transactionId;
-    
-    UInt32 pktTotalLength         = pktHeaderLength + request->sendDataLength;
-    UInt32 pktTotalLengthAligned  = HV_PACKETALIGN(pktTotalLength);
-    
-    UInt32 writeIndexOld      = txBuffer->writeIndex;
-    UInt32 writeIndexNew      = writeIndexOld;
-    UInt64 writeIndexShifted  = ((UInt64)writeIndexOld) << 32;
-    
-    //
-    // Ensure there is space for the packet.
-    //
-    // We cannot end up with read index == write index after the write, as that would indicate an empty buffer.
-    //
-    if (getAvailableTxSpace() <= pktTotalLengthAligned) {
-      SYSLOG("Packet is too large for buffer (TXR: %X, TXW: %X)", txBuffer->readIndex, txBuffer->writeIndex);
-      return kIOReturnNoResources;
-    }
-    
-    pktHeader->headerLength = pktHeaderLength >> kVMBusPacketSizeShift;
-    pktHeader->totalLength = pktTotalLength >> kVMBusPacketSizeShift;
-    
-    //
-    // Copy header, data, padding, and index to this packet.
-    //
-    // DBGLOG("Packet type %u, flags %u, header length %u, total length %u, pad %u",
-    //        pktHeader->type, pktHeader->flags, pktHeaderLength, pktTotalLength, pktTotalLengthAligned - pktTotalLength);
-    writeIndexNew = copyPacketDataToRingBuffer(writeIndexNew, pktHeader, pktHeaderLength);
-    writeIndexNew = copyPacketDataToRingBuffer(writeIndexNew, request->sendData, request->sendDataLength);
-    writeIndexNew = zeroPacketDataToRingBuffer(writeIndexNew, pktTotalLengthAligned - pktTotalLength);
-    writeIndexNew = copyPacketDataToRingBuffer(writeIndexNew, &writeIndexShifted, sizeof (writeIndexShifted));
-    // DBGLOG("TX read index %X, new TX write index %X", txBuffer->readIndex, writeIndexNew);
-    
-    //
-    // Update write index and notify host if needed.
-    //
-    //DBGLOG("TX imask %X rx imask %X, channel ID %u", txBuffer->interruptMask, rxBuffer->interruptMask, channelId);
-    txBuffer->writeIndex = writeIndexNew;
-    if (txBuffer->interruptMask == 0) {
-      vmbusProvider->signalVMBusChannel(channelId);
-    }
-    //DBGLOG("TX read index %X, new TX write index %X", txBuffer->readIndex, txBuffer->writeIndex);
-    
-    //
-    // Wait for a response if a response is expected.
-    //
-    if (request->responseData != NULL) {
-      commandSleeping = true;
-      commandGate->commandSleep(&commandLock);
-      DBGLOG("Waking up for response");
-    }
-  }
-  
-  //
-  // Process response.
-  //
-  if (request->responseData != NULL) {
-    //
-    // No data to read.
-    //
-    if (rxBuffer->readIndex == rxBuffer->writeIndex) {
-      request->responseDataLength = 0;
-      return kIOReturnSuccess;
-    }
-    
-    //
-    // Read packet header.
-    //
-    UInt32 readIndexNew = rxBuffer->readIndex;
-    VMBusPacketHeader pktHeader;
-    
-    readIndexNew = copyPacketDataFromRingBuffer(readIndexNew, sizeof (VMBusPacketHeader), &pktHeader, sizeof (VMBusPacketHeader));
-    
-    UInt32 packetHeaderLength = pktHeader.headerLength << kVMBusPacketSizeShift;
-    UInt32 packetTotalLength = pktHeader.totalLength << kVMBusPacketSizeShift;
-    UInt32 packetDataLength = packetTotalLength - packetHeaderLength;
-    //DBGLOG("Packet type %u, flags %u, trans %u, header length %u, total length %u", pktHeader.type, pktHeader.flags, pktHeader.transactionId, packetHeaderLength, packetTotalLength);
-    //DBGLOG("RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
-    
-    UInt32 actualReadLength = packetDataLength;
-    if (request->responseDataLength < packetDataLength) {
-      DBGLOG("Buffer too small, %u < %u", request->responseDataLength, packetDataLength);
-      
-      if (!request->ignoreLargePackets) {
-        request->responseDataLength = packetDataLength;
-        return kIOReturnMessageTooLarge;
-      } else {
-        actualReadLength = request->responseDataLength;
-      }
-    }
-
-    readIndexNew = copyPacketDataFromRingBuffer(readIndexNew, packetDataLength, request->responseData, actualReadLength);
-    request->responseDataLength = actualReadLength;
-    
-    UInt64 readIndexShifted;
-    readIndexNew = copyPacketDataFromRingBuffer(readIndexNew, sizeof (readIndexShifted), &readIndexShifted, sizeof (readIndexShifted));
-    
-    rxBuffer->readIndex = readIndexNew;
-    // DBGLOG("New RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
-    
-    //
-    // If there is more data to be read, and we returned from an interrupt, raise child interrupt.
-    //
-    if (request->sendData != NULL && rxBuffer->readIndex != rxBuffer->writeIndex) {
-      if (childInterruptSource != NULL) {
-        childInterruptSource->interruptOccurred(0, 0, 0);
-      }
-    }
-  }
-  
-  return kIOReturnSuccess;
-}
-
-IOReturn HyperVVMBusDevice::readRawPacketGated(void *buffer, UInt32 *bufferLength) {
+IOReturn HyperVVMBusDevice::readRawPacketGated(void *header, UInt32 *headerLength, void *buffer, UInt32 *bufferLength) {
   //
   // No data to read.
   //
@@ -327,8 +181,9 @@ IOReturn HyperVVMBusDevice::readRawPacketGated(void *buffer, UInt32 *bufferLengt
          pktHeader.transactionId, pktHeader.headerLength << kVMBusPacketSizeShift, packetTotalLength);
   MSGDBG("RAW old RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
   
-  if (*bufferLength < packetTotalLength) {
-    MSGDBG("RAW buffer too small, %u < %u", *bufferLength, packetTotalLength);
+  UInt32 packetDataLength = headerLength != NULL ? packetTotalLength - *headerLength : packetTotalLength;
+  if (*bufferLength < packetDataLength) {
+    MSGDBG("RAW buffer too small, %u < %u", *bufferLength, packetDataLength);
     return kIOReturnNoResources;
   }
   
@@ -336,60 +191,16 @@ IOReturn HyperVVMBusDevice::readRawPacketGated(void *buffer, UInt32 *bufferLengt
   // Read raw packet.
   //
   UInt32 readIndexNew = rxBuffer->readIndex;
-  readIndexNew = copyPacketDataFromRingBuffer(readIndexNew, packetTotalLength, buffer, packetTotalLength);
-  
-  UInt64 readIndexShifted;
-  readIndexNew = copyPacketDataFromRingBuffer(readIndexNew, sizeof (readIndexShifted), &readIndexShifted, sizeof (readIndexShifted));
-  
-  rxBuffer->readIndex = readIndexNew;
-  MSGDBG("RAW new RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
-  return kIOReturnSuccess;
-}
-
-IOReturn HyperVVMBusDevice::readInbandPacketGated(void *buffer, UInt32 *bufferLength, UInt64 *transactionId) {
-  //
-  // No data to read.
-  //
-  if (rxBuffer->readIndex == rxBuffer->writeIndex) {
-    return kIOReturnNotFound;
+  if (headerLength != NULL) {
+    readIndexNew = copyPacketDataFromRingBuffer(readIndexNew, *headerLength, header, *headerLength);
   }
-  
-  //
-  // Read packet header and verify it's inband.
-  //
-  UInt32 readIndexNew = rxBuffer->readIndex;
-  VMBusPacketHeader pktHeader;
-  readIndexNew = copyPacketDataFromRingBuffer(readIndexNew, sizeof (VMBusPacketHeader), &pktHeader, sizeof (VMBusPacketHeader));
-  if (pktHeader.type != kVMBusPacketTypeDataInband) {
-    MSGDBG("INBAND attempted to read non-inband packet");
-    return kIOReturnUnsupported;
-  }
-  
-  UInt32 packetHeaderLength = pktHeader.headerLength << kVMBusPacketSizeShift;
-  UInt32 packetTotalLength = pktHeader.totalLength << kVMBusPacketSizeShift;
-  UInt32 packetDataLength = packetTotalLength - packetHeaderLength;
-  MSGDBG("INBAND packet type %u, flags %u, trans %u, header length %u, total length %u", pktHeader.type, pktHeader.flags, pktHeader.transactionId, packetHeaderLength, packetTotalLength);
-  MSGDBG("INBAND old RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
-  
-  if (*bufferLength < packetDataLength) {
-    MSGDBG("INBAND buffer too small, %u < %u", *bufferLength, packetDataLength);
-    return kIOReturnNoResources;
-  }
-  
-  if (transactionId != NULL) {
-    *transactionId = pktHeader.transactionId;
-  }
-  
-  //
-  // Read inband packet data.
-  //
   readIndexNew = copyPacketDataFromRingBuffer(readIndexNew, packetDataLength, buffer, packetDataLength);
   
   UInt64 readIndexShifted;
   readIndexNew = copyPacketDataFromRingBuffer(readIndexNew, sizeof (readIndexShifted), &readIndexShifted, sizeof (readIndexShifted));
   
   rxBuffer->readIndex = readIndexNew;
-  MSGDBG("INBAND new RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
+  MSGDBG("RAW new RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
   return kIOReturnSuccess;
 }
 
@@ -488,7 +299,7 @@ UInt32 HyperVVMBusDevice::zeroPacketDataToRingBuffer(UInt32 writeIndex, UInt32 l
   return (writeIndex + length) % txBufferSize;
 }
 
-void HyperVVMBusDevice::addPacketRequest(HyperVVMBusDeviceRequestNew *vmbusRequest) {
+void HyperVVMBusDevice::addPacketRequest(HyperVVMBusDeviceRequest *vmbusRequest) {
   IOLockLock(vmbusRequestsLock);
   if (vmbusRequests == NULL) {
     vmbusRequests = vmbusRequest;
@@ -500,7 +311,7 @@ void HyperVVMBusDevice::addPacketRequest(HyperVVMBusDeviceRequestNew *vmbusReque
   IOLockUnlock(vmbusRequestsLock);
 }
 
-void HyperVVMBusDevice::sleepPacketRequest(HyperVVMBusDeviceRequestNew *vmbusRequest) {
+void HyperVVMBusDevice::sleepPacketRequest(HyperVVMBusDeviceRequest *vmbusRequest) {
   MSGDBG("Sleeping transaction %u", vmbusRequest->transactionId);
   IOLockLock(vmbusRequest->lock);
   while (vmbusRequest->isSleeping) {

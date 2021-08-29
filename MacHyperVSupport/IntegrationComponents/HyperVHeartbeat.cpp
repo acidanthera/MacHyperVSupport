@@ -35,7 +35,7 @@ bool HyperVHeartbeat::processMessage() {
   //
   // Read and parse inbound inband packet.
   //
-  if (hvDevice->readInbandPacket(&heartbeatMsg, sizeof (heartbeatMsg), NULL) != kIOReturnSuccess) {
+  if (hvDevice->readInbandCompletionPacket(&heartbeatMsg, sizeof (heartbeatMsg), NULL) != kIOReturnSuccess) {
     return false;
   }
   switch (heartbeatMsg.header.type) {

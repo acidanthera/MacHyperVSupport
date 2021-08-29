@@ -32,7 +32,7 @@ void HyperVMouse::handleInterrupt(OSObject *owner, IOInterruptEventSource *sende
     // Read next packet.
     //
     UInt64 transactionId;
-    if (hvDevice->readInbandPacket((void *)message, pktDataLength, &transactionId) == kIOReturnSuccess) {
+    if (hvDevice->readInbandCompletionPacket((void *)message, pktDataLength, &transactionId) == kIOReturnSuccess) {
       // TODO: Handle other failures
       switch (message->header.type) {
         case kHyperVMouseMessageTypeProtocolResponse:
