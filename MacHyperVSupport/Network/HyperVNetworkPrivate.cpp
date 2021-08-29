@@ -8,8 +8,6 @@
 #include "HyperVNetwork.hpp"
 
 void HyperVNetwork::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
-  DBGLOG("Interrupt");
-  
   VMBusPacketType type;
   UInt32 headersize;
   UInt32 totalsize;
@@ -17,14 +15,16 @@ void HyperVNetwork::handleInterrupt(OSObject *owner, IOInterruptEventSource *sen
   void *responseBuffer;
   UInt32 responseLength;
   
+  HyperVNetworkMessage *pktComp;
+  
   while (true) {
     if (!hvDevice->nextPacketAvailable(&type, &headersize, &totalsize)) {
-      DBGLOG("last one");
+     // DBGLOG("last one");
       break;
     }
     
-    void *buf = IOMalloc(totalsize);
-    hvDevice->readRawPacket(buf, totalsize);
+    UInt8 *buf = (UInt8*)IOMalloc(totalsize);
+    hvDevice->readRawPacket((void*)buf, totalsize);
     
     switch (type) {
       case kVMBusPacketTypeDataInband:
@@ -38,6 +38,13 @@ void HyperVNetwork::handleInterrupt(OSObject *owner, IOInterruptEventSource *sen
         if (hvDevice->getPendingTransaction(((VMBusPacketHeader*)buf)->transactionId, &responseBuffer, &responseLength)) {
           memcpy(responseBuffer, (UInt8*)buf + headersize, responseLength);
           hvDevice->wakeTransaction(((VMBusPacketHeader*)buf)->transactionId);
+        } else {
+          pktComp = (HyperVNetworkMessage*) (buf + headersize);
+          DBGLOG("pkt completion status %X %X", pktComp->messageType, pktComp->v1.sendRNDISPacketComplete.status);
+          
+          if (pktComp->messageType == kHyperVNetworkMessageTypeV1SendRNDISPacketComplete) {
+            releaseSendIndex((UInt32)(((VMBusPacketHeader*)buf)->transactionId & ~kHyperVNetworkSendTransIdBits));
+          }
         }
         break;
       default:
@@ -111,7 +118,7 @@ bool HyperVNetwork::initBuffers() {
     SYSLOG("Failed to create GPADL for receive buffer");
     return false;
   }
-  if (!hvDevice->createGpadlBuffer(sendBufferSize, &sendGpadlHandle, &sendBuffer)) {
+  if (!hvDevice->createGpadlBuffer(sendBufferSize, &sendGpadlHandle, (void**)&sendBuffer)) {
     SYSLOG("Failed to create GPADL for send buffer");
     return false;
   }
@@ -160,6 +167,11 @@ bool HyperVNetwork::initBuffers() {
   }
   sendSectionSize = netMsg.v1.sendSendBufferComplete.sectionSize;
   sendSectionCount = sendBufferSize / sendSectionSize;
+  sendIndexMapSize = (sendSectionCount + sizeof (UInt64) - 1) / sizeof (UInt64);
+  sendIndexMap = (UInt64*)IOMalloc(sendIndexMapSize);
+  memset(sendIndexMap, 0, sendIndexMapSize);
+  DBGLOG("send index map size %u", sendIndexMapSize);
+  
   DBGLOG("Send buffer configured with section size of %u bytes and %u sections", sendSectionSize, sendSectionCount);
   
   return true;

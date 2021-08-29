@@ -188,6 +188,8 @@ typedef enum : UInt32 {
   kHyperVNetworkRNDISChannelTypeControl   = 1
 } HyperVNetworkRNDISChannelType;
 
+#define kHyperVNetworkRNDISSendSectionIndexInvalid      (-1)
+
 //
 // Message used to send an RNDIS packet to the other end of the channel.
 // This message is used by both Hyper-V and the VM.
@@ -277,6 +279,23 @@ typedef enum : UInt32 {
   kHyperVNetworkRNDISMessageTypeKeepalive         = 0x8,
   kHyperVNetworkRNDISMessageTypeKeepaliveComplete = (kHyperVNetworkRNDISMessageTypeKeepalive | kHyperVNetworkRNDISMessageTypeCompletion)
 } HyperVNetworkRNDISMessageType;
+
+//
+// Data packet message.
+// This message is used for Ethernet frames. Offsets are from
+// the beginning of the packet header.
+//
+typedef struct {
+  UInt32 dataOffset;
+  UInt32 dataLength;
+  UInt32 oobDataOffset;
+  UInt32 oobDataLength;
+  UInt32 oobNumDataElements;
+  UInt32 perPacketInfoOffset;
+  UInt32 perPacketInfoLength;
+  UInt32 vcHandle;
+  UInt32 reserved;
+} HyperVNetworkRNDISMessageDataPacket;
 
 //
 // Initialization message.
@@ -460,7 +479,7 @@ typedef struct {
   UInt32                        msgLength;
   
   union {
-    UInt32                                        requestId;
+    HyperVNetworkRNDISMessageDataPacket           dataPacket;
     HyperVNetworkRNDISMessageInitializeRequest    initRequest;
     HyperVNetworkRNDISMessageInitializeComplete   initComplete;
     HyperVNetworkRNDISMessageQueryRequest         queryRequest;

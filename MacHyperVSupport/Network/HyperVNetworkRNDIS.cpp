@@ -23,8 +23,8 @@ bool HyperVNetwork::processRNDISPacket(UInt8 *data, UInt32 dataLength) {
 
       
       while (reqCurr != NULL) {
-        DBGLOG("checking %u", reqCurr->message.requestId);
-        if (reqCurr->message.requestId == rndisPkt->initComplete.requestId) {
+        DBGLOG("checking %u", reqCurr->message.initComplete.requestId);
+        if (reqCurr->message.initComplete.requestId == rndisPkt->initComplete.requestId) {
           //
           // Copy response data.
           //
@@ -58,10 +58,8 @@ bool HyperVNetwork::processRNDISPacket(UInt8 *data, UInt32 dataLength) {
       break;
       
     case kHyperVNetworkRNDISMessageTypePacket:
-      for (int i = 0; i < dataLength; i++) {
-        IOLog(" %X", data[i]);
-      }
-      IOLog("\n");
+      if (isEnabled)
+        processIncoming(data, dataLength);
       break;
       
     case kHyperVNetworkRNDISMessageTypeIndicate:
@@ -73,6 +71,32 @@ bool HyperVNetwork::processRNDISPacket(UInt8 *data, UInt32 dataLength) {
   }
   
   return true;
+}
+
+void HyperVNetwork::processIncoming(UInt8 *data, UInt32 dataLength) {
+  HyperVNetworkRNDISMessage *rndisPkt = (HyperVNetworkRNDISMessage*)data;
+  UInt8 *pktData = data + 8 + rndisPkt->dataPacket.dataOffset;
+  
+  mbuf_t newPacket = allocatePacket(rndisPkt->dataPacket.dataLength);
+  memcpy(mbuf_data(newPacket), pktData, rndisPkt->dataPacket.dataLength);
+  
+  ethInterface->inputPacket(newPacket, rndisPkt->dataPacket.dataLength);
+}
+
+UInt32 HyperVNetwork::getNextSendIndex() {
+  for (UInt32 i = 0; i < sendSectionCount; i++) {
+    DBGLOG("idx %u %X", i, sendIndexMap[i / 8]);
+    if ((sendIndexMap[i / 8] & (1 << (i % 8))) == 0) {
+      sendIndexMap[i / 8] |= (1 << (i % 8));
+      return i;
+    }
+  }
+
+  return kHyperVNetworkRNDISSendSectionIndexInvalid;
+}
+
+void HyperVNetwork::releaseSendIndex(UInt32 sendIndex) {
+  sendIndexMap[sendIndex / 8] &= ~(1 << (sendIndex % 8));
 }
 
 HyperVNetworkRNDISRequest* HyperVNetwork::allocateRNDISRequest() {
@@ -109,7 +133,7 @@ HyperVNetworkRNDISRequest* HyperVNetwork::allocateRNDISRequest() {
   rndisRequest->isSleeping = false;
   rndisRequest->memDescriptor = bufDesc;
   rndisRequest->messagePhysicalAddress = bufDesc->getPhysicalAddress();
-  DBGLOG("Mapped RNDIS request buffer to phys 0x%llX", rndisRequest->messagePhysicalAddress);
+  DBGLOG("Mapped RNDIS request buffer 0x%llX to phys 0x%llX", rndisRequest, rndisRequest->messagePhysicalAddress);
   
   return rndisRequest;
 }
@@ -128,7 +152,7 @@ UInt32 HyperVNetwork::getNextRNDISTransId() {
   return value;
 }
 
-bool HyperVNetwork::sendRNDISMessage(HyperVNetworkRNDISRequest *rndisRequest, bool waitResponse) {
+bool HyperVNetwork::sendRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest, bool waitResponse) {
   //
   // Create page buffer set.
   //
@@ -147,9 +171,8 @@ bool HyperVNetwork::sendRNDISMessage(HyperVNetworkRNDISRequest *rndisRequest, bo
   netMsg.v1.sendRNDISPacket.sendBufferSectionIndex = -1;
   netMsg.v1.sendRNDISPacket.sendBufferSectionSize = 0;
   
-  //UInt32 respSize = sizeof (netMsg);
   rndisRequest->isSleeping = true;
-  rndisRequest->message.requestId = getNextRNDISTransId();
+  rndisRequest->message.initRequest.requestId = getNextRNDISTransId();
   
   //
   // Add to linked list.
@@ -174,6 +197,43 @@ bool HyperVNetwork::sendRNDISMessage(HyperVNetworkRNDISRequest *rndisRequest, bo
   return true;
 }
 
+bool HyperVNetwork::sendRNDISDataPacket(mbuf_t packet) {
+  size_t packetLength = mbuf_pkthdr_len(packet);
+  
+  UInt32 sendIndex = getNextSendIndex();
+  UInt8 *rndisBuffer = sendBuffer + (sendSectionSize * sendIndex);
+  HyperVNetworkRNDISMessage *rndisMsg = (HyperVNetworkRNDISMessage*)rndisBuffer;
+  memset(rndisMsg, 0, sizeof (HyperVNetworkRNDISMessage));
+  
+  rndisMsg->msgType = kHyperVNetworkRNDISMessageTypePacket;
+  rndisMsg->dataPacket.dataOffset = sizeof (HyperVNetworkRNDISMessageDataPacket);
+  rndisMsg->dataPacket.dataLength = (UInt32)packetLength;
+  rndisMsg->msgLength = sizeof (HyperVNetworkRNDISMessageDataPacket) + 8 + rndisMsg->dataPacket.dataLength;
+  
+  rndisBuffer += rndisMsg->dataPacket.dataOffset + 8;
+  for (mbuf_t pktCurrent = packet; pktCurrent != NULL; pktCurrent = mbuf_next(pktCurrent)) {
+    size_t pktCurrentLength = mbuf_len(pktCurrent);
+    memcpy(rndisBuffer, mbuf_data(pktCurrent), pktCurrentLength);
+    rndisBuffer += pktCurrentLength;
+  }
+  freePacket(packet);
+  
+  //
+  // Create packet for sending the RNDIS data packet.
+  //
+  HyperVNetworkMessage netMsg;
+  memset(&netMsg, 0, sizeof (netMsg));
+  netMsg.messageType = kHyperVNetworkMessageTypeV1SendRNDISPacket;
+  netMsg.v1.sendRNDISPacket.channelType = kHyperVNetworkRNDISChannelTypeData;
+  netMsg.v1.sendRNDISPacket.sendBufferSectionIndex = sendIndex;
+  netMsg.v1.sendRNDISPacket.sendBufferSectionSize = rndisMsg->msgLength;
+  
+  DBGLOG("Packet at index %u, size %u bytes", sendIndex, rndisMsg->msgLength);
+  hvDevice->writeInbandPacketWithTransactionId(&netMsg, sizeof (netMsg), sendIndex | kHyperVNetworkSendTransIdBits, true);
+  
+  return true;
+}
+
 bool HyperVNetwork::initializeRNDIS() {
   HyperVNetworkRNDISRequest *rndisRequest = allocateRNDISRequest();
   rndisRequest->message.msgType   = kHyperVNetworkRNDISMessageTypeInit;
@@ -183,9 +243,11 @@ bool HyperVNetwork::initializeRNDIS() {
   rndisRequest->message.initRequest.minorVersion    = kHyperVNetworkRNDISVersionMinor;
   rndisRequest->message.initRequest.maxTransferSize = kHyperVNetworkRNDISMaxTransferSize;
   
-  bool result = sendRNDISMessage(rndisRequest);
+  bool result = sendRNDISRequest(rndisRequest);
   if (result) {
-    DBGLOG("RNDIS initializated with status 0x%X", rndisRequest->message.initComplete.status);
+    DBGLOG("RNDIS initializated with status 0x%X, max packets per msg %u, max transfer size 0x%X, packet alignment 0x%X",
+           rndisRequest->message.initComplete.status, rndisRequest->message.initComplete.maxPacketsPerMessage,
+           rndisRequest->message.initComplete.maxTransferSize, rndisRequest->message.initComplete.packetAlignmentFactor);
     result = rndisRequest->message.initComplete.status == kHyperVNetworkRNDISStatusSuccess;
   } else {
     SYSLOG("Failed to send RNDIS initialization request");
@@ -209,12 +271,12 @@ bool HyperVNetwork::queryRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32
   rndisRequest->message.queryRequest.infoBufferLength = 0;
   rndisRequest->message.queryRequest.deviceVcHandle   = 0;
   
-  DBGLOG("OID query request offset 0x%X, length 0x%X",
+  DBGLOG("OID query 0x%X request offset 0x%X, length 0x%X", oid,
          rndisRequest->message.queryRequest.infoBufferOffset, rndisRequest->message.queryRequest.infoBufferLength);
   
-  bool result = sendRNDISMessage(rndisRequest);
+  bool result = sendRNDISRequest(rndisRequest);
   if (result) {
-    DBGLOG("OID query response status 0x%X, offset 0x%X, length 0x%X",
+    DBGLOG("OID query 0x%X response status 0x%X, offset 0x%X, length 0x%X", oid,
            rndisRequest->message.queryComplete.status,
            rndisRequest->message.queryComplete.infoBufferOffset, rndisRequest->message.queryComplete.infoBufferLength);
     

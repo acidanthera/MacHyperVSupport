@@ -30,7 +30,7 @@ bool HyperVNetwork::start(IOService *provider) {
   //
   // Configure the channel.
   //
-  if (!hvDevice->openChannel(kHyperVNetworkRingBufferSize, kHyperVNetworkRingBufferSize, this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVNetwork::handleInterrupt))) {
+  if (!hvDevice->openChannel(kHyperVNetworkRingBufferSize, kHyperVNetworkRingBufferSize, this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVNetwork::handleInterrupt), kHyperVNetworkMaximumTransId)) {
     super::stop(provider);
     return false;
   }
@@ -54,5 +54,27 @@ bool HyperVNetwork::start(IOService *provider) {
 
 IOReturn HyperVNetwork::getHardwareAddress(IOEthernetAddress *addrP) {
   *addrP = ethAddress;
+  return kIOReturnSuccess;
+}
+
+UInt32 HyperVNetwork::outputPacket(mbuf_t m, void *param) {
+  
+  sendRNDISDataPacket(m);
+  
+  
+  return kIOReturnSuccess;
+}
+
+IOReturn HyperVNetwork::enable(IONetworkInterface *interface ) {
+  
+  UInt32 stats;
+  UInt32 statsLeng = 4;
+  UInt32 stats2;
+  UInt32 statsLeng2 = 4;
+  
+  queryRNDISOID(kHyperVNetworkRNDISOIDGeneralTransmitOk, &stats, &statsLeng);
+  queryRNDISOID(kHyperVNetworkRNDISOIDGeneralReceiveOk, &stats2, &statsLeng2);
+  DBGLOG("TRANSMIT OK %u RCV OK %u", stats, stats2);
+  isEnabled = true;
   return kIOReturnSuccess;
 }

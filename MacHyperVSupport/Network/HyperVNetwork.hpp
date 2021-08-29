@@ -8,11 +8,18 @@
 #ifndef HyperVNetwork_hpp
 #define HyperVNetwork_hpp
 
+#include <IOKit/network/IONetworkInterface.h>
 #include <IOKit/network/IOEthernetController.h>
 #include <IOKit/network/IOEthernetInterface.h>
+#include <IOKit/network/IOMbufMemoryCursor.h>
+#include <IOKit/network/IONetworkMedium.h>
 
 #include "HyperVVMBusDevice.hpp"
 #include "HyperVNetworkRegs.hpp"
+
+extern "C" {
+#include <sys/kpi_mbuf.h>
+}
 
 #define super IOEthernetController
 
@@ -20,6 +27,9 @@
 #define DBGLOG(str, ...) DBGLOG_PRINT("HyperVNetwork", str, ## __VA_ARGS__)
 
 #define MBit 1000000
+
+#define kHyperVNetworkMaximumTransId  0xFFFFFFFF
+#define kHyperVNetworkSendTransIdBits 0xFA00000000000000
 
 typedef struct HyperVNetworkRNDISRequest {
   HyperVNetworkRNDISMessage message;
@@ -42,6 +52,8 @@ private:
   //
   HyperVVMBusDevice       *hvDevice;
   
+  bool                          isEnabled = false;
+  
   HyperVNetworkProtocolVersion  netVersion;
   UInt32                        receiveBufferSize;
   UInt32                        receiveGpadlHandle;
@@ -49,15 +61,16 @@ private:
   
   UInt32                        sendBufferSize;
   UInt32                        sendGpadlHandle;
-  void                          *sendBuffer;
+  UInt8                         *sendBuffer;
   UInt32                        sendSectionSize;
   UInt32                        sendSectionCount;
+  UInt64                        *sendIndexMap;
+  size_t                        sendIndexMapSize;
   
   IOLock                        *rndisLock = NULL;
   UInt32                        rndisTransId = 0;
   
   HyperVNetworkRNDISRequest     *rndisRequests;
-  HyperVVMBusDeviceRequestNew   *vmbusRequests;
   
   IOEthernetInterface           *ethInterface;
   IOEthernetAddress             ethAddress;
@@ -77,14 +90,18 @@ private:
   void handleCompletion();
 
   bool processRNDISPacket(UInt8 *data, UInt32 dataLength);
+  void processIncoming(UInt8 *data, UInt32 dataLength);
   
   //
   // RNDIS
   //
+  UInt32 getNextSendIndex();
+  void releaseSendIndex(UInt32 sendIndex);
   HyperVNetworkRNDISRequest *allocateRNDISRequest();
   void freeRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest);
   UInt32 getNextRNDISTransId();
-  bool sendRNDISMessage(HyperVNetworkRNDISRequest *rndisRequest, bool waitResponse = false);
+  bool sendRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest, bool waitResponse = false);
+  bool sendRNDISDataPacket(mbuf_t packet);
   
   bool initializeRNDIS();
   bool queryRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 *valueSize);
@@ -107,6 +124,10 @@ public:
   // IOEthernetController overrides.
   //
   IOReturn getHardwareAddress(IOEthernetAddress *addrP) APPLE_KEXT_OVERRIDE;
+  
+  UInt32 outputPacket(mbuf_t m, void *param) APPLE_KEXT_OVERRIDE;
+  
+  IOReturn enable(IONetworkInterface *interface) APPLE_KEXT_OVERRIDE;
 };
 
 #endif /* HyperVNetwork_hpp */
