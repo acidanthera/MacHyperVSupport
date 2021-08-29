@@ -79,6 +79,9 @@ private:
   
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
   
+  IOReturn writePacketInternal(void *buffer, UInt32 bufferLength, VMBusPacketType packetType, UInt64 transactionId,
+                               bool responseRequired, void *responseBuffer, UInt32 responseBufferLength);
+  
   IOReturn nextPacketAvailableGated(VMBusPacketType *type, UInt32 *packetHeaderLength, UInt32 *packetTotalLength);
   IOReturn doRequestGated(HyperVVMBusDeviceRequest *request, void *pageBufferData, UInt32 *pageBufferLength);
   IOReturn readRawPacketGated(void *buffer, UInt32 *bufferLength);
@@ -136,15 +139,7 @@ public:
   IOReturn writeGPADirectSinglePagePacket(void *buffer, UInt32 bufferLength, bool responseRequired,
                                           VMBusSinglePageBuffer pageBuffers[], UInt32 pageBufferCount,
                                           void *responseBuffer = NULL, UInt32 responseBufferLength = 0);
-  
-  IOReturn sendMessage(void *message, UInt32 messageLength, VMBusPacketType type, UInt64 transactionId,
-                       bool responseRequired = false, void *response = NULL, UInt32 *responseLength = NULL);
-  IOReturn sendMessageSinglePageBuffers(void *message, UInt32 messageLength, UInt64 transactionId,
-                                        VMBusSinglePageBuffer pageBuffers[], UInt32 pageBufferCount,
-                                        bool responseRequired = false, void *response = NULL, UInt32 *responseLength = NULL);
-  IOReturn sendMessageMultiPageBuffer(void *message, UInt32 messageLength, UInt64 transactionId,
-                                      VMBusMultiPageBuffer *multiPageBuffer, UInt32 multiPageBufferLength,
-                                      bool responseRequired = false, void *response = NULL, UInt32 *responseLength = NULL);
+  IOReturn writeCompletionPacketWithTransactionId(void *buffer, UInt32 bufferLength, UInt64 transactionId, bool responseRequired);
   
   
   bool getPendingTransaction(UInt64 transactionId, void **buffer, UInt32 *bufferLength);

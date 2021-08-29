@@ -84,8 +84,7 @@ void HyperVNetwork::handleRNDISRanges(VMBusPacketTransferPages *pktPages, UInt32
   netMsg2.messageType = kHyperVNetworkMessageTypeV1SendRNDISPacketComplete;
   netMsg2.v1.sendRNDISPacketComplete.status = kHyperVNetworkMessageStatusSuccess;
   
-  hvDevice->sendMessage(&netMsg2, sizeof (netMsg2), kVMBusPacketTypeDataInband, pktPages->header.transactionId);
-  DBGLOG("sent completion");
+  hvDevice->writeCompletionPacketWithTransactionId(&netMsg2, sizeof (netMsg2), pktPages->header.transactionId, false);
 }
 
 bool HyperVNetwork::negotiateProtocol(HyperVNetworkProtocolVersion protocolVersion) {
@@ -96,8 +95,7 @@ bool HyperVNetwork::negotiateProtocol(HyperVNetworkProtocolVersion protocolVersi
   netMsg.init.initVersion.maxProtocolVersion = protocolVersion;
   netMsg.init.initVersion.minProtocolVersion = protocolVersion;
 
-  UInt32 msgSize = sizeof (netMsg);
-  if (hvDevice->sendMessage(&netMsg, sizeof (netMsg), kVMBusPacketTypeDataInband, 0, true, &netMsg, &msgSize) != kIOReturnSuccess) {
+  if (hvDevice->writeInbandPacket(&netMsg, sizeof (netMsg), true, &netMsg, sizeof (netMsg)) != kIOReturnSuccess) {
     SYSLOG("failed to send protocol negotiation message");
     return false;
   }
@@ -131,8 +129,7 @@ bool HyperVNetwork::initBuffers() {
   netMsg.v1.sendReceiveBuffer.gpadlHandle = receiveGpadlHandle;
   netMsg.v1.sendReceiveBuffer.id = kHyperVNetworkReceiveBufferID;
   
-  UInt32 respLength = sizeof (netMsg);
-  if (hvDevice->sendMessage(&netMsg, sizeof (netMsg), kVMBusPacketTypeDataInband, 0, true, &netMsg, &respLength) != kIOReturnSuccess) {
+  if (hvDevice->writeInbandPacket(&netMsg, sizeof (netMsg), true, &netMsg, sizeof (netMsg)) != kIOReturnSuccess) {
     SYSLOG("Failed to send receive buffer configuration message");
     return false;
   }
@@ -155,8 +152,7 @@ bool HyperVNetwork::initBuffers() {
   netMsg.v1.sendSendBuffer.gpadlHandle = sendGpadlHandle;
   netMsg.v1.sendSendBuffer.id = kHyperVNetworkSendBufferID;
 
-  respLength = sizeof (netMsg);
-  if (hvDevice->sendMessage(&netMsg, sizeof (netMsg), kVMBusPacketTypeDataInband, 0, true, &netMsg, &respLength) != kIOReturnSuccess) {
+  if (hvDevice->writeInbandPacket(&netMsg, sizeof (netMsg), true, &netMsg, sizeof (netMsg)) != kIOReturnSuccess) {
     SYSLOG("Failed to send send buffer configuration message");
     return false;
   }
@@ -194,7 +190,7 @@ bool HyperVNetwork::connectNetwork() {
   netMsg.v1.sendNDISVersion.major = (ndisVersion & 0xFFFF0000) >> 16;
   netMsg.v1.sendNDISVersion.minor = ndisVersion & 0x0000FFFF;
   
-  if (hvDevice->sendMessage(&netMsg, sizeof (netMsg), kVMBusPacketTypeDataInband, 0) != kIOReturnSuccess) {
+  if (hvDevice->writeInbandPacket(&netMsg, sizeof (netMsg), false) != kIOReturnSuccess) {
     SYSLOG("failed to send NDIS version");
     return false;
   }

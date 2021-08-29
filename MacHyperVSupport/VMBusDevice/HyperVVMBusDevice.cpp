@@ -187,27 +187,7 @@ IOReturn HyperVVMBusDevice::writeInbandPacket(void *buffer, UInt32 bufferLength,
 
 IOReturn HyperVVMBusDevice::writeInbandPacketWithTransactionId(void *buffer, UInt32 bufferLength, UInt64 transactionId,
                                                                bool responseRequired, void *responseBuffer, UInt32 responseBufferLength) {
-  HyperVVMBusDeviceRequestNew req;
-  req.isSleeping = true;
-  req.lock = IOLockAlloc();
-  req.responseData = responseBuffer;
-  req.responseDataLength = responseBufferLength;
-  req.transactionId = transactionId;
-  
-  if (responseBuffer != NULL) {
-    addPacketRequest(&req);
-  }
-  
-  IOReturn status = commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::writeInbandPacketGated),
-                                buffer, &bufferLength, &responseRequired, &transactionId);
-  if (responseBuffer != NULL) {
-    if (status == kIOReturnSuccess) {
-      sleepPacketRequest(&req);
-    } else {
-      wakeTransaction(transactionId);
-    }
-  }
-  return status;
+  return writePacketInternal(buffer, bufferLength, kVMBusPacketTypeDataInband, transactionId, responseRequired, responseBuffer, responseBufferLength);
 }
 
 IOReturn HyperVVMBusDevice::writeGPADirectSinglePagePacket(void *buffer, UInt32 bufferLength, bool responseRequired,
@@ -263,70 +243,8 @@ IOReturn HyperVVMBusDevice::writeGPADirectSinglePagePacket(void *buffer, UInt32 
   return status;
 }
 
-IOReturn HyperVVMBusDevice::sendMessage(void *message, UInt32 messageLength, VMBusPacketType type, UInt64 transactionId,
-                                        bool responseRequired, void *response, UInt32 *responseLength) {
-  HyperVVMBusDeviceRequest request;
-  memset(&request, 0, sizeof (request));
-  
-  request.sendData = message;
-  request.sendDataLength = messageLength;
-  request.sendPacketType = type;
-  request.transactionId = transactionId;
-  
-  request.responseRequired = responseRequired;
-  if (responseRequired && response && responseLength) {
-    request.responseData = response;
-    request.responseDataLength = *responseLength;
-  }
-  
-  auto status = commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::doRequestGated), &request, NULL, NULL);
-  
-  if (responseRequired && response && responseLength) {
-    *responseLength = request.responseDataLength;
-  }
-  return status;
-}
-
-IOReturn HyperVVMBusDevice::sendMessageSinglePageBuffers(void *message, UInt32 messageLength, UInt64 transactionId,
-                                                         VMBusSinglePageBuffer pageBuffers[], UInt32 pageBufferCount,
-                                                         bool responseRequired, void *response, UInt32 *responseLength) {
-  if (pageBufferCount > kVMBusMaxPageBufferCount) {
-    return kIOReturnNoResources;
-  }
-  
-  HyperVVMBusDeviceRequest request;
-  memset(&request, 0, sizeof (request));
-  
-  request.sendData = message;
-  request.sendDataLength = messageLength;
-  request.sendPacketType = kVMBusPacketTypeDataUsingGPADirect;
-  request.transactionId = transactionId;
-  
-  request.responseRequired = responseRequired;
-  if (responseRequired && response && responseLength) {
-    request.responseData = response;
-    request.responseDataLength = *responseLength;
-  }
-  
-  // Create packet header for page buffers.
-  VMBusPacketSinglePageBuffer pagePacket;
-  pagePacket.reserved = 0;
-  pagePacket.rangeCount = pageBufferCount;
-  
-  for (int i = 0; i < pagePacket.rangeCount; i++) {
-    pagePacket.ranges[i].length = pageBuffers[i].length;
-    pagePacket.ranges[i].offset = pageBuffers[i].offset;
-    pagePacket.ranges[i].pfn    = pageBuffers[i].pfn;
-  }
-  UInt32 pagePacketLength = sizeof (VMBusPacketSinglePageBuffer) -
-    ((kVMBusMaxPageBufferCount - pageBufferCount) * sizeof (VMBusSinglePageBuffer));
-  
-  auto status = commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::doRequestGated),
-                                       &request, &pagePacket, &pagePacketLength);
-  if (responseRequired && response && responseLength) {
-    *responseLength = request.responseDataLength;
-  }
-  return status;
+IOReturn HyperVVMBusDevice::writeCompletionPacketWithTransactionId(void *buffer, UInt32 bufferLength, UInt64 transactionId, bool responseRequired) {
+  return writePacketInternal(buffer, bufferLength, kVMBusPacketTypeCompletion, transactionId, responseRequired, NULL, 0);
 }
 
 bool HyperVVMBusDevice::getPendingTransaction(UInt64 transactionId, void **buffer, UInt32 *bufferLength) {
