@@ -301,18 +301,40 @@ void HyperVVMBusController::handleSynICInterrupt(OSObject *target, void *refCon,
   //
   // Handle channel event flags.
   //
-  for (UInt32 i = 1; i <= vmbusChannelHighest; i++) {
-    if ((cpuData.perCPUData[cpuIndex].eventFlags[kVMBusInterruptMessage].flags[VMBUS_CHANNEL_EVENT_INDEX(i)] & VMBUS_CHANNEL_EVENT_MASK(i)) == 0 ||
-        vmbusChannels[i].status != kVMBusChannelStatusOpen) {
-      continue;
+  // On Windows 8 and above, each channel has its own bit in the global event flags.
+  // On Windows Server 2008 R2 and older, the RX event flags needs to be checked in a similar fashion.
+  //
+  if (useLegacyEventFlags && cpuData.perCPUData[cpuIndex].eventFlags[kVMBusInterruptMessage].flags[0] & 0x1) {
+    cpuData.perCPUData[cpuIndex].eventFlags[kVMBusInterruptMessage].flags[0] &= ~0x1;
+    for (UInt32 i = 1; i <= vmbusChannelHighest; i++) {
+      if ((vmbusRxEventFlags->flags[VMBUS_CHANNEL_EVENT_INDEX(i)] & VMBUS_CHANNEL_EVENT_MASK(i)) == 0 ||
+          vmbusChannels[i].status != kVMBusChannelStatusOpen) {
+        continue;
+      }
+      
+      //
+      // Clear event flag and trigger handler.
+      //
+      vmbusRxEventFlags->flags[VMBUS_CHANNEL_EVENT_INDEX(i)] &= ~VMBUS_CHANNEL_EVENT_MASK(i);
+      if (vectors[i].handler != NULL) {
+        vectors[i].handler(vectors[i].target, vectors[i].refCon, vectors[i].nub, vectors[i].source);
+      }
     }
-    
-    //
-    // Clear event flag and trigger handler.
-    //
-    cpuData.perCPUData[cpuIndex].eventFlags[kVMBusInterruptMessage].flags[VMBUS_CHANNEL_EVENT_INDEX(i)] &= ~VMBUS_CHANNEL_EVENT_MASK(i);
-    if (vectors[i].handler != NULL) {
-      vectors[i].handler(vectors[i].target, vectors[i].refCon, vectors[i].nub, vectors[i].source);
+
+  } else {
+    for (UInt32 i = 1; i <= vmbusChannelHighest; i++) {
+      if ((cpuData.perCPUData[cpuIndex].eventFlags[kVMBusInterruptMessage].flags[VMBUS_CHANNEL_EVENT_INDEX(i)] & VMBUS_CHANNEL_EVENT_MASK(i)) == 0 ||
+          vmbusChannels[i].status != kVMBusChannelStatusOpen) {
+        continue;
+      }
+      
+      //
+      // Clear event flag and trigger handler.
+      //
+      cpuData.perCPUData[cpuIndex].eventFlags[kVMBusInterruptMessage].flags[VMBUS_CHANNEL_EVENT_INDEX(i)] &= ~VMBUS_CHANNEL_EVENT_MASK(i);
+      if (vectors[i].handler != NULL) {
+        vectors[i].handler(vectors[i].target, vectors[i].refCon, vectors[i].nub, vectors[i].source);
+      }
     }
   }
   

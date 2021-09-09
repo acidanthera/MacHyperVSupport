@@ -293,7 +293,9 @@ void HyperVVMBusController::signalVMBusChannel(UInt32 channelId) {
   //
   // Set bit for channel.
   //
-//  vmbusTxEventFlags[VMBUS_CHANNEL_EVENT_INDEX(channelId)] |= VMBUS_CHANNEL_EVENT_MASK(channelId);
+  if (useLegacyEventFlags) {
+    vmbusTxEventFlags->flags[VMBUS_CHANNEL_EVENT_INDEX(channelId)] |= VMBUS_CHANNEL_EVENT_MASK(channelId);
+  }
   
   //
   // Signal event for specified connection.

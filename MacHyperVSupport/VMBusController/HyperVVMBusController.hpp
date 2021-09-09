@@ -86,9 +86,10 @@ private:
   
   HyperVCPUData       cpuData;
   
+  bool                useLegacyEventFlags = false;
   HyperVDMABuffer     vmbusEventFlags;
-  UInt8               *vmbusRxEventFlags;
-  UInt8               *vmbusTxEventFlags;
+  HyperVEventFlags    *vmbusRxEventFlags;
+  HyperVEventFlags    *vmbusTxEventFlags;
   
   HyperVDMABuffer     vmbusMnf1;
   HyperVDMABuffer     vmbusMnf2;
