@@ -8,7 +8,7 @@
 #include "HyperVVMBusDevice.hpp"
 #include "HyperVVMBusDeviceInternal.hpp"
 
-bool HyperVVMBusDevice::setupInterrupt() {
+bool HyperVVMBusDevice::setupCommandGate() {
   bool initialized = false;
   
   do {    
@@ -22,26 +22,14 @@ bool HyperVVMBusDevice::setupInterrupt() {
       break;
     }
     workLoop->addEventSource(commandGate);
-    
-    interruptSource = IOInterruptEventSource::interruptEventSource(this,
-                                                                   OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVVMBusDevice::handleInterrupt),
-                                                                   this, 0);
-    if (interruptSource == NULL) {
-      workLoop->removeEventSource(commandGate);
-      break;
-    }
-    interruptSource->enable();
-    workLoop->addEventSource(interruptSource);
     initialized = true;
     
   } while (false);
   
   if (!initialized) {
-    OSSafeReleaseNULL(interruptSource);
     OSSafeReleaseNULL(commandGate);
     OSSafeReleaseNULL(workLoop);
-    
-    interruptSource = NULL;
+
     commandGate = NULL;
     workLoop = NULL;
   }
@@ -49,43 +37,14 @@ bool HyperVVMBusDevice::setupInterrupt() {
   return initialized;
 }
 
-void HyperVVMBusDevice::teardownInterrupt() {
-  if (childInterruptSource != NULL) {
-    childInterruptSource->disable();
-    workLoop->removeEventSource(childInterruptSource);
-    childInterruptSource = NULL;
-  }
-  
-  if (interruptSource == NULL) {
-    return;
-  }
-  
-  interruptSource->disable();
-  workLoop->removeEventSource(interruptSource);
+void HyperVVMBusDevice::teardownCommandGate() {
   workLoop->removeEventSource(commandGate);
-  
-  interruptSource->release();
+
   commandGate->release();
   workLoop->release();
-  
-  interruptSource = NULL;
+
   commandGate = NULL;
   workLoop = NULL;
-}
-
-void HyperVVMBusDevice::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
-  //
-  // If there is a command in progress, handle that.
-  //
-  if (commandSleeping) {
-    commandSleeping = false;
-    commandGate->commandWakeup(&commandLock);
-
-  } else {
-    if (childInterruptSource != NULL) {
-      childInterruptSource->interruptOccurred(0, 0, 0);
-    }
-  }
 }
 
 
@@ -238,7 +197,7 @@ IOReturn HyperVVMBusDevice::writeRawPacketGated(void *header, UInt32 *headerLeng
   //
   // Update write index and notify Hyper-V if needed.
   //
-  MSGDBG("RAW TX imask %X, channel ID %u", txBuffer->interruptMask, channelId);
+  MSGDBG("RAW TX imask %X, RX imask %X, channel ID %u", txBuffer->interruptMask, rxBuffer->interruptMask, channelId);
   txBuffer->writeIndex = writeIndexNew;
   if (txBuffer->interruptMask == 0) {
     vmbusProvider->signalVMBusChannel(channelId);

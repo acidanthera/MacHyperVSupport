@@ -11,7 +11,7 @@ IOReturn HyperVStorage::executeCommand(HyperVStoragePacket *packet, bool checkCo
   //
   // Send packet and get response.
   //
-  IOReturn status = hvDevice->writeInbandPacket(packet, sizeof (*packet) - packetSizeDelta, true, packet, sizeof (*packet));
+  IOReturn status = hvDevice->writeInbandPacket(packet, sizeof (HyperVStoragePacket) - packetSizeDelta, true, packet, sizeof (HyperVStoragePacket));
   if (status != kIOReturnSuccess) {
     return status;
   }
@@ -29,8 +29,6 @@ IOReturn HyperVStorage::executeCommand(HyperVStoragePacket *packet, bool checkCo
 }
 
 void HyperVStorage::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
- // DBGLOG("Interrupt!");
-  
   HyperVStoragePacket packet;
 
   VMBusPacketType type;

@@ -30,6 +30,7 @@ class HyperVStorage : public IOSCSIParallelInterfaceController {
 
 private:
   HyperVVMBusDevice       *hvDevice;
+  IOInterruptEventSource  *interruptSource;
   
   UInt32                  protocolVersion;
   UInt32                  senseBufferSize;

@@ -26,6 +26,7 @@ private:
   // Parent VMBus device.
   //
   HyperVVMBusDevice       *hvDevice;
+  IOInterruptEventSource  *interruptSource;
 
   //
   // HID structures.

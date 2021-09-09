@@ -41,9 +41,6 @@ private:
   IOWorkLoop              *workLoop;
   IOCommandGate           *commandGate;
   bool                    commandLock;
-  bool                    commandSleeping;
-  IOInterruptEventSource  *interruptSource;
-  IOInterruptEventSource  *childInterruptSource;
   
   VMBusRingBuffer         *txBuffer;
   UInt32                  txBufferSize;
@@ -58,10 +55,9 @@ private:
   
   bool                    debugPackets = false;
 
-  bool setupInterrupt();
-  void teardownInterrupt();
-  
-  void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
+  bool setupCommandGate();
+  void teardownCommandGate();
+
   
   IOReturn writePacketInternal(void *buffer, UInt32 bufferLength, VMBusPacketType packetType, UInt64 transactionId,
                                bool responseRequired, void *responseBuffer, UInt32 responseBufferLength);
@@ -97,7 +93,7 @@ public:
   // General functions.
   //
   void setDebugMessagePrinting(bool enabled) { debugPackets = enabled; }
-  bool openChannel(UInt32 txSize, UInt32 rxSize, OSObject *owner = NULL, IOInterruptEventAction intAction = NULL, UInt64 maxAutoTransId = UINT64_MAX);
+  bool openChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId = UINT64_MAX);
   void closeChannel();
   bool createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer);
 

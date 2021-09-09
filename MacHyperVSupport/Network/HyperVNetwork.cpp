@@ -25,12 +25,20 @@ bool HyperVNetwork::start(IOService *provider) {
     return false;
   }
   hvDevice->retain();
-  hvDevice->setDebugMessagePrinting(true);
+  //hvDevice->setDebugMessagePrinting(true);
+  
+  //
+  // Configure interrupt.
+  //
+  interruptSource =
+    IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVNetwork::handleInterrupt), provider, 0);
+  getWorkLoop()->addEventSource(interruptSource);
+  interruptSource->enable();
   
   //
   // Configure the channel.
   //
-  if (!hvDevice->openChannel(kHyperVNetworkRingBufferSize, kHyperVNetworkRingBufferSize, this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVNetwork::handleInterrupt), kHyperVNetworkMaximumTransId)) {
+  if (!hvDevice->openChannel(kHyperVNetworkRingBufferSize, kHyperVNetworkRingBufferSize, kHyperVNetworkMaximumTransId)) {
     super::stop(provider);
     return false;
   }

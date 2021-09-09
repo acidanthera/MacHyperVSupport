@@ -28,9 +28,20 @@ bool HyperVKeyboard::start(IOService *provider) {
   hvDevice->retain();
   
   //
+  // Configure interrupt.
+  //
+  interruptSource =
+    IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVKeyboard::handleInterrupt), provider, 0);
+  getWorkLoop()->addEventSource(interruptSource);
+  interruptSource->enable();
+  
+  //
   // Configure the channel.
   //
-  if (!hvDevice->openChannel(kHyperVKeyboardRingBufferSize, kHyperVKeyboardRingBufferSize, this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVKeyboard::handleInterrupt))) {
+  if (!hvDevice->openChannel(kHyperVKeyboardRingBufferSize, kHyperVKeyboardRingBufferSize)) {
+    interruptSource->disable();
+    getWorkLoop()->removeEventSource(interruptSource);
+    OSSafeReleaseNULL(interruptSource);
     super::stop(provider);
     return false;
   }

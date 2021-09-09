@@ -67,7 +67,7 @@ void HyperVVMBusDevice::detach(IOService *provider) {
   super::detach(provider);
 }
 
-bool HyperVVMBusDevice::openChannel(UInt32 txSize, UInt32 rxSize, OSObject *owner, IOInterruptEventAction intAction, UInt64 maxAutoTransId) {
+bool HyperVVMBusDevice::openChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId) {
   if (channelIsOpen) {
     return true;
   }
@@ -76,18 +76,8 @@ bool HyperVVMBusDevice::openChannel(UInt32 txSize, UInt32 rxSize, OSObject *owne
   txBufferSize = txSize;
   rxBufferSize = rxSize;
   
-  if (!setupInterrupt()) {
+  if (!setupCommandGate()) {
     return false;
-  }
-  
-  if (owner != NULL && intAction != NULL) {
-    childInterruptSource = IOInterruptEventSource::interruptEventSource(owner, intAction);
-    if (childInterruptSource == NULL) {
-      return kIOReturnError;
-    }
-
-    workLoop->addEventSource(childInterruptSource);
-    childInterruptSource->enable();
   }
   
   //
@@ -95,13 +85,13 @@ bool HyperVVMBusDevice::openChannel(UInt32 txSize, UInt32 rxSize, OSObject *owne
   //
   vmbusMaxAutoTransId = maxAutoTransId;
   if (!vmbusProvider->initVMBusChannel(channelId, txBufferSize, &txBuffer, rxBufferSize, &rxBuffer)) {
-    teardownInterrupt();
+    teardownCommandGate();
     return false;
   }
   
   if (!vmbusProvider->openVMBusChannel(channelId)) {
     vmbusProvider->closeVMBusChannel(channelId);
-    teardownInterrupt();
+    teardownCommandGate();
     return false;
   }
   
@@ -115,7 +105,7 @@ void HyperVVMBusDevice::closeChannel() {
   // Close channel and stop interrupts.
   //
   vmbusProvider->closeVMBusChannel(channelId);
-  teardownInterrupt();
+  teardownCommandGate();
   channelIsOpen = false;
 }
 

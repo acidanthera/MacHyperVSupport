@@ -51,6 +51,7 @@ private:
   // Parent VMBus device.
   //
   HyperVVMBusDevice       *hvDevice;
+  IOInterruptEventSource  *interruptSource;
   
   bool                          isEnabled = false;
   

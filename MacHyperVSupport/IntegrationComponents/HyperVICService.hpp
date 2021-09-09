@@ -21,6 +21,7 @@ class HyperVICService : public IOService {
 
 private:
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
+  IOInterruptEventSource  *interruptSource;
   
 protected:
   HyperVVMBusDevice *hvDevice;

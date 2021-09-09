@@ -29,12 +29,19 @@ bool HyperVMouse::handleStart(IOService *provider) {
     return false;
   }
   hvDevice->retain();
+  
+  //
+  // Configure interrupt.
+  //
+  interruptSource =
+    IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVMouse::handleInterrupt), provider, 0);
+  getWorkLoop()->addEventSource(interruptSource);
+  interruptSource->enable();
 
   //
   // Configure the channel.
   //
-  if (!hvDevice->openChannel(kHyperVMouseRingBufferSize, kHyperVMouseRingBufferSize,
-                             this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVMouse::handleInterrupt))) {
+  if (!hvDevice->openChannel(kHyperVMouseRingBufferSize, kHyperVMouseRingBufferSize)) {
     return false;
   }
 

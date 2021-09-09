@@ -59,9 +59,17 @@ bool HyperVStorage::InitializeController() {
   packetSizeDelta = sizeof (HyperVStorageSCSIRequestWin8Extension);
   
   //
+  // Configure interrupt.
+  //
+  interruptSource =
+    IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVStorage::handleInterrupt), getProvider(), 0);
+  getProvider()->getWorkLoop()->addEventSource(interruptSource);
+  interruptSource->enable();
+  
+  //
   // Configure the channel.
   //
-  if (!hvDevice->openChannel(kHyperVStorageRingBufferSize, kHyperVStorageRingBufferSize, this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVStorage::handleInterrupt))) {
+  if (!hvDevice->openChannel(kHyperVStorageRingBufferSize, kHyperVStorageRingBufferSize)) {
     return false;
   }
   
