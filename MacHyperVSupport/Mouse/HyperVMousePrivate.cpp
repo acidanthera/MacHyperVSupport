@@ -71,8 +71,8 @@ bool HyperVMouse::setupMouse() {
   //
   // Send mouse request.
   //
-  HyperVMousePipeMessage          message;
-  HyperVMousePipeIncomingMessage  respMessage;
+  HyperVMousePipeMessage              message;
+  HyperVMouseMessageProtocolResponse  protoResponse;
 
   message.type = kHyperVPipeMessageTypeData;
   message.size = sizeof (HyperVMouseMessageProtocolRequest);
@@ -82,12 +82,12 @@ bool HyperVMouse::setupMouse() {
   message.request.versionRequested = kHyperVMouseVersion;
 
   DBGLOG("Sending mouse protocol request");
-  if (hvDevice->writeInbandPacket(&message, sizeof (message), true, &respMessage, sizeof (respMessage)) != kIOReturnSuccess) {
+  if (hvDevice->writeInbandPacket(&message, sizeof (message), true, &protoResponse, sizeof (protoResponse)) != kIOReturnSuccess) {
     return false;
   }
 
-  DBGLOG("Got mouse protocol response of %u", respMessage.response.status);
-  return respMessage.response.status != 0;
+  DBGLOG("Got mouse protocol response of %u, version 0x%X", protoResponse.status, protoResponse.versionRequested);
+  return protoResponse.status != 0;
 }
 
 void HyperVMouse::handleProtocolResponse(HyperVMouseMessageProtocolResponse *response, UInt64 transactionId) {
