@@ -25,7 +25,6 @@ bool HyperVNetwork::start(IOService *provider) {
     return false;
   }
   hvDevice->retain();
-  //hvDevice->setDebugMessagePrinting(true);
   
   //
   // Configure interrupt.
@@ -74,15 +73,6 @@ UInt32 HyperVNetwork::outputPacket(mbuf_t m, void *param) {
 }
 
 IOReturn HyperVNetwork::enable(IONetworkInterface *interface ) {
-  
-  UInt32 stats;
-  UInt32 statsLeng = 4;
-  UInt32 stats2;
-  UInt32 statsLeng2 = 4;
-  
-  queryRNDISOID(kHyperVNetworkRNDISOIDGeneralTransmitOk, &stats, &statsLeng);
-  queryRNDISOID(kHyperVNetworkRNDISOIDGeneralReceiveOk, &stats2, &statsLeng2);
-  DBGLOG("TRANSMIT OK %u RCV OK %u", stats, stats2);
   isEnabled = true;
   return kIOReturnSuccess;
 }
