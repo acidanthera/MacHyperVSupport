@@ -24,7 +24,8 @@ extern "C" {
 #define super IOEthernetController
 
 #define SYSLOG(str, ...) SYSLOG_PRINT("HyperVNetwork", str, ## __VA_ARGS__)
-#define DBGLOG(str, ...) DBGLOG_PRINT("HyperVNetwork", str, ## __VA_ARGS__)
+#define DBGLOG(str, ...) \
+  if (this->debugEnabled) DBGLOG_PRINT("HyperVNetwork", str, ## __VA_ARGS__)
 
 #define MBit 1000000
 
@@ -52,6 +53,7 @@ private:
   //
   HyperVVMBusDevice       *hvDevice;
   IOInterruptEventSource  *interruptSource;
+  bool                    debugEnabled = false;
   
   bool                          isEnabled = false;
   
@@ -128,7 +130,8 @@ public:
   
   UInt32 outputPacket(mbuf_t m, void *param) APPLE_KEXT_OVERRIDE;
   
-  IOReturn enable(IONetworkInterface *interface) APPLE_KEXT_OVERRIDE;
+  virtual IOReturn enable(IONetworkInterface *interface) APPLE_KEXT_OVERRIDE;
+  virtual IOReturn disable(IONetworkInterface *interface) APPLE_KEXT_OVERRIDE;
 };
 
 #endif /* HyperVNetwork_hpp */

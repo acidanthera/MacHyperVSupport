@@ -65,14 +65,15 @@ IOReturn HyperVNetwork::getHardwareAddress(IOEthernetAddress *addrP) {
 }
 
 UInt32 HyperVNetwork::outputPacket(mbuf_t m, void *param) {
-  
-  sendRNDISDataPacket(m);
-  
-  
+  return sendRNDISDataPacket(m) ? kIOReturnSuccess : kIOReturnIOError;
+}
+
+IOReturn HyperVNetwork::enable(IONetworkInterface *interface) {
+  isEnabled = true;
   return kIOReturnSuccess;
 }
 
-IOReturn HyperVNetwork::enable(IONetworkInterface *interface ) {
-  isEnabled = true;
+IOReturn HyperVNetwork::disable(IONetworkInterface *interface) {
+  isEnabled = false;
   return kIOReturnSuccess;
 }
