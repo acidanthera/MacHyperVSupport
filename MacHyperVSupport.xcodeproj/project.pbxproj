@@ -31,6 +31,8 @@
 		419B88C5263F1F85005A9977 /* VMBus.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 419B88C4263F1F85005A9977 /* VMBus.cpp */; };
 		41B41BDD26C74B4C00926A0D /* HyperVNetwork.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41B41BDB26C74B4C00926A0D /* HyperVNetwork.cpp */; };
 		41B41BDE26C74B4C00926A0D /* HyperVNetwork.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41B41BDC26C74B4C00926A0D /* HyperVNetwork.hpp */; };
+		41B41BE426C84A9F00926A0D /* HyperVNetworkPrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41B41BE326C84A9F00926A0D /* HyperVNetworkPrivate.cpp */; };
+		41B41BE726CDC42D00926A0D /* HyperVNetworkRNDIS.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41B41BE626CDC42D00926A0D /* HyperVNetworkRNDIS.cpp */; };
 		41BE411A263EDFAF0018C52B /* HyperVVMBusController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41BE4118263EDFAF0018C52B /* HyperVVMBusController.cpp */; };
 		41BE411B263EDFAF0018C52B /* HyperVVMBusController.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41BE4119263EDFAF0018C52B /* HyperVVMBusController.hpp */; };
 		41E2EC78263F894300BBE18F /* SynIC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41E2EC77263F894300BBE18F /* SynIC.cpp */; };
@@ -114,6 +116,8 @@
 		41B41BDB26C74B4C00926A0D /* HyperVNetwork.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVNetwork.cpp; sourceTree = "<group>"; };
 		41B41BDC26C74B4C00926A0D /* HyperVNetwork.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVNetwork.hpp; sourceTree = "<group>"; };
 		41B41BE126C80DEC00926A0D /* HyperVNetworkRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVNetworkRegs.hpp; sourceTree = "<group>"; };
+		41B41BE326C84A9F00926A0D /* HyperVNetworkPrivate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVNetworkPrivate.cpp; sourceTree = "<group>"; };
+		41B41BE626CDC42D00926A0D /* HyperVNetworkRNDIS.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVNetworkRNDIS.cpp; sourceTree = "<group>"; };
 		41BE4104263EDE380018C52B /* MacHyperVSupport.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacHyperVSupport.kext; sourceTree = BUILT_PRODUCTS_DIR; };
 		41BE410B263EDE380018C52B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		41BE4113263EDEA10018C52B /* libkmod.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libkmod.a; path = MacKernelSDK/Library/x86_64/libkmod.a; sourceTree = "<group>"; };
@@ -243,6 +247,8 @@
 				41B41BDB26C74B4C00926A0D /* HyperVNetwork.cpp */,
 				41B41BDC26C74B4C00926A0D /* HyperVNetwork.hpp */,
 				41B41BE126C80DEC00926A0D /* HyperVNetworkRegs.hpp */,
+				41B41BE626CDC42D00926A0D /* HyperVNetworkRNDIS.cpp */,
+				41B41BE326C84A9F00926A0D /* HyperVNetworkPrivate.cpp */,
 			);
 			path = Network;
 			sourceTree = "<group>";
@@ -572,8 +578,10 @@
 				41F2E44B2666F37B00CE26CE /* HyperVPCIProvider.cpp in Sources */,
 				418F843D2648BA38003F8520 /* HyperVStorage.cpp in Sources */,
 				41F2E42D2665B64D00CE26CE /* HyperVPlatformProvider.cpp in Sources */,
+				41B41BE426C84A9F00926A0D /* HyperVNetworkPrivate.cpp in Sources */,
 				41225F572644D98500574E86 /* HyperVHeartbeat.cpp in Sources */,
 				41B41BDD26C74B4C00926A0D /* HyperVNetwork.cpp in Sources */,
+				41B41BE726CDC42D00926A0D /* HyperVNetworkRNDIS.cpp in Sources */,
 				41078473264603F1005894D4 /* VMBusChannel.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

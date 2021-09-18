@@ -8,42 +8,57 @@
 #include "HyperVMouse.hpp"
 
 void HyperVMouse::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
-  HyperVVMBusDeviceRequest request = { 0 };
-  UInt8 data[256];
-  
-  //
-  // Very large packets should never occur,
-  // but we do not want to hold up the packet chain.
-  //
-  HyperVMousePipeIncomingMessage *message = (HyperVMousePipeIncomingMessage*)data;
-  request.responseData = data;
-  request.ignoreLargePackets = true;
-  
+  UInt8 data128[128];
+
   do {
     //
-    // Get next packet.
+    // Check for available inband packets.
+    // Large packets will be allocated as needed.
     //
-    request.responseDataLength = sizeof (data);
-    IOReturn status = hvDevice->doRequest(&request);
-    if (status != kIOReturnSuccess || request.responseDataLength == 0) {
+    HyperVMousePipeIncomingMessage *message;
+    UInt32 pktDataLength;
+    if (!hvDevice->nextInbandPacketAvailable(&pktDataLength)) {
+      break;
+    }
+
+    if (pktDataLength <= sizeof (data128)) {
+      message = (HyperVMousePipeIncomingMessage*)data128;
+    } else {
+      DBGLOG("Allocating large packet of %u bytes", pktDataLength);
+      message = (HyperVMousePipeIncomingMessage*)IOMalloc(pktDataLength);
+    }
+
+    //
+    // Read next packet.
+    //
+    UInt64 transactionId;
+    if (hvDevice->readInbandCompletionPacket((void *)message, pktDataLength, &transactionId) == kIOReturnSuccess) {
       // TODO: Handle other failures
-      return;
+      switch (message->header.type) {
+        case kHyperVMouseMessageTypeProtocolResponse:
+          handleProtocolResponse(&message->response, transactionId);
+          break;
+
+        case kHyperVMouseMessageTypeInitialDeviceInfo:
+          handleDeviceInfo(&message->deviceInfo);
+          break;
+
+        case kHyperVMouseMessageTypeInputReport:
+          handleInputReport(&message->inputReport);
+          break;
+
+        default:
+          DBGLOG("Unknown message type %u, size %u", message->header.type, message->header.size);
+          break;
+      }
     }
-    
-    switch (message->header.type) {
-      case kHyperVMouseMessageTypeInitialDeviceInfo:
-        handleDeviceInfo(&message->deviceInfo);
-        break;
-        
-      case kHyperVMouseMessageTypeInputReport:
-        handleInputReport(&message->inputReport);
-        break;
-        
-      default:
-        DBGLOG("Unknown message type %u, size %u", message->header.type, message->header.size);
-        break;
+
+    //
+    // Free allocated packet if needed.
+    //
+    if (pktDataLength > sizeof (data128)) {
+      IOFree(message, pktDataLength);
     }
-    
   } while (true);
 }
 
@@ -52,35 +67,40 @@ bool HyperVMouse::setupMouse() {
   // Device info is invalid.
   //
   hidDescriptorValid = false;
-  
+
   //
   // Send mouse request.
   //
-  HyperVVMBusDeviceRequest        request = { 0 };
-  HyperVMousePipeMessage          message;
-  HyperVMousePipeIncomingMessage  respMessage;
-  
+  HyperVMousePipeMessage              message;
+  HyperVMouseMessageProtocolResponse  protoResponse;
+
   message.type = kHyperVPipeMessageTypeData;
   message.size = sizeof (HyperVMouseMessageProtocolRequest);
-  
+
   message.request.header.type = kHyperVMouseMessageTypeProtocolRequest;
   message.request.header.size = sizeof (UInt32);
   message.request.versionRequested = kHyperVMouseVersion;
-  
-  request.sendData = &message;
-  request.sendDataLength = sizeof (message);
-  request.sendPacketType = kVMBusPacketTypeDataInband;
-  request.responseRequired = true;
-  request.responseData = &respMessage;
-  request.responseDataLength = sizeof (respMessage);
-  
+
   DBGLOG("Sending mouse protocol request");
-  if (hvDevice->doRequest(&request) != kIOReturnSuccess) {
+  if (hvDevice->writeInbandPacket(&message, sizeof (message), true, &protoResponse, sizeof (protoResponse)) != kIOReturnSuccess) {
     return false;
   }
-  
-  DBGLOG("Got mouse protocol response of %u", respMessage.response.status);
-  return respMessage.response.status != 0;
+
+  DBGLOG("Got mouse protocol response of %u, version 0x%X", protoResponse.status, protoResponse.versionRequested);
+  return protoResponse.status != 0;
+}
+
+void HyperVMouse::handleProtocolResponse(HyperVMouseMessageProtocolResponse *response, UInt64 transactionId) {
+  void    *responseBuffer;
+  UInt32  responseLength;
+
+  if (hvDevice->getPendingTransaction(transactionId, &responseBuffer, &responseLength)) {
+    if (sizeof (*response) > responseLength) {
+      return;
+    }
+    memcpy(responseBuffer, response, responseLength);
+    hvDevice->wakeTransaction(transactionId);
+  }
 }
 
 void HyperVMouse::handleDeviceInfo(HyperVMouseMessageInitialDeviceInfo *deviceInfo) {
@@ -88,43 +108,37 @@ void HyperVMouse::handleDeviceInfo(HyperVMouseMessageInitialDeviceInfo *deviceIn
       deviceInfo->info.size < sizeof(deviceInfo->info)) {
     return;
   }
-  
+
   memcpy(&mouseInfo, &deviceInfo->info, sizeof (mouseInfo));
   DBGLOG("Hyper-V Mouse ID %04X:%04X, version 0x%X",
          mouseInfo.vendor, mouseInfo.product, mouseInfo.version);
-  
+
   //
   // Store HID descriptor.
   //
   hidDescriptorLength = deviceInfo->hidDescriptor.hidDescriptorLength;
   DBGLOG("HID descriptor is %u bytes", hidDescriptorLength);
-  
+
   hidDescriptor = IOMalloc(hidDescriptorLength);
   if (hidDescriptor == NULL) {
     return;
   }
   memcpy(hidDescriptor, deviceInfo->hidDescriptorData, hidDescriptorLength);
   hidDescriptorValid = true;
-  
+
   //
   // Send device info ack message.
   //
-  HyperVVMBusDeviceRequest  request = { 0 };
-  HyperVMousePipeMessage    message;
-  
+  HyperVMousePipeMessage message;
   message.type = kHyperVPipeMessageTypeData;
   message.size = sizeof (HyperVMouseMessageInitialDeviceInfoAck);
-  
+
   message.deviceInfoAck.header.type = kHyperVMouseMessageTypeInitialDeviceInfoAck;
   message.deviceInfoAck.header.size = sizeof (HyperVMouseMessageInitialDeviceInfoAck) - sizeof (HyperVMouseMessageHeader);
   message.deviceInfoAck.reserved = 0;
-  
-  request.sendData = &message;
-  request.sendDataLength = sizeof (message);
-  request.sendPacketType = kVMBusPacketTypeDataInband;
-  
+
   DBGLOG("Sending device info ack");
-  hvDevice->doRequest(&request);
+  hvDevice->writeInbandPacket(&message, sizeof (message), false);
 }
 
 void HyperVMouse::handleInputReport(HyperVMouseMessageInputReport *inputReport) {

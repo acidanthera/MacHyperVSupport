@@ -42,8 +42,11 @@ bool HyperVVMBusController::allocateVMBusBuffers() {
   allocateDmaBuffer(&vmbusMnf1, PAGE_SIZE);
   allocateDmaBuffer(&vmbusMnf2, PAGE_SIZE);
   
-  vmbusRxEventFlags = (UInt8*)vmbusEventFlags.buffer;
-  vmbusTxEventFlags = (UInt8*)vmbusEventFlags.buffer + PAGE_SIZE / 2;
+  //
+  // Event flag bits primarily used on Windows Server 2008 R2 and older.
+  //
+  vmbusRxEventFlags = (HyperVEventFlags*)vmbusEventFlags.buffer;
+  vmbusTxEventFlags = (HyperVEventFlags*)((UInt8*)vmbusEventFlags.buffer + PAGE_SIZE / 2);
   
   return true;
 }

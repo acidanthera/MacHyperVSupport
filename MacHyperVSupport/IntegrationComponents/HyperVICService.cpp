@@ -30,10 +30,16 @@ bool HyperVICService::start(IOService *provider) {
   hvDevice->retain();
   
   //
+  // Configure interrupt.
+  //
+  interruptSource = IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVICService::handleInterrupt), provider, 0);
+  getWorkLoop()->addEventSource(interruptSource);
+  interruptSource->enable();
+  
+  //
   // Configure the channel.
   //
-  if (!hvDevice->openChannel(kHyperVICBufferSize, kHyperVICBufferSize,
-                             this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVICService::handleInterrupt))) {
+  if (!hvDevice->openChannel(kHyperVICBufferSize, kHyperVICBufferSize)) {
     super::stop(provider);
     return false;
   }
@@ -98,5 +104,5 @@ bool HyperVICService::createNegotiationResponse(VMBusICMessageNegotiate *negMsg,
 }
 
 void HyperVICService::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
-  processMessage();
+  while (processMessage());
 }

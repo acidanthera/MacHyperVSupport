@@ -64,7 +64,7 @@
 		</dict>
 		<key>HyperVMouse</key>
 		<dict>
-      		<key>AbsoluteAxisBoundsRemovalPercentage</key>
+			<key>AbsoluteAxisBoundsRemovalPercentage</key>
 			<integer>0</integer>
 			<key>CFBundleIdentifier</key>
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
@@ -195,6 +195,8 @@
 		<string>1.0.0d1</string>
 		<key>com.apple.iokit.IOHIDFamily</key>
 		<string>1.1</string>
+		<key>com.apple.iokit.IONetworkingFamily</key>
+		<string>1.5.0</string>
 		<key>com.apple.iokit.IOPCIFamily</key>
 		<string>1.0.0b1</string>
 		<key>com.apple.iokit.IOSCSIParallelFamily</key>

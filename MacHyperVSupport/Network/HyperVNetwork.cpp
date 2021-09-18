@@ -6,7 +6,6 @@
 //
 
 #include "HyperVNetwork.hpp"
-#include "HyperVNetworkRegs.hpp"
 
 OSDefineMetaClassAndStructors(HyperVNetwork, super);
 
@@ -28,17 +27,53 @@ bool HyperVNetwork::start(IOService *provider) {
   hvDevice->retain();
   
   //
+  // Configure interrupt.
+  //
+  interruptSource =
+    IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVNetwork::handleInterrupt), provider, 0);
+  getWorkLoop()->addEventSource(interruptSource);
+  interruptSource->enable();
+  
+  //
   // Configure the channel.
   //
-  if (!hvDevice->openChannel(kHyperVNetworkRingBufferSize, kHyperVNetworkRingBufferSize, this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVNetwork::handleInterrupt))) {
+  if (!hvDevice->openChannel(kHyperVNetworkRingBufferSize, kHyperVNetworkRingBufferSize, kHyperVNetworkMaximumTransId)) {
     super::stop(provider);
     return false;
   }
+  
+  rndisLock = IOLockAlloc();
+  
+  connectNetwork();
+  createMediumDictionary();
+  
+  //
+  // Attach network interface.
+  //
+  if (!attachInterface((IONetworkInterface **)&ethInterface, false)) {
+    return false;
+  }
+  ethInterface->registerService();
   
   SYSLOG("Initialized Hyper-V Synthetic Networking");
   return true;
 }
 
-void HyperVNetwork::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
-  DBGLOG("Interrupt");
+IOReturn HyperVNetwork::getHardwareAddress(IOEthernetAddress *addrP) {
+  *addrP = ethAddress;
+  return kIOReturnSuccess;
+}
+
+UInt32 HyperVNetwork::outputPacket(mbuf_t m, void *param) {
+  return sendRNDISDataPacket(m) ? kIOReturnSuccess : kIOReturnIOError;
+}
+
+IOReturn HyperVNetwork::enable(IONetworkInterface *interface) {
+  isEnabled = true;
+  return kIOReturnSuccess;
+}
+
+IOReturn HyperVNetwork::disable(IONetworkInterface *interface) {
+  isEnabled = false;
+  return kIOReturnSuccess;
 }

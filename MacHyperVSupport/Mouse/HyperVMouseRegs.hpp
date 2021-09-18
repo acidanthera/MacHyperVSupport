@@ -78,7 +78,7 @@ typedef struct __attribute__((packed)) {
 // Protocol response
 typedef struct __attribute__((packed)) {
   HyperVMouseMessageHeader  header;
-  
+
   UInt32                    versionRequested;
   UInt8                     status;
   UInt8                     reserved[3];
@@ -87,7 +87,7 @@ typedef struct __attribute__((packed)) {
 // Device info
 typedef struct __attribute__((packed)) {
   HyperVMouseMessageHeader  header;
-  
+
   HyperVMouseDeviceInfo     info;
   HyperVHIDDescriptor       hidDescriptor;
   UInt8                     hidDescriptorData[];
@@ -96,14 +96,14 @@ typedef struct __attribute__((packed)) {
 // Device info ack
 typedef struct __attribute__((packed)) {
   HyperVMouseMessageHeader  header;
-  
+
   UInt8                     reserved;
 } HyperVMouseMessageInitialDeviceInfoAck;
 
 // Input report
 typedef struct __attribute__((packed)) {
   HyperVMouseMessageHeader  header;
-  
+
   UInt8                     data[];
 } HyperVMouseMessageInputReport;
 

@@ -59,9 +59,17 @@ bool HyperVStorage::InitializeController() {
   packetSizeDelta = sizeof (HyperVStorageSCSIRequestWin8Extension);
   
   //
+  // Configure interrupt.
+  //
+  interruptSource =
+    IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVStorage::handleInterrupt), getProvider(), 0);
+  getProvider()->getWorkLoop()->addEventSource(interruptSource);
+  interruptSource->enable();
+  
+  //
   // Configure the channel.
   //
-  if (!hvDevice->openChannel(kHyperVStorageRingBufferSize, kHyperVStorageRingBufferSize, this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVStorage::handleInterrupt))) {
+  if (!hvDevice->openChannel(kHyperVStorageRingBufferSize, kHyperVStorageRingBufferSize)) {
     return false;
   }
   
@@ -327,27 +335,23 @@ SCSIServiceResponse HyperVStorage::ProcessParallelTask(SCSIParallelTaskIdentifie
   packet.flags = kHyperVStoragePacketFlagRequestCompletion;
   
   currentTask = parallelRequest;
-  
-  
-  HyperVVMBusDeviceRequest request;
-  request.sendData = &packet;
-  request.sendDataLength = sizeof (packet) - packetSizeDelta;
-  request.sendPacketType = dataDirection != kSCSIDataTransfer_NoDataTransfer ? kVMBusPacketTypeDataUsingGPADirect : kVMBusPacketTypeDataInband;
-  request.responseRequired = true;
-  request.responseData = NULL;
-  request.multiPageBuffer = NULL;
+
   
   if (dataDirection != kSCSIDataTransfer_NoDataTransfer) {
     
-    if (!prepareDataTransfer(parallelRequest, &request)) {
+    VMBusPacketMultiPageBuffer *pagePacket;
+    UInt32 pagePacketLength;
+    if (!prepareDataTransfer(parallelRequest, &pagePacket, &pagePacketLength)) {
       return kSCSIServiceResponse_FUNCTION_REJECTED;
     }
     
     UInt64 lengthPhys = GetRequestedDataTransferCount(parallelRequest);
     packet.scsiRequest.dataTransferLength = (UInt32) lengthPhys;
+    
+    hvDevice->writeGPADirectMultiPagePacket(&packet, sizeof (packet) - packetSizeDelta, true, pagePacket, pagePacketLength);
+  } else {
+    hvDevice->writeInbandPacket(&packet, sizeof (packet) - packetSizeDelta, true);
   }
-  
-  hvDevice->doRequest(&request);
   currentTask = parallelRequest;
   
   /*if (dataDirection != kSCSIDataTransfer_NoDataTransfer && request.mbpArray != NULL) {

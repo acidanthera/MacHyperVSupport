@@ -19,62 +19,64 @@ bool HyperVShutdown::start(IOService *provider) {
   if (!super::start(provider)) {
     return false;
   }
-  
+
   SYSLOG("Initialized Hyper-V Guest Shutdown");
   return true;
 }
 
-void HyperVShutdown::processMessage() {
+bool HyperVShutdown::processMessage() {
   VMBusICMessageShutdown shutdownMsg;
-  
-  HyperVVMBusDeviceRequest request = { 0 };
-  request.responseData = &shutdownMsg;
-  request.responseDataLength = sizeof (shutdownMsg);
-  
+
   //
   // Ignore errors and the acknowledgement interrupt (no data to read).
   //
-  if (hvDevice->doRequest(&request) != kIOReturnSuccess || request.responseDataLength == 0) {
-    return;
+  UInt32 pktDataLength;
+  if (!hvDevice->nextInbandPacketAvailable(&pktDataLength) || pktDataLength > sizeof (shutdownMsg)) {
+    return false;
   }
-  
+
+  //
+  // Read and parse inbound inband packet.
+  //
+  if (hvDevice->readInbandCompletionPacket(&shutdownMsg, sizeof (shutdownMsg), NULL) != kIOReturnSuccess) {
+    return false;
+  }
+
   bool doShutdown = false;
-  
   switch (shutdownMsg.header.type) {
     case kVMBusICMessageTypeNegotiate:
       createNegotiationResponse(&shutdownMsg.negotiate, 3, 3);
       break;
-      
+
     case kVMBusICMessageTypeShutdown:
       doShutdown = handleShutdown(&shutdownMsg.shutdown);
       break;
-      
+
     default:
       DBGLOG("Unknown shutdown message type %u", shutdownMsg.header.type);
       shutdownMsg.header.status = kHyperVStatusFail;
       break;
   }
-  
-  shutdownMsg.header.flags = kVMBusICFlagTransaction | kVMBusICFlagResponse;
-  
-  UInt32 sendLength = request.responseDataLength;
-  
-  request = { 0 };
-  request.sendData = &shutdownMsg;
-  request.sendDataLength = sendLength;
-  request.sendPacketType = kVMBusPacketTypeDataInband;
-  
-  hvDevice->doRequest(&request);
 
+  //
+  // Send response back to Hyper-V. The packet size will always be the same as the original inbound one.
+  //
+  shutdownMsg.header.flags = kVMBusICFlagTransaction | kVMBusICFlagResponse;
+  hvDevice->writeInbandPacket(&shutdownMsg, pktDataLength, false);
+
+  //
+  // Shutdown machine if requested. This should not return.
+  //
   if (doShutdown) {
     SYSLOG("Shutting down system");
     HyperVPlatformProvider::getInstance()->shutdownSystem();
   }
+  return true;
 }
 
 bool HyperVShutdown::handleShutdown(VMBusICMessageShutdownData *shutdownData) {
   DBGLOG("Shutdown request received: flags 0x%X, reason 0x%X", shutdownData->flags, shutdownData->reason);
-  
+
   //
   // Report back to Hyper-V if we can shutdown system.
   //
@@ -83,7 +85,7 @@ bool HyperVShutdown::handleShutdown(VMBusICMessageShutdownData *shutdownData) {
   if (provider != NULL) {
     result = provider->canShutdownSystem();
   }
-  
+
   shutdownData->header.status = result ? kHyperVStatusSuccess : kHyperVStatusFail;
   if (!result) {
     SYSLOG("Platform does not support shutdown");

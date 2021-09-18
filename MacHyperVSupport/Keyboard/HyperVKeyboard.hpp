@@ -23,7 +23,8 @@ class HyperVKeyboard : public IOHIKeyboard {
   OSDeclareDefaultStructors(HyperVKeyboard);
 
 private:
-  HyperVVMBusDevice *hvDevice;
+  HyperVVMBusDevice       *hvDevice;
+  IOInterruptEventSource  *interruptSource;
   
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
   bool connectKeyboard();

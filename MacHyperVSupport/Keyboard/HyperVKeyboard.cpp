@@ -28,9 +28,20 @@ bool HyperVKeyboard::start(IOService *provider) {
   hvDevice->retain();
   
   //
+  // Configure interrupt.
+  //
+  interruptSource =
+    IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVKeyboard::handleInterrupt), provider, 0);
+  getWorkLoop()->addEventSource(interruptSource);
+  interruptSource->enable();
+  
+  //
   // Configure the channel.
   //
-  if (!hvDevice->openChannel(kHyperVKeyboardRingBufferSize, kHyperVKeyboardRingBufferSize, this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVKeyboard::handleInterrupt))) {
+  if (!hvDevice->openChannel(kHyperVKeyboardRingBufferSize, kHyperVKeyboardRingBufferSize)) {
+    interruptSource->disable();
+    getWorkLoop()->removeEventSource(interruptSource);
+    OSSafeReleaseNULL(interruptSource);
     super::stop(provider);
     return false;
   }
@@ -48,14 +59,7 @@ bool HyperVKeyboard::connectKeyboard() {
   requestMsg.header.type = kHyperVKeyboardMessageTypeProtocolRequest;
   requestMsg.versionRequested = kHyperVKeyboardVersion;
   
-  HyperVVMBusDeviceRequest request;
-  request.sendData = &requestMsg;
-  request.responseRequired = true;
-  request.sendDataLength = sizeof (requestMsg);
-  request.responseData = NULL;
-  request.sendPacketType = kVMBusPacketTypeDataInband;
-  
-  hvDevice->doRequest(&request);
+  hvDevice->writeInbandPacket(&requestMsg, sizeof (requestMsg), true);
   
   return true;
 }
@@ -75,40 +79,55 @@ inline UInt32 getKeyCode(HyperVKeyboardMessageKeystroke *keyEvent) {
 }
 
 void HyperVKeyboard::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
-  UInt8 data[1024];
-  HyperVKeyboardMessageProtocolResponse *responseMsg = (HyperVKeyboardMessageProtocolResponse*)data;
-  HyperVKeyboardMessageKeystroke        *eventMsg = (HyperVKeyboardMessageKeystroke*)data;
-  
-  HyperVVMBusDeviceRequest request = { 0 };
-  request.responseData = responseMsg;
-  do {
-    request.responseDataLength = sizeof(data);
-    
-    hvDevice->doRequest(&request);
-    if (request.responseDataLength == 0) {
-      return;
-    }
-    switch (responseMsg->header.type) {
-      case kHyperVKeyboardMessageTypeProtocolResponse:
-        DBGLOG("Keyboard protocol status %u %u", responseMsg->header.type, responseMsg->status);
-        break;
-        
-      case kHyperVKeyboardMessageTypeEvent:
-        UInt64 time;
-        clock_get_uptime(&time);
-        
-        dispatchKeyboardEvent(getKeyCode(eventMsg), !eventMsg->isBreak, *(AbsoluteTime*)&time);
-        break;
-        
-      default:
-        break;
-    }
-    
-  } while (true);
-  
+  UInt8 data128[128];
 
-  
-  
+  do {
+    //
+    // Check for available inband packets.
+    // Large packets will be allocated as needed.
+    //
+    HyperVKeyboardMessage *message;
+    UInt32 pktDataLength;
+    if (!hvDevice->nextInbandPacketAvailable(&pktDataLength)) {
+      break;
+    }
+
+    if (pktDataLength <= sizeof (data128)) {
+      message = (HyperVKeyboardMessage*)data128;
+    } else {
+      DBGLOG("Allocating large packet of %u bytes", pktDataLength);
+      message = (HyperVKeyboardMessage*)IOMalloc(pktDataLength);
+    }
+
+    //
+    // Read next packet.
+    //
+    if (hvDevice->readInbandCompletionPacket((void *)message, pktDataLength, NULL) == kIOReturnSuccess) {
+      switch (message->header.type) {
+        case kHyperVKeyboardMessageTypeProtocolResponse:
+          DBGLOG("Keyboard protocol status %u %u", message->protocolResponse.header.type, message->protocolResponse.status);
+          break;
+
+        case kHyperVKeyboardMessageTypeEvent:
+          UInt64 time;
+          clock_get_uptime(&time);
+          
+          dispatchKeyboardEvent(getKeyCode(&message->keystroke), !message->keystroke.isBreak, *(AbsoluteTime*)&time);
+          break;
+
+        default:
+          DBGLOG("Unknown message type %u, size %u", message->header.type, pktDataLength);
+          break;
+      }
+    }
+
+    //
+    // Free allocated packet if needed.
+    //
+    if (pktDataLength > sizeof (data128)) {
+      IOFree(message, pktDataLength);
+    }
+  } while (true);
 }
 
 const unsigned char * HyperVKeyboard::defaultKeymapOfLength(UInt32 * length)

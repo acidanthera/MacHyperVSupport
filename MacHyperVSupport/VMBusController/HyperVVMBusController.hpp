@@ -86,9 +86,10 @@ private:
   
   HyperVCPUData       cpuData;
   
+  bool                useLegacyEventFlags = false;
   HyperVDMABuffer     vmbusEventFlags;
-  UInt8               *vmbusRxEventFlags;
-  UInt8               *vmbusTxEventFlags;
+  HyperVEventFlags    *vmbusRxEventFlags;
+  HyperVEventFlags    *vmbusTxEventFlags;
   
   HyperVDMABuffer     vmbusMnf1;
   HyperVDMABuffer     vmbusMnf2;
@@ -160,7 +161,7 @@ private:
   //
   // Private VMBus channel management.
   //
-  bool configureVMBusChannelGpadl(VMBusChannel *channel);
+  bool configureVMBusChannelGpadl(VMBusChannel *channel, HyperVDMABuffer *buffer, UInt32 *gpadlHandle);
   bool configureVMBusChannel(VMBusChannel *channel);
   
 public:
@@ -183,6 +184,8 @@ public:
   void signalVMBusChannel(UInt32 channelId);
   void closeVMBusChannel(UInt32 channelId);
   void freeVMBusChannel(UInt32 channelId);
+  
+  bool initVMBusChannelGpadl(UInt32 channelId, UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer);
 };
 
 #endif

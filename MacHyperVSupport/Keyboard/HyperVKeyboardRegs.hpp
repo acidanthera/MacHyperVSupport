@@ -63,4 +63,14 @@ typedef struct __attribute__((packed)) {
   UInt32                      reserved2 : 28;
 } HyperVKeyboardMessageKeystroke;
 
+//
+// All messages.
+//
+typedef union __attribute__((packed)) {
+  HyperVKeyboardMessageHeader           header;
+  HyperVKeyboardMessageProtocolRequest  protocolRequest;
+  HyperVKeyboardMessageProtocolResponse protocolResponse;
+  HyperVKeyboardMessageKeystroke        keystroke;
+} HyperVKeyboardMessage;
+
 #endif

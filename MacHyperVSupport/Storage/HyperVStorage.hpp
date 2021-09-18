@@ -30,6 +30,7 @@ class HyperVStorage : public IOSCSIParallelInterfaceController {
 
 private:
   HyperVVMBusDevice       *hvDevice;
+  IOInterruptEventSource  *interruptSource;
   
   UInt32                  protocolVersion;
   UInt32                  senseBufferSize;
@@ -62,7 +63,7 @@ private:
   void setHBAInfo();
   
   void completeIO(HyperVStoragePacket *packet);
-  bool prepareDataTransfer(SCSIParallelTaskIdentifier parallelRequest, HyperVVMBusDeviceRequest *request);
+  bool prepareDataTransfer(SCSIParallelTaskIdentifier parallelRequest, VMBusPacketMultiPageBuffer **pagePacket, UInt32 *pagePacketLength);
   void completeDataTransfer(SCSIParallelTaskIdentifier parallelRequest, HyperVStoragePacket *packet);
   
 protected:

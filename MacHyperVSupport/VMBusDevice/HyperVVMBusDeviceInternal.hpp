@@ -13,4 +13,7 @@
 #define SYSLOG(str, ...) SYSLOG_PRINT("HyperVVMBusDevice", str, ## __VA_ARGS__)
 #define DBGLOG(str, ...) DBGLOG_PRINT("HyperVVMBusDevice", str, ## __VA_ARGS__)
 
+#define MSGDBG(str, ...) \
+  if (this->debugPackets) DBGLOG_PRINT("HyperVVMBusDevice", str, ## __VA_ARGS__)
+
 #endif
