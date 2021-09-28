@@ -12,6 +12,7 @@ Hyper-V integration services for macOS. Requires a Generation 2 virtual machine 
 - Synthetic mouse
 - Synthetic keyboard
 - Synthetic SCSI controller
+- Synthetic network controller
 
 #### Additional information
 - The following SSDTs should be used for proper operation:
