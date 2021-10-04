@@ -746,7 +746,7 @@
 				MODULE_NAME = fish.goldfish64.MacHyperVSupport;
 				MODULE_START = "$(PRODUCT_NAME)_kern_start";
 				MODULE_STOP = "$(PRODUCT_NAME)_kern_stop";
-				MODULE_VERSION = 0.7;
+				MODULE_VERSION = 0.8;
 				OTHER_CFLAGS = (
 					"-mmmx",
 					"-msse",
@@ -824,7 +824,7 @@
 				MODULE_NAME = fish.goldfish64.MacHyperVSupport;
 				MODULE_START = "$(PRODUCT_NAME)_kern_start";
 				MODULE_STOP = "$(PRODUCT_NAME)_kern_stop";
-				MODULE_VERSION = 0.7;
+				MODULE_VERSION = 0.8;
 				OTHER_CFLAGS = (
 					"-mmmx",
 					"-msse",
