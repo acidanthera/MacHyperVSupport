@@ -22,6 +22,9 @@ extern "C" {
 #include <IOKit/IOBufferMemoryDescriptor.h>
 #include <IOKit/IOLocks.h>
 
+#include <IOKit/acpi/IOACPIPlatformDevice.h>
+#include <IOKit/acpi/IOACPITypes.h>
+
 #include "HyperV.hpp"
 #include "VMBus.hpp"
 #include "VMBusDriver.hpp"
@@ -163,6 +166,11 @@ private:
   //
   bool configureVMBusChannelGpadl(VMBusChannel *channel, HyperVDMABuffer *buffer, UInt32 *gpadlHandle);
   bool configureVMBusChannel(VMBusChannel *channel);
+  
+  //
+  // ACPI resource to IODeviceMemory.
+  //
+  void walkResources(IOACPIPlatformDevice *provider);
   
 public:
   //

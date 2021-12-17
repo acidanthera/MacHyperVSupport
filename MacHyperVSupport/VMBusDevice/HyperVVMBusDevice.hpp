@@ -125,7 +125,10 @@ public:
   bool getPendingTransaction(UInt64 transactionId, void **buffer, UInt32 *bufferLength);
   void wakeTransaction(UInt64 transactionId);
   
-  
+  //
+  // MMIO allocation function.
+  //
+  IODeviceMemory* allocateMmio(size_t start, size_t size, size_t align, bool allowFbOverlap);
 };
 
 #endif

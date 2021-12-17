@@ -369,3 +369,45 @@ bool HyperVVMBusController::registerVMBusDevice(VMBusChannel *channel) {
 void HyperVVMBusController::cleanupVMBusDevice(VMBusChannel *channel) {
   channel->status = kVMBusChannelStatusNotPresent;
 }
+
+typedef struct __attribute__((packed)) {
+  UInt64 type;
+  UInt64 reserved1;
+  UInt64 reserved2;
+  UInt64 min;
+  UInt64 max;
+  UInt64 reserved3;
+  UInt64 length;
+  UInt64 reserved4;
+  UInt64 reserved5;
+  UInt64 reserved6;
+} AppleACPIRange;
+
+void HyperVVMBusController::walkResources(IOACPIPlatformDevice *provider) {
+  IORegistryEntry *ancestor;
+  OSArray *array;
+  
+  for (ancestor = provider; ancestor; ancestor = ancestor->getParentEntry(gIOACPIPlane)) {
+    if (provider->getProperty("IOInterruptSpecifiers")) { DBGLOG("ACPI interrupt found but no work to be done."); }
+    
+    OSData *acpiAddressSpaces = OSDynamicCast(OSData, ancestor->getProperty("acpi-address-spaces"));
+    if (acpiAddressSpaces != NULL) {
+      AppleACPIRange *acpiRanges = (AppleACPIRange*) acpiAddressSpaces->getBytesNoCopy();
+      UInt32 acpiRangeCount = acpiAddressSpaces->getLength() / sizeof (AppleACPIRange);
+      
+      IODeviceMemory::InitElement rangeList[acpiRangeCount];
+      
+      for (int i = 0; i < acpiRangeCount; i++) {
+        DBGLOG("type %u, min %llX, max %llX, len %llX", acpiRanges[i].type, acpiRanges[i].min, acpiRanges[i].max, acpiRanges[i].length);
+        if (acpiRanges[i].type == 0) {
+          rangeList[i].start  = acpiRanges[i].min;
+          rangeList[i].length = acpiRanges[i].length;
+        }
+      }
+      
+      array = IODeviceMemory::arrayFromList(rangeList, acpiRangeCount);
+      provider->setDeviceMemory(array);
+      array->release();
+    };
+  };
+}

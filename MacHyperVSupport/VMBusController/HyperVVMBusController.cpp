@@ -211,7 +211,7 @@ bool HyperVVMBusController::start(IOService *provider) {
   pciService->release();
   DBGLOG("HyperVPCIRoot is now loaded");
   
-
+  walkResources(OSDynamicCast(IOACPIPlatformDevice, provider));
   
   //
   // Setup hypercalls.

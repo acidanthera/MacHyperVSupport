@@ -348,3 +348,18 @@ void HyperVVMBusDevice::wakeTransaction(UInt64 transactionId) {
   }
   IOLockUnlock(vmbusRequestsLock);
 }
+
+IODeviceMemory* HyperVVMBusDevice::allocateMmio(size_t start, size_t size, size_t align, bool allowFbOverlap) {
+  if (allowFbOverlap) { DBGLOG("allowFbOverlap not currently implemented"); }
+  OSArray* deviceMemoryArray = vmbusProvider->getProvider()->getDeviceMemory();
+  if (deviceMemoryArray != NULL) {
+    for (int i = 0; i < deviceMemoryArray->getCount(); i++) {
+      IODeviceMemory* currentDeviceMemory = (IODeviceMemory*)(deviceMemoryArray->getObject(i));
+      if (currentDeviceMemory != NULL) {
+        IOPhysicalAddress currentDeviceMemoryStart = (currentDeviceMemory->getPhysicalAddress() + align - 1) & ~(align - 1);
+        return (IODeviceMemory*)IOMemoryDescriptor::withAddressRange(currentDeviceMemoryStart, round_page(currentDeviceMemoryStart+size), kIODirectionInOut | kIOMemoryPhysicallyContiguous | kIOMapInhibitCache | kIOMemoryMapperNone, kernel_task);
+      }
+    }
+  }
+  return NULL;
+}
