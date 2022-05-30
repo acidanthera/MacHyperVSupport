@@ -13,8 +13,8 @@
 
 #define super IOACPIPlatformDevice
 
-#define SYSLOG(str, ...) SYSLOG_PRINT("HyperVPCIProvider", str, ## __VA_ARGS__)
-#define DBGLOG(str, ...) DBGLOG_PRINT("HyperVPCIProvider", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVPCIProvider", str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVPCIProvider", str, ## __VA_ARGS__)
 
 class HyperVPCIProvider : public IOACPIPlatformDevice {
   OSDeclareDefaultStructors(HyperVPCIProvider);

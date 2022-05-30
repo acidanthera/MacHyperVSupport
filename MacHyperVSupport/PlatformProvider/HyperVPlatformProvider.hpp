@@ -75,7 +75,4 @@ public:
   
 };
 
-#undef DBGLOG
-#undef SYSLOG
-
 #endif

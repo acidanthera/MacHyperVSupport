@@ -35,25 +35,25 @@ bool HyperVVMBusController::initHypercalls() {
   // Setup hypercall page with Hyper-V.
   //
   hvHypercall = rdmsr64(kHyperVMsrHypercall);
-  DBGLOG("Hypercall MSR current value: 0x%llX", hvHypercall);
-  DBGLOG("Allocated hypercall page to phys 0x%llX", hypercallPhysAddr);
+  HVDBGLOG("Hypercall MSR current value: 0x%llX", hvHypercall);
+  HVDBGLOG("Allocated hypercall page to phys 0x%llX", hypercallPhysAddr);
   
   hvHypercall = ((hypercallPhysAddr << PAGE_SHIFT) >> kHyperVMsrHypercallPageShift)
                 | (hvHypercall & kHyperVMsrHypercallRsvdMask) | kHyperVMsrHypercallEnable;
   wrmsr64(kHyperVMsrHypercall, hvHypercall);
   
   hvHypercall = rdmsr64(kHyperVMsrHypercall);
-  DBGLOG("Hypercall MSR new value: 0x%llX", hvHypercall);
+  HVDBGLOG("Hypercall MSR new value: 0x%llX", hvHypercall);
   
   //
   // Verify hypercalls are enabled.
   //
   if ((hvHypercall & kHyperVMsrHypercallEnable) == 0) {
-    SYSLOG("Hypercalls failed to be enabled!");
+    HVSYSLOG("Hypercalls failed to be enabled!");
     freeHypercallPage();
     return false;
   }
-  SYSLOG("Hypercalls are now enabled");
+  HVSYSLOG("Hypercalls are now enabled");
   
   return true;
 }
@@ -68,7 +68,7 @@ void HyperVVMBusController::destroyHypercalls() {
   wrmsr64(kHyperVMsrHypercall, hvHypercall & kHyperVMsrHypercallRsvdMask);
   freeHypercallPage();
   
-  SYSLOG("Hypercalls are now disabled");
+  HVSYSLOG("Hypercalls are now disabled");
 }
 
 void HyperVVMBusController::freeHypercallPage() {

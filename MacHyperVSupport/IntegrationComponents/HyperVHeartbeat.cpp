@@ -11,13 +11,13 @@
 
 #define super HyperVICService
 
-#define SYSLOG(str, ...) SYSLOG_PRINT("HyperVHeartbeat", str, ## __VA_ARGS__)
-#define DBGLOG(str, ...) DBGLOG_PRINT("HyperVHeartbeat", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVHeartbeat", str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVHeartbeat", str, ## __VA_ARGS__)
 
 OSDefineMetaClassAndStructors(HyperVHeartbeat, super);
 
 bool HyperVHeartbeat::start(IOService *provider) {
-  DBGLOG("Initializing Hyper-V Heartbeat");
+  HVDBGLOG("Initializing Hyper-V Heartbeat");
   return super::start(provider);
 }
 
@@ -49,17 +49,17 @@ bool HyperVHeartbeat::processMessage() {
       // Increment sequence.
       // Host will increment this further before sending a message back.
       //
-      //DBGLOG("Got heartbeat, seq = %u", heartbeatMsg.heartbeat.sequence);
+      //HVDBGLOG("Got heartbeat, seq = %u", heartbeatMsg.heartbeat.sequence);
       heartbeatMsg.heartbeat.sequence++;
 
       if (!firstHeartbeatReceived) {
         firstHeartbeatReceived = true;
-        SYSLOG("Initialized Hyper-V Heartbeat");
+        HVSYSLOG("Initialized Hyper-V Heartbeat");
       }
       break;
 
     default:
-      DBGLOG("Unknown heartbeat message type %u", heartbeatMsg.header.type);
+      HVDBGLOG("Unknown heartbeat message type %u", heartbeatMsg.header.type);
       heartbeatMsg.header.status = kHyperVStatusFail;
       break;
   }

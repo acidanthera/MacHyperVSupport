@@ -101,7 +101,7 @@ void HyperVStorage::setHBAInfo() {
 
 void HyperVStorage::completeIO(HyperVStoragePacket *packet) {
   if (packet->scsiRequest.scsiStatus == kSCSITaskStatus_CHECK_CONDITION) {
-    DBGLOG("Doing a sense");
+    HVDBGLOG("Doing a sense");
     SetAutoSenseData(currentTask, (SCSI_Sense_Data*)packet->scsiRequest.senseData, kSenseDefaultSize);
   }
   
@@ -136,14 +136,14 @@ bool HyperVStorage::prepareDataTransfer(SCSIParallelTaskIdentifier parallelReque
   
   IOReturn status = dmaCmd->prepare(GetDataBufferOffset(parallelRequest), bufferLength);
   if (status != kIOReturnSuccess) {
-    SYSLOG("Error %X while preparing the IODMACommand for buffer of %u bytes", status, bufferLength);
+    HVSYSLOG("Error %X while preparing the IODMACommand for buffer of %u bytes", status, bufferLength);
     return false;
   }
   
   status = dmaCmd->gen64IOVMSegments(&offsetSeg, segs64, &numSegs);
   if (status != kIOReturnSuccess) {
     dmaCmd->complete();
-    SYSLOG("Error %X while generating segments for buffer of %u bytes", status, bufferLength);
+    HVSYSLOG("Error %X while generating segments for buffer of %u bytes", status, bufferLength);
     return false;
   }
   
@@ -156,7 +156,7 @@ bool HyperVStorage::prepareDataTransfer(SCSIParallelTaskIdentifier parallelReque
   for (int i = 0; i < numSegs; i++) {
     if (i != 0 && i != (numSegs - 1)) {
       if (segs64[i].fLength != PAGE_SIZE && segs64[i].fLength != 0) {
-        DBGLOG("Seg invalid %u: 0x%X %u bytes", i, segs64[i].fIOVMAddr, segs64[i].fLength);
+        HVDBGLOG("Seg invalid %u: 0x%X %u bytes", i, segs64[i].fIOVMAddr, segs64[i].fLength);
       }
     }
     

@@ -22,8 +22,8 @@
 
 #define super IOSCSIParallelInterfaceController
 
-#define SYSLOG(str, ...) SYSLOG_PRINT("HyperVStorage", str, ## __VA_ARGS__)
-#define DBGLOG(str, ...) DBGLOG_PRINT("HyperVStorage", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVStorage", str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVStorage", str, ## __VA_ARGS__)
 
 class HyperVStorage : public IOSCSIParallelInterfaceController {
   OSDeclareDefaultStructors(HyperVStorage);

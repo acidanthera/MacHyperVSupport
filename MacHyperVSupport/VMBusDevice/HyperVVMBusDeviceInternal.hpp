@@ -10,10 +10,10 @@
 
 #define super IOService
 
-#define SYSLOG(str, ...) SYSLOG_PRINT("HyperVVMBusDevice", str, ## __VA_ARGS__)
-#define DBGLOG(str, ...) DBGLOG_PRINT("HyperVVMBusDevice", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVVMBusDevice", str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVVMBusDevice", str, ## __VA_ARGS__)
 
 #define MSGDBG(str, ...) \
-  if (this->debugPackets) DBGLOG_PRINT("HyperVVMBusDevice", str, ## __VA_ARGS__)
+  if (this->debugPackets) HVDBGLOG_PRINT("HyperVVMBusDevice", str, ## __VA_ARGS__)
 
 #endif

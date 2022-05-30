@@ -178,7 +178,7 @@ IOReturn HyperVVMBusDevice::writeRawPacketGated(void *header, UInt32 *headerLeng
   // We cannot end up with read index == write index after the write, as that would indicate an empty buffer.
   //
   if (getAvailableTxSpace() <= pktTotalLengthAligned) {
-    SYSLOG("RAW packet is too large for buffer (TXR: %X, TXW: %X)", txBuffer->readIndex, txBuffer->writeIndex);
+    HVSYSLOG("RAW packet is too large for buffer (TXR: %X, TXW: %X)", txBuffer->readIndex, txBuffer->writeIndex);
     return kIOReturnNoResources;
   }
   

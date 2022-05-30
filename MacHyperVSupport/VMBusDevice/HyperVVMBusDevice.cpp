@@ -28,7 +28,7 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
     return false;
   }
   channelId = channelNumber->unsigned32BitValue();
-  DBGLOG("Attaching nub for channel %u", channelId);
+  HVDBGLOG("Attaching nub for channel %u", channelId);
   
   //
   // Set location to ensure unique names in I/O Registry.
@@ -72,7 +72,7 @@ bool HyperVVMBusDevice::openChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAuto
     return true;
   }
   
-  DBGLOG("Opening channel for %u", channelId);
+  HVDBGLOG("Opening channel for %u", channelId);
   txBufferSize = txSize;
   rxBufferSize = rxSize;
   
@@ -96,7 +96,7 @@ bool HyperVVMBusDevice::openChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAuto
   }
   
   channelIsOpen = true;
-  DBGLOG("Opened channel for %u", channelId);
+  HVDBGLOG("Opened channel for %u", channelId);
   return true;
 }
 

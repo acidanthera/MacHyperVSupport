@@ -38,8 +38,8 @@ inline void logPrint(const char *className, const char *funcName, const char *fo
   IOLog("%s::%s(): %s\n", className, funcName, tmp);
 }
 
-#define DBGLOG_PRINT(className, str, ...) logPrint(className, __FUNCTION__, str, ## __VA_ARGS__)
-#define SYSLOG_PRINT(className, str, ...) logPrint(className, __FUNCTION__, str, ## __VA_ARGS__)
+#define HVDBGLOG_PRINT(className, str, ...) logPrint(className, __FUNCTION__, str, ## __VA_ARGS__)
+#define HVSYSLOG_PRINT(className, str, ...) logPrint(className, __FUNCTION__, str, ## __VA_ARGS__)
 #else
 
 //
@@ -56,8 +56,8 @@ inline void logPrint(const char *className, const char *format, ...) {
   IOLog("%s: %s\n", className, tmp);
 }
 
-#define DBGLOG_PRINT(className, str, ...) {}
-#define SYSLOG_PRINT(className, str, ...) logPrint(className, str, ## __VA_ARGS__)
+#define HVDBGLOG_PRINT(className, str, ...) {}
+#define HVSYSLOG_PRINT(className, str, ...) logPrint(className, str, ## __VA_ARGS__)
 #endif
 
 template <class T, size_t N>

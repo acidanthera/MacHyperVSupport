@@ -12,13 +12,10 @@
 
 #include <Headers/kern_api.hpp>
 
-#undef SYSLOG
-#undef DBGLOG
-
 #define super IOInterruptController
 
-#define SYSLOG(str, ...) SYSLOG_PRINT("HyperVVMBusController", str, ## __VA_ARGS__)
-#define DBGLOG(str, ...) DBGLOG_PRINT("HyperVVMBusController", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVVMBusController", str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVVMBusController", str, ## __VA_ARGS__)
 
 extern "C" int cpu_number(void);
 

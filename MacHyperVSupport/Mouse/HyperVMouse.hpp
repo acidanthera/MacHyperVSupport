@@ -15,8 +15,8 @@
 
 #define super IOHIDDevice
 
-#define SYSLOG(str, ...) SYSLOG_PRINT("HyperVMouse", str, ## __VA_ARGS__)
-#define DBGLOG(str, ...) DBGLOG_PRINT("HyperVMouse", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVMouse", str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVMouse", str, ## __VA_ARGS__)
 
 class HyperVMouse : public IOHIDDevice {
   OSDeclareDefaultStructors(HyperVMouse);

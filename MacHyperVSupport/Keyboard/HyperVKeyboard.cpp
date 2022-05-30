@@ -15,7 +15,7 @@ bool HyperVKeyboard::start(IOService *provider) {
     return false;
   }
   
-  DBGLOG("Initializing Hyper-V Synthetic Keyboard");
+  HVDBGLOG("Initializing Hyper-V Synthetic Keyboard");
   
   //
   // Get parent VMBus device object.
@@ -48,12 +48,12 @@ bool HyperVKeyboard::start(IOService *provider) {
   
   connectKeyboard();
   
-  SYSLOG("Initialized Hyper-V Synthetic Keyboard");
+  HVSYSLOG("Initialized Hyper-V Synthetic Keyboard");
   return true;
 }
 
 bool HyperVKeyboard::connectKeyboard() {
-  DBGLOG("Connecting to keyboard interface");
+  HVDBGLOG("Connecting to keyboard interface");
   
   HyperVKeyboardMessageProtocolRequest requestMsg;
   requestMsg.header.type = kHyperVKeyboardMessageTypeProtocolRequest;
@@ -95,7 +95,7 @@ void HyperVKeyboard::handleInterrupt(OSObject *owner, IOInterruptEventSource *se
     if (pktDataLength <= sizeof (data128)) {
       message = (HyperVKeyboardMessage*)data128;
     } else {
-      DBGLOG("Allocating large packet of %u bytes", pktDataLength);
+      HVDBGLOG("Allocating large packet of %u bytes", pktDataLength);
       message = (HyperVKeyboardMessage*)IOMalloc(pktDataLength);
     }
 
@@ -105,7 +105,7 @@ void HyperVKeyboard::handleInterrupt(OSObject *owner, IOInterruptEventSource *se
     if (hvDevice->readInbandCompletionPacket((void *)message, pktDataLength, NULL) == kIOReturnSuccess) {
       switch (message->header.type) {
         case kHyperVKeyboardMessageTypeProtocolResponse:
-          DBGLOG("Keyboard protocol status %u %u", message->protocolResponse.header.type, message->protocolResponse.status);
+          HVDBGLOG("Keyboard protocol status %u %u", message->protocolResponse.header.type, message->protocolResponse.status);
           break;
 
         case kHyperVKeyboardMessageTypeEvent:
@@ -116,7 +116,7 @@ void HyperVKeyboard::handleInterrupt(OSObject *owner, IOInterruptEventSource *se
           break;
 
         default:
-          DBGLOG("Unknown message type %u, size %u", message->header.type, pktDataLength);
+          HVDBGLOG("Unknown message type %u, size %u", message->header.type, pktDataLength);
           break;
       }
     }

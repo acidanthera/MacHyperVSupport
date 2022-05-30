@@ -16,8 +16,8 @@
 
 #define super IOHIKeyboard
 
-#define SYSLOG(str, ...) SYSLOG_PRINT("HyperVKeyboard", str, ## __VA_ARGS__)
-#define DBGLOG(str, ...) DBGLOG_PRINT("HyperVKeyboard", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVKeyboard", str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVKeyboard", str, ## __VA_ARGS__)
 
 class HyperVKeyboard : public IOHIKeyboard {
   OSDeclareDefaultStructors(HyperVKeyboard);

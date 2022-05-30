@@ -15,8 +15,8 @@
 
 #define super IOPCIBridge
 
-#define SYSLOG(str, ...) SYSLOG_PRINT("HyperVGraphics", str, ## __VA_ARGS__)
-#define DBGLOG(str, ...) DBGLOG_PRINT("HyperVGraphics", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVGraphics", str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVGraphics", str, ## __VA_ARGS__)
 
 class HyperVGraphics : public IOPCIBridge {
   OSDeclareDefaultStructors(HyperVGraphics);
@@ -39,7 +39,7 @@ public:
   // IOPCIBridge overrides.
   //
   virtual bool configure(IOService *provider) APPLE_KEXT_OVERRIDE;
-  IODeviceMemory *ioDeviceMemory() APPLE_KEXT_OVERRIDE { DBGLOG("start"); return NULL; }
+  IODeviceMemory *ioDeviceMemory() APPLE_KEXT_OVERRIDE { HVDBGLOG("start"); return NULL; }
   UInt32 configRead32(IOPCIAddressSpace space, UInt8 offset) APPLE_KEXT_OVERRIDE;
   void configWrite32(IOPCIAddressSpace space, UInt8 offset, UInt32 data) APPLE_KEXT_OVERRIDE;
   UInt16 configRead16(IOPCIAddressSpace space, UInt8 offset) APPLE_KEXT_OVERRIDE;
@@ -48,18 +48,18 @@ public:
   void configWrite8(IOPCIAddressSpace space, UInt8 offset, UInt8 data) APPLE_KEXT_OVERRIDE;
 
   IOPCIAddressSpace getBridgeSpace() APPLE_KEXT_OVERRIDE {
-    DBGLOG("start");
+    HVDBGLOG("start");
     IOPCIAddressSpace space = { 0 };
     return space;
   }
 
   UInt8 firstBusNum() APPLE_KEXT_OVERRIDE {
-    DBGLOG("start");
+    HVDBGLOG("start");
     return kHyperVPCIBusSyntheticGraphics;
   }
   
   UInt8 lastBusNum() APPLE_KEXT_OVERRIDE {
-    DBGLOG("start");
+    HVDBGLOG("start");
     return kHyperVPCIBusSyntheticGraphics;
   }
 };

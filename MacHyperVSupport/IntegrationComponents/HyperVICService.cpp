@@ -9,8 +9,8 @@
 
 #define super IOService
 
-#define SYSLOG(str, ...) SYSLOG_PRINT("HyperVICService", str, ## __VA_ARGS__)
-#define DBGLOG(str, ...) DBGLOG_PRINT("HyperVICService", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVICService", str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVICService", str, ## __VA_ARGS__)
 
 OSDefineMetaClassAndAbstractStructors(HyperVICService, super);
 
@@ -57,14 +57,14 @@ void HyperVICService::stop(IOService *provider) {
 
 bool HyperVICService::createNegotiationResponse(VMBusICMessageNegotiate *negMsg, UInt32 fwVersion, UInt32 msgVersion) {
   if (negMsg->frameworkVersionCount == 0 || negMsg->messageVersionCount == 0) {
-    DBGLOG("Invalid framework or message version count");
+    HVDBGLOG("Invalid framework or message version count");
     return false;
   }
   UInt32 versionCount = negMsg->frameworkVersionCount + negMsg->messageVersionCount;
   
   UInt32 packetSize = negMsg->header.dataSize + sizeof(negMsg->header);
   if (packetSize < __offsetof(VMBusICMessageNegotiate, versions[versionCount])) {
-    DBGLOG("Packet has invalid size and does not contain all versions");
+    HVDBGLOG("Packet has invalid size and does not contain all versions");
     return false;
   }
   
@@ -91,11 +91,11 @@ bool HyperVICService::createNegotiationResponse(VMBusICMessageNegotiate *negMsg,
   }
   
   if (foundFwMatch && foundMsgMatch) {
-    DBGLOG("Found supported fw version %u and msg version %u", fwVersion, msgVersion);
+    HVDBGLOG("Found supported fw version %u and msg version %u", fwVersion, msgVersion);
     negMsg->frameworkVersionCount = 1;
     negMsg->messageVersionCount   = 1;
   } else {
-    DBGLOG("Unsupported fw version %u and msg version %u", fwVersion, msgVersion);
+    HVDBGLOG("Unsupported fw version %u and msg version %u", fwVersion, msgVersion);
     negMsg->frameworkVersionCount = 0;
     negMsg->messageVersionCount   = 0;
   }

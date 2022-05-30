@@ -41,7 +41,7 @@ static const HyperVStorageProtocol storageProtocols[] = {
 };
 
 bool HyperVStorage::InitializeController() {
-  DBGLOG("Initializing Hyper-V Synthetic Storage controller");
+  HVDBGLOG("Initializing Hyper-V Synthetic Storage controller");
   HyperVStoragePacket packet;
   
   //
@@ -102,7 +102,7 @@ bool HyperVStorage::InitializeController() {
       protocolVersion = storageProtocols[i].protocolVersion;
       senseBufferSize = storageProtocols[i].senseBufferSize;
       packetSizeDelta = storageProtocols[i].packetSizeDelta;
-      DBGLOG("SCSI protocol version: 0x%X, sense buffer size: %u", protocolVersion, senseBufferSize);
+      HVDBGLOG("SCSI protocol version: 0x%X, sense buffer size: %u", protocolVersion, senseBufferSize);
       break;
     }
   }
@@ -124,7 +124,7 @@ bool HyperVStorage::InitializeController() {
   maxSubChannels       = packet.storageChannelProperties.maxChannelCount;
   maxTransferBytes     = packet.storageChannelProperties.maxTransferBytes;
   maxPageSegments      = maxTransferBytes / PAGE_SIZE;
-  DBGLOG("Multi channel supported: %s, max sub channels: %u, max transfer bytes: %u (%u segments)",
+  HVDBGLOG("Multi channel supported: %s, max sub channels: %u, max transfer bytes: %u (%u segments)",
          subChannelsSupported ? "yes" : "no", maxSubChannels, maxTransferBytes, maxPageSegments);
   
   //
@@ -146,7 +146,7 @@ bool HyperVStorage::InitializeController() {
   //
   setHBAInfo();
   
-  SYSLOG("Initialized Hyper-V Synthetic Storage controller");
+  HVSYSLOG("Initialized Hyper-V Synthetic Storage controller");
   return true;
 }
 
@@ -160,7 +160,7 @@ bool HyperVStorage::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size) {
                                                              kIODirectionInOut | kIOMemoryPhysicallyContiguous | kIOMapInhibitCache | kIOMemoryMapperNone,
                                                              size, 0xFFFFFFFFFFFFF000ULL);
   if (bufDesc == NULL) {
-    SYSLOG("Failed to allocate DMA buffer memory of %u bytes", size);
+    HVSYSLOG("Failed to allocate DMA buffer memory of %u bytes", size);
     return false;
   }
   bufDesc->prepare();
@@ -171,21 +171,21 @@ bool HyperVStorage::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size) {
   dmaBuf->size     = size;
   
   memset(dmaBuf->buffer, 0, dmaBuf->size);
-  DBGLOG("Mapped buffer of %u bytes to 0x%llX", dmaBuf->size, dmaBuf->physAddr);
+  HVDBGLOG("Mapped buffer of %u bytes to 0x%llX", dmaBuf->size, dmaBuf->physAddr);
   return true;
 }
 
 void HyperVStorage::TerminateController() {
-  DBGLOG("Controller is terminated");
+  HVDBGLOG("Controller is terminated");
 }
 
 bool HyperVStorage::StartController() {
-  DBGLOG("Controller is now started");
+  HVDBGLOG("Controller is now started");
   return true;
 }
 
 void HyperVStorage::StopController() {
-  DBGLOG("Controller is now stopped");
+  HVDBGLOG("Controller is now stopped");
 }
 
 bool HyperVStorage::DoesHBAPerformDeviceManagement() {
@@ -196,7 +196,7 @@ bool HyperVStorage::DoesHBAPerformDeviceManagement() {
 }
 
 bool HyperVStorage::DoesHBASupportSCSIParallelFeature(SCSIParallelFeature theFeature) {
-  DBGLOG("start");
+  HVDBGLOG("start");
   return false;
 }
 
@@ -216,17 +216,17 @@ SCSIDeviceIdentifier HyperVStorage::ReportHighestSupportedDeviceID() {
 }
 
 UInt32 HyperVStorage::ReportMaximumTaskCount() {
-  DBGLOG("start");
+  HVDBGLOG("start");
   return 1;
 }
 
 UInt32 HyperVStorage::ReportHBASpecificTaskDataSize() {
-  DBGLOG("start");
+  HVDBGLOG("start");
   return sizeof (VMBusPacketMultiPageBuffer) + (sizeof (UInt64) * maxPageSegments); //32 * 4096;
 }
 
 UInt32 HyperVStorage::ReportHBASpecificDeviceDataSize() {
-  DBGLOG("start");
+  HVDBGLOG("start");
   return 0;
 }
 
@@ -253,44 +253,44 @@ SCSILogicalUnitNumber HyperVStorage::ReportHBAHighestLogicalUnitNumber() {
 }
 
 SCSIServiceResponse HyperVStorage::AbortTaskRequest(SCSITargetIdentifier theT, SCSILogicalUnitNumber theL, SCSITaggedTaskIdentifier theQ) {
-  DBGLOG("start");
+  HVDBGLOG("start");
   return kSCSIServiceResponse_TASK_COMPLETE;
 }
 
 SCSIServiceResponse HyperVStorage::AbortTaskSetRequest(SCSITargetIdentifier theT, SCSILogicalUnitNumber theL) {
-  DBGLOG("start");
+  HVDBGLOG("start");
   return kSCSIServiceResponse_TASK_COMPLETE;
 }
 
 SCSIServiceResponse HyperVStorage::ClearACARequest(SCSITargetIdentifier theT, SCSILogicalUnitNumber theL) {
-  DBGLOG("start");
+  HVDBGLOG("start");
   return kSCSIServiceResponse_TASK_COMPLETE;
 }
 
 SCSIServiceResponse HyperVStorage::ClearTaskSetRequest(SCSITargetIdentifier theT, SCSILogicalUnitNumber theL) {
-  DBGLOG("start");
+  HVDBGLOG("start");
   return kSCSIServiceResponse_TASK_COMPLETE;
 }
 
 SCSIServiceResponse HyperVStorage::LogicalUnitResetRequest(SCSITargetIdentifier theT, SCSILogicalUnitNumber theL) {
-  DBGLOG("start");
+  HVDBGLOG("start");
   return kSCSIServiceResponse_TASK_COMPLETE;
 }
 
 SCSIServiceResponse HyperVStorage::TargetResetRequest(SCSITargetIdentifier theT) {
-  DBGLOG("start");
+  HVDBGLOG("start");
   return kSCSIServiceResponse_TASK_COMPLETE;
 }
 
 SCSIServiceResponse HyperVStorage::ProcessParallelTask(SCSIParallelTaskIdentifier parallelRequest) {
-  //DBGLOG("start");
+  //HVDBGLOG("start");
   
   SCSICommandDescriptorBlock cdbData;
   
   GetCommandDescriptorBlock(parallelRequest, &cdbData);
   
-  //DBGLOG("######## Attempting CDB 0x%X for target %u, LUN %u ##########", cdbData[0], GetTargetIdentifier(parallelRequest), GetLogicalUnitNumber(parallelRequest));
- // DBGLOG("CDB %X %X %X %X %X %X", cdbData[0], cdbData[1], cdbData[2], cdbData[3], cdbData[4], cdbData[5]);
+  //HVDBGLOG("######## Attempting CDB 0x%X for target %u, LUN %u ##########", cdbData[0], GetTargetIdentifier(parallelRequest), GetLogicalUnitNumber(parallelRequest));
+ // HVDBGLOG("CDB %X %X %X %X %X %X", cdbData[0], cdbData[1], cdbData[2], cdbData[3], cdbData[4], cdbData[5]);
   
   HyperVStoragePacket packet;
   clearPacket(&packet);
@@ -320,13 +320,13 @@ SCSIServiceResponse HyperVStorage::ProcessParallelTask(SCSIParallelTaskIdentifie
       break;
       
     default:
-      DBGLOG("Bad data direction 0x%X", dataDirection);
+      HVDBGLOG("Bad data direction 0x%X", dataDirection);
       return kSCSIServiceResponse_FUNCTION_REJECTED;
   };
   
   srb->cdbLength = GetCommandDescriptorBlockSize(parallelRequest);
   memcpy(srb->cdb, cdbData, srb->cdbLength);
- // DBGLOG("CDB is %u bytes", srb->cdbLength);
+ // HVDBGLOG("CDB is %u bytes", srb->cdbLength);
   
   srb->length = sizeof (HyperVStorageSCSIRequest);
   srb->senseInfoLength = senseBufferSize;

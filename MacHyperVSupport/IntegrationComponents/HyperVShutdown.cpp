@@ -10,8 +10,8 @@
 
 #define super HyperVICService
 
-#define SYSLOG(str, ...) SYSLOG_PRINT("HyperVShutdown", str, ## __VA_ARGS__)
-#define DBGLOG(str, ...) DBGLOG_PRINT("HyperVShutdown", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVShutdown", str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVShutdown", str, ## __VA_ARGS__)
 
 OSDefineMetaClassAndStructors(HyperVShutdown, super);
 
@@ -20,7 +20,7 @@ bool HyperVShutdown::start(IOService *provider) {
     return false;
   }
 
-  SYSLOG("Initialized Hyper-V Guest Shutdown");
+  HVSYSLOG("Initialized Hyper-V Guest Shutdown");
   return true;
 }
 
@@ -53,7 +53,7 @@ bool HyperVShutdown::processMessage() {
       break;
 
     default:
-      DBGLOG("Unknown shutdown message type %u", shutdownMsg.header.type);
+      HVDBGLOG("Unknown shutdown message type %u", shutdownMsg.header.type);
       shutdownMsg.header.status = kHyperVStatusFail;
       break;
   }
@@ -68,14 +68,14 @@ bool HyperVShutdown::processMessage() {
   // Shutdown machine if requested. This should not return.
   //
   if (doShutdown) {
-    SYSLOG("Shutting down system");
+    HVSYSLOG("Shutting down system");
     HyperVPlatformProvider::getInstance()->shutdownSystem();
   }
   return true;
 }
 
 bool HyperVShutdown::handleShutdown(VMBusICMessageShutdownData *shutdownData) {
-  DBGLOG("Shutdown request received: flags 0x%X, reason 0x%X", shutdownData->flags, shutdownData->reason);
+  HVDBGLOG("Shutdown request received: flags 0x%X, reason 0x%X", shutdownData->flags, shutdownData->reason);
 
   //
   // Report back to Hyper-V if we can shutdown system.
@@ -88,7 +88,7 @@ bool HyperVShutdown::handleShutdown(VMBusICMessageShutdownData *shutdownData) {
 
   shutdownData->header.status = result ? kHyperVStatusSuccess : kHyperVStatusFail;
   if (!result) {
-    SYSLOG("Platform does not support shutdown");
+    HVSYSLOG("Platform does not support shutdown");
   }
   return result;
 }

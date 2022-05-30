@@ -14,7 +14,7 @@ bool HyperVNetwork::start(IOService *provider) {
     return false;
   }
   
-  DBGLOG("Initializing Hyper-V Synthetic Networking");
+  HVDBGLOG("Initializing Hyper-V Synthetic Networking");
   
   //
   // Get parent VMBus device object.
@@ -55,7 +55,7 @@ bool HyperVNetwork::start(IOService *provider) {
   }
   ethInterface->registerService();
   
-  SYSLOG("Initialized Hyper-V Synthetic Networking");
+  HVSYSLOG("Initialized Hyper-V Synthetic Networking");
   return true;
 }
 

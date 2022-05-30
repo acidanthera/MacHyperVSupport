@@ -150,11 +150,11 @@ bool HyperVVMBusController::initSynIC() {
   }
   
   if (!foundVector) {
-    SYSLOG("Failed to get VMBus device interrupt vector");
+    HVSYSLOG("Failed to get VMBus device interrupt vector");
     return false;
   }
   cpuData.interruptVector = vector;
-  DBGLOG("VMBus device interrupt vector: 0x%X", cpuData.interruptVector);
+  HVDBGLOG("VMBus device interrupt vector: 0x%X", cpuData.interruptVector);
 
   //
   // Setup workloop and command gate.
@@ -182,7 +182,7 @@ bool HyperVVMBusController::initSynIC() {
   
   pmKextRegister(pmVersion, NULL, &pmCallbacks);
   if (pmCallbacks.LCPUtoProcessor == NULL || pmCallbacks.ThreadBind == NULL ) {
-    SYSLOG("PM callbacks are invalid");
+    HVSYSLOG("PM callbacks are invalid");
     return false;
   }
   preemptionLock = IOSimpleLockAlloc();
@@ -213,7 +213,7 @@ bool HyperVVMBusController::initSynIC() {
   if (!interruptsStarted) {
     //OSSafeReleaseNULL(interruptMessageSource);
     OSSafeReleaseNULL(workloop);
-    SYSLOG("Failed to setup interrupt handlers");
+    HVSYSLOG("Failed to setup interrupt handlers");
     return false;
   }
 
@@ -253,7 +253,7 @@ void HyperVVMBusController::sendSynICEOM(UInt32 cpu) {
   //
   if (cpu != cpu_number()) {
     if (!IOSimpleLockTryLock(preemptionLock)) {
-      SYSLOG("Failed to disable preemption");
+      HVSYSLOG("Failed to disable preemption");
       return;
     }
     
@@ -270,7 +270,7 @@ void HyperVVMBusController::sendSynICEOM(UInt32 cpu) {
     
     IOSimpleLockUnlock(preemptionLock);
     ml_set_interrupts_enabled(intsEnabled);
-    DBGLOG("Changed to cpu %u", cpu_number());
+    HVDBGLOG("Changed to cpu %u", cpu_number());
   }
   
   //

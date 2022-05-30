@@ -14,15 +14,15 @@
 
 #include <IOKit/IOPlatformExpert.h>
 
-#define SYSLOG(str, ...) SYSLOG_PRINT("HyperVPlatformProvider", str, ## __VA_ARGS__)
-#define DBGLOG(str, ...) DBGLOG_PRINT("HyperVPlatformProvider", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVPlatformProvider", str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVPlatformProvider", str, ## __VA_ARGS__)
 
 #define RB_HALT    0x08
 
 HyperVPlatformProvider *HyperVPlatformProvider::instance;
 
 void HyperVPlatformProvider::init() {
-  DBGLOG("Initializing provider");
+  HVDBGLOG("Initializing provider");
   
   //
   // Lilu is used for certain functions of child devices, register patcher callback.
@@ -55,12 +55,12 @@ void HyperVPlatformProvider::init() {
       MachInfo::setKernelWriting(false, KernelPatcher::kernelWriteLock);
     }
     
-    DBGLOG("Patched IOPlatformExpert::setConsoleInfo");
+    HVDBGLOG("Patched IOPlatformExpert::setConsoleInfo");
   }
 }
 
 IOReturn HyperVPlatformProvider::wrapSetConsoleInfo(IOPlatformExpert *that, PE_Video *consoleInfo, unsigned int op) {
-  DBGLOG("op %X", op);
+  HVDBGLOG("op %X", op);
   
   // Fix arg here
   if (op == kPEBaseAddressChange && consoleInfo != NULL) {
@@ -94,20 +94,20 @@ IOReturn HyperVPlatformProvider::wrapSetConsoleInfo(IOPlatformExpert *that, PE_V
       MachInfo::setKernelWriting(false, KernelPatcher::kernelWriteLock);
     }
   } else {
-    DBGLOG("kPEBaseAddressChange specified, not patching again");
+    HVDBGLOG("kPEBaseAddressChange specified, not patching again");
   }
 
   return result;
 }
 
 void HyperVPlatformProvider::onLiluPatcherLoad(KernelPatcher &patcher) {
-  DBGLOG("Patcher loaded");
+  HVDBGLOG("Patcher loaded");
 
   KernelPatcher::RouteRequest requests[] = {
     { "_reboot", reboot, origReboot }
   };
   if (!patcher.routeMultiple(KernelPatcher::KernelID, requests, arrsize(requests))) {
-    SYSLOG("Failed to route platform functions");
+    HVSYSLOG("Failed to route platform functions");
     patcher.clearError();
   }
 }
@@ -128,7 +128,7 @@ bool HyperVPlatformProvider::canShutdownSystem() {
 }
 
 void HyperVPlatformProvider::shutdownSystem() {
-  DBGLOG("Shutdown initiated");
+  HVDBGLOG("Shutdown initiated");
   
   //
   // Invoke reboot syscall to shutdown the system.

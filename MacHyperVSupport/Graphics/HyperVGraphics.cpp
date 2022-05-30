@@ -41,7 +41,7 @@ bool HyperVGraphics::start(IOService *provider) {
   //
   IORegistryEntry *pciEntry = IORegistryEntry::fromPath("/PCI0@0", gIODTPlane);
   if (pciEntry != NULL) {
-    DBGLOG("Existing PCI bus found (Gen1 VM), will not start");
+    HVDBGLOG("Existing PCI bus found (Gen1 VM), will not start");
     
     pciEntry->release();
     return false;
@@ -51,7 +51,7 @@ bool HyperVGraphics::start(IOService *provider) {
   // Locate root PCI bus instance and register ourselves.
   //
   if (!HyperVPCIRoot::registerChildPCIBridge(this)) {
-    SYSLOG("Failed to register with root PCI bus instance");
+    HVSYSLOG("Failed to register with root PCI bus instance");
     return false;
   }
   
@@ -60,16 +60,16 @@ bool HyperVGraphics::start(IOService *provider) {
   // TODO: Use actual info from Hyper-V VMBus device for this.
   //
   if (getPlatform()->getConsoleInfo(&consoleInfo) != kIOReturnSuccess) {
-    SYSLOG("Failed to get console info");
+    HVSYSLOG("Failed to get console info");
     return false;
   }
-  DBGLOG("Console is at 0x%X (%ux%u, bpp: %u, bytes/row: %u)",
+  HVDBGLOG("Console is at 0x%X (%ux%u, bpp: %u, bytes/row: %u)",
          consoleInfo.v_baseAddr, consoleInfo.v_height, consoleInfo.v_width, consoleInfo.v_depth, consoleInfo.v_rowBytes);
   
   pciLock = IOSimpleLockAlloc();
   fillFakePCIDeviceSpace();
   
-  DBGLOG("PCI bridge started");
+  HVDBGLOG("PCI bridge started");
   
   if (!super::start(provider)) {
     return false;
@@ -84,19 +84,19 @@ bool HyperVGraphics::start(IOService *provider) {
     
     IOService *childService = OSDynamicCast(IOService, childIterator->getNextObject());
     if (childService != NULL) {
-      DBGLOG("Found child %s", childService->getName());
+      HVDBGLOG("Found child %s", childService->getName());
       childService->setProperty("model", "Hyper-V Graphics");
     }
 
     childIterator->release();
   }
 
-  SYSLOG("Hyper-V Synthetic Video initialized");
+  HVSYSLOG("Hyper-V Synthetic Video initialized");
   return true;
 }
 
 UInt32 HyperVGraphics::configRead32(IOPCIAddressSpace space, UInt8 offset) {
-  DBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
+  HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
   UInt32 data;
   IOInterruptState ints;
@@ -109,7 +109,7 @@ UInt32 HyperVGraphics::configRead32(IOPCIAddressSpace space, UInt8 offset) {
   data = OSReadLittleInt32(fakePCIDeviceSpace, offset);
   
   if (offset == kIOPCIConfigurationOffsetBaseAddress0) {
-    DBGLOG("gonna read %X", data);
+    HVDBGLOG("gonna read %X", data);
   }
   
   IOSimpleLockUnlockEnableInterrupt(pciLock, ints);
@@ -117,21 +117,21 @@ UInt32 HyperVGraphics::configRead32(IOPCIAddressSpace space, UInt8 offset) {
 }
 
 void HyperVGraphics::configWrite32(IOPCIAddressSpace space, UInt8 offset, UInt32 data) {
-  DBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
+  HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
   IOInterruptState ints;
   
   if (space.es.deviceNum != 0 || space.es.functionNum != 0 || (offset > kIOPCIConfigurationOffsetBaseAddress0 && offset <= kIOPCIConfigurationOffsetBaseAddress5) || offset == kIOPCIConfigurationOffsetExpansionROMBase) {
-    DBGLOG("ignoring offset %X", offset);
+    HVDBGLOG("ignoring offset %X", offset);
     return;
   }
   
   if (offset == kIOPCIConfigurationOffsetBaseAddress0) {
-    DBGLOG("gonna write %X", data);
+    HVDBGLOG("gonna write %X", data);
   }
   
   if (offset == kIOPCIConfigurationOffsetBaseAddress0 && data == 0xFFFFFFFF) {
-    DBGLOG("Got bar size request");
+    HVDBGLOG("Got bar size request");
     UInt32 fbSize = (UInt32)(consoleInfo.v_height * consoleInfo.v_rowBytes);
     OSWriteLittleInt32(fakePCIDeviceSpace, offset, (0xFFFFFFFF - fbSize) + 1);
     return;
@@ -144,7 +144,7 @@ void HyperVGraphics::configWrite32(IOPCIAddressSpace space, UInt8 offset, UInt32
 }
 
 UInt16 HyperVGraphics::configRead16(IOPCIAddressSpace space, UInt8 offset) {
-  DBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
+  HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
   UInt16 data;
   IOInterruptState ints;
@@ -161,7 +161,7 @@ UInt16 HyperVGraphics::configRead16(IOPCIAddressSpace space, UInt8 offset) {
 }
 
 void HyperVGraphics::configWrite16(IOPCIAddressSpace space, UInt8 offset, UInt16 data) {
-  DBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
+  HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
   IOInterruptState ints;
   
@@ -176,7 +176,7 @@ void HyperVGraphics::configWrite16(IOPCIAddressSpace space, UInt8 offset, UInt16
 }
 
 UInt8 HyperVGraphics::configRead8(IOPCIAddressSpace space, UInt8 offset) {
-  DBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
+  HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
   UInt8 data;
   IOInterruptState ints;
@@ -193,7 +193,7 @@ UInt8 HyperVGraphics::configRead8(IOPCIAddressSpace space, UInt8 offset) {
 }
 
 void HyperVGraphics::configWrite8(IOPCIAddressSpace space, UInt8 offset, UInt8 data) {
-  DBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
+  HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
   IOInterruptState ints;
   

@@ -18,7 +18,7 @@ bool HyperVMouse::handleStart(IOService *provider) {
   // HIDDefaultBehavior needs to be set to Mouse for the device to
   // get exposed as a mouse to userspace.
   //
-  DBGLOG("Initializing Hyper-V Synthetic Mouse");
+  HVDBGLOG("Initializing Hyper-V Synthetic Mouse");
   setProperty("HIDDefaultBehavior", "Mouse");
 
   //
@@ -46,13 +46,13 @@ bool HyperVMouse::handleStart(IOService *provider) {
   }
 
   if (!setupMouse()) {
-    SYSLOG("Failed to set up device");
+    HVSYSLOG("Failed to set up device");
     return false;
   }
 
   for (int i = 0; i < kHyperVMouseInitTimeout; i++) {
     if (hidDescriptorValid) {
-      DBGLOG("Device info packet is now valid");
+      HVDBGLOG("Device info packet is now valid");
       break;
     }
 
@@ -60,16 +60,16 @@ bool HyperVMouse::handleStart(IOService *provider) {
   }
 
   if (hidDescriptorValid) {
-    SYSLOG("Initialized Hyper-V Synthetic Mouse");
+    HVSYSLOG("Initialized Hyper-V Synthetic Mouse");
   } else {
-    SYSLOG("Timed out getting device info");
+    HVSYSLOG("Timed out getting device info");
   }
 
   return hidDescriptorValid;
 }
 
 void HyperVMouse::handleStop(IOService *provider) {
-  DBGLOG("Hyper-V Mouse is stopping");
+  HVDBGLOG("Hyper-V Mouse is stopping");
 
   if (hidDescriptor != NULL) {
     IOFree(hidDescriptor, hidDescriptorLength);
@@ -114,7 +114,7 @@ OSNumber* HyperVMouse::newVersionNumber() const {
 IOReturn HyperVMouse::newReportDescriptor(IOMemoryDescriptor **descriptor) const {
   IOBufferMemoryDescriptor *bufferDesc = IOBufferMemoryDescriptor::withBytes(hidDescriptor, hidDescriptorLength, kIODirectionNone);
   if (bufferDesc == NULL) {
-    SYSLOG("Failed to allocate report descriptor buffer descriptor");
+    HVSYSLOG("Failed to allocate report descriptor buffer descriptor");
     return kIOReturnNoResources;
   }
 

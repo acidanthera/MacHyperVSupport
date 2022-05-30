@@ -24,7 +24,7 @@ void HyperVMouse::handleInterrupt(OSObject *owner, IOInterruptEventSource *sende
     if (pktDataLength <= sizeof (data128)) {
       message = (HyperVMousePipeIncomingMessage*)data128;
     } else {
-      DBGLOG("Allocating large packet of %u bytes", pktDataLength);
+      HVDBGLOG("Allocating large packet of %u bytes", pktDataLength);
       message = (HyperVMousePipeIncomingMessage*)IOMalloc(pktDataLength);
     }
 
@@ -48,7 +48,7 @@ void HyperVMouse::handleInterrupt(OSObject *owner, IOInterruptEventSource *sende
           break;
 
         default:
-          DBGLOG("Unknown message type %u, size %u", message->header.type, message->header.size);
+          HVDBGLOG("Unknown message type %u, size %u", message->header.type, message->header.size);
           break;
       }
     }
@@ -81,12 +81,12 @@ bool HyperVMouse::setupMouse() {
   message.request.header.size = sizeof (UInt32);
   message.request.versionRequested = kHyperVMouseVersion;
 
-  DBGLOG("Sending mouse protocol request");
+  HVDBGLOG("Sending mouse protocol request");
   if (hvDevice->writeInbandPacket(&message, sizeof (message), true, &protoResponse, sizeof (protoResponse)) != kIOReturnSuccess) {
     return false;
   }
 
-  DBGLOG("Got mouse protocol response of %u, version 0x%X", protoResponse.status, protoResponse.versionRequested);
+  HVDBGLOG("Got mouse protocol response of %u, version 0x%X", protoResponse.status, protoResponse.versionRequested);
   return protoResponse.status != 0;
 }
 
@@ -110,14 +110,14 @@ void HyperVMouse::handleDeviceInfo(HyperVMouseMessageInitialDeviceInfo *deviceIn
   }
 
   memcpy(&mouseInfo, &deviceInfo->info, sizeof (mouseInfo));
-  DBGLOG("Hyper-V Mouse ID %04X:%04X, version 0x%X",
+  HVDBGLOG("Hyper-V Mouse ID %04X:%04X, version 0x%X",
          mouseInfo.vendor, mouseInfo.product, mouseInfo.version);
 
   //
   // Store HID descriptor.
   //
   hidDescriptorLength = deviceInfo->hidDescriptor.hidDescriptorLength;
-  DBGLOG("HID descriptor is %u bytes", hidDescriptorLength);
+  HVDBGLOG("HID descriptor is %u bytes", hidDescriptorLength);
 
   hidDescriptor = IOMalloc(hidDescriptorLength);
   if (hidDescriptor == NULL) {
@@ -137,7 +137,7 @@ void HyperVMouse::handleDeviceInfo(HyperVMouseMessageInitialDeviceInfo *deviceIn
   message.deviceInfoAck.header.size = sizeof (HyperVMouseMessageInitialDeviceInfoAck) - sizeof (HyperVMouseMessageHeader);
   message.deviceInfoAck.reserved = 0;
 
-  DBGLOG("Sending device info ack");
+  HVDBGLOG("Sending device info ack");
   hvDevice->writeInbandPacket(&message, sizeof (message), false);
 }
 

@@ -19,7 +19,7 @@ void HyperVNetwork::handleInterrupt(OSObject *owner, IOInterruptEventSource *sen
   
   while (true) {
     if (!hvDevice->nextPacketAvailable(&type, &headersize, &totalsize)) {
-     // DBGLOG("last one");
+     // HVDBGLOG("last one");
       break;
     }
     
@@ -40,7 +40,7 @@ void HyperVNetwork::handleInterrupt(OSObject *owner, IOInterruptEventSource *sen
           hvDevice->wakeTransaction(((VMBusPacketHeader*)buf)->transactionId);
         } else {
           pktComp = (HyperVNetworkMessage*) (buf + headersize);
-          DBGLOG("pkt completion status %X %X", pktComp->messageType, pktComp->v1.sendRNDISPacketComplete.status);
+          HVDBGLOG("pkt completion status %X %X", pktComp->messageType, pktComp->v1.sendRNDISPacketComplete.status);
           
           if (pktComp->messageType == kHyperVNetworkMessageTypeV1SendRNDISPacketComplete) {
             releaseSendIndex((UInt32)(((VMBusPacketHeader*)buf)->transactionId & ~kHyperVNetworkSendTransIdBits));
@@ -63,10 +63,10 @@ void HyperVNetwork::handleRNDISRanges(VMBusPacketTransferPages *pktPages, UInt32
   //
   if (netMsg->messageType != kHyperVNetworkMessageTypeV1SendRNDISPacket ||
       pktPages->transferPagesetId != kHyperVNetworkReceiveBufferID) {
-    SYSLOG("Invalid message of type 0x%X and pageset ID of 0x%X received", netMsg->messageType, pktPages->transferPagesetId);
+    HVSYSLOG("Invalid message of type 0x%X and pageset ID of 0x%X received", netMsg->messageType, pktPages->transferPagesetId);
     return;
   }
-  DBGLOG("Received %u RNDIS ranges, range[0] count = %u, offset = 0x%X", pktPages->rangeCount, pktPages->ranges[0].count, pktPages->ranges[0].offset);
+  HVDBGLOG("Received %u RNDIS ranges, range[0] count = %u, offset = 0x%X", pktPages->rangeCount, pktPages->ranges[0].count, pktPages->ranges[0].offset);
   
   //
   // Process each range which contains a packet.
@@ -75,7 +75,7 @@ void HyperVNetwork::handleRNDISRanges(VMBusPacketTransferPages *pktPages, UInt32
     UInt8 *data = receiveBuffer + pktPages->ranges[i].offset;
     UInt32 dataLength = pktPages->ranges[i].count;
     
-    DBGLOG("Got range of %u bytes at 0x%X", dataLength, pktPages->ranges[i].offset);
+    HVDBGLOG("Got range of %u bytes at 0x%X", dataLength, pktPages->ranges[i].offset);
     processRNDISPacket(data, dataLength);
   }
   
@@ -96,15 +96,15 @@ bool HyperVNetwork::negotiateProtocol(HyperVNetworkProtocolVersion protocolVersi
   netMsg.init.initVersion.minProtocolVersion = protocolVersion;
 
   if (hvDevice->writeInbandPacket(&netMsg, sizeof (netMsg), true, &netMsg, sizeof (netMsg)) != kIOReturnSuccess) {
-    SYSLOG("failed to send protocol negotiation message");
+    HVSYSLOG("failed to send protocol negotiation message");
     return false;
   }
 
   if (netMsg.init.initComplete.status != kHyperVNetworkMessageStatusSuccess) {
-    SYSLOG("error returned from Hyper-V: 0x%X", netMsg.init.initComplete.status);
+    HVSYSLOG("error returned from Hyper-V: 0x%X", netMsg.init.initComplete.status);
   }
 
-  DBGLOG("Can use protocol 0x%X, max MDL length %u",
+  HVDBGLOG("Can use protocol 0x%X, max MDL length %u",
          netMsg.init.initComplete.negotiatedProtocolVersion, netMsg.init.initComplete.maxMdlChainLength);
   return true;
 }
@@ -113,14 +113,14 @@ bool HyperVNetwork::initBuffers() {
   
   // Allocate receive and send buffers.
   if (!hvDevice->createGpadlBuffer(receiveBufferSize, &receiveGpadlHandle, (void**)&receiveBuffer)) {
-    SYSLOG("Failed to create GPADL for receive buffer");
+    HVSYSLOG("Failed to create GPADL for receive buffer");
     return false;
   }
   if (!hvDevice->createGpadlBuffer(sendBufferSize, &sendGpadlHandle, (void**)&sendBuffer)) {
-    SYSLOG("Failed to create GPADL for send buffer");
+    HVSYSLOG("Failed to create GPADL for send buffer");
     return false;
   }
-  DBGLOG("Receive GPADL: 0x%X, send GPADL: 0x%X", receiveGpadlHandle, sendGpadlHandle);
+  HVDBGLOG("Receive GPADL: 0x%X, send GPADL: 0x%X", receiveGpadlHandle, sendGpadlHandle);
   
   // Send receive buffer GPADL handle to Hyper-V.
   HyperVNetworkMessage netMsg;
@@ -130,19 +130,19 @@ bool HyperVNetwork::initBuffers() {
   netMsg.v1.sendReceiveBuffer.id = kHyperVNetworkReceiveBufferID;
   
   if (hvDevice->writeInbandPacket(&netMsg, sizeof (netMsg), true, &netMsg, sizeof (netMsg)) != kIOReturnSuccess) {
-    SYSLOG("Failed to send receive buffer configuration message");
+    HVSYSLOG("Failed to send receive buffer configuration message");
     return false;
   }
 
   if (netMsg.v1.sendReceiveBufferComplete.status != kHyperVNetworkMessageStatusSuccess) {
-    SYSLOG("Failed to configure receive buffer: 0x%X", netMsg.v1.sendReceiveBufferComplete.status);
+    HVSYSLOG("Failed to configure receive buffer: 0x%X", netMsg.v1.sendReceiveBufferComplete.status);
     return false;
   }
-  DBGLOG("Receive buffer configured with %u sections", netMsg.v1.sendReceiveBufferComplete.numSections);
+  HVDBGLOG("Receive buffer configured with %u sections", netMsg.v1.sendReceiveBufferComplete.numSections);
   
   // Linux driver only allows 1 section.
   if (netMsg.v1.sendReceiveBufferComplete.numSections != 1 || netMsg.v1.sendReceiveBufferComplete.sections[0].offset != 0) {
-    SYSLOG("Invalid receive buffer sections");
+    HVSYSLOG("Invalid receive buffer sections");
     return false;
   }
   
@@ -153,12 +153,12 @@ bool HyperVNetwork::initBuffers() {
   netMsg.v1.sendSendBuffer.id = kHyperVNetworkSendBufferID;
 
   if (hvDevice->writeInbandPacket(&netMsg, sizeof (netMsg), true, &netMsg, sizeof (netMsg)) != kIOReturnSuccess) {
-    SYSLOG("Failed to send send buffer configuration message");
+    HVSYSLOG("Failed to send send buffer configuration message");
     return false;
   }
 
   if (netMsg.v1.sendSendBufferComplete.status != kHyperVNetworkMessageStatusSuccess) {
-    SYSLOG("Failed to configure send buffer: 0x%X", netMsg.v1.sendSendBufferComplete.status);
+    HVSYSLOG("Failed to configure send buffer: 0x%X", netMsg.v1.sendSendBufferComplete.status);
     return false;
   }
   sendSectionSize = netMsg.v1.sendSendBufferComplete.sectionSize;
@@ -166,15 +166,15 @@ bool HyperVNetwork::initBuffers() {
   sendIndexMapSize = (sendSectionCount + sizeof (UInt64) - 1) / sizeof (UInt64);
   sendIndexMap = (UInt64*)IOMalloc(sendIndexMapSize);
   memset(sendIndexMap, 0, sendIndexMapSize);
-  DBGLOG("send index map size %u", sendIndexMapSize);
+  HVDBGLOG("send index map size %u", sendIndexMapSize);
   
-  DBGLOG("Send buffer configured with section size of %u bytes and %u sections", sendSectionSize, sendSectionCount);
+  HVDBGLOG("Send buffer configured with section size of %u bytes and %u sections", sendSectionSize, sendSectionCount);
   
   return true;
 }
 
 bool HyperVNetwork::connectNetwork() {
-  DBGLOG("start");
+  HVDBGLOG("start");
   
   // Negotiate max protocol version with Hyper-V.
   negotiateProtocol(kHyperVNetworkProtocolVersion1);
@@ -191,7 +191,7 @@ bool HyperVNetwork::connectNetwork() {
   netMsg.v1.sendNDISVersion.minor = ndisVersion & 0x0000FFFF;
   
   if (hvDevice->writeInbandPacket(&netMsg, sizeof (netMsg), false) != kIOReturnSuccess) {
-    SYSLOG("failed to send NDIS version");
+    HVSYSLOG("failed to send NDIS version");
     return false;
   }
   
@@ -230,11 +230,11 @@ void HyperVNetwork::createMediumDictionary() {
 bool HyperVNetwork::readMACAddress() {
   UInt32 macSize = sizeof (ethAddress.bytes);
   if (!queryRNDISOID(kHyperVNetworkRNDISOIDEthernetPermanentAddress, (void *)ethAddress.bytes, &macSize)) {
-    SYSLOG("Failed to get MAC address");
+    HVSYSLOG("Failed to get MAC address");
     return false;
   }
   
-  DBGLOG("MAC address is %02X:%02X:%02X:%02X:%02X:%02X",
+  HVDBGLOG("MAC address is %02X:%02X:%02X:%02X:%02X:%02X",
          ethAddress.bytes[0], ethAddress.bytes[1], ethAddress.bytes[2],
          ethAddress.bytes[3], ethAddress.bytes[4], ethAddress.bytes[5]);
   return true;
@@ -248,11 +248,11 @@ void HyperVNetwork::updateLinkState(HyperVNetworkRNDISMessageIndicateStatus *ind
     HyperVNetworkRNDISLinkState linkState;
     UInt32 linkStateSize = sizeof (linkState);
     if (!queryRNDISOID(kHyperVNetworkRNDISOIDGeneralMediaConnectStatus, &linkState, &linkStateSize)) {
-      SYSLOG("Failed to get link state");
+      HVSYSLOG("Failed to get link state");
       return;
     }
 
-    DBGLOG("Link state is initially %s", linkState == kHyperVNetworkRNDISLinkStateConnected ? "up" : "down");
+    HVDBGLOG("Link state is initially %s", linkState == kHyperVNetworkRNDISLinkStateConnected ? "up" : "down");
     isLinkUp = linkState == kHyperVNetworkRNDISLinkStateConnected;
     if (isLinkUp) {
       setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive, 0);
@@ -265,16 +265,16 @@ void HyperVNetwork::updateLinkState(HyperVNetworkRNDISMessageIndicateStatus *ind
   //
   // Handle media and link speed changes.
   //
-  DBGLOG("Indicate status of 0x%X, buffer off 0x%X of %u bytes received",
+  HVDBGLOG("Indicate status of 0x%X, buffer off 0x%X of %u bytes received",
          indicateStatus->status, indicateStatus->statusBufferOffset, indicateStatus->statusBufferLength);
   switch (indicateStatus->status) {
     case kHyperVNetworkRNDISStatusLinkSpeedChange:
-      DBGLOG("Link has changed speeds");
+      HVDBGLOG("Link has changed speeds");
       break;
 
     case kHyperVNetworkRNDISStatusMediaConnect:
       if (!isLinkUp) {
-        DBGLOG("Link is coming up");
+        HVDBGLOG("Link is coming up");
         setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive, 0);
         isLinkUp = true;
       }
@@ -282,7 +282,7 @@ void HyperVNetwork::updateLinkState(HyperVNetworkRNDISMessageIndicateStatus *ind
 
     case kHyperVNetworkRNDISStatusMediaDisconnect:
       if (isLinkUp) {
-        DBGLOG("Link is going down");
+        HVDBGLOG("Link is going down");
         setLinkStatus(kIONetworkLinkValid, 0);
         isLinkUp = false;
       }
@@ -293,7 +293,7 @@ void HyperVNetwork::updateLinkState(HyperVNetworkRNDISMessageIndicateStatus *ind
         //
         // Do a link up and down to force a refresh in the OS.
         //
-        DBGLOG("Link has changed networks");
+        HVDBGLOG("Link has changed networks");
         setLinkStatus(kIONetworkLinkValid, 0);
         setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive, 0);
       }

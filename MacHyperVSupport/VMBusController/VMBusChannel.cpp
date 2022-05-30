@@ -15,7 +15,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel, Hy
   // Get the next available GPADL handle.
   //
   if (!IOSimpleLockTryLock(nextGpadlHandleLock)) {
-    SYSLOG("Failed to acquire GPADL handle lock");
+    HVSYSLOG("Failed to acquire GPADL handle lock");
     return false;
   }
 
@@ -28,11 +28,11 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel, Hy
   //
   UInt32 pageCount = (UInt32)(buffer->size >> PAGE_SHIFT);
   if (pageCount > kHyperVMaxGpadlPages) {
-    SYSLOG("%u is above the maximum supported number of GPADL pages");
+    HVSYSLOG("%u is above the maximum supported number of GPADL pages");
     return false;
   }
   
-  DBGLOG("Configuring GPADL handle 0x%X for channel %u of %llu pages", *gpadlHandle, channelId, pageCount);
+  HVDBGLOG("Configuring GPADL handle 0x%X for channel %u of %llu pages", *gpadlHandle, channelId, pageCount);
   
   //
   // For larger GPADL requests, a GPADL header and one or more GPADL body messages are required.
@@ -42,7 +42,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel, Hy
     sizeof (VMBusChannelMessageGPADLHeader) - sizeof (HyperVGPARange);
   UInt32 pageHeaderCount = pfnSize / sizeof (UInt64);
   
-  DBGLOG("Total GPADL PFNs required: %u, multiple messages required: %u", pageCount, pageCount > pageHeaderCount);
+  HVDBGLOG("Total GPADL PFNs required: %u, multiple messages required: %u", pageCount, pageCount > pageHeaderCount);
   if (pageCount > pageHeaderCount) {
     //
     // Create GPADL header message.
@@ -52,7 +52,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel, Hy
 
     VMBusChannelMessageGPADLHeader *gpadlHeader = (VMBusChannelMessageGPADLHeader*) IOMalloc(messageSize);
     if (gpadlHeader == NULL) {
-      SYSLOG("Failed to allocate GPADL header message");
+      HVSYSLOG("Failed to allocate GPADL header message");
       return false;
     }
     memset(gpadlHeader, 0, messageSize);
@@ -80,7 +80,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel, Hy
     bool result = sendVMBusMessageWithSize((VMBusChannelMessage*) gpadlHeader, messageSize);
     IOFree(gpadlHeader, messageSize);
     if (!result) {
-      SYSLOG("Failed to send GPADL header message for channel %u", channelId);
+      HVSYSLOG("Failed to send GPADL header message for channel %u", channelId);
       return false;
     }
     
@@ -100,7 +100,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel, Hy
       UInt32 messageSize = (UInt32) (sizeof (VMBusChannelMessageGPADLBody) + pagesBodyCount * sizeof (UInt64));
       VMBusChannelMessageGPADLBody *gpadlBody = (VMBusChannelMessageGPADLBody*) IOMalloc(messageSize);
       if (gpadlBody == NULL) {
-        SYSLOG("Failed to allocate GPADL body message for channel %u", channelId);
+        HVSYSLOG("Failed to allocate GPADL body message for channel %u", channelId);
         return false;
       }
       memset(gpadlBody, 0, messageSize);
@@ -112,7 +112,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel, Hy
         physPageIndex++;
       }
       
-      DBGLOG("Processed %u body pages for for channel %u, %u remaining", pagesBodyCount, channelId, pagesRemaining);
+      HVDBGLOG("Processed %u body pages for for channel %u, %u remaining", pagesBodyCount, channelId, pagesRemaining);
       pagesRemaining -= pagesBodyCount;
       
       //
@@ -122,10 +122,10 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel, Hy
       if (pagesRemaining == 0) {
         VMBusChannelMessageGPADLCreated gpadlCreated;
         result = sendVMBusMessageWithSize((VMBusChannelMessage*) gpadlBody, messageSize, kVMBusChannelMessageTypeGPADLCreated, (VMBusChannelMessage*) &gpadlCreated);
-        DBGLOG("GPADL creation response 0x%X for channel %u", gpadlCreated.status, channelId);
+        HVDBGLOG("GPADL creation response 0x%X for channel %u", gpadlCreated.status, channelId);
 
         if (!result && gpadlCreated.status != kHyperVStatusSuccess) {
-          SYSLOG("Failed to create GPADL for channel %u", channelId);
+          HVSYSLOG("Failed to create GPADL for channel %u", channelId);
           
           IOFree(gpadlBody, messageSize);
           return false;
@@ -136,7 +136,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel, Hy
 
       IOFree(gpadlBody, messageSize);
       if (!result) {
-        SYSLOG("Failed to send GPADL body message for channel %u", channelId);
+        HVSYSLOG("Failed to send GPADL body message for channel %u", channelId);
         return false;
       }
     }
@@ -150,7 +150,7 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel, Hy
 
     VMBusChannelMessageGPADLHeader *gpadlHeader = (VMBusChannelMessageGPADLHeader*) IOMalloc(messageSize);
     if (gpadlHeader == NULL) {
-      SYSLOG("Failed to allocate GPADL header message for channel %u", channelId);
+      HVSYSLOG("Failed to allocate GPADL header message for channel %u", channelId);
       return false;
     }
     memset(gpadlHeader, 0, messageSize);
@@ -180,13 +180,13 @@ bool HyperVVMBusController::configureVMBusChannelGpadl(VMBusChannel *channel, Hy
                                            messageSize, kVMBusChannelMessageTypeGPADLCreated, (VMBusChannelMessage*) &gpadlCreated);
     IOFree(gpadlHeader, messageSize);
     
-    DBGLOG("GPADL creation response 0x%X for channel %u", gpadlCreated.status, channelId);
+    HVDBGLOG("GPADL creation response 0x%X for channel %u", gpadlCreated.status, channelId);
     
     if (!result) {
-      SYSLOG("Failed to send GPADL header message");
+      HVSYSLOG("Failed to send GPADL header message");
       return false;
     } else if (gpadlCreated.status != kHyperVStatusSuccess) {
-      SYSLOG("Failed to create GPADL for channel %u", channel->offerMessage.channelId);
+      HVSYSLOG("Failed to create GPADL for channel %u", channel->offerMessage.channelId);
       return false;
     }
   }
@@ -212,7 +212,7 @@ bool HyperVVMBusController::configureVMBusChannel(VMBusChannel *channel) {
   if (!sendVMBusMessage((VMBusChannelMessage*) &openMsg, kVMBusChannelMessageTypeChannelOpenResponse, (VMBusChannelMessage*) &openResponseMsg)) {
     return false;
   }
-  DBGLOG("Channel %u open result: 0x%X", channel->offerMessage.channelId, openResponseMsg.status);
+  HVDBGLOG("Channel %u open result: 0x%X", channel->offerMessage.channelId, openResponseMsg.status);
   
   if (openResponseMsg.status != kHyperVStatusSuccess) {
     channel->status = kVMBusChannelStatusClosed;
@@ -235,7 +235,7 @@ bool HyperVVMBusController::initVMBusChannel(UInt32 channelId, UInt32 txBufferSi
   }
   
   VMBusChannel *channel = &vmbusChannels[channelId];
-  DBGLOG("Channel flags %u %u %u", channelId, channel->offerMessage.flags, channel->offerMessage.monitorAllocated);
+  HVDBGLOG("Channel flags %u %u %u", channelId, channel->offerMessage.flags, channel->offerMessage.monitorAllocated);
   
   //
   // The actual buffers will be +1 page each to account for state info.
@@ -325,9 +325,9 @@ void HyperVVMBusController::closeVMBusChannel(UInt32 channelId) {
     
     result = sendVMBusMessage((VMBusChannelMessage*) &closeMsg);
     if (!result) {
-      SYSLOG("Failed to send channel close message for channel %u", channelId);
+      HVSYSLOG("Failed to send channel close message for channel %u", channelId);
     }
-    DBGLOG("Channel %u is now closed", channelId);
+    HVDBGLOG("Channel %u is now closed", channelId);
   }
   
   //
@@ -343,9 +343,9 @@ void HyperVVMBusController::closeVMBusChannel(UInt32 channelId) {
   result = sendVMBusMessage((VMBusChannelMessage*) &gpadlTeardownMsg,
                             kVMBusChannelMessageTypeGPADLTeardownResponse, (VMBusChannelMessage*) &gpadlTeardownResponseMsg);
   if (!result) {
-    SYSLOG("Failed to send GPADL teardown message");
+    HVSYSLOG("Failed to send GPADL teardown message");
   }
-  DBGLOG("GPADL torn down for channel %u", channelId);
+  HVDBGLOG("GPADL torn down for channel %u", channelId);
   
   //
   // Free ring buffers.
@@ -374,9 +374,9 @@ void HyperVVMBusController::freeVMBusChannel(UInt32 channelId) {
   
   bool result = sendVMBusMessage((VMBusChannelMessage*) &freeMsg);
   if (!result) {
-    SYSLOG("Failed to send channel free message for channel %u", channelId);
+    HVSYSLOG("Failed to send channel free message for channel %u", channelId);
   }
-  DBGLOG("Channel %u is now freed", channelId);
+  HVDBGLOG("Channel %u is now freed", channelId);
   channel->status = kVMBusChannelStatusNotPresent;
 }
 
