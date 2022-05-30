@@ -6,6 +6,7 @@
 //
 
 #include "HyperVNetwork.hpp"
+#include <Headers/kern_api.hpp>
 
 OSDefineMetaClassAndStructors(HyperVNetwork, super);
 
@@ -25,6 +26,9 @@ bool HyperVNetwork::start(IOService *provider) {
     return false;
   }
   hvDevice->retain();
+  
+  debugEnabled = checkKernelArgument("-hvnetdbg");
+  hvDevice->setDebugMessagePrinting(checkKernelArgument("-hvnetmsgdbg"));
   
   //
   // Configure interrupt.
