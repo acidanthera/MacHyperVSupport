@@ -295,7 +295,6 @@ void HyperVVMBusController::handleSynICInterrupt(OSObject *target, void *refCon,
     if (message->flags.messagePending) {
       wrmsr64(kHyperVMsrEom, 0);
     }
-   //cpuData.perCPUData[cpuIndex].synProc->triggerInterrupt();
   }
   
   //

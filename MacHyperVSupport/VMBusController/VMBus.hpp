@@ -19,8 +19,9 @@
 //
 // Default VMBus connection IDs.
 //
-#define kVMBusConnIdMessage     1
+#define kVMBusConnIdMessage1    1
 #define kVMBusConnIdEvent       2
+#define kVMBusConnIdMessage4    4
 
 #define VMBUS_CHANNEL_EVENT_INDEX(chan) (chan / 8)
 #define VMBUS_CHANNEL_EVENT_MASK(chan)  (1 << (chan % 8))
@@ -29,14 +30,14 @@
 // VMBus protocol versions.
 //
 // 0.13 - Windows Server 2008
-// 1.1  - Windows 7
-// 2.4  - Windows 8
-// 3.0  - Windows 8.1
-// 4.0  - Windows 10
+// 1.1  - Windows Server 2008 R2
+// 2.4  - Windows 8 and Server 2012
+// 3.0  - Windows 8.1 and Server 2012 R2
+// 4.0  - Windows 10 v1607 and Server 2016
 // 4.1  - Windows 10 v1709
 // 5.0  - Windows 10 (newer)
 // 5.1  - Windows 10 v1803
-// 5.2  - Windows 10 v1809
+// 5.2  - Windows 10 v1809 and Server 2019
 // 5.3  - Windows Server 2022
 //
 #define kVMBusVersionWS2008       ((0 << 16) | (13))

@@ -227,9 +227,9 @@ bool HyperVVMBusController::start(IOService *provider) {
   cmdGate = IOCommandGate::commandGate(this);
   workloop->addEventSource(cmdGate);
   
-  //cmdGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBus::connectVMBus));
-  
-  connectVMBus();
+  if (!connectVMBus()) {
+    return false;
+  }
   scanVMBus();
 
   

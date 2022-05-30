@@ -10,6 +10,15 @@
 
 #include "HyperVVMBusDevice.hpp"
 
+const UInt32 VMBusVersions[] = {
+  kVMBusVersionWIN10_V4_1,
+  kVMBusVersionWIN10,
+  kVMBusVersionWIN8_1,
+  kVMBusVersionWIN8,
+  kVMBusVersionWIN7,
+  kVMBusVersionWS2008
+};
+
 const VMBusMessageTypeTableEntry
 VMBusMessageTypeTable[kVMBusChannelMessageTypeMax] = {
   { kVMBusChannelMessageTypeInvalid, 0 },
@@ -32,9 +41,6 @@ VMBusMessageTypeTable[kVMBusChannelMessageTypeMax] = {
 };
 
 bool HyperVVMBusController::allocateVMBusBuffers() {
-  
-  
-  
   //
   // Allocate common VMBus structures.
   //
@@ -175,21 +181,57 @@ void HyperVVMBusController::processIncomingVMBusMessage(UInt32 cpu) {
 }
 
 bool HyperVVMBusController::connectVMBus() {
+  for (int i = 0; i < arrsize(VMBusVersions); i++) {
+    vmbusVersion = VMBusVersions[i];
+    if (negotiateVMBus(vmbusVersion)) {
+      HVDBGLOG("Negotiated VMBus version 0x%X with host", vmbusVersion);
+      return true;
+    }
+  }
+  
+  vmbusVersion = 0;
+  HVSYSLOG("Unable to negotiate compatible VMBus version with host");
+  return false;
+}
+
+bool HyperVVMBusController::negotiateVMBus(UInt32 version) {
   VMBusChannelMessageConnect connectMsg;
-  connectMsg.header.type = kVMBusChannelMessageTypeConnect; //VMBUS_CHANMSG_TYPE_CONNECT;
-  connectMsg.targetProcessor = 0;
-  connectMsg.protocolVersion = kVMBusVersionWIN8_1; //((4 << 16) | (0)); // ((5 << 16) | (0));//((4 << 16) | (0));
-  connectMsg.interruptPage = vmbusEventFlags.physAddr;
-  connectMsg.monitorPage1 = vmbusMnf1.physAddr;
-  connectMsg.monitorPage2 = vmbusMnf2.physAddr;
-  DBGLOG("Version %X", connectMsg.protocolVersion);
+  connectMsg.header.type      = kVMBusChannelMessageTypeConnect;
+  connectMsg.targetProcessor  = 0;
+  connectMsg.protocolVersion  = version;
+  connectMsg.monitorPage1     = vmbusMnf1.physAddr;
+  connectMsg.monitorPage2     = vmbusMnf2.physAddr;
+  
+  // Older hosts used connection ID 1 for VMBus, but Windows 10 v5.0 and higher use ID 4.
+  if (vmbusVersion >= kVMBusVersionWIN10_V5) {
+    vmbusMsgConnectionId      = kVMBusConnIdMessage4;
+    connectMsg.messageInt     = kVMBusInterruptMessage;
+  } else {
+    vmbusMsgConnectionId      = kVMBusConnIdMessage1;
+    connectMsg.interruptPage  = vmbusEventFlags.physAddr;
+  }
+  
+  // Windows Server 2008 and 2008 R2 use the event flag bits.
+  useLegacyEventFlags = (vmbusVersion == kVMBusVersionWS2008 || vmbusVersion == kVMBusVersionWIN7);
+  if (useLegacyEventFlags) {
+    HVDBGLOG("Legacy event flags will be used for messages");
+  }
+  
+  HVDBGLOG("Trying version 0x%X and connection ID %u", connectMsg.protocolVersion, vmbusMsgConnectionId);
   
   VMBusChannelMessageConnectResponse resp;
-  sendVMBusMessage((VMBusChannelMessage*) &connectMsg, kVMBusChannelMessageTypeConnectResponse, (VMBusChannelMessage*) &resp);
+  if (!sendVMBusMessage((VMBusChannelMessage*) &connectMsg, kVMBusChannelMessageTypeConnectResponse, (VMBusChannelMessage*) &resp)) {
+    return false;
+  }
   
-  DBGLOG("header %X %X %X", cpuData.perCPUData[0].messages[kVMBusInterruptMessage].type, resp.header.type, resp.supported);
-
-  return true;
+  HVDBGLOG("Version 0x%X is %s (connection ID %u)",
+           connectMsg.protocolVersion, resp.supported ? "supported" : "not supported", resp.messageConnectionId);
+  if (resp.supported != 0 && vmbusVersion >= kVMBusVersionWIN10_V5) {
+    // We'll use indicated connection ID for future messages.
+    vmbusMsgConnectionId = resp.messageConnectionId;
+  }
+  
+  return resp.supported != 0;
 }
 
 bool HyperVVMBusController::scanVMBus() {

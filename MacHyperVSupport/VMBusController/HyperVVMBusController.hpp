@@ -110,6 +110,8 @@ private:
   
   UInt32                  nextGpadlHandle;
   IOSimpleLock            *nextGpadlHandleLock;
+  UInt32                  vmbusVersion;
+  UInt16                  vmbusMsgConnectionId;
   VMBusChannel            vmbusChannels[kHyperVMaxChannels];
   UInt32                  vmbusChannelHighest;
   
@@ -152,6 +154,7 @@ private:
   bool sendVMBusMessageWithSize(VMBusChannelMessage *message, UInt32 messageSize, VMBusChannelMessageType responseType = kVMBusChannelMessageTypeInvalid, VMBusChannelMessage *response = NULL);
   IOReturn sendVMBusMessageGated(VMBusChannelMessage *message, UInt32 *messageSize, VMBusChannelMessageType *responseType, VMBusChannelMessage *response);
   bool connectVMBus();
+  bool negotiateVMBus(UInt32 version);
   bool scanVMBus();
   bool addVMBusDevice(VMBusChannelMessageChannelOffer *offerMessage);
   void removeVMBusDevice(VMBusChannelMessageChannelRescindOffer *rescindOfferMessage);
