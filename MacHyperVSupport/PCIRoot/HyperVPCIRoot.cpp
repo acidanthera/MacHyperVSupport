@@ -120,7 +120,7 @@ bool HyperVPCIRoot::configure(IOService *provider) {
 UInt32 HyperVPCIRoot::configRead32(IOPCIAddressSpace space, UInt8 offset) {
   HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
-  UInt32 data;
+  UInt32 data = 0xFFFFFFFF;
   IOInterruptState ints;
   
   if (pciBridges[space.es.busNum] != NULL) {
@@ -166,7 +166,7 @@ void HyperVPCIRoot::configWrite32(IOPCIAddressSpace space, UInt8 offset, UInt32 
 UInt16 HyperVPCIRoot::configRead16(IOPCIAddressSpace space, UInt8 offset) {
   HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
-  UInt16 data;
+  UInt16 data = 0xFFFF;
   IOInterruptState ints;
   
   if (pciBridges[space.es.busNum] != NULL) {
@@ -202,7 +202,7 @@ void HyperVPCIRoot::configWrite16(IOPCIAddressSpace space, UInt8 offset, UInt16 
 UInt8 HyperVPCIRoot::configRead8(IOPCIAddressSpace space, UInt8 offset) {
   HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
-  UInt8 data;
+  UInt8 data = 0xFF;
   IOInterruptState ints;
   
   if (pciBridges[space.es.busNum] != NULL) {

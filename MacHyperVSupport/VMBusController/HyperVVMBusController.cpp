@@ -218,6 +218,9 @@ bool HyperVVMBusController::start(IOService *provider) {
   //
   bool result = initHypercalls();
   HVDBGLOG("Hypercall init result %u", result);
+  if (!result) {
+    return false;
+  }
   
   initSynIC();
       
