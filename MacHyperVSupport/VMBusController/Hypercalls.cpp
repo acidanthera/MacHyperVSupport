@@ -98,9 +98,9 @@ UInt32 HyperVVMBusController::hypercallPostMessage(UInt32 connectionId, HyperVMe
   
   HypercallPostMessage *postMessage = (HypercallPostMessage*) postPageBuffer->buffer;
   postMessage->connectionId = connectionId;
-  postMessage->reserved = 0;
-  postMessage->messageType = messageType;
-  postMessage->size = size;
+  postMessage->reserved     = 0;
+  postMessage->messageType  = messageType;
+  postMessage->size         = size;
   memcpy(&postMessage->data[0], data, size);
   
   //

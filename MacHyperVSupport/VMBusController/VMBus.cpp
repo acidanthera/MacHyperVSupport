@@ -78,16 +78,14 @@ IOReturn HyperVVMBusController::sendVMBusMessageGated(VMBusChannelMessage *messa
   bool postCompleted = false;
   
   const VMBusMessageTypeTableEntry *msgEntry = &VMBusMessageTypeTable[message->header.type];
-
   UInt32 size = messageSize != NULL ? *messageSize : msgEntry->size;
-  HVDBGLOG("Preparing to send message of type %u and %u bytes", msgEntry->type, size);
   
   //
   // Multiple hypercalls may fail due to lack of resources on the host
   // side, just try again if that happens.
   //
   for (int i = 0; i < kHyperVHypercallRetryCount; i++) {
-    HVDBGLOG("Sending message of %u bytes", size);
+    HVDBGLOG("Sending message on connection ID %u, type %u, %u bytes", vmbusMsgConnectionId, msgEntry->type, size);
     hvStatus = hypercallPostMessage(vmbusMsgConnectionId, kHyperVMessageTypeChannel, message, (UInt32) size);
     
     switch (hvStatus) {
@@ -203,6 +201,7 @@ bool HyperVVMBusController::negotiateVMBus(UInt32 version) {
   connectMsg.monitorPage2     = vmbusMnf2.physAddr;
   
   // Older hosts used connection ID 1 for VMBus, but Windows 10 v5.0 and higher use ID 4.
+  // TODO: Seems to have issues getting a response when using ID: 4, which is what Linux uses.
   if (vmbusVersion >= kVMBusVersionWIN10_V5) {
     vmbusMsgConnectionId      = kVMBusConnIdMessage4;
     connectMsg.messageInt     = kVMBusInterruptMessage;
