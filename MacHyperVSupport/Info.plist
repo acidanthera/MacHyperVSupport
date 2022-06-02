@@ -107,6 +107,20 @@
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
 		</dict>
+		<key>HyperVPCIBridge</key>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>IOClass</key>
+			<string>HyperVPCIBridge</string>
+			<key>IOPropertyMatch</key>
+			<dict>
+				<key>HVType</key>
+				<string>44c4f61d-4444-4400-9d52-802e27ede19f</string>
+			</dict>
+			<key>IOProviderClass</key>
+			<string>HyperVVMBusDevice</string>
+		</dict>
 		<key>HyperVPCIProviderGen2</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
