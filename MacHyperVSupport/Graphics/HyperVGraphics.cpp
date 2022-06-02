@@ -32,7 +32,7 @@ bool HyperVGraphics::configure(IOService *provider) {
   UInt32 fbSize = (UInt32)(consoleInfo.v_height * consoleInfo.v_rowBytes);
   
   addBridgeMemoryRange(consoleInfo.v_baseAddr, fbSize, true);
-  return true;
+  return super::configure(provider);
 }
 
 bool HyperVGraphics::start(IOService *provider) {
