@@ -1,5 +1,8 @@
 MacHyperVSupport Changelog
 ============================
+#### v0.8
+- Latest Windows support
+
 #### v0.7
 - Added networking support
 
