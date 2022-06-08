@@ -1,5 +1,8 @@
 MacHyperVSupport Changelog
 ============================
+#### v0.9
+- Added constants for macOS 13 support
+
 #### v0.8
 - Latest Windows support
 
