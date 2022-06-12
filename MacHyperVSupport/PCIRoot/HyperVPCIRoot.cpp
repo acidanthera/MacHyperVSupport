@@ -9,25 +9,14 @@
 #include <architecture/i386/pio.h>
 #include <IOKit/acpi/IOACPIPlatformDevice.h>
 
+#include "AppleACPIRange.hpp"
+
 #define super IOPCIBridge
 
 #define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVPCIRoot", false, 0, str, ## __VA_ARGS__)
 #define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVPCIRoot", false, 0, str, ## __VA_ARGS__)
 
 OSDefineMetaClassAndStructors(HyperVPCIRoot, super);
-
-typedef struct __attribute__((packed)) {
-  UInt64 type;
-  UInt64 reserved1;
-  UInt64 reserved2;
-  UInt64 min;
-  UInt64 max;
-  UInt64 reserved3;
-  UInt64 length;
-  UInt64 reserved4;
-  UInt64 reserved5;
-  UInt64 reserved6;
-} AppleACPIRange;
 
 inline bool HyperVPCIRoot::setConfigSpace(IOPCIAddressSpace space, UInt8 offset) {
   offset &= 0xFC;

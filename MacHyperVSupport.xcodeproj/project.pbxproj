@@ -174,6 +174,7 @@
 		41F2E45B26683B2C00CE26CE /* HyperVPCIRoot.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVPCIRoot.hpp; sourceTree = "<group>"; };
 		41F9B8EE2849792200E0DCB2 /* HyperVPCIBridge.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVPCIBridge.cpp; sourceTree = "<group>"; };
 		41F9B8EF2849792200E0DCB2 /* HyperVPCIBridge.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVPCIBridge.hpp; sourceTree = "<group>"; };
+		41F9B903284BA4AB00E0DCB2 /* AppleACPIRange.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = AppleACPIRange.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -421,6 +422,7 @@
 		41F2E45926683AF900CE26CE /* PCIRoot */ = {
 			isa = PBXGroup;
 			children = (
+				41F9B903284BA4AB00E0DCB2 /* AppleACPIRange.hpp */,
 				41F2E4492666F37B00CE26CE /* HyperVPCIProvider.cpp */,
 				41F2E44A2666F37B00CE26CE /* HyperVPCIProvider.hpp */,
 				41F2E45A26683B2B00CE26CE /* HyperVPCIRoot.cpp */,
