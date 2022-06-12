@@ -105,7 +105,7 @@ IOReturn HyperVVMBusDevice::nextPacketAvailableGated(VMBusPacketType *type, UInt
   
   VMBusPacketHeader pktHeader;
   copyPacketDataFromRingBuffer(rxBuffer->readIndex, sizeof (VMBusPacketHeader), &pktHeader, sizeof (VMBusPacketHeader));
-  MSGDBG("Packet type %X, header size %X, total size %X",
+  MSGDBG("Packet type %u, header size %u, total size %u",
          pktHeader.type, pktHeader.headerLength << kVMBusPacketSizeShift, pktHeader.totalLength << kVMBusPacketSizeShift);
 
   if (type != NULL) {
@@ -138,7 +138,7 @@ IOReturn HyperVVMBusDevice::readRawPacketGated(void *header, UInt32 *headerLengt
   UInt32 packetTotalLength = pktHeader.totalLength << kVMBusPacketSizeShift;
   MSGDBG("RAW packet type %u, flags %u, trans %llu, header length %u, total length %u", pktHeader.type, pktHeader.flags,
          pktHeader.transactionId, pktHeader.headerLength << kVMBusPacketSizeShift, packetTotalLength);
-  MSGDBG("RAW old RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
+  MSGDBG("RAW old RX read index 0x%X, RX write index 0x%X", rxBuffer->readIndex, rxBuffer->writeIndex);
   
   UInt32 packetDataLength = headerLength != NULL ? packetTotalLength - *headerLength : packetTotalLength;
   if (*bufferLength < packetDataLength) {
@@ -159,7 +159,7 @@ IOReturn HyperVVMBusDevice::readRawPacketGated(void *header, UInt32 *headerLengt
   readIndexNew = copyPacketDataFromRingBuffer(readIndexNew, sizeof (readIndexShifted), &readIndexShifted, sizeof (readIndexShifted));
   
   rxBuffer->readIndex = readIndexNew;
-  MSGDBG("RAW new RX read index %X, RX write index %X", rxBuffer->readIndex, rxBuffer->writeIndex);
+  MSGDBG("RAW new RX read index 0x%X, RX new write index 0x%X", rxBuffer->readIndex, rxBuffer->writeIndex);
   return kIOReturnSuccess;
 }
 
@@ -178,7 +178,7 @@ IOReturn HyperVVMBusDevice::writeRawPacketGated(void *header, UInt32 *headerLeng
   // We cannot end up with read index == write index after the write, as that would indicate an empty buffer.
   //
   if (getAvailableTxSpace() <= pktTotalLengthAligned) {
-    HVSYSLOG("RAW packet is too large for buffer (TXR: %X, TXW: %X)", txBuffer->readIndex, txBuffer->writeIndex);
+    HVSYSLOG("RAW packet is too large for buffer (TXR: 0x%X, TXW: 0x%X)", txBuffer->readIndex, txBuffer->writeIndex);
     return kIOReturnNoResources;
   }
   
@@ -192,17 +192,17 @@ IOReturn HyperVVMBusDevice::writeRawPacketGated(void *header, UInt32 *headerLeng
   writeIndexNew = copyPacketDataToRingBuffer(writeIndexNew, buffer, *bufferLength);
   writeIndexNew = zeroPacketDataToRingBuffer(writeIndexNew, pktTotalLengthAligned - pktTotalLength);
   writeIndexNew = copyPacketDataToRingBuffer(writeIndexNew, &writeIndexShifted, sizeof (writeIndexShifted));
-  MSGDBG("RAW TX read index %X, new TX write index %X", txBuffer->readIndex, writeIndexNew);
+  MSGDBG("RAW TX read index 0x%X, new TX write index 0x%X", txBuffer->readIndex, writeIndexNew);
   
   //
   // Update write index and notify Hyper-V if needed.
   //
-  MSGDBG("RAW TX imask %X, RX imask %X, channel ID %u", txBuffer->interruptMask, rxBuffer->interruptMask, channelId);
+  MSGDBG("RAW TX imask 0x%X, RX imask 0x%X, channel ID %u", txBuffer->interruptMask, rxBuffer->interruptMask, channelId);
   txBuffer->writeIndex = writeIndexNew;
   if (txBuffer->interruptMask == 0) {
     vmbusProvider->signalVMBusChannel(channelId);
   }
-  MSGDBG("RAW TX read index %X, new TX write index %X", txBuffer->readIndex, txBuffer->writeIndex);
+  MSGDBG("RAW TX new read index 0x%X, new TX write index 0x%X", txBuffer->readIndex, txBuffer->writeIndex);
   return kIOReturnSuccess;
 }
 

@@ -96,6 +96,7 @@ public:
   bool openChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId = UINT64_MAX);
   void closeChannel();
   bool createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer);
+  UInt32 getChannelId() { return channelId; }
 
   
   //

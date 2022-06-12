@@ -9,16 +9,26 @@
 
 #include <IOKit/IOPlatformExpert.h>
 
+#include <Headers/kern_api.hpp>
+
 #define super HyperVICService
 
-#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVHeartbeat", str, ## __VA_ARGS__)
-#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVHeartbeat", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVHeartbeat", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) \
+  if (this->debugEnabled) HVDBGLOG_PRINT("HyperVHeartbeat", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 
 OSDefineMetaClassAndStructors(HyperVHeartbeat, super);
 
 bool HyperVHeartbeat::start(IOService *provider) {
-  HVDBGLOG("Initializing Hyper-V Heartbeat");
-  return super::start(provider);
+  if (!super::start(provider)) {
+    return false;
+  }
+  
+  debugEnabled = checkKernelArgument("-hvheartdbg");
+  hvDevice->setDebugMessagePrinting(checkKernelArgument("-hvheartmsgdbg"));
+  
+  HVDBGLOG("Initialized Hyper-V Heartbeat");
+  return true;
 }
 
 bool HyperVHeartbeat::processMessage() {

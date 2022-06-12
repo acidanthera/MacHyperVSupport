@@ -71,6 +71,8 @@ class HyperVVMBusController : public IOInterruptController {
   OSDeclareDefaultStructors(HyperVVMBusController);
   
 private:
+  bool debugEnabled = false;
+  
   UInt32 hvMaxLeaf;
   UInt32 hvFeatures;
   UInt32 hvPmFeatures;

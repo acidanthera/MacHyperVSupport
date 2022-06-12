@@ -11,8 +11,8 @@
 
 #define super IOPCIBridge
 
-#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVPCIRoot", str, ## __VA_ARGS__)
-#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVPCIRoot", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVPCIRoot", false, 0, str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVPCIRoot", false, 0, str, ## __VA_ARGS__)
 
 OSDefineMetaClassAndStructors(HyperVPCIRoot, super);
 

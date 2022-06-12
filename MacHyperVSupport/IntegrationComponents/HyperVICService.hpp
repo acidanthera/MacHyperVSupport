@@ -25,6 +25,7 @@ private:
   
 protected:
   HyperVVMBusDevice *hvDevice;
+  bool              debugEnabled = false;
   
   virtual bool processMessage() = 0;
   

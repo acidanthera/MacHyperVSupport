@@ -9,8 +9,9 @@
 
 #define super IOService
 
-#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVICService", str, ## __VA_ARGS__)
-#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVICService", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVICService", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) \
+  if (this->debugEnabled) HVDBGLOG_PRINT("HyperVICService", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 
 OSDefineMetaClassAndAbstractStructors(HyperVICService, super);
 

@@ -8,16 +8,25 @@
 #ifndef HyperVPCIBridge_hpp
 #define HyperVPCIBridge_hpp
 
-#include "HyperV.hpp"
 #include <IOKit/pci/IOPCIBridge.h>
 
 #define super IOService
 
-#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVPCIBridge", str, ## __VA_ARGS__)
-#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVPCIBridge", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVPCIBridge", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVPCIBridge", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 
 class HyperVPCIBridge : public IOService {
   OSDeclareDefaultStructors(HyperVPCIBridge);
+  
+private:
+  //
+  // Parent VMBus device.
+  //
+  HyperVVMBusDevice       *hvDevice;
+  IOInterruptEventSource  *interruptSource;
+  bool                    debugEnabled = false;
+  
+  void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
   
 public:
   //
