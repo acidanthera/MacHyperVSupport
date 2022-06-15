@@ -49,6 +49,8 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
   vmbusRequestsLock = IOLockAlloc();
   vmbusTransLock = IOLockAlloc();
   
+  prepareSleepThread();
+  
   return true;
 }
 
@@ -145,7 +147,8 @@ UInt64 HyperVVMBusDevice::getNextTransId() {
   UInt64 value = vmbusTransId;
   vmbusTransId++;
   if (vmbusTransId > vmbusMaxAutoTransId) {
-    vmbusTransId = 0;
+    // Some devices have issues with 0 as a transaction ID.
+    vmbusTransId = 1;
   }
   IOLockUnlock(vmbusTransLock);
   return value;
@@ -341,10 +344,16 @@ void HyperVVMBusDevice::wakeTransaction(UInt64 transactionId) {
       current->isSleeping = false;
       IOLockUnlock(current->lock);
       IOLockWakeup(current->lock, &current->isSleeping, true);
+      IOLockFree(current->lock);
       return;
     }
     previous  = current;
     current   = current->next;
   }
   IOLockUnlock(vmbusRequestsLock);
+}
+
+void HyperVVMBusDevice::doSleepThread() {
+  sleepPacketRequest(&threadZeroRequest);
+  prepareSleepThread();
 }

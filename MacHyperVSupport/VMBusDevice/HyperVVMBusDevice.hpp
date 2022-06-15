@@ -49,9 +49,11 @@ private:
   
   HyperVVMBusDeviceRequest      *vmbusRequests = NULL;
   IOLock                        *vmbusRequestsLock;
-  UInt64                        vmbusTransId = 0;
+  UInt64                        vmbusTransId = 1; // Some devices have issues with 0 as a transaction ID.
   UInt64                        vmbusMaxAutoTransId = UINT64_MAX;
   IOLock                        *vmbusTransLock;
+  
+  HyperVVMBusDeviceRequest      threadZeroRequest;
   
   bool                    debugPackets = false;
 
@@ -74,6 +76,7 @@ private:
   
   void addPacketRequest(HyperVVMBusDeviceRequest *vmbusRequest);
   void sleepPacketRequest(HyperVVMBusDeviceRequest *vmbusRequest);
+  void prepareSleepThread();
   
   inline UInt32 getAvailableTxSpace() {
     return (txBuffer->writeIndex >= txBuffer->readIndex) ?
@@ -125,6 +128,7 @@ public:
   
   bool getPendingTransaction(UInt64 transactionId, void **buffer, UInt32 *bufferLength);
   void wakeTransaction(UInt64 transactionId);
+  void doSleepThread();
   
   
 };
