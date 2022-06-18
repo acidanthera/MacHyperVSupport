@@ -49,6 +49,7 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
   vmbusRequestsLock = IOLockAlloc();
   vmbusTransLock = IOLockAlloc();
   
+  threadZeroRequest.lock = IOLockAlloc();
   prepareSleepThread();
   
   return true;
@@ -65,6 +66,7 @@ void HyperVVMBusDevice::detach(IOService *provider) {
   
   IOLockFree(vmbusRequestsLock);
   IOLockFree(vmbusTransLock);
+  IOLockFree(threadZeroRequest.lock);
   
   super::detach(provider);
 }
@@ -245,6 +247,7 @@ IOReturn HyperVVMBusDevice::writeGPADirectSinglePagePacket(void *buffer, UInt32 
     } else {
       wakeTransaction(transactionId);
     }
+    IOLockFree(req.lock);
   }
   return status;
 }
@@ -290,6 +293,7 @@ IOReturn HyperVVMBusDevice::writeGPADirectMultiPagePacket(void *buffer, UInt32 b
     } else {
       wakeTransaction(transactionId);
     }
+    IOLockFree(req.lock);
   }
   return status;
 }
@@ -344,7 +348,6 @@ void HyperVVMBusDevice::wakeTransaction(UInt64 transactionId) {
       current->isSleeping = false;
       IOLockUnlock(current->lock);
       IOLockWakeup(current->lock, &current->isSleeping, true);
-      IOLockFree(current->lock);
       return;
     }
     previous  = current;

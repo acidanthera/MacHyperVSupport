@@ -98,6 +98,7 @@ IOReturn HyperVVMBusDevice::writePacketInternal(void *buffer, UInt32 bufferLengt
     } else {
       wakeTransaction(transactionId);
     }
+    IOLockFree(req.lock);
   }
   return status;
 }
@@ -293,7 +294,6 @@ void HyperVVMBusDevice::prepareSleepThread() {
   // Used by clients for disconnected response sleeping.
   //
   threadZeroRequest.isSleeping = true;
-  threadZeroRequest.lock = IOLockAlloc();
   threadZeroRequest.transactionId = 0;
   addPacketRequest(&threadZeroRequest);
 }
