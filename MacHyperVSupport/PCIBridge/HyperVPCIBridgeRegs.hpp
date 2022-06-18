@@ -8,7 +8,11 @@
 #ifndef HyperVPCIBridgeRegs_h
 #define HyperVPCIBridgeRegs_h
 
-#define kHyperVPCIBridgeRingBufferSize (4 * PAGE_SIZE)
+#define kHyperVPCIBridgeRingBufferSize  (4 * PAGE_SIZE)
+
+// First page selects the function, second page is PCI config space of selected function.
+#define kHyperVPCIBridgeWindowSize      (2 * PAGE_SIZE)
+#define kHyperVPCIConfigPageOffset      PAGE_SIZE
 
 //
 // Protocol versions.

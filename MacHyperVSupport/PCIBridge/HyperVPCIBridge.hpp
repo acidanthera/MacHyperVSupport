@@ -13,6 +13,8 @@
 #include "HyperVVMBusDevice.hpp"
 #include "HyperVPCIBridgeRegs.hpp"
 
+#include "HyperVModuleDevice.hpp"
+
 #define super IOService
 
 #define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVPCIBridge", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
@@ -31,6 +33,12 @@ private:
   
   HyperVPCIBridgeProtocolVersion  currentPciVersion;
   
+  HyperVModuleDevice  *hvModuleDevice;
+  IORangeScalar       pciConfigSpace;
+  IOMemoryDescriptor  *pciConfigMemoryDescriptor;
+  IOMemoryMap         *pciConfigMemoryMap;
+
+  
   UInt32                        pciFunctionCount = 0;
   HyperVPCIFunctionDescription  *pciFunctions = nullptr;
   
@@ -39,6 +47,8 @@ private:
   
   bool negotiateProtocolVersion();
   bool queryBusRelations();
+  bool allocatePCIConfigWindow();
+  bool enterPCID0();
   
 public:
   //

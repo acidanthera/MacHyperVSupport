@@ -8,8 +8,6 @@
 #include "HyperVPCIBridge.hpp"
 #include <Headers/kern_api.hpp>
 
-#include "HyperVModuleDevice.hpp"
-
 OSDefineMetaClassAndStructors(HyperVPCIBridge, super);
 
 bool HyperVPCIBridge::start(IOService *provider) {
@@ -47,55 +45,16 @@ bool HyperVPCIBridge::start(IOService *provider) {
   }
   
   // Negoiate protocol version and send request for functions.
-  if (!negotiateProtocolVersion() || !queryBusRelations()) {
+  if (!negotiateProtocolVersion() || !allocatePCIConfigWindow() || !queryBusRelations() || !enterPCID0()) {
     hvDevice->closeChannel();
     super::stop(provider);
     return false;
   }
   
-  OSDictionary *pciMatching = IOService::serviceMatching("HyperVModuleDevice");
-  if (pciMatching == NULL) {
-    HVSYSLOG("Failed to create HyperVModuleDevice matching dictionary");
-    return false;
-  }
-  
-  HVDBGLOG("Waiting for HyperVModuleDevice");
-  IOService *pciService = waitForMatchingService(pciMatching);
-  pciMatching->release();
-  if (pciService == NULL) {
-    HVSYSLOG("Failed to locate HyperVModuleDevice");
-    super::stop(provider);
-    return false;
-  }
-  HVDBGLOG("got for HyperVModuleDevice");
-
-  
-  HyperVModuleDevice *hvModuleDevice = OSDynamicCast(HyperVModuleDevice, pciService);
-  
-  IORangeScalar pciConfigSpace;
-  hvModuleDevice->rangeAllocator->allocate(0x2000, &pciConfigSpace, 0x1000);
-  
-  HyperVPCIBridgeMessagePCIBusD0Entry pktD0;
-  pktD0.header.type =kHyperVPCIBridgeMessageTypeBusD0Entry;
-  pktD0.reserved = 0;
-  pktD0.mmioBase = pciConfigSpace;
-  
-  UInt32 pciStatus = 0x1234567;
-  hvDevice->writeInbandPacket(&pktD0, sizeof (pktD0), true, &pciStatus, sizeof (pciStatus));
-  
-  HVDBGLOG("PCI status 0x%X", pciStatus);
-  HVDBGLOG("using config space @ 0x%llX", pciConfigSpace);
-  
-  IOMemoryDescriptor *desc = IOMemoryDescriptor::withPhysicalAddress(pciConfigSpace, 0x2000, kIOMemoryDirectionInOut);
-  IOMemoryMap *map = desc->map();
-  
-  UInt16 *bytes = (UInt16*)(map->getAddress() + 0x1000);
-  UInt32 *bytes32 = (UInt32*)(map->getAddress() + 0x1000);
+  UInt16 *bytes = (UInt16*)(pciConfigMemoryMap->getAddress() + 0x1000);
+  UInt32 *bytes32 = (UInt32*)(pciConfigMemoryMap->getAddress() + 0x1000);
   
   HVDBGLOG("PCI device ID %X:%X, class code %X", bytes[0], bytes[1], bytes32[2]);
-  
-  
-  pciService->release();
   
   return true;
 }

@@ -152,3 +152,54 @@ bool HyperVPCIBridge::queryBusRelations() {
   hvDevice->doSleepThread();
   return pciFunctionCount != 0;
 }
+
+bool HyperVPCIBridge::allocatePCIConfigWindow() {
+  // Get HyperVModuleDevice instance used for allocating MMIO regions for Hyper-V.
+  OSDictionary *vmodMatching = IOService::serviceMatching("HyperVModuleDevice");
+  if (vmodMatching == NULL) {
+    HVSYSLOG("Failed to create HyperVModuleDevice matching dictionary");
+    return false;
+  }
+  
+  HVDBGLOG("Waiting for HyperVModuleDevice");
+  IOService *vmodService = waitForMatchingService(vmodMatching);
+  vmodMatching->release();
+  if (vmodService == NULL) {
+    HVSYSLOG("Failed to locate HyperVModuleDevice");
+    return false;
+  }
+  HVDBGLOG("Got instance of HyperVModuleDevice");
+  hvModuleDevice = OSDynamicCast(HyperVModuleDevice, vmodService);
+  hvModuleDevice->retain();
+  
+  // Allocate PCI config window.
+  if (!hvModuleDevice->rangeAllocator->allocate(kHyperVPCIBridgeWindowSize, &pciConfigSpace, PAGE_SIZE)) {
+    return false;
+  }
+  pciConfigMemoryDescriptor = IOMemoryDescriptor::withPhysicalAddress(pciConfigSpace, kHyperVPCIBridgeWindowSize, kIOMemoryDirectionInOut);
+  pciConfigMemoryMap = pciConfigMemoryDescriptor->map();
+  HVDBGLOG("PCI config window located @ phys 0x%llX", pciConfigSpace);
+  
+  return true;
+}
+
+bool HyperVPCIBridge::enterPCID0() {
+  // Instruct Hyper-V to enable the PCI bridge using the allocated PCI config window.
+  HyperVPCIBridgeMessagePCIBusD0Entry pktD0;
+  pktD0.header.type = kHyperVPCIBridgeMessageTypeBusD0Entry;
+  pktD0.reserved    = 0;
+  pktD0.mmioBase    = pciConfigSpace;
+  
+  UInt32 pciStatus;
+  if (hvDevice->writeInbandPacket(&pktD0, sizeof (pktD0), true, &pciStatus, sizeof (pciStatus)) != kIOReturnSuccess) {
+    return false;
+  }
+  
+  if (pciStatus != 0) {
+    HVSYSLOG("Enter D0 returned error status 0x%X", pciStatus);
+    return false;
+  }
+  
+  HVDBGLOG("PCI bridge has entered D0 state using config space @ phys 0x%X", pciConfigSpace);
+  return true;
+}
