@@ -12,6 +12,8 @@
 
 #define kHyperVMouseInitTimeout     10000
 
+#define kHyperVMouseProtocolRequestTransactionID 0xCAFECAFE
+
 //
 // Current mouse protocol is 2.0.
 //

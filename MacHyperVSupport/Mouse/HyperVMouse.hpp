@@ -36,12 +36,11 @@ private:
   HyperVMouseDeviceInfo   mouseInfo;
   void                    *hidDescriptor;
   size_t                  hidDescriptorLength;
-  bool                    hidDescriptorValid;
 
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
 
   bool setupMouse();
-  void handleProtocolResponse(HyperVMouseMessageProtocolResponse *response, UInt64 transactionId);
+  void handleProtocolResponse(HyperVMouseMessageProtocolResponse *response);
   void handleDeviceInfo(HyperVMouseMessageInitialDeviceInfo *deviceInfo);
   void handleInputReport(HyperVMouseMessageInputReport *inputReport);
 

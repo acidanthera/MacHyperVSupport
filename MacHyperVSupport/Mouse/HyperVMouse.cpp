@@ -54,23 +54,9 @@ bool HyperVMouse::handleStart(IOService *provider) {
     HVSYSLOG("Failed to set up device");
     return false;
   }
-
-  for (int i = 0; i < kHyperVMouseInitTimeout; i++) {
-    if (hidDescriptorValid) {
-      HVDBGLOG("Device info packet is now valid");
-      break;
-    }
-
-    IODelay(10);
-  }
-
-  if (hidDescriptorValid) {
-    HVSYSLOG("Initialized Hyper-V Synthetic Mouse");
-  } else {
-    HVSYSLOG("Timed out getting device info");
-  }
-
-  return hidDescriptorValid;
+  
+  HVSYSLOG("Initialized Hyper-V Synthetic Mouse");
+  return true;
 }
 
 void HyperVMouse::handleStop(IOService *provider) {
