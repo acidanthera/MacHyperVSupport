@@ -10,6 +10,9 @@
 
 #include <IOKit/pci/IOPCIBridge.h>
 
+#include "HyperVVMBusDevice.hpp"
+#include "HyperVPCIBridgeRegs.hpp"
+
 #define super IOService
 
 #define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVPCIBridge", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
@@ -26,7 +29,16 @@ private:
   IOInterruptEventSource  *interruptSource;
   bool                    debugEnabled = false;
   
+  HyperVPCIBridgeProtocolVersion  currentPciVersion;
+  
+  UInt32                        pciFunctionCount = 0;
+  HyperVPCIFunctionDescription  *pciFunctions = nullptr;
+  
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
+  void handleIncomingPCIMessage(HyperVPCIBridgeIncomingMessageHeader *pciMsgHeader, UInt32 msgSize);
+  
+  bool negotiateProtocolVersion();
+  bool queryBusRelations();
   
 public:
   //
