@@ -66,6 +66,7 @@ void HyperVPCIBridge::handleInterrupt(OSObject *owner, IOInterruptEventSource *s
 
 void HyperVPCIBridge::handleIncomingPCIMessage(HyperVPCIBridgeIncomingMessageHeader *pciMsgHeader, UInt32 msgSize) {
   HyperVPCIBridgeIncomingMessageBusRelations *busRelations;
+  HVDBGLOG("Incoming PCI message type 0x%X", pciMsgHeader->type);
   
   switch (pciMsgHeader->type) {
     //
@@ -202,4 +203,76 @@ bool HyperVPCIBridge::enterPCID0() {
   
   HVDBGLOG("PCI bridge has entered D0 state using config space @ phys 0x%X", pciConfigSpace);
   return true;
+}
+
+UInt32 HyperVPCIBridge::readPCIConfig(UInt32 offset, UInt8 size) {
+  UInt32 result;
+  
+  HVDBGLOG("Reading size %u from offset 0x%X", size, offset);
+  
+  // Simulate special registers.
+  if (offset + size <= kIOPCIConfigCommand) {
+    memcpy(&result, ((UInt8*)&pciFunctions[0].vendorId) + offset, size);
+  } else if (offset >= kIOPCIConfigRevisionID && offset + size <= kIOPCIConfigCacheLineSize) {
+    memcpy(&result, ((UInt8*)&pciFunctions[0].revision) + offset - kIOPCIConfigRevisionID, size);
+  } else if (offset >= kIOPCIConfigSubSystemVendorID && offset + size <= kIOPCIConfigExpansionROMBase) {
+    memcpy(&result, ((UInt8*)&pciFunctions[0].subVendorId) + offset - kIOPCIConfigSubSystemVendorID, size);
+  } else if (offset >= kIOPCIConfigExpansionROMBase && offset + size <= kIOPCIConfigCapabilitiesPtr) {
+    // Not implemented.
+    result = 0;
+  } else if (offset >= kIOPCIConfigInterruptLine && offset + size <= kIOPCIConfigInterruptPin) {
+    // Not supported.
+    result = 0;
+  } else if (offset + size <= PAGE_SIZE) {
+    volatile UInt8 *pciAddress = (UInt8*)pciConfigMemoryMap->getAddress() + kHyperVPCIConfigPageOffset + offset;
+    
+    IOInterruptState ints = IOSimpleLockLockDisableInterrupt(pciLock);
+    switch (size) {
+      case sizeof (UInt8):
+        result = *pciAddress;
+        break;
+        
+      case sizeof (UInt16):
+        result = OSReadLittleInt16(pciAddress, 0);
+        break;
+        
+      default:
+        result = OSReadLittleInt32(pciAddress, 0);
+        break;
+    }
+    IOSimpleLockUnlockEnableInterrupt(pciLock, ints);
+  } else {
+    HVDBGLOG("Attempted to read beyond PCI config space");
+    result = 0xFFFFFFFF;
+  }
+  
+  return result;
+}
+
+void HyperVPCIBridge::writePCIConfig(UInt32 offset, UInt8 size, UInt32 value) {
+  if (offset >= kIOPCIConfigSubSystemVendorID && offset + size <= kIOPCIConfigCapabilitiesPtr) {
+    // Read-only sections.
+    HVDBGLOG("Attempted to write value 0x%X to read-only offset 0x%X", value, offset);
+  } else if (offset >= kIOPCIConfigCommand && offset + size <= PAGE_SIZE) {
+    HVDBGLOG("Writing value 0x%X of size %u to offset 0x%X", value, size, offset);
+    volatile UInt8 *pciAddress = (UInt8*)pciConfigMemoryMap->getAddress() + kHyperVPCIConfigPageOffset + offset;
+    
+    IOInterruptState ints = IOSimpleLockLockDisableInterrupt(pciLock);
+    switch (size) {
+      case sizeof (UInt8):
+        *pciAddress = (UInt8)value;
+        break;
+        
+      case sizeof (UInt16):
+        OSWriteLittleInt16(pciAddress, 0, (UInt16)value);
+        break;
+        
+      default:
+        OSWriteLittleInt32(pciAddress, 0, value);
+        break;
+    }
+    IOSimpleLockUnlockEnableInterrupt(pciLock, ints);
+  } else {
+    HVDBGLOG("Attempted to write value 0x%X to out-of-bounds offset 0x%X", value, offset);
+  }
 }

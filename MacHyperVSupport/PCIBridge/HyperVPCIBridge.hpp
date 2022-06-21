@@ -15,12 +15,12 @@
 
 #include "HyperVModuleDevice.hpp"
 
-#define super IOService
+#define super IOPCIBridge
 
 #define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVPCIBridge", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 #define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVPCIBridge", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 
-class HyperVPCIBridge : public IOService {
+class HyperVPCIBridge : public IOPCIBridge {
   OSDeclareDefaultStructors(HyperVPCIBridge);
   
 private:
@@ -30,6 +30,7 @@ private:
   HyperVVMBusDevice       *hvDevice;
   IOInterruptEventSource  *interruptSource;
   bool                    debugEnabled = false;
+  IOSimpleLock      *pciLock;
   
   HyperVPCIBridgeProtocolVersion  currentPciVersion;
   
@@ -50,11 +51,42 @@ private:
   bool allocatePCIConfigWindow();
   bool enterPCID0();
   
+  UInt32 readPCIConfig(UInt32 offset, UInt8 size);
+  void writePCIConfig(UInt32 offset, UInt8 size, UInt32 value);
+  
 public:
   //
   // IOService overrides.
   //
   virtual bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
+  
+  //
+  // IOPCIBridge overrides.
+  //
+  virtual bool configure(IOService *provider) APPLE_KEXT_OVERRIDE;
+  IODeviceMemory *ioDeviceMemory() APPLE_KEXT_OVERRIDE { HVDBGLOG("start"); return NULL; }
+  UInt32 configRead32(IOPCIAddressSpace space, UInt8 offset) APPLE_KEXT_OVERRIDE;
+  void configWrite32(IOPCIAddressSpace space, UInt8 offset, UInt32 data) APPLE_KEXT_OVERRIDE;
+  UInt16 configRead16(IOPCIAddressSpace space, UInt8 offset) APPLE_KEXT_OVERRIDE;
+  void configWrite16(IOPCIAddressSpace space, UInt8 offset, UInt16 data) APPLE_KEXT_OVERRIDE;
+  UInt8 configRead8(IOPCIAddressSpace space, UInt8 offset) APPLE_KEXT_OVERRIDE;
+  void configWrite8(IOPCIAddressSpace space, UInt8 offset, UInt8 data) APPLE_KEXT_OVERRIDE;
+
+  IOPCIAddressSpace getBridgeSpace() APPLE_KEXT_OVERRIDE {
+    HVDBGLOG("start");
+    IOPCIAddressSpace space = { 0 };
+    return space;
+  }
+
+  UInt8 firstBusNum() APPLE_KEXT_OVERRIDE {
+    HVDBGLOG("start");
+    return 0xAA;
+  }
+  
+  UInt8 lastBusNum() APPLE_KEXT_OVERRIDE {
+    HVDBGLOG("start");
+    return 0xAA;
+  }
 };
 
 #endif
