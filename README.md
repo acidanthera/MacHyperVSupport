@@ -23,6 +23,7 @@ Hyper-V integration services for macOS. Requires a Generation 2 virtual machine 
 - On older versions of macOS, IOSCSIParallelFamily (`com.apple.iokit.IOSCSIParallelFamily`) may need to be Force injected. Refer to the OpenCore Configuration manual for details.
 - Booter quirks
   - `AllowRelocationBlock` - required for macOS 10.7 and older
+  - `AvoidRuntimeDefrag` - required
   - `ForceExitBootServices` - required for macOS 10.7 and older
   - `RebuildAppleMemoryMap` - required for macOS 10.6 and older
 - Kernel quirks
