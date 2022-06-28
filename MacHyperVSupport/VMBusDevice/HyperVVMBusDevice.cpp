@@ -20,15 +20,17 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
   channelIsOpen = false;
   
   //
-  // Get channel number.
+  // Get channel number and instance GUID.
   //
   OSNumber *channelNumber = OSDynamicCast(OSNumber, getProperty(kHyperVVMBusDeviceChannelIDKey));
+  OSData *instanceBytes   = OSDynamicCast(OSData, getProperty(kHyperVVMBusDeviceChannelInstanceKey));
   vmbusProvider = OSDynamicCast(HyperVVMBusController, getProvider());
-  if (channelNumber == NULL || vmbusProvider == NULL) {
+  if (channelNumber == NULL || instanceBytes == NULL || vmbusProvider == NULL) {
     return false;
   }
   channelId = channelNumber->unsigned32BitValue();
   HVDBGLOG("Attaching nub for channel %u", channelId);
+  memcpy(instanceId, instanceBytes->getBytesNoCopy(), instanceBytes->getLength());
   
   //
   // Set location to ensure unique names in I/O Registry.

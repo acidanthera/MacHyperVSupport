@@ -36,6 +36,7 @@ class HyperVVMBusDevice : public IOService {
 private:
   HyperVVMBusController   *vmbusProvider;
   UInt32                  channelId;
+  uuid_t                  instanceId;
   bool                    channelIsOpen;
   
   IOWorkLoop              *workLoop;
@@ -100,7 +101,7 @@ public:
   void closeChannel();
   bool createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer);
   UInt32 getChannelId() { return channelId; }
-
+  uuid_t* getInstanceId() { return &instanceId; }
   
   //
   // Messages.

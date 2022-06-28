@@ -46,6 +46,7 @@ typedef enum {
 typedef struct {
   VMBusChannelStatus              status;
   uuid_string_t                   typeGuidString;
+  uuid_t                          instanceId;
   VMBusChannelMessageChannelOffer offerMessage;
   
   //
