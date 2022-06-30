@@ -38,10 +38,16 @@ private:
   IORangeScalar       pciConfigSpace;
   IOMemoryDescriptor  *pciConfigMemoryDescriptor;
   IOMemoryMap         *pciConfigMemoryMap;
+  UInt32              msiCap;
+  bool                isMsiX = false;
+  bool                interruptConfigured = false;
 
   
   UInt32                        pciFunctionCount = 0;
   HyperVPCIFunctionDescription  *pciFunctions = nullptr;
+  
+  UInt64              bars[kHyperVPCIBarCount];
+  UInt64              barSizes[kHyperVPCIBarCount];
   
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
   void handleIncomingPCIMessage(HyperVPCIBridgeIncomingMessageHeader *pciMsgHeader, UInt32 msgSize);
@@ -50,6 +56,12 @@ private:
   bool queryBusRelations();
   bool allocatePCIConfigWindow();
   bool enterPCID0();
+  bool queryResourceRequirements();
+  bool sendResourcesAllocated(UInt32 slot);
+  
+  inline UInt64 getBarSize(UInt64 barValue) {
+    return roundup((1 + ~(barValue & kHyperVPCIBarMemoryMask)), PAGE_SIZE);
+  }
   
   UInt32 readPCIConfig(UInt32 offset, UInt8 size);
   void writePCIConfig(UInt32 offset, UInt8 size, UInt32 value);
@@ -87,6 +99,8 @@ public:
     HVDBGLOG("start");
     return 0xAA;
   }
+  
+  virtual bool publishNub(IOPCIDevice *nub, UInt32 index) APPLE_KEXT_OVERRIDE;
 };
 
 #endif

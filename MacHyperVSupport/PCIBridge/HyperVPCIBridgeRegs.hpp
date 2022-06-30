@@ -14,6 +14,11 @@
 #define kHyperVPCIBridgeWindowSize      (2 * PAGE_SIZE)
 #define kHyperVPCIConfigPageOffset      PAGE_SIZE
 
+#define kHyperVPCIBarCount              6
+#define kHyperVPCIBarSpaceIO            0x1
+#define kHyperVPCIBarMemoryType64Bit    0x4
+#define kHyperVPCIBarMemoryMask         ~(0x0FUL)
+
 //
 // Protocol versions.
 //
@@ -95,6 +100,12 @@ typedef struct __attribute__((packed)) {
   HyperVPCIBridgeMessageType type;
 } HyperVPCIBridgeMessageHeader;
 
+// Message to specific slot (child device).
+typedef struct __attribute__((packed)) {
+  HyperVPCIBridgeMessageHeader  header;
+  HyperVPCISlotEncoding         slot;
+} HyperVPCIBridgeChildMessage;
+
 // Protocol version request.
 typedef struct __attribute__((packed)) {
   HyperVPCIBridgeMessageHeader    header;
@@ -108,6 +119,26 @@ typedef struct __attribute__((packed)) {
   UInt64                        mmioBase;
 } HyperVPCIBridgeMessagePCIBusD0Entry;
 
+// Resources assigned v1.
+typedef struct __attribute__((packed)) {
+  HyperVPCIBridgeMessageHeader  header;
+  HyperVPCISlotEncoding         slot;
+  UInt8                         memoryRange[0x14][6];
+  UInt32                        msiDescriptors;
+  UInt32                        reserved[4];
+} HyperVPCIBridgeMessageResourcesAssigned;
+
+// Create interrupt
+typedef struct __attribute__((packed))  {
+  HyperVPCIBridgeMessageHeader  header;
+  HyperVPCISlotEncoding         slot;
+  UInt8 vector;
+  UInt8 deliveryMode;
+  UInt16 vectorCount;
+  UInt32  reserved;
+  UInt64  cpuMask;
+} HyperVPCIBridgeMessageCreateInterrupt;
+
 //
 // Incoming messages.
 //
@@ -117,11 +148,28 @@ typedef struct __attribute__((packed)) {
   HyperVPCIBridgeMessageType  type;
 } HyperVPCIBridgeIncomingMessageHeader;
 
-// Bus relations v1.
+// Bus relations v1 (inband response).
 typedef struct __attribute__((packed)) {
   HyperVPCIBridgeIncomingMessageHeader  header;
   UInt32                                functionCount;
   HyperVPCIFunctionDescription          functions[];
 } HyperVPCIBridgeIncomingMessageBusRelations;
+
+// Resource request response (completion response).
+typedef struct __attribute__((packed)) {
+  SInt32              status;
+  UInt32              probedBARs[kHyperVPCIBarCount];
+} HyperVPCIBridgeQueryResourceRequirementsResponse;
+
+// Create interrupt
+typedef struct __attribute__((packed))  {
+  SInt32              status;
+  UInt32  reserved2;
+  UInt16  reserved;
+  UInt16 vectorCount;
+  
+  UInt32  data;
+  UInt64  address;
+} HyperVPCIBridgeMessageCreateInterruptResponse;
 
 #endif

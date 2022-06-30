@@ -174,9 +174,7 @@ bool HyperVPCIBridge::allocatePCIConfigWindow() {
   hvModuleDevice->retain();
   
   // Allocate PCI config window.
-  if (!hvModuleDevice->rangeAllocator->allocate(kHyperVPCIBridgeWindowSize, &pciConfigSpace, PAGE_SIZE)) {
-    return false;
-  }
+  pciConfigSpace = hvModuleDevice->allocateRange(kHyperVPCIBridgeWindowSize, PAGE_SIZE, true);
   pciConfigMemoryDescriptor = IOMemoryDescriptor::withPhysicalAddress(pciConfigSpace, kHyperVPCIBridgeWindowSize, kIOMemoryDirectionInOut);
   pciConfigMemoryMap = pciConfigMemoryDescriptor->map();
   HVDBGLOG("PCI config window located @ phys 0x%llX", pciConfigSpace);
@@ -204,6 +202,86 @@ bool HyperVPCIBridge::enterPCID0() {
   HVDBGLOG("PCI bridge has entered D0 state using config space @ phys 0x%X", pciConfigSpace);
   return true;
 }
+
+bool HyperVPCIBridge::queryResourceRequirements() {
+  HyperVPCIBridgeChildMessage pktChild;
+  pktChild.header.type = kHyperVPCIBridgeMessageTypeQueryResourceRequirements;
+  pktChild.slot.slot = 0; // TODO: Variable slots
+  
+  HyperVPCIBridgeQueryResourceRequirementsResponse pktReqResponse;
+  
+  if (hvDevice->writeInbandPacket(&pktChild, sizeof (pktChild), true, &pktReqResponse, sizeof (pktReqResponse)) != kIOReturnSuccess) {
+    return false;
+  }
+  
+  memset(bars, 0, sizeof (bars));
+  memset(barSizes, 0, sizeof (barSizes));
+  
+  HVDBGLOG("Got resource request status %u", pktReqResponse.status);
+  HVDBGLOG("BAR requirements:");
+  for (int i = 0; i < kHyperVPCIBarCount; i++) {
+    if (pktReqResponse.probedBARs[i] != 0) {
+      UInt64 barVal = pktReqResponse.probedBARs[i];
+      
+      // Is this BAR 64-bit?
+      // If so the next BAR is the high 32 bits, and this one is the low 32 bits.
+      bool isBar64Bit = barVal & kHyperVPCIBarMemoryType64Bit;
+      if (isBar64Bit) {
+        barVal |= ((UInt64)pktReqResponse.probedBARs[i+1] << 32);
+      } else {
+        barVal |= 0xFFFFFFFF00000000;
+      }
+      HVDBGLOG("  BAR%u: 0x%llX", i, barVal);
+      
+      // Determine BAR size and allocate it.
+      barSizes[i] = getBarSize(barVal);
+      HVDBGLOG("%u-bit BAR requires 0x%llX bytes", isBar64Bit ? 64 : 32, barSizes[i]);
+      bars[i] = hvModuleDevice->allocateRange(barSizes[i], PAGE_SIZE, false);
+      
+      // Write BAR to device.
+      writePCIConfig(kIOPCIConfigBaseAddress0 + i, sizeof (UInt32), (UInt32)bars[i]);
+      if (isBar64Bit) {
+        writePCIConfig(kIOPCIConfigBaseAddress0 + i + 1, sizeof (UInt32), (UInt32)(bars[i] >> 32));
+      }
+      
+      HVDBGLOG("Wrote BAR @ phys 0x%llX", bars[i]);
+      HVDBGLOG("BAR%u is now 0x%X", i, readPCIConfig(kIOPCIConfigBaseAddress0 + i, sizeof (UInt32)));
+      if (isBar64Bit) {
+        HVDBGLOG("BAR%u is now 0x%X (high 32 bits)", i + 1, readPCIConfig(kIOPCIConfigBaseAddress0 + i + 1, sizeof (UInt32)));
+      }
+      
+      HVDBGLOG("Old command reg %X", readPCIConfig(kIOPCIConfigCommand, sizeof (UInt16)));
+      writePCIConfig(kIOPCIConfigCommand, 2, readPCIConfig(kIOPCIConfigCommand, sizeof (UInt16)) | kIOPCICommandMemorySpace);
+      HVDBGLOG("New command reg %X", readPCIConfig(kIOPCIConfigCommand, sizeof (UInt16)));
+      
+      // 64-bit BARs take two 32-bit BAR slots, so skip over the next one.
+      if (isBar64Bit) {
+        i++;
+      }
+    }
+  }
+  
+  return true;
+}
+
+bool HyperVPCIBridge::sendResourcesAllocated(UInt32 slot) {
+  HyperVPCIBridgeMessageResourcesAssigned pktRes;
+  memset(&pktRes, 0, sizeof (pktRes));
+  pktRes.header.type = kHyperVPCIBridgeMessageTypeResourcesAssigned;
+  pktRes.slot.slot = 0; // TODO: Variable slots
+  
+  SInt32  pciStatus;
+  
+  if (hvDevice->writeInbandPacket(&pktRes, sizeof (pktRes), true, &pciStatus, sizeof (pciStatus)) != kIOReturnSuccess) {
+    return false;
+  }
+  
+  HVDBGLOG("PCI status %X", pciStatus);
+  
+  return true;
+}
+
+
 
 UInt32 HyperVPCIBridge::readPCIConfig(UInt32 offset, UInt8 size) {
   UInt32 result;
@@ -246,6 +324,7 @@ UInt32 HyperVPCIBridge::readPCIConfig(UInt32 offset, UInt8 size) {
     result = 0xFFFFFFFF;
   }
   
+  HVDBGLOG("Result = 0x%X", result);
   return result;
 }
 
