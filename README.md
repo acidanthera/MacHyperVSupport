@@ -28,6 +28,8 @@ Hyper-V integration services for macOS. Requires a Generation 2 virtual machine 
   - `RebuildAppleMemoryMap` - required for macOS 10.6 and older
 - Kernel quirks
   - `ProvideCurrentCpuInfo` - required for proper TSC/FSB values and CPU topology values.
+- UEFI quirks
+  - `DisableSecurityPolicy` - required on Windows 10 and newer
 - [Lilu](https://github.com/acidanthera/Lilu) is required for patching and library functions
 - Installer images can either be passed in from USB hard disks, or converted from a DMG to a VHDX image using `qemu-img`:
   - DMGs need to be in a read/write format first.
