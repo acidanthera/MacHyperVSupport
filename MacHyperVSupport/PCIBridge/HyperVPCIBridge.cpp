@@ -158,7 +158,7 @@ void HyperVPCIBridge::configWrite16(IOPCIAddressSpace space, UInt8 offset, UInt1
       
       writePCIConfig(msiCap + 0x4, 4, pciStatus.address);
       writePCIConfig(msiCap + 0xC, 2, pciStatus.data);
-      writePCIConfig(msiCap + 0xC, 2, pciStatus.data | 0x1);
+      writePCIConfig(msiCap + 0x2, 2, msiControl | 0x1);
       interruptConfigured = true;
     }
   } else {

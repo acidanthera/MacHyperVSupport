@@ -231,23 +231,23 @@ bool HyperVPCIBridge::queryResourceRequirements() {
       } else {
         barVal |= 0xFFFFFFFF00000000;
       }
-      HVDBGLOG("  BAR%u: 0x%llX", i, barVal);
+      HVDBGLOG("BAR%u: 0x%llX", i, barVal);
       
       // Determine BAR size and allocate it.
       barSizes[i] = getBarSize(barVal);
       HVDBGLOG("%u-bit BAR requires 0x%llX bytes", isBar64Bit ? 64 : 32, barSizes[i]);
-      bars[i] = hvModuleDevice->allocateRange(barSizes[i], PAGE_SIZE, false);
+      bars[i] = hvModuleDevice->allocateRange(barSizes[i], barSizes[i], isBar64Bit);
       
       // Write BAR to device.
-      writePCIConfig(kIOPCIConfigBaseAddress0 + i, sizeof (UInt32), (UInt32)bars[i]);
+      writePCIConfig(kIOPCIConfigBaseAddress0 + (i * sizeof (UInt32)), sizeof (UInt32), (UInt32)bars[i]);
       if (isBar64Bit) {
-        writePCIConfig(kIOPCIConfigBaseAddress0 + i + 1, sizeof (UInt32), (UInt32)(bars[i] >> 32));
+        writePCIConfig(kIOPCIConfigBaseAddress0 + ((i + 1) * sizeof (UInt32)), sizeof (UInt32), (UInt32)(bars[i] >> 32));
       }
       
       HVDBGLOG("Wrote BAR @ phys 0x%llX", bars[i]);
-      HVDBGLOG("BAR%u is now 0x%X", i, readPCIConfig(kIOPCIConfigBaseAddress0 + i, sizeof (UInt32)));
+      HVDBGLOG("BAR%u is now 0x%X", i, readPCIConfig(kIOPCIConfigBaseAddress0 + (i * sizeof (UInt32)), sizeof (UInt32)));
       if (isBar64Bit) {
-        HVDBGLOG("BAR%u is now 0x%X (high 32 bits)", i + 1, readPCIConfig(kIOPCIConfigBaseAddress0 + i + 1, sizeof (UInt32)));
+        HVDBGLOG("BAR%u is now 0x%X (high 32 bits)", i + 1, readPCIConfig(kIOPCIConfigBaseAddress0 + ((i + 1) * sizeof (UInt32)), sizeof (UInt32)));
       }
       
       HVDBGLOG("Old command reg %X", readPCIConfig(kIOPCIConfigCommand, sizeof (UInt16)));
