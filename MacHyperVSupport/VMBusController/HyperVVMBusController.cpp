@@ -169,6 +169,7 @@ bool HyperVVMBusController::start(IOService *provider) {
   if (!super::start(provider)) {
     return false;
   }
+  debugEnabled = checkKernelArgument("-hvvmbusdbg");
   
   //
   // Verify we are on Hyper-V.

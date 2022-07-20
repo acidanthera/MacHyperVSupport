@@ -281,6 +281,7 @@ bool HyperVVMBusController::addVMBusDevice(VMBusChannelMessageChannelOffer *offe
   //
   memcpy(&vmbusChannels[channelId].offerMessage, offerMessage, sizeof (VMBusChannelMessageChannelOffer));
   guid_unparse(offerMessage->type, vmbusChannels[channelId].typeGuidString);
+  memcpy(vmbusChannels[channelId].instanceId, offerMessage->instance, sizeof (offerMessage->instance));
   vmbusChannels[channelId].status = kVMBusChannelStatusClosed;
   
   if (!registerVMBusDevice(&vmbusChannels[channelId])) {
@@ -333,9 +334,11 @@ bool HyperVVMBusController::registerVMBusDevice(VMBusChannel *channel) {
   // Create property objects for channel information.
   //
   OSString *devType     = OSString::withCString(channel->typeGuidString);
+  OSData   *devInstance = OSData::withBytes(channel->instanceId, sizeof (channel->instanceId));
   OSNumber *channelNumber = OSNumber::withNumber(channel->offerMessage.channelId, 32);
-  if (devType == NULL || channelNumber == NULL) {
+  if (devType == NULL || devInstance == NULL || channelNumber == NULL) {
     OSSafeReleaseNULL(devType);
+    OSSafeReleaseNULL(devInstance);
     OSSafeReleaseNULL(channelNumber);
     childDevice->release();
     return false;
@@ -351,6 +354,7 @@ bool HyperVVMBusController::registerVMBusDevice(VMBusChannel *channel) {
     OSSafeReleaseNULL(interruptControllers);
     OSSafeReleaseNULL(interruptSpecifiers);
     devType->release();
+    devInstance->release();
     channelNumber->release();
     childDevice->release();
     return false;
@@ -367,6 +371,7 @@ bool HyperVVMBusController::registerVMBusDevice(VMBusChannel *channel) {
   OSDictionary *dict = OSDictionary::withCapacity(5);
   if (dict == NULL) {
     devType->release();
+    devInstance->release();
     channelNumber->release();
     interruptControllers->release();
     interruptSpecifiers->release();
@@ -375,11 +380,13 @@ bool HyperVVMBusController::registerVMBusDevice(VMBusChannel *channel) {
   }
   
   bool result = dict->setObject(kHyperVVMBusDeviceChannelTypeKey, devType) &&
+                dict->setObject(kHyperVVMBusDeviceChannelInstanceKey, devInstance) &&
                 dict->setObject(kHyperVVMBusDeviceChannelIDKey, channelNumber) &&
                 dict->setObject(gIOInterruptControllersKey, interruptControllers) &&
                 dict->setObject(gIOInterruptSpecifiersKey, interruptSpecifiers);
   
   devType->release();
+  devInstance->release();
   channelNumber->release();
   interruptControllers->release();
   interruptSpecifiers->release();

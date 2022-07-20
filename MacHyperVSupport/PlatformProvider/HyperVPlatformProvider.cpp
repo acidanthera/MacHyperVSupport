@@ -14,8 +14,8 @@
 
 #include <IOKit/IOPlatformExpert.h>
 
-#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVPlatformProvider", str, ## __VA_ARGS__)
-#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVPlatformProvider", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVPlatformProvider", false, 0, str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVPlatformProvider", false, 0, str, ## __VA_ARGS__)
 
 #define RB_HALT    0x08
 

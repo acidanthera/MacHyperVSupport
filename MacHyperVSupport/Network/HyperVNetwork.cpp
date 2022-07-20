@@ -15,8 +15,6 @@ bool HyperVNetwork::start(IOService *provider) {
     return false;
   }
   
-  HVDBGLOG("Initializing Hyper-V Synthetic Networking");
-  
   //
   // Get parent VMBus device object.
   //
@@ -29,6 +27,7 @@ bool HyperVNetwork::start(IOService *provider) {
   
   debugEnabled = checkKernelArgument("-hvnetdbg");
   hvDevice->setDebugMessagePrinting(checkKernelArgument("-hvnetmsgdbg"));
+  HVDBGLOG("Initializing Hyper-V Synthetic Networking");
   
   //
   // Configure interrupt.

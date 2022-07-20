@@ -27,7 +27,7 @@
 //
 // Debug logging function.
 //
-inline void logPrint(const char *className, const char *funcName, const char *format, ...) {
+inline void logPrint(const char *className, const char *funcName, bool hasChannelId, UInt32 channelId, const char *format, ...) {
   char tmp[256];
   tmp[0] = '\0';
   va_list va;
@@ -35,17 +35,21 @@ inline void logPrint(const char *className, const char *funcName, const char *fo
   vsnprintf(tmp, sizeof (tmp), format, va);
   va_end(va);
   
-  IOLog("%s::%s(): %s\n", className, funcName, tmp);
+  if (hasChannelId) {
+    IOLog("%s(%u)::%s(): %s\n", className, channelId, funcName, tmp);
+  } else {
+    IOLog("%s::%s(): %s\n", className, funcName, tmp);
+  }
 }
 
-#define HVDBGLOG_PRINT(className, str, ...) logPrint(className, __FUNCTION__, str, ## __VA_ARGS__)
-#define HVSYSLOG_PRINT(className, str, ...) logPrint(className, __FUNCTION__, str, ## __VA_ARGS__)
+#define HVDBGLOG_PRINT(className, channelId, str, ...) logPrint(className, __FUNCTION__, channelId, str, ## __VA_ARGS__)
+#define HVSYSLOG_PRINT(className, channelId, str, ...) logPrint(className, __FUNCTION__, channelId, str, ## __VA_ARGS__)
 #else
 
 //
 // Release print function.
 //
-inline void logPrint(const char *className, const char *format, ...) {
+inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId, const char *format, ...) {
   char tmp[256];
   tmp[0] = '\0';
   va_list va;
@@ -53,11 +57,15 @@ inline void logPrint(const char *className, const char *format, ...) {
   vsnprintf(tmp, sizeof (tmp), format, va);
   va_end(va);
   
-  IOLog("%s: %s\n", className, tmp);
+  if (hasChannelId) {
+    IOLog("%s(%u): %s\n", className, channelId, tmp);
+  } else {
+    IOLog("%s: %s\n", className, tmp);
+  }
 }
 
-#define HVDBGLOG_PRINT(className, str, ...) {}
-#define HVSYSLOG_PRINT(className, str, ...) logPrint(className, str, ## __VA_ARGS__)
+#define HVDBGLOG_PRINT(className, channelId, str, ...) {}
+#define HVSYSLOG_PRINT(className, channelId, str, ...) logPrint(className, channelId, str, ## __VA_ARGS__)
 #endif
 
 template <class T, size_t N>

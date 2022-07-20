@@ -23,9 +23,9 @@ extern "C" {
 
 #define super IOEthernetController
 
-#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVNetwork", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVNetwork", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 #define HVDBGLOG(str, ...) \
-  if (this->debugEnabled) HVDBGLOG_PRINT("HyperVNetwork", str, ## __VA_ARGS__)
+  if (this->debugEnabled) HVDBGLOG_PRINT("HyperVNetwork", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 
 #define MBit 1000000
 

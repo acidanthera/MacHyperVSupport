@@ -7,19 +7,14 @@
 
 #include "HyperVMouse.hpp"
 
+#include <Headers/kern_api.hpp>
+
 OSDefineMetaClassAndStructors(HyperVMouse, super);
 
 bool HyperVMouse::handleStart(IOService *provider) {
   if (!super::handleStart(provider)) {
     return false;
   }
-
-  //
-  // HIDDefaultBehavior needs to be set to Mouse for the device to
-  // get exposed as a mouse to userspace.
-  //
-  HVDBGLOG("Initializing Hyper-V Synthetic Mouse");
-  setProperty("HIDDefaultBehavior", "Mouse");
 
   //
   // Get parent VMBus device object.
@@ -29,6 +24,16 @@ bool HyperVMouse::handleStart(IOService *provider) {
     return false;
   }
   hvDevice->retain();
+  
+  debugEnabled = checkKernelArgument("-hvmousdbg");
+  hvDevice->setDebugMessagePrinting(checkKernelArgument("-hvmousmsgdbg"));
+  
+  //
+  // HIDDefaultBehavior needs to be set to Mouse for the device to
+  // get exposed as a mouse to userspace.
+  //
+  HVDBGLOG("Initializing Hyper-V Synthetic Mouse");
+  setProperty("HIDDefaultBehavior", "Mouse");
   
   //
   // Configure interrupt.
@@ -49,23 +54,9 @@ bool HyperVMouse::handleStart(IOService *provider) {
     HVSYSLOG("Failed to set up device");
     return false;
   }
-
-  for (int i = 0; i < kHyperVMouseInitTimeout; i++) {
-    if (hidDescriptorValid) {
-      HVDBGLOG("Device info packet is now valid");
-      break;
-    }
-
-    IODelay(10);
-  }
-
-  if (hidDescriptorValid) {
-    HVSYSLOG("Initialized Hyper-V Synthetic Mouse");
-  } else {
-    HVSYSLOG("Timed out getting device info");
-  }
-
-  return hidDescriptorValid;
+  
+  HVSYSLOG("Initialized Hyper-V Synthetic Mouse");
+  return true;
 }
 
 void HyperVMouse::handleStop(IOService *provider) {

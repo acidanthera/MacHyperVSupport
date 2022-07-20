@@ -22,8 +22,9 @@
 
 #define super IOSCSIParallelInterfaceController
 
-#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVStorage", str, ## __VA_ARGS__)
-#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVStorage", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVStorage", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) \
+  if (this->debugEnabled) HVDBGLOG_PRINT("HyperVStorage", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 
 class HyperVStorage : public IOSCSIParallelInterfaceController {
   OSDeclareDefaultStructors(HyperVStorage);
@@ -31,6 +32,7 @@ class HyperVStorage : public IOSCSIParallelInterfaceController {
 private:
   HyperVVMBusDevice       *hvDevice;
   IOInterruptEventSource  *interruptSource;
+  bool                    debugEnabled = false;
   
   UInt32                  protocolVersion;
   UInt32                  senseBufferSize;

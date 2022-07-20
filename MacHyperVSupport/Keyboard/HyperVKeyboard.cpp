@@ -8,14 +8,14 @@
 #include "HyperVKeyboard.hpp"
 #include "HyperVADBMap.hpp"
 
+#include <Headers/kern_api.hpp>
+
 OSDefineMetaClassAndStructors(HyperVKeyboard, super);
 
 bool HyperVKeyboard::start(IOService *provider) {
   if (!super::start(provider)) {
     return false;
   }
-  
-  HVDBGLOG("Initializing Hyper-V Synthetic Keyboard");
   
   //
   // Get parent VMBus device object.
@@ -26,6 +26,11 @@ bool HyperVKeyboard::start(IOService *provider) {
     return false;
   }
   hvDevice->retain();
+  
+  debugEnabled = checkKernelArgument("-hvkbddbg");
+  hvDevice->setDebugMessagePrinting(checkKernelArgument("-hvkbdmsgdbg"));
+  
+  HVDBGLOG("Initializing Hyper-V Synthetic Keyboard");
   
   //
   // Configure interrupt.

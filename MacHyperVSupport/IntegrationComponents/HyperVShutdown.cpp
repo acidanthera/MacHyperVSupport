@@ -8,10 +8,13 @@
 #include "HyperVShutdown.hpp"
 #include "HyperVPlatformProvider.hpp"
 
+#include <Headers/kern_api.hpp>
+
 #define super HyperVICService
 
-#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVShutdown", str, ## __VA_ARGS__)
-#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVShutdown", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVShutdown", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) \
+  if (this->debugEnabled) HVDBGLOG_PRINT("HyperVShutdown", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 
 OSDefineMetaClassAndStructors(HyperVShutdown, super);
 
@@ -19,6 +22,9 @@ bool HyperVShutdown::start(IOService *provider) {
   if (!super::start(provider)) {
     return false;
   }
+  
+  debugEnabled = checkKernelArgument("-hvshutdbg");
+  hvDevice->setDebugMessagePrinting(checkKernelArgument("-hvshutmsgdbg"));
 
   HVSYSLOG("Initialized Hyper-V Guest Shutdown");
   return true;

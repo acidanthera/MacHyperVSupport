@@ -7,6 +7,8 @@
 
 #include "HyperVStorage.hpp"
 
+#include <Headers/kern_api.hpp>
+
 OSDefineMetaClassAndStructors(HyperVStorage, super);
 
 //
@@ -41,7 +43,6 @@ static const HyperVStorageProtocol storageProtocols[] = {
 };
 
 bool HyperVStorage::InitializeController() {
-  HVDBGLOG("Initializing Hyper-V Synthetic Storage controller");
   HyperVStoragePacket packet;
   
   //
@@ -52,6 +53,11 @@ bool HyperVStorage::InitializeController() {
     return false;
   }
   hvDevice->retain();
+  
+  debugEnabled = checkKernelArgument("-hvstordbg");
+  hvDevice->setDebugMessagePrinting(checkKernelArgument("-hvstormsgdbg"));
+  
+  HVDBGLOG("Initializing Hyper-V Synthetic Storage controller");
   
   //
   // Assume we are on an older host and take off the Windows 8 extensions by default.

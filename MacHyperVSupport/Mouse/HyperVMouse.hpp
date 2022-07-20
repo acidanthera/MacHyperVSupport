@@ -15,8 +15,9 @@
 
 #define super IOHIDDevice
 
-#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVMouse", str, ## __VA_ARGS__)
-#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVMouse", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVMouse", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) \
+  if (this->debugEnabled) HVDBGLOG_PRINT("HyperVMouse", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 
 class HyperVMouse : public IOHIDDevice {
   OSDeclareDefaultStructors(HyperVMouse);
@@ -27,6 +28,7 @@ private:
   //
   HyperVVMBusDevice       *hvDevice;
   IOInterruptEventSource  *interruptSource;
+  bool                    debugEnabled = false;
 
   //
   // HID structures.
@@ -34,12 +36,11 @@ private:
   HyperVMouseDeviceInfo   mouseInfo;
   void                    *hidDescriptor;
   size_t                  hidDescriptorLength;
-  bool                    hidDescriptorValid;
 
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
 
   bool setupMouse();
-  void handleProtocolResponse(HyperVMouseMessageProtocolResponse *response, UInt64 transactionId);
+  void handleProtocolResponse(HyperVMouseMessageProtocolResponse *response);
   void handleDeviceInfo(HyperVMouseMessageInitialDeviceInfo *deviceInfo);
   void handleInputReport(HyperVMouseMessageInputReport *inputReport);
 

@@ -15,19 +15,21 @@
 
 #define super IOPCIBridge
 
-#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVGraphics", str, ## __VA_ARGS__)
-#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVGraphics", str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVGraphics", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...) \
+  if (this->debugEnabled) HVDBGLOG_PRINT("HyperVGraphics", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 
 class HyperVGraphics : public IOPCIBridge {
   OSDeclareDefaultStructors(HyperVGraphics);
   
 private:
-  IOSimpleLock *pciLock;
-  UInt8 fakePCIDeviceSpace[256];
+  HyperVVMBusDevice *hvDevice;
+  bool              debugEnabled = false;
+  IOSimpleLock      *pciLock;
+  UInt8             fakePCIDeviceSpace[256];
+  PE_Video          consoleInfo;
   
   void fillFakePCIDeviceSpace();
-  
-  PE_Video consoleInfo;
   
 public:
   //

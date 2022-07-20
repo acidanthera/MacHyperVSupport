@@ -20,15 +20,17 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
   channelIsOpen = false;
   
   //
-  // Get channel number.
+  // Get channel number and instance GUID.
   //
   OSNumber *channelNumber = OSDynamicCast(OSNumber, getProperty(kHyperVVMBusDeviceChannelIDKey));
+  OSData *instanceBytes   = OSDynamicCast(OSData, getProperty(kHyperVVMBusDeviceChannelInstanceKey));
   vmbusProvider = OSDynamicCast(HyperVVMBusController, getProvider());
-  if (channelNumber == NULL || vmbusProvider == NULL) {
+  if (channelNumber == NULL || instanceBytes == NULL || vmbusProvider == NULL) {
     return false;
   }
   channelId = channelNumber->unsigned32BitValue();
   HVDBGLOG("Attaching nub for channel %u", channelId);
+  memcpy(instanceId, instanceBytes->getBytesNoCopy(), instanceBytes->getLength());
   
   //
   // Set location to ensure unique names in I/O Registry.
@@ -49,6 +51,9 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
   vmbusRequestsLock = IOLockAlloc();
   vmbusTransLock = IOLockAlloc();
   
+  threadZeroRequest.lock = IOLockAlloc();
+  prepareSleepThread();
+  
   return true;
 }
 
@@ -63,6 +68,7 @@ void HyperVVMBusDevice::detach(IOService *provider) {
   
   IOLockFree(vmbusRequestsLock);
   IOLockFree(vmbusTransLock);
+  IOLockFree(threadZeroRequest.lock);
   
   super::detach(provider);
 }
@@ -145,7 +151,8 @@ UInt64 HyperVVMBusDevice::getNextTransId() {
   UInt64 value = vmbusTransId;
   vmbusTransId++;
   if (vmbusTransId > vmbusMaxAutoTransId) {
-    vmbusTransId = 0;
+    // Some devices have issues with 0 as a transaction ID.
+    vmbusTransId = 1;
   }
   IOLockUnlock(vmbusTransLock);
   return value;
@@ -242,6 +249,7 @@ IOReturn HyperVVMBusDevice::writeGPADirectSinglePagePacket(void *buffer, UInt32 
     } else {
       wakeTransaction(transactionId);
     }
+    IOLockFree(req.lock);
   }
   return status;
 }
@@ -287,6 +295,7 @@ IOReturn HyperVVMBusDevice::writeGPADirectMultiPagePacket(void *buffer, UInt32 b
     } else {
       wakeTransaction(transactionId);
     }
+    IOLockFree(req.lock);
   }
   return status;
 }
@@ -347,4 +356,9 @@ void HyperVVMBusDevice::wakeTransaction(UInt64 transactionId) {
     current   = current->next;
   }
   IOLockUnlock(vmbusRequestsLock);
+}
+
+void HyperVVMBusDevice::doSleepThread() {
+  sleepPacketRequest(&threadZeroRequest);
+  prepareSleepThread();
 }

@@ -36,7 +36,7 @@ void HyperVMouse::handleInterrupt(OSObject *owner, IOInterruptEventSource *sende
       // TODO: Handle other failures
       switch (message->header.type) {
         case kHyperVMouseMessageTypeProtocolResponse:
-          handleProtocolResponse(&message->response, transactionId);
+          handleProtocolResponse(&message->response);
           break;
 
         case kHyperVMouseMessageTypeInitialDeviceInfo:
@@ -64,12 +64,8 @@ void HyperVMouse::handleInterrupt(OSObject *owner, IOInterruptEventSource *sende
 
 bool HyperVMouse::setupMouse() {
   //
-  // Device info is invalid.
-  //
-  hidDescriptorValid = false;
-
-  //
   // Send mouse request.
+  // Fixed transaction ID is used for tracking as the response is always zero.
   //
   HyperVMousePipeMessage              message;
   HyperVMouseMessageProtocolResponse  protoResponse;
@@ -82,24 +78,33 @@ bool HyperVMouse::setupMouse() {
   message.request.versionRequested = kHyperVMouseVersion;
 
   HVDBGLOG("Sending mouse protocol request");
-  if (hvDevice->writeInbandPacket(&message, sizeof (message), true, &protoResponse, sizeof (protoResponse)) != kIOReturnSuccess) {
+  if (hvDevice->writeInbandPacketWithTransactionId(&message, sizeof (message), kHyperVMouseProtocolRequestTransactionID, true, &protoResponse, sizeof (protoResponse)) != kIOReturnSuccess) {
     return false;
   }
 
   HVDBGLOG("Got mouse protocol response of %u, version 0x%X", protoResponse.status, protoResponse.versionRequested);
-  return protoResponse.status != 0;
+  if (protoResponse.status == 0) {
+    return false;
+  }
+  
+  //
+  // Wait for packet to be received.
+  //
+  hvDevice->doSleepThread();
+  
+  return true;
 }
 
-void HyperVMouse::handleProtocolResponse(HyperVMouseMessageProtocolResponse *response, UInt64 transactionId) {
+void HyperVMouse::handleProtocolResponse(HyperVMouseMessageProtocolResponse *response) {
   void    *responseBuffer;
   UInt32  responseLength;
 
-  if (hvDevice->getPendingTransaction(transactionId, &responseBuffer, &responseLength)) {
+  if (hvDevice->getPendingTransaction(kHyperVMouseProtocolRequestTransactionID, &responseBuffer, &responseLength)) {
     if (sizeof (*response) > responseLength) {
       return;
     }
     memcpy(responseBuffer, response, responseLength);
-    hvDevice->wakeTransaction(transactionId);
+    hvDevice->wakeTransaction(kHyperVMouseProtocolRequestTransactionID);
   }
 }
 
@@ -124,7 +129,6 @@ void HyperVMouse::handleDeviceInfo(HyperVMouseMessageInitialDeviceInfo *deviceIn
     return;
   }
   memcpy(hidDescriptor, deviceInfo->hidDescriptorData, hidDescriptorLength);
-  hidDescriptorValid = true;
 
   //
   // Send device info ack message.
@@ -139,6 +143,7 @@ void HyperVMouse::handleDeviceInfo(HyperVMouseMessageInitialDeviceInfo *deviceIn
 
   HVDBGLOG("Sending device info ack");
   hvDevice->writeInbandPacket(&message, sizeof (message), false);
+  hvDevice->wakeTransaction(0);
 }
 
 void HyperVMouse::handleInputReport(HyperVMouseMessageInputReport *inputReport) {

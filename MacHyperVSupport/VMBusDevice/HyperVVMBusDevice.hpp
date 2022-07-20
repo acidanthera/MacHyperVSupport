@@ -36,6 +36,7 @@ class HyperVVMBusDevice : public IOService {
 private:
   HyperVVMBusController   *vmbusProvider;
   UInt32                  channelId;
+  uuid_t                  instanceId;
   bool                    channelIsOpen;
   
   IOWorkLoop              *workLoop;
@@ -49,9 +50,11 @@ private:
   
   HyperVVMBusDeviceRequest      *vmbusRequests = NULL;
   IOLock                        *vmbusRequestsLock;
-  UInt64                        vmbusTransId = 0;
+  UInt64                        vmbusTransId = 1; // Some devices have issues with 0 as a transaction ID.
   UInt64                        vmbusMaxAutoTransId = UINT64_MAX;
   IOLock                        *vmbusTransLock;
+  
+  HyperVVMBusDeviceRequest      threadZeroRequest;
   
   bool                    debugPackets = false;
 
@@ -74,6 +77,7 @@ private:
   
   void addPacketRequest(HyperVVMBusDeviceRequest *vmbusRequest);
   void sleepPacketRequest(HyperVVMBusDeviceRequest *vmbusRequest);
+  void prepareSleepThread();
   
   inline UInt32 getAvailableTxSpace() {
     return (txBuffer->writeIndex >= txBuffer->readIndex) ?
@@ -96,7 +100,8 @@ public:
   bool openChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId = UINT64_MAX);
   void closeChannel();
   bool createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer);
-
+  UInt32 getChannelId() { return channelId; }
+  uuid_t* getInstanceId() { return &instanceId; }
   
   //
   // Messages.
@@ -124,6 +129,7 @@ public:
   
   bool getPendingTransaction(UInt64 transactionId, void **buffer, UInt32 *bufferLength);
   void wakeTransaction(UInt64 transactionId);
+  void doSleepThread();
   
   
 };
