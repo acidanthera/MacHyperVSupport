@@ -163,19 +163,27 @@ bool HyperVPCIBridge::allocatePCIConfigWindow() {
   }
   
   HVDBGLOG("Waiting for HyperVModuleDevice");
+#if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
+  IOService *vmodService = IOService::waitForService(vmodMatching);
+  if (vmodService == NULL) {
+    vmodService->retain();
+  }
+#else
   IOService *vmodService = waitForMatchingService(vmodMatching);
   vmodMatching->release();
+#endif
+  
   if (vmodService == NULL) {
     HVSYSLOG("Failed to locate HyperVModuleDevice");
     return false;
   }
+  
   HVDBGLOG("Got instance of HyperVModuleDevice");
   hvModuleDevice = OSDynamicCast(HyperVModuleDevice, vmodService);
-  hvModuleDevice->retain();
   
   // Allocate PCI config window.
   pciConfigSpace = hvModuleDevice->allocateRange(kHyperVPCIBridgeWindowSize, PAGE_SIZE, true);
-  pciConfigMemoryDescriptor = IOMemoryDescriptor::withPhysicalAddress(pciConfigSpace, kHyperVPCIBridgeWindowSize, kIOMemoryDirectionInOut);
+  pciConfigMemoryDescriptor = IOMemoryDescriptor::withPhysicalAddress(pciConfigSpace, kHyperVPCIBridgeWindowSize, static_cast<IODirection>(kIOMemoryDirectionInOut));
   pciConfigMemoryMap = pciConfigMemoryDescriptor->map();
   HVDBGLOG("PCI config window located @ phys 0x%llX", pciConfigSpace);
   

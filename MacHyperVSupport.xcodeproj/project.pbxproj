@@ -781,7 +781,7 @@
 					"$(PROJECT_DIR)/MacKernelSDK/Library/universal",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
-				"MACOSX_DEPLOYMENT_TARGET[arch=ACID32]" = 10.6;
+				"MACOSX_DEPLOYMENT_TARGET[arch=ACID32]" = 10.4;
 				MARKETING_VERSION = "$(MODULE_VERSION)";
 				MODULE_NAME = fish.goldfish64.MacHyperVSupport;
 				MODULE_START = "$(PRODUCT_NAME)_kern_start";
@@ -821,13 +821,13 @@
 					"-fno-jump-tables",
 					"-fno-stack-protector",
 					"-target",
-					"i386-apple-macos10.6",
+					"i386-apple-macos10.4",
 				);
 				OTHER_LDFLAGS = "-static";
 				"OTHER_LDFLAGS[arch=ACID32]" = (
 					"-static",
 					"-target",
-					"i386-apple-macos10.6",
+					"i386-apple-macos10.4",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = fish.goldfish64.MacHyperVSupport;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -859,7 +859,7 @@
 					"$(PROJECT_DIR)/MacKernelSDK/Library/universal",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
-				"MACOSX_DEPLOYMENT_TARGET[arch=ACID32]" = 10.6;
+				"MACOSX_DEPLOYMENT_TARGET[arch=ACID32]" = 10.4;
 				MARKETING_VERSION = "$(MODULE_VERSION)";
 				MODULE_NAME = fish.goldfish64.MacHyperVSupport;
 				MODULE_START = "$(PRODUCT_NAME)_kern_start";
@@ -899,13 +899,13 @@
 					"-fno-jump-tables",
 					"-fno-stack-protector",
 					"-target",
-					"i386-apple-macos10.6",
+					"i386-apple-macos10.4",
 				);
 				OTHER_LDFLAGS = "-static";
 				"OTHER_LDFLAGS[arch=ACID32]" = (
 					"-static",
 					"-target",
-					"i386-apple-macos10.6",
+					"i386-apple-macos10.4",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = fish.goldfish64.MacHyperVSupport;
 				PRODUCT_NAME = "$(TARGET_NAME)";
