@@ -104,6 +104,8 @@ IORangeScalar HyperVModuleDevice::allocateRange(IORangeScalar size, IORangeScala
   } else {
     result = rangeAllocatorLow->allocate(size, &range, alignment);
   }
+  HVDBGLOG("Allocation result for size 0x%llX (high: %u) - %u", size, highMemory, result);
+  HVDBGLOG("Range result: 0x%llX", result ? range : 0);
   
   return result ? range : 0;
 }
