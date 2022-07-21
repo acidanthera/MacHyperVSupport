@@ -204,7 +204,7 @@ bool HyperVVMBusController::start(IOService *provider) {
   HVDBGLOG("Waiting for HyperVPCIRoot");
 #if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
   IOService *pciService = IOService::waitForService(pciMatching);
-  if (pciService == NULL) {
+  if (pciService != NULL) {
     pciService->retain();
   }
 #else

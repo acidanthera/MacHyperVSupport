@@ -127,18 +127,33 @@ bool HyperVVMBusController::initSynIC() {
   //
   // Get vector for our interrupt.
   //
-  auto matching = serviceMatching("AppleAPICInterruptController");
-  if (matching != NULL) {
-    IOService *apicService = waitForMatchingService(matching);
-    if (apicService != NULL) {
-      auto vectorBase = OSDynamicCast(OSNumber, apicService->getProperty("Base Vector Number"));
-      if (vectorBase != NULL) {
-        vector = vectorBase->unsigned32BitValue();
-      }
-      apicService->release();
-    }
-    matching->release();
+  HVDBGLOG("Waiting for AppleAPICInterruptController");
+  auto apicMatching = serviceMatching("AppleAPICInterruptController");
+  if (apicMatching == NULL) {
+    HVSYSLOG("Failed to create AppleAPICInterruptController matching dictionary");
+    return false;
   }
+  
+#if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
+  IOService *apicService = IOService::waitForService(apicMatching);
+  if (apicService != NULL) {
+    apicService->retain();
+  }
+#else
+  IOService *apicService = waitForMatchingService(apicMatching);
+  apicMatching->release();
+#endif
+  
+  if (apicService == NULL) {
+    HVSYSLOG("Failed to locate AppleAPICInterruptController");
+    return false;
+  }
+
+  auto vectorBase = OSDynamicCast(OSNumber, apicService->getProperty("Base Vector Number"));
+  if (vectorBase != NULL) {
+    vector = vectorBase->unsigned32BitValue();
+  }
+  apicService->release();
   
   auto intArray = OSDynamicCast(OSArray, getProvider()->getProperty("IOInterruptSpecifiers"));
   if (intArray != NULL) {

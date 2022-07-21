@@ -165,7 +165,7 @@ bool HyperVPCIBridge::allocatePCIConfigWindow() {
   HVDBGLOG("Waiting for HyperVModuleDevice");
 #if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
   IOService *vmodService = IOService::waitForService(vmodMatching);
-  if (vmodService == NULL) {
+  if (vmodService != NULL) {
     vmodService->retain();
   }
 #else
