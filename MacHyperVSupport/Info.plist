@@ -211,7 +211,7 @@
 		</dict>
 	</dict>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2021 Goldfish64. All rights reserved.</string>
+	<string>Copyright © 2021-2022 Goldfish64. All rights reserved.</string>
 	<key>OSBundleLibraries</key>
 	<dict>
 		<key>as.vit9696.Lilu</key>
@@ -225,7 +225,7 @@
 		<key>com.apple.iokit.IOPCIFamily</key>
 		<string>1.0.0b1</string>
 		<key>com.apple.iokit.IOSCSIParallelFamily</key>
-		<string>2.0.0</string>
+		<string>1.4.4</string>
 		<key>com.apple.kpi.bsd</key>
 		<string>8.0.0</string>
 		<key>com.apple.kpi.iokit</key>
@@ -236,6 +236,33 @@
 		<string>8.0.0</string>
 		<key>com.apple.kpi.unsupported</key>
 		<string>8.0.0</string>
+		<key>com.apple.kernel.6.0</key>
+		<string>7.9.9</string>
+	</dict>
+	<key>OSBundleLibraries_x86_64</key>
+		<dict>
+		<key>as.vit9696.Lilu</key>
+		<string>1.4.7</string>
+		<key>com.apple.iokit.IOACPIFamily</key>
+		<string>1.0.0d1</string>
+		<key>com.apple.iokit.IOHIDFamily</key>
+		<string>1.1</string>
+		<key>com.apple.iokit.IONetworkingFamily</key>
+		<string>1.5.0</string>
+		<key>com.apple.iokit.IOPCIFamily</key>
+		<string>1.0.0b1</string>
+		<key>com.apple.iokit.IOSCSIParallelFamily</key>
+		<string>2.0.0</string>
+		<key>com.apple.kpi.bsd</key>
+		<string>10.0.0</string>
+		<key>com.apple.kpi.iokit</key>
+		<string>10.0.0</string>
+		<key>com.apple.kpi.libkern</key>
+		<string>10.0.0</string>
+		<key>com.apple.kpi.mach</key>
+		<string>10.0.0</string>
+		<key>com.apple.kpi.unsupported</key>
+		<string>10.0.0</string>
 	</dict>
 	<key>OSBundleRequired</key>
 	<string>Root</string>
