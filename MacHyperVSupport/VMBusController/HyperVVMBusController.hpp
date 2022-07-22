@@ -80,8 +80,10 @@ private:
   UInt16 hvMajorVersion;
   UInt32 hvRecommends;
   
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_6
   pmCallBacks_t pmCallbacks;
   IOSimpleLock *preemptionLock;
+#endif
   
   void                *hypercallPage;
   IOMemoryDescriptor  *hypercallDesc;

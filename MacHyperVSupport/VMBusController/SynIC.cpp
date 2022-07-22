@@ -86,6 +86,17 @@ extern "C" void initSyncIC(void *cpuData) {
   wrmsr64(kHyperVMsrSyncICControl, kHyperVMsrSyncICControlEnable | (rdmsr64(kHyperVMsrSyncICControl) & kHyperVMsrSyncICControlRsvdMask));
 }
 
+#if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
+extern "C" void doAllCpuSyncICEOM(void *cpu) {
+  int currentCpuIndex = cpu_number();
+  int *desiredCpuIndex = (int*)cpu;
+  
+  if (currentCpuIndex == *desiredCpuIndex) {
+    wrmsr64(kHyperVMsrEom, 0);
+  }
+}
+#endif
+
 bool HyperVVMBusController::allocateSynICBuffers() {
   //
   // Allocate per-CPU buffers.
@@ -185,6 +196,7 @@ bool HyperVVMBusController::initSynIC() {
   }
   workloop->addEventSource(cmdGate);
   
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_6
   //
   // Get PM callbacks.
   //
@@ -204,6 +216,7 @@ bool HyperVVMBusController::initSynIC() {
   if (preemptionLock == NULL) {
     return false;
   }
+#endif
   
   //
   // Allocate buffers for SynIC.
@@ -263,6 +276,7 @@ void HyperVVMBusController::sendSynICEOM(UInt32 cpu) {
     return;
   }
   
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_6
   //
   // Change to desired CPU if needed.
   //
@@ -292,9 +306,13 @@ void HyperVVMBusController::sendSynICEOM(UInt32 cpu) {
   // We should now be on the correct CPU, so send EOM.
   //
   wrmsr64(kHyperVMsrEom, 0);
+#else
+  //
+  // PM kext API does not exist on 10.4, call function on all CPUs.
+  //
+  mp_rendezvous_no_intrs(doAllCpuSyncICEOM, &cpu);
+#endif
 }
-
-
 
 void HyperVVMBusController::handleSynICInterrupt(OSObject *target, void *refCon, IOService *nub, int source) {
   UInt32 cpuIndex = cpu_number();
