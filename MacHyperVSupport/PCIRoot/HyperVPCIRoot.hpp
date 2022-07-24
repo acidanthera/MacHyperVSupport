@@ -11,7 +11,7 @@
 #include "HyperV.hpp"
 #include <IOKit/pci/IOPCIBridge.h>
 
-class HyperVPCIRoot : public IOPCIBridge {
+class HyperVPCIRoot : public HV_PCIBRIDGE_CLASS {
   OSDeclareDefaultStructors(HyperVPCIRoot);
   
 private:

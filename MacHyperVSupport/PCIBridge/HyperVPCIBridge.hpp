@@ -15,12 +15,12 @@
 
 #include "HyperVModuleDevice.hpp"
 
-#define super IOPCIBridge
+#define super HV_PCIBRIDGE_CLASS
 
 #define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVPCIBridge", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 #define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVPCIBridge", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 
-class HyperVPCIBridge : public IOPCIBridge {
+class HyperVPCIBridge : public HV_PCIBRIDGE_CLASS {
   OSDeclareDefaultStructors(HyperVPCIBridge);
   
 private:

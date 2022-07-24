@@ -36,7 +36,7 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
   va_end(va);
   
   if (hasChannelId) {
-    IOLog("%s(%u)::%s(): %s\n", className, channelId, funcName, tmp);
+    IOLog("%s(%u)::%s(): %s\n", className, (unsigned int) channelId, funcName, tmp);
   } else {
     IOLog("%s::%s(): %s\n", className, funcName, tmp);
   }
@@ -58,7 +58,7 @@ inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId,
   va_end(va);
   
   if (hasChannelId) {
-    IOLog("%s(%u): %s\n", className, channelId, tmp);
+    IOLog("%s(%u): %s\n", className, (unsigned int) channelId, tmp);
   } else {
     IOLog("%s: %s\n", className, tmp);
   }
@@ -66,6 +66,12 @@ inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId,
 
 #define HVDBGLOG_PRINT(className, channelId, str, ...) {}
 #define HVSYSLOG_PRINT(className, channelId, str, ...) logPrint(className, channelId, str, ## __VA_ARGS__)
+#endif
+
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_12_0
+#define HV_PCIBRIDGE_CLASS IOPCIHostBridge
+#else
+#define HV_PCIBRIDGE_CLASS IOPCIBridge
 #endif
 
 template <class T, size_t N>

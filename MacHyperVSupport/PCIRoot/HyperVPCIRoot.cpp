@@ -11,7 +11,7 @@
 
 #include "AppleACPIRange.hpp"
 
-#define super IOPCIBridge
+#define super HV_PCIBRIDGE_CLASS
 
 #define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVPCIRoot", false, 0, str, ## __VA_ARGS__)
 #define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVPCIRoot", false, 0, str, ## __VA_ARGS__)

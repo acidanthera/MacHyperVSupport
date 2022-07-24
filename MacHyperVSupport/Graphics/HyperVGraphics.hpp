@@ -13,13 +13,13 @@
 
 #include <IOKit/pci/IOPCIBridge.h>
 
-#define super IOPCIBridge
+#define super HV_PCIBRIDGE_CLASS
 
 #define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVGraphics", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 #define HVDBGLOG(str, ...) \
   if (this->debugEnabled) HVDBGLOG_PRINT("HyperVGraphics", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 
-class HyperVGraphics : public IOPCIBridge {
+class HyperVGraphics : public HV_PCIBRIDGE_CLASS {
   OSDeclareDefaultStructors(HyperVGraphics);
   
 private:
