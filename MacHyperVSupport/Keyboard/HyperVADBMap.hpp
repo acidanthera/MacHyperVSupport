@@ -357,7 +357,7 @@ static const UInt8 PS2ToADBMapStock[kADBConverterLength] =
     0x77,   // e0 4f  End
     0x7d,   // e0 50  Down Arrow
     0x79,   // e0 51  Page Down
-    0x92,   // e0 52  Insert = Eject
+    kADBDeadKey,// e0 52  Insert = Eject
     0x75,   // e0 53  Delete
     kADBDeadKey,// e0 54
     kADBDeadKey,// e0 55
@@ -369,7 +369,7 @@ static const UInt8 PS2ToADBMapStock[kADBConverterLength] =
     0x37,   // e0 5b  Left GUI(Windows)
     0x36,   // e0 5c  Right GUI(Windows)
     0x6e,   // e0 5d  App( Windows context menu key )
-    0x7f,   // e0 5e  System Power / Keyboard Power
+    kADBDeadKey,// e0 5e  System Power / Keyboard Power
     kADBDeadKey,// e0 5f  System Sleep (hp Fn+F1)
     kADBDeadKey,// e0 60
     kADBDeadKey,// e0 61
