@@ -21,8 +21,6 @@ extern "C" {
 #include <sys/kpi_mbuf.h>
 }
 
-#define super IOEthernetController
-
 #define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVNetwork", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 #define HVDBGLOG(str, ...) \
   if (this->debugEnabled) HVDBGLOG_PRINT("HyperVNetwork", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
@@ -46,6 +44,7 @@ typedef struct HyperVNetworkRNDISRequest {
 
 class HyperVNetwork : public IOEthernetController {
   OSDeclareDefaultStructors(HyperVNetwork);
+  typedef IOEthernetController super;
 
 private:
   //

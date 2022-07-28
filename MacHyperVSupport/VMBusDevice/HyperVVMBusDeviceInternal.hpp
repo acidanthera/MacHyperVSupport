@@ -8,8 +8,6 @@
 #ifndef HyperVVMBusDeviceInternal_h
 #define HyperVVMBusDeviceInternal_h
 
-#define super IOService
-
 #define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVVMBusDevice", true, this->channelId, str, ## __VA_ARGS__)
 #define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVVMBusDevice", true, this->channelId, str, ## __VA_ARGS__)
 

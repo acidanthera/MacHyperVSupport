@@ -18,6 +18,7 @@
 
 class HyperVICService : public IOService {
   OSDeclareDefaultStructors(HyperVICService);
+  typedef IOService super;
 
 private:
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);

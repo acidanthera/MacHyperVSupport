@@ -10,8 +10,6 @@
 
 #include "AppleACPIRange.hpp"
 
-#define super IOService
-
 #define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVModuleDevice", false, 0, str, ## __VA_ARGS__)
 #define HVDBGLOG(str, ...) \
   if (this->debugEnabled) HVDBGLOG_PRINT("HyperVModuleDevice", false, 0, str, ## __VA_ARGS__)

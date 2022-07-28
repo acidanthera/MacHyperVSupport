@@ -8,10 +8,7 @@
 #include "HyperVHeartbeat.hpp"
 
 #include <IOKit/IOPlatformExpert.h>
-
 #include <Headers/kern_api.hpp>
-
-#define super HyperVICService
 
 #define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVHeartbeat", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 #define HVDBGLOG(str, ...) \

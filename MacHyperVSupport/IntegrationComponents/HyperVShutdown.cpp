@@ -10,8 +10,6 @@
 
 #include <Headers/kern_api.hpp>
 
-#define super HyperVICService
-
 #define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVShutdown", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 #define HVDBGLOG(str, ...) \
   if (this->debugEnabled) HVDBGLOG_PRINT("HyperVShutdown", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)

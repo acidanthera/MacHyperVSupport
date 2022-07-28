@@ -20,14 +20,13 @@
 #include "HyperVVMBusDevice.hpp"
 #include "HyperVStorageRegs.hpp"
 
-#define super IOSCSIParallelInterfaceController
-
 #define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVStorage", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 #define HVDBGLOG(str, ...) \
   if (this->debugEnabled) HVDBGLOG_PRINT("HyperVStorage", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 
 class HyperVStorage : public IOSCSIParallelInterfaceController {
   OSDeclareDefaultStructors(HyperVStorage);
+  typedef IOSCSIParallelInterfaceController super;
 
 private:
   HyperVVMBusDevice       *hvDevice;

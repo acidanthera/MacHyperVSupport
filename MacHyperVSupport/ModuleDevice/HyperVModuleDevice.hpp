@@ -15,6 +15,7 @@
 
 class HyperVModuleDevice : public IOService {
   OSDeclareDefaultStructors(HyperVModuleDevice);
+  typedef IOService super;
   
 private:
   bool debugEnabled = false;

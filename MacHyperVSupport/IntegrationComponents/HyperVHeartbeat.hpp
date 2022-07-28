@@ -12,6 +12,7 @@
 
 class HyperVHeartbeat : public HyperVICService {
   OSDeclareDefaultStructors(HyperVHeartbeat);
+  typedef HyperVICService super;
 
 private:
   bool firstHeartbeatReceived;

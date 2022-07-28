@@ -12,8 +12,6 @@
 
 #include <Headers/kern_api.hpp>
 
-#define super IOInterruptController
-
 #define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVVMBusController", false, 0, str, ## __VA_ARGS__)
 #define HVDBGLOG(str, ...) \
   if (this->debugEnabled) HVDBGLOG_PRINT("HyperVVMBusController", false, 0, str, ## __VA_ARGS__)

@@ -12,6 +12,7 @@
 
 class HyperVShutdown : public HyperVICService {
   OSDeclareDefaultStructors(HyperVShutdown);
+  typedef HyperVICService super;
 
 private:
   bool handleShutdown(VMBusICMessageShutdownData *shutdownData);

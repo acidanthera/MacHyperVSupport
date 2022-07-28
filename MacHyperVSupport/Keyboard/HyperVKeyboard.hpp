@@ -14,14 +14,13 @@
 #include "HyperVVMBusDevice.hpp"
 #include "HyperVKeyboardRegs.hpp"
 
-#define super IOHIKeyboard
-
 #define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVKeyboard", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 #define HVDBGLOG(str, ...) \
   if (this->debugEnabled) HVDBGLOG_PRINT("HyperVKeyboard", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
 
 class HyperVKeyboard : public IOHIKeyboard {
   OSDeclareDefaultStructors(HyperVKeyboard);
+  typedef IOHIKeyboard super;
 
 private:
   HyperVVMBusDevice       *hvDevice;

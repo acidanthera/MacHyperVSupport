@@ -69,6 +69,7 @@ typedef struct {
 
 class HyperVVMBusController : public IOInterruptController {
   OSDeclareDefaultStructors(HyperVVMBusController);
+  typedef IOInterruptController super;
   
 private:
   bool debugEnabled = false;

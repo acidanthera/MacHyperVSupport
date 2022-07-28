@@ -32,6 +32,7 @@ typedef struct HyperVVMBusDeviceRequest {
 
 class HyperVVMBusDevice : public IOService {
   OSDeclareDefaultStructors(HyperVVMBusDevice);
+  typedef IOService super;
   
 private:
   HyperVVMBusController   *vmbusProvider;
