@@ -13,12 +13,9 @@
 #include "HyperVVMBusDevice.hpp"
 #include "HyperVMouseRegs.hpp"
 
-#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVMouse", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
-#define HVDBGLOG(str, ...) \
-  if (this->debugEnabled) HVDBGLOG_PRINT("HyperVMouse", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
-
 class HyperVMouse : public IOHIDDevice {
   OSDeclareDefaultStructors(HyperVMouse);
+  HVDeclareLogFunctionsVMBusChild();
   typedef IOHIDDevice super;
 
 private:
@@ -27,7 +24,6 @@ private:
   //
   HyperVVMBusDevice       *hvDevice;
   IOInterruptEventSource  *interruptSource;
-  bool                    debugEnabled = false;
 
   //
   // HID structures.

@@ -27,13 +27,10 @@
 //
 // Debug logging function.
 //
-inline void logPrint(const char *className, const char *funcName, bool hasChannelId, UInt32 channelId, const char *format, ...) {
+inline void logPrint(const char *className, const char *funcName, bool hasChannelId, UInt32 channelId, const char *format, va_list va) {
   char tmp[256];
   tmp[0] = '\0';
-  va_list va;
-  va_start(va, format);
   vsnprintf(tmp, sizeof (tmp), format, va);
-  va_end(va);
   
   if (hasChannelId) {
     IOLog("%s(%u)::%s(): %s\n", className, (unsigned int) channelId, funcName, tmp);
@@ -42,8 +39,85 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
   }
 }
 
-#define HVDBGLOG_PRINT(className, channelId, str, ...) logPrint(className, __FUNCTION__, channelId, str, ## __VA_ARGS__)
-#define HVSYSLOG_PRINT(className, channelId, str, ...) logPrint(className, __FUNCTION__, channelId, str, ## __VA_ARGS__)
+//
+// Log functions for normal modules.
+//
+#define HVDeclareLogFunctions() \
+  private: \
+  bool debugEnabled = false; \
+  inline void HVDBGLOG_PRINT(const char *func, const char *str, ...) const { \
+    if (this->debugEnabled) { \
+      va_list args; \
+      va_start(args, str); \
+      logPrint(this->getMetaClass()->getClassName(), func, false, 0, str, args); \
+    } \
+  } \
+    \
+  inline void HVSYSLOG_PRINT(const char *func, const char *str, ...) const { \
+    va_list args; \
+    va_start(args, str); \
+    logPrint(this->getMetaClass()->getClassName(), func, false, 0, str, args); \
+  } \
+  protected:
+
+//
+// Log functions for VMBus child modules.
+//
+#define HVDeclareLogFunctionsVMBusChild() \
+  private: \
+  bool debugEnabled = false; \
+  inline void HVDBGLOG_PRINT(const char *func, const char *str, ...) const { \
+    if (this->debugEnabled) { \
+      va_list args; \
+      va_start(args, str); \
+      logPrint(this->getMetaClass()->getClassName(), func, true, hvDevice->getChannelId(), str, args); \
+    } \
+  } \
+    \
+  inline void HVSYSLOG_PRINT(const char *func, const char *str, ...) const { \
+    va_list args; \
+    va_start(args, str); \
+    logPrint(this->getMetaClass()->getClassName(), func, true, hvDevice->getChannelId(), str, args); \
+  } \
+  protected:
+
+//
+// Log functions for the VMBus device nub module.
+//
+#define HVDeclareLogFunctionsVMBusDeviceNub() \
+  private: \
+  bool debugEnabled = false; \
+  bool debugPackets = false; \
+  inline void HVDBGLOG_PRINT(const char *func, const char *str, ...) const { \
+    if (this->debugEnabled) { \
+      va_list args; \
+      va_start(args, str); \
+      logPrint(this->getMetaClass()->getClassName(), func, true, this->channelId, str, args); \
+    } \
+  } \
+    \
+  inline void HVSYSLOG_PRINT(const char *func, const char *str, ...) const { \
+    va_list args; \
+    va_start(args, str); \
+    logPrint(this->getMetaClass()->getClassName(), func, true, this->channelId, str, args); \
+  } \
+    \
+  inline void HVMSGLOG_PRINT(const char *func, const char *str, ...) const { \
+    if (this->debugPackets) { \
+      va_list args; \
+      va_start(args, str); \
+      logPrint(this->getMetaClass()->getClassName(), func, true, this->channelId, str, args); \
+    } \
+  } \
+  protected:
+
+//
+// Common logging macros to inject function name.
+//
+#define HVDBGLOG(str, ...) HVDBGLOG_PRINT(__FUNCTION__, str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...) HVSYSLOG_PRINT(__FUNCTION__, str, ## __VA_ARGS__)
+#define HVMSGLOG(str, ...) HVMSGLOG_PRINT(__FUNCTION__, str, ## __VA_ARGS__)
+
 #else
 
 //
@@ -64,8 +138,53 @@ inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId,
   }
 }
 
-#define HVDBGLOG_PRINT(className, channelId, str, ...) {}
-#define HVSYSLOG_PRINT(className, channelId, str, ...) logPrint(className, channelId, str, ## __VA_ARGS__)
+//
+// Log functions for normal modules.
+//
+#define HVDeclareLogFunctions() \
+  private: \
+  bool debugEnabled = false; \
+  inline void HVDBGLOG(const char *str, ...) const { } \
+    \
+  inline void HVSYSLOG(const char *str, ...) const { \
+    va_list args; \
+    va_start(args, str); \
+    logPrint(this->getMetaClass()->getClassName(), false, 0, str, args); \
+  } \
+  protected:
+
+//
+// Log functions for VMBus child modules.
+//
+#define HVDeclareLogFunctionsVMBusChild() \
+  private: \
+  bool debugEnabled = false; \
+  inline void HVDBGLOG(const char *str, ...) const { } \
+    \
+  inline void HVSYSLOG(const char *str, ...) const { \
+    va_list args; \
+    va_start(args, str); \
+    logPrint(this->getMetaClass()->getClassName(), true, hvDevice->getChannelId(), str, args); \
+  } \
+  protected:
+
+//
+// Log functions for the VMBus device nub module.
+//
+#define HVDeclareLogFunctionsVMBusDeviceNub() \
+  private: \
+  bool debugEnabled = false; \
+  bool debugPackets = false; \
+  inline void HVDBGLOG(const char *str, ...) const { } \
+    \
+  inline void HVSYSLOG(const char *str, ...) const { \
+    va_list args; \
+    va_start(args, str); \
+    logPrint(this->getMetaClass()->getClassName(), true, this->channelId, str, args); \
+  } \
+    \
+  inline void HVMSGLOG(const char *str, ...) const { } \
+  protected:
 #endif
 
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_12_0

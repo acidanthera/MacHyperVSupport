@@ -10,10 +10,6 @@
 
 #include "AppleACPIRange.hpp"
 
-#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVModuleDevice", false, 0, str, ## __VA_ARGS__)
-#define HVDBGLOG(str, ...) \
-  if (this->debugEnabled) HVDBGLOG_PRINT("HyperVModuleDevice", false, 0, str, ## __VA_ARGS__)
-
 OSDefineMetaClassAndStructors(HyperVModuleDevice, super);
 
 bool HyperVModuleDevice::start(IOService *provider) {

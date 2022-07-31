@@ -13,17 +13,13 @@
 
 #include <IOKit/pci/IOPCIBridge.h>
 
-#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVGraphics", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
-#define HVDBGLOG(str, ...) \
-  if (this->debugEnabled) HVDBGLOG_PRINT("HyperVGraphics", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
-
 class HyperVGraphics : public HV_PCIBRIDGE_CLASS {
   OSDeclareDefaultStructors(HyperVGraphics);
+  HVDeclareLogFunctionsVMBusChild();
   typedef HV_PCIBRIDGE_CLASS super;
   
 private:
   HyperVVMBusDevice *hvDevice;
-  bool              debugEnabled = false;
   IOSimpleLock      *pciLock;
   UInt8             fakePCIDeviceSpace[256];
   PE_Video          consoleInfo;

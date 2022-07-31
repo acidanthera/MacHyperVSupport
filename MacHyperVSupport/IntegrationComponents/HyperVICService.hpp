@@ -18,6 +18,7 @@
 
 class HyperVICService : public IOService {
   OSDeclareDefaultStructors(HyperVICService);
+  HVDeclareLogFunctionsVMBusChild();
   typedef IOService super;
 
 private:
@@ -26,7 +27,6 @@ private:
   
 protected:
   HyperVVMBusDevice *hvDevice;
-  bool              debugEnabled = false;
   
   virtual bool processMessage() = 0;
   

@@ -6,7 +6,6 @@
 //
 
 #include "HyperVVMBusDevice.hpp"
-#include "HyperVVMBusDeviceInternal.hpp"
 
 OSDefineMetaClassAndStructors(HyperVVMBusDevice, super);
 
@@ -171,7 +170,7 @@ IOReturn HyperVVMBusDevice::readInbandCompletionPacket(void *buffer, UInt32 buff
                                            &pktHeader, &pktHeaderSize, buffer, &bufferLength);
   if (status == kIOReturnSuccess) {
     if (pktHeader.type != kVMBusPacketTypeDataInband && pktHeader.type != kVMBusPacketTypeCompletion) {
-      MSGDBG("INBAND COMP attempted to read non-inband or non-completion packet");
+      HVMSGLOG("INBAND COMP attempted to read non-inband or non-completion packet");
       return kIOReturnUnsupported;
     }
     
@@ -226,9 +225,9 @@ IOReturn HyperVVMBusDevice::writeGPADirectSinglePagePacket(void *buffer, UInt32 
     pagePacket.ranges[i].pfn    = pageBuffers[i].pfn;
   }
   
-  MSGDBG("SP Packet type %u, flags %u, trans %llu, header length %u, total length %u, page count %u",
-         pagePacket.header.type, pagePacket.header.flags, pagePacket.header.transactionId,
-         pagePacket.header.headerLength, pagePacket.header.totalLength, pageBufferCount);
+  HVMSGLOG("SP Packet type %u, flags %u, trans %llu, header length %u, total length %u, page count %u",
+           pagePacket.header.type, pagePacket.header.flags, pagePacket.header.transactionId,
+           pagePacket.header.headerLength, pagePacket.header.totalLength, pageBufferCount);
   
   HyperVVMBusDeviceRequest req;
   if (responseBuffer != NULL) {
@@ -272,9 +271,9 @@ IOReturn HyperVVMBusDevice::writeGPADirectMultiPagePacket(void *buffer, UInt32 b
   pagePacket->reserved              = 0;
   pagePacket->rangeCount            = 1;
   
-  MSGDBG("MP Packet type %u, flags %u, trans %llu, header length %u, total length %u",
-         pagePacket->header.type, pagePacket->header.flags, pagePacket->header.transactionId,
-         pagePacket->header.headerLength, pagePacket->header.totalLength);
+  HVMSGLOG("MP Packet type %u, flags %u, trans %llu, header length %u, total length %u",
+           pagePacket->header.type, pagePacket->header.flags, pagePacket->header.transactionId,
+           pagePacket->header.headerLength, pagePacket->header.totalLength);
   
   HyperVVMBusDeviceRequest req;
   if (responseBuffer != NULL) {
@@ -310,7 +309,7 @@ bool HyperVVMBusDevice::getPendingTransaction(UInt64 transactionId, void **buffe
   HyperVVMBusDeviceRequest *current = vmbusRequests;
   while (current != NULL) {
     if (current->transactionId == transactionId) {
-      MSGDBG("Found transaction %u", transactionId);
+      HVMSGLOG("Found transaction %u", transactionId);
 
       *buffer       = current->responseData;
       *bufferLength = current->responseDataLength;
@@ -331,7 +330,7 @@ void HyperVVMBusDevice::wakeTransaction(UInt64 transactionId) {
   HyperVVMBusDeviceRequest *previous = NULL;
   while (current != NULL) {
     if (current->transactionId == transactionId) {
-      MSGDBG("Waking transaction %u", transactionId);
+      HVMSGLOG("Waking transaction %u", transactionId);
 
       //
       // Remove from linked list.

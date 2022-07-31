@@ -32,6 +32,7 @@ typedef struct HyperVVMBusDeviceRequest {
 
 class HyperVVMBusDevice : public IOService {
   OSDeclareDefaultStructors(HyperVVMBusDevice);
+  HVDeclareLogFunctionsVMBusDeviceNub();
   typedef IOService super;
   
 private:
@@ -56,8 +57,6 @@ private:
   IOLock                        *vmbusTransLock;
   
   HyperVVMBusDeviceRequest      threadZeroRequest;
-  
-  bool                    debugPackets = false;
 
   bool setupCommandGate();
   void teardownCommandGate();

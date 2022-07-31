@@ -21,10 +21,6 @@ extern "C" {
 #include <sys/kpi_mbuf.h>
 }
 
-#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVNetwork", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
-#define HVDBGLOG(str, ...) \
-  if (this->debugEnabled) HVDBGLOG_PRINT("HyperVNetwork", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
-
 #define MBit 1000000
 
 #define kHyperVNetworkMaximumTransId  0xFFFFFFFF
@@ -44,6 +40,7 @@ typedef struct HyperVNetworkRNDISRequest {
 
 class HyperVNetwork : public IOEthernetController {
   OSDeclareDefaultStructors(HyperVNetwork);
+  HVDeclareLogFunctionsVMBusChild();
   typedef IOEthernetController super;
 
 private:
@@ -52,7 +49,6 @@ private:
   //
   HyperVVMBusDevice       *hvDevice;
   IOInterruptEventSource  *interruptSource;
-  bool                    debugEnabled = false;
   
   bool                          isEnabled = false;
   

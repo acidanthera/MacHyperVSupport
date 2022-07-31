@@ -69,11 +69,10 @@ typedef struct {
 
 class HyperVVMBusController : public IOInterruptController {
   OSDeclareDefaultStructors(HyperVVMBusController);
+  HVDeclareLogFunctions();
   typedef IOInterruptController super;
   
 private:
-  bool debugEnabled = false;
-  
   UInt32 hvMaxLeaf;
   UInt32 hvFeatures;
   UInt32 hvPmFeatures;

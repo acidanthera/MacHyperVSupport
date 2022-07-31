@@ -15,10 +15,10 @@
 
 class HyperVModuleDevice : public IOService {
   OSDeclareDefaultStructors(HyperVModuleDevice);
+  HVDeclareLogFunctions();
   typedef IOService super;
   
 private:
-  bool debugEnabled = false;
   IORangeAllocator *rangeAllocatorLow;
   IORangeAllocator *rangeAllocatorHigh;
   

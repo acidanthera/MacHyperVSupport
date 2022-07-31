@@ -15,11 +15,9 @@
 
 #include "HyperVModuleDevice.hpp"
 
-#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVPCIBridge", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
-#define HVDBGLOG(str, ...) HVDBGLOG_PRINT("HyperVPCIBridge", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
-
 class HyperVPCIBridge : public HV_PCIBRIDGE_CLASS {
   OSDeclareDefaultStructors(HyperVPCIBridge);
+  HVDeclareLogFunctionsVMBusChild();
   typedef HV_PCIBRIDGE_CLASS super;
   
 private:
@@ -28,7 +26,6 @@ private:
   //
   HyperVVMBusDevice       *hvDevice;
   IOInterruptEventSource  *interruptSource;
-  bool                    debugEnabled = false;
   IOSimpleLock      *pciLock;
   
   HyperVPCIBridgeProtocolVersion  currentPciVersion;
