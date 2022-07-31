@@ -50,6 +50,7 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
       va_list args; \
       va_start(args, str); \
       logPrint(this->getMetaClass()->getClassName(), func, false, 0, str, args); \
+      va_end(args); \
     } \
   } \
     \
@@ -57,6 +58,7 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
     va_list args; \
     va_start(args, str); \
     logPrint(this->getMetaClass()->getClassName(), func, false, 0, str, args); \
+    va_end(args); \
   } \
   protected:
 
@@ -71,6 +73,7 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
       va_list args; \
       va_start(args, str); \
       logPrint(this->getMetaClass()->getClassName(), func, true, hvDevice->getChannelId(), str, args); \
+      va_end(args); \
     } \
   } \
     \
@@ -78,6 +81,7 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
     va_list args; \
     va_start(args, str); \
     logPrint(this->getMetaClass()->getClassName(), func, true, hvDevice->getChannelId(), str, args); \
+    va_end(args); \
   } \
   protected:
 
@@ -93,6 +97,7 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
       va_list args; \
       va_start(args, str); \
       logPrint(this->getMetaClass()->getClassName(), func, true, this->channelId, str, args); \
+      va_end(args); \
     } \
   } \
     \
@@ -100,6 +105,7 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
     va_list args; \
     va_start(args, str); \
     logPrint(this->getMetaClass()->getClassName(), func, true, this->channelId, str, args); \
+    va_end(args); \
   } \
     \
   inline void HVMSGLOG_PRINT(const char *func, const char *str, ...) const { \
@@ -107,6 +113,7 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
       va_list args; \
       va_start(args, str); \
       logPrint(this->getMetaClass()->getClassName(), func, true, this->channelId, str, args); \
+      va_end(args); \
     } \
   } \
   protected:
@@ -150,6 +157,7 @@ inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId,
     va_list args; \
     va_start(args, str); \
     logPrint(this->getMetaClass()->getClassName(), false, 0, str, args); \
+    va_end(args); \
   } \
   protected:
 
@@ -165,6 +173,7 @@ inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId,
     va_list args; \
     va_start(args, str); \
     logPrint(this->getMetaClass()->getClassName(), true, hvDevice->getChannelId(), str, args); \
+    va_end(args); \
   } \
   protected:
 
@@ -181,6 +190,7 @@ inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId,
     va_list args; \
     va_start(args, str); \
     logPrint(this->getMetaClass()->getClassName(), true, this->channelId, str, args); \
+    va_end(args); \
   } \
     \
   inline void HVMSGLOG(const char *str, ...) const { } \
