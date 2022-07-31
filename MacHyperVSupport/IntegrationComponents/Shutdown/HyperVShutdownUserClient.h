@@ -18,7 +18,6 @@ typedef enum : UInt32 {
 typedef struct {
   mach_msg_header_t               header;
   HyperVShutdownNotificationType  type;
-  io_user_reference_t             ref;
   
 #ifndef KERNEL
   mach_msg_trailer_t              trailer;

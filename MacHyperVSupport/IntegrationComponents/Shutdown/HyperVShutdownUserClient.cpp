@@ -74,7 +74,7 @@ IOReturn HyperVShutdownUserClient::registerNotificationPort(mach_port_t port, UI
     return kIOReturnNotReady;
   }
   
-  HVDBGLOG("Registering notification port %X type %X", port, type);
+  HVDBGLOG("Registering notification port 0x%p type 0x%X", port, type);
 
   isPortRegistered                        = true;
   notificationMsg.header.msgh_bits        = MACH_MSGH_BITS(MACH_MSG_TYPE_COPY_SEND, 0);
@@ -84,7 +84,6 @@ IOReturn HyperVShutdownUserClient::registerNotificationPort(mach_port_t port, UI
   notificationMsg.header.msgh_reserved    = 0;
   notificationMsg.header.msgh_id          = 0;
   notificationMsg.type                    = kHyperVShutdownNotificationTypePerformShutdown;
-  notificationMsg.ref                     = refCon;
   
   return kIOReturnSuccess;
 }
@@ -95,5 +94,5 @@ IOReturn HyperVShutdownUserClient::performShutdown() {
   }
   
   HVDBGLOG("Sending notification for shutdown");
-  return mach_msg_send_from_kernel_proper(&notificationMsg.header, notificationMsg.header.msgh_size);
+  return mach_msg_send_from_kernel(&notificationMsg.header, notificationMsg.header.msgh_size);
 }

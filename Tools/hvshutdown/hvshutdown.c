@@ -66,7 +66,7 @@ static mach_port_t hvShutdownSetupPort(io_connect_t connection) {
     mach_port_deallocate(mach_task_self(), port);
     return MACH_PORT_NULL;
   }
-  HVDBGLOG(stdout, "Port 0x%llX created for shutdown notifications", port);
+  HVDBGLOG(stdout, "Port 0x%p created for shutdown notifications", port);
   
   //
   // Setup notification for shutdown requests.
@@ -77,7 +77,7 @@ static mach_port_t hvShutdownSetupPort(io_connect_t connection) {
     mach_port_deallocate(mach_task_self(), port);
     return MACH_PORT_NULL;
   }
-  HVDBGLOG(stdout, "Port 0x%llX setup for shutdown notfications", port);
+  HVDBGLOG(stdout, "Port 0x%p setup for shutdown notfications", port);
   
   return port;
 }
