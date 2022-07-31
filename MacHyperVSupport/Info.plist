@@ -165,6 +165,8 @@
 			</dict>
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
+			<key>IOUserClientClass</key>
+			<string>HyperVShutdownUserClient</string>
 		</dict>
 		<key>HyperVStorage</key>
 		<dict>

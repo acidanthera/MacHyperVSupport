@@ -10,10 +10,6 @@
 
 #include <Headers/kern_api.hpp>
 
-#define HVSYSLOG(str, ...) HVSYSLOG_PRINT("HyperVShutdown", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
-#define HVDBGLOG(str, ...) \
-  if (this->debugEnabled) HVDBGLOG_PRINT("HyperVShutdown", true, hvDevice->getChannelId(), str, ## __VA_ARGS__)
-
 OSDefineMetaClassAndStructors(HyperVShutdown, super);
 
 bool HyperVShutdown::start(IOService *provider) {
@@ -23,9 +19,28 @@ bool HyperVShutdown::start(IOService *provider) {
   
   debugEnabled = checkKernelArgument("-hvshutdbg");
   hvDevice->setDebugMessagePrinting(checkKernelArgument("-hvshutmsgdbg"));
-
+  registerService();
+  
   HVSYSLOG("Initialized Hyper-V Guest Shutdown");
   return true;
+}
+
+bool HyperVShutdown::open(IOService *forClient, IOOptionBits options, void *arg) {
+  if (userClientInstance != nullptr) {
+    return false;
+  }
+  
+  if (!super::open(forClient, options, arg)) {
+    return false;
+  }
+  
+  userClientInstance = forClient;
+  return true;
+}
+
+void HyperVShutdown::close(IOService *forClient, IOOptionBits options) {
+  userClientInstance = nullptr;
+  super::close(forClient, options);
 }
 
 bool HyperVShutdown::processMessage() {
@@ -72,8 +87,8 @@ bool HyperVShutdown::processMessage() {
   // Shutdown machine if requested. This should not return.
   //
   if (doShutdown) {
-    HVSYSLOG("Shutting down system");
-    HyperVPlatformProvider::getInstance()->shutdownSystem();
+    HVSYSLOG("Shutdown request received, notifying userspace");
+    messageClients(kHyperVShutdownMessageTypePerformShutdown);
   }
   return true;
 }
@@ -82,17 +97,19 @@ bool HyperVShutdown::handleShutdown(VMBusICMessageShutdownData *shutdownData) {
   HVDBGLOG("Shutdown request received: flags 0x%X, reason 0x%X", shutdownData->flags, shutdownData->reason);
 
   //
-  // Report back to Hyper-V if we can shutdown system.
+  // Send message to userclients to see if we can shutdown.
   //
-  bool result = false;
-  HyperVPlatformProvider *provider = HyperVPlatformProvider::getInstance();
-  if (provider != NULL) {
-    result = provider->canShutdownSystem();
+  bool result       = false;
+  bool clientResult = false;
+  if (userClientInstance != nullptr) {
+    IOReturn status = messageClient(kHyperVShutdownMessageTypeShutdownRequested, userClientInstance, &clientResult, sizeof (clientResult));
+    result = (status == kIOReturnSuccess) && clientResult;
+    HVDBGLOG("Response from client: status 0x%X result %u", status, result);
   }
 
   shutdownData->header.status = result ? kHyperVStatusSuccess : kHyperVStatusFail;
   if (!result) {
-    HVSYSLOG("Platform does not support shutdown");
+    HVSYSLOG("Unable to request shutdown (shutdown daemon is not running)");
   }
   return result;
 }
