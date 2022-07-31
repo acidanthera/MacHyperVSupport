@@ -213,6 +213,7 @@
 		418F84412648BA88003F8520 /* HyperVStorageRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVStorageRegs.hpp; sourceTree = "<group>"; };
 		419B88C1263F0169005A9977 /* Hypercalls.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Hypercalls.cpp; sourceTree = "<group>"; };
 		419B88C4263F1F85005A9977 /* VMBus.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = VMBus.cpp; sourceTree = "<group>"; };
+		41B371732896CD5F00D348B5 /* hvdebug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = hvdebug.h; sourceTree = "<group>"; };
 		41B41BDB26C74B4C00926A0D /* HyperVNetwork.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVNetwork.cpp; sourceTree = "<group>"; };
 		41B41BDC26C74B4C00926A0D /* HyperVNetwork.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVNetwork.hpp; sourceTree = "<group>"; };
 		41B41BE126C80DEC00926A0D /* HyperVNetworkRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVNetworkRegs.hpp; sourceTree = "<group>"; };
@@ -320,6 +321,7 @@
 		417C978C289217CA00CFE0B2 /* Tools */ = {
 			isa = PBXGroup;
 			children = (
+				41B371732896CD5F00D348B5 /* hvdebug.h */,
 				417C97932892184C00CFE0B2 /* hvshutdown */,
 			);
 			path = Tools;

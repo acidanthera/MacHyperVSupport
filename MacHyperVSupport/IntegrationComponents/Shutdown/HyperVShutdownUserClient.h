@@ -16,9 +16,13 @@ typedef enum : UInt32 {
 } HyperVShutdownNotificationType;
 
 typedef struct {
-  mach_msg_header_t header;
-  HyperVShutdownNotificationType type;
-  io_user_reference_t ref;
+  mach_msg_header_t               header;
+  HyperVShutdownNotificationType  type;
+  io_user_reference_t             ref;
+  
+#ifndef KERNEL
+  mach_msg_trailer_t              trailer;
+#endif
 } HyperVShutdownNotificationMessage;
 
 #endif

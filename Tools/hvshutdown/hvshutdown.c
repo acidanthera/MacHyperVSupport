@@ -1,104 +1,158 @@
 //
-//  main.c
-//  hvshutdown
+//  hvshutdown.c
+//  Hyper-V guest shutdown daemon
 //
-//  Created by John Davis on 7/27/22.
+//  Copyright © 2022 Goldfish64. All rights reserved.
 //
-
-#include <stdio.h>
-#include <IOKit/IOKitLib.h>
 
 #include <mach/mach_port.h>
+#include <IOKit/IOKitLib.h>
 
+#include "hvdebug.h"
 #include "HyperVShutdownUserClient.h"
 
-io_connect_t hvshutdown_connect(void) {
-  io_connect_t con = 0;
-  CFMutableDictionaryRef dict = IOServiceMatching("HyperVShutdown");
+#define HVSHUTDOWN_KERNEL_SERVICE   "HyperVShutdown"
+#define SHUTDOWN_BIN_PATH           "/sbin/shutdown"
+
+HVDeclareLogFunctionsUser("hvshutdown");
+
+static io_connect_t hvShutdownConnect(void) {
+  io_connect_t  connection = 0;
+  io_iterator_t iterator = 0;
+  kern_return_t result;
+  
+  //
+  // Locate HyperVShutdown service and open connection.
+  //
+  CFMutableDictionaryRef dict = IOServiceMatching(HVSHUTDOWN_KERNEL_SERVICE);
   if (dict) {
-    io_iterator_t iterator = 0;
-    kern_return_t result = IOServiceGetMatchingServices(kIOMasterPortDefault, dict, &iterator);
+    result = IOServiceGetMatchingServices(kIOMasterPortDefault, dict, &iterator);
     if (result == kIOReturnSuccess && IOIteratorIsValid(iterator)) {
       io_object_t device = IOIteratorNext(iterator);
       if (device) {
-        result = IOServiceOpen(device, mach_task_self(), 0, &con);
+        result = IOServiceOpen(device, mach_task_self(), 0, &connection);
         if (result != kIOReturnSuccess)
-          fprintf(stderr, "Unable to open AppleRTC1 service %08X\n", result);
+          HVSYSLOG(stderr, "Failure while opening %s service: 0x%X\n", HVSHUTDOWN_KERNEL_SERVICE, result);
         IOObjectRelease(device);
       } else {
-        fprintf(stderr, "Unable to locate AppleRTC device\n");
+        HVSYSLOG(stderr, "Unable to locate %s service: 0x%X\n", HVSHUTDOWN_KERNEL_SERVICE, result);
       }
       IOObjectRelease(iterator);
     } else {
-      fprintf(stderr, "Unable to get AppleRTC2 service %08X\n", result);
+      HVSYSLOG(stderr, "Unable to locate %s service: 0x%X\n", HVSHUTDOWN_KERNEL_SERVICE, result);
     }
   } else {
-    fprintf(stderr, "Unable to create AppleRTC matching dict\n");
+    HVSYSLOG(stderr, "Unable to create %s service matching dictionary\n", HVSHUTDOWN_KERNEL_SERVICE);
   }
   
-  return con;
+  return connection;
 }
 
-static void
-waitForNotification(mach_port_t port)
-{
-    kern_return_t   kr;
+static mach_port_t hvShutdownSetupPort(io_connect_t connection) {
+  kern_return_t result;
+  mach_port_t   port = MACH_PORT_NULL;
   
+  //
+  // Create port used for shutdown request notifications.
+  //
+  result = mach_port_allocate(mach_task_self(), MACH_PORT_RIGHT_RECEIVE, &port);
+  if (result != kIOReturnSuccess) {
+    HVSYSLOG(stderr, "Failed to allocate notification port: 0x%X", result);
+    return MACH_PORT_NULL;
+  }
+  result = mach_port_insert_right(mach_task_self(), port, port, MACH_MSG_TYPE_MAKE_SEND);
+  if (result != kIOReturnSuccess) {
+    HVSYSLOG(stderr, "Failed to insert notification port: 0x%X", result);
+    mach_port_deallocate(mach_task_self(), port);
+    return MACH_PORT_NULL;
+  }
+  HVDBGLOG(stdout, "Port 0x%llX created for shutdown notifications", port);
+  
+  //
+  // Setup notification for shutdown requests.
+  //
+  result = IOConnectSetNotificationPort(connection, kHyperVShutdownNotificationTypePerformShutdown, port, 0);
+  if (result != kIOReturnSuccess) {
+    HVSYSLOG(stderr, "Failed to set notification port: 0x%X", result);
+    mach_port_deallocate(mach_task_self(), port);
+    return MACH_PORT_NULL;
+  }
+  HVDBGLOG(stdout, "Port 0x%llX setup for shutdown notfications", port);
+  
+  return port;
+}
+
+static void hvShutdownTeardown(io_connect_t connection, mach_port_t port) {
+  //
+  // Cleanup connection.
+  //
+  IOServiceClose(connection);
+  mach_port_deallocate(mach_task_self(), port);
+}
+
+static kern_return_t hvShutdownWaitForNotification(mach_port_t port) {
+  kern_return_t                     result;
   HyperVShutdownNotificationMessage msg;
-
-    // Now wait for a notification.
-    //
-    kr = mach_msg(&msg.header, MACH_RCV_MSG,
-                  0, sizeof(msg), port, 0, MACH_PORT_NULL);
-
-   // if (kr != KERN_SUCCESS)
-        printf("Error: mach_msg %x\n", kr);
-//  else
-//      printf("\n\n[message id=%x]\n", msg.hdr.h.msgh_id);
+  
+  //
+  // Wait for notification message to come in on port.
+  //
+  result = mach_msg(&msg.header, MACH_RCV_MSG, 0, sizeof (msg), port, 0, MACH_PORT_NULL);
+  if (result != kIOReturnSuccess) {
+    HVSYSLOG(stderr, "Failure while waiting for notification: 0x%X", result);
+  }
+  return result;
 }
 
 int main(int argc, const char * argv[]) {
-  kern_return_t  kernResult;
-  io_service_t  service;
-  io_iterator_t   iterator;
+  kern_return_t result;
+  io_connect_t  hvConnection;
+  mach_port_t   shutdownPort;
   
-  io_connect_t con = hvshutdown_connect();
+  //
+  // Connect to HyperVShutdown.
+  //
+  hvConnection = hvShutdownConnect();
+  if (!hvConnection) {
+    return -1;
+  }
+  HVDBGLOG(stdout, "Connected to %s", HVSHUTDOWN_KERNEL_SERVICE);
   
-  mach_port_t p = MACH_PORT_NULL;
-  mach_port_allocate(mach_task_self(), MACH_PORT_RIGHT_RECEIVE, &p);
-  mach_port_insert_right(mach_task_self(), p, p, MACH_MSG_TYPE_MAKE_SEND);
+  //
+  // Setup notification and wait for port to be triggered.
+  // The port being triggered indicates a shutdown request.
+  //
+  shutdownPort = hvShutdownSetupPort(hvConnection);
+  if (shutdownPort == MACH_PORT_NULL) {
+    hvShutdownTeardown(hvConnection, shutdownPort);
+    return -1;
+  }
+  result = hvShutdownWaitForNotification(shutdownPort);
+  if (result != kIOReturnSuccess) {
+    hvShutdownTeardown(hvConnection, shutdownPort);
+    return -1;
+  }
   
+  HVSYSLOG(stdout, "Shutdown request received, performing shutdown");
+  hvShutdownTeardown(hvConnection, shutdownPort);
   
-  kern_return_t res = IOConnectSetNotificationPort (con, kHyperVShutdownNotificationTypePerformShutdown, p, 0);
-  printf("Hello, World! %u %X\n", con, res);
-  waitForNotification (p);
-  
-  
-  pid_t p2;
-      int status;
-  
-  p2 = fork();
-      if (p2 == 0) {
-        
-  const char *shutdownArgs[] = {
-    "/sbin/shutdown",
+  //
+  // Shutdown has been requested, invoke /sbin/shutdown.
+  //
+  char *shutdownArgs[] = {
+    SHUTDOWN_BIN_PATH,
     "-h",
     "now",
     NULL
   };
-  int ret = execv ("/sbin/shutdown", shutdownArgs);
-  if(ret == -1) {
-    printf("error %u\n", ret);
-          }
-      }
   
-  do {
-    p2 = wait(&status);
-      } while (p2 == -1 && errno == EINTR);
-  
-  //while (true);
-  
-  // insert code here...
+  //
+  // This should not return.
+  //
+  int ret = execv(shutdownArgs[0], shutdownArgs);
+  if (ret == -1) {
+    HVSYSLOG(stderr, "Failed to execute %s", shutdownArgs[0]);
+  }
   
   return 0;
 }
