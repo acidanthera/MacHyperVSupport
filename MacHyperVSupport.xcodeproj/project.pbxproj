@@ -166,6 +166,30 @@
 		41F9B900284BA20700E0DCB2 /* HyperVModuleDevice.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F9B8FE284BA20700E0DCB2 /* HyperVModuleDevice.hpp */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		41AE1D0428974D8B001A7B42 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41BE4103263EDE370018C52B;
+			remoteInfo = MacHyperVSupport;
+		};
+		41AE1D0628974D8B001A7B42 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41BF45D6288CDF1200813670;
+			remoteInfo = MacHyperVSupportMonterey;
+		};
+		41AE1D0828974D8B001A7B42 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 417C97912892184C00CFE0B2;
+			remoteInfo = hvshutdown;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXCopyFilesBuildPhase section */
 		417C97902892184C00CFE0B2 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -213,6 +237,7 @@
 		418F84412648BA88003F8520 /* HyperVStorageRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVStorageRegs.hpp; sourceTree = "<group>"; };
 		419B88C1263F0169005A9977 /* Hypercalls.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Hypercalls.cpp; sourceTree = "<group>"; };
 		419B88C4263F1F85005A9977 /* VMBus.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = VMBus.cpp; sourceTree = "<group>"; };
+		41AE1CFF28974C7E001A7B42 /* package.tool */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = package.tool; sourceTree = "<group>"; };
 		41B371732896CD5F00D348B5 /* hvdebug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = hvdebug.h; sourceTree = "<group>"; };
 		41B41BDB26C74B4C00926A0D /* HyperVNetwork.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVNetwork.cpp; sourceTree = "<group>"; };
 		41B41BDC26C74B4C00926A0D /* HyperVNetwork.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVNetwork.hpp; sourceTree = "<group>"; };
@@ -431,6 +456,7 @@
 			children = (
 				41BE410B263EDE380018C52B /* Info.plist */,
 				41F2E4272665B4C100CE26CE /* kern_start.cpp */,
+				41AE1CFF28974C7E001A7B42 /* package.tool */,
 				41F2E4392666E62F00CE26CE /* Graphics */,
 				418F051F26483C3C00E1D14C /* IntegrationComponents */,
 				418219632648605D00619C15 /* Keyboard */,
@@ -719,6 +745,26 @@
 		};
 /* End PBXHeadersBuildPhase section */
 
+/* Begin PBXLegacyTarget section */
+		41AE1D0028974D81001A7B42 /* Package */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = 41AE1D0128974D81001A7B42 /* Build configuration list for PBXLegacyTarget "Package" */;
+			buildPhases = (
+			);
+			buildToolPath = "${SRCROOT}/MacHyperVSupport/package.tool";
+			buildWorkingDirectory = "";
+			dependencies = (
+				41AE1D0528974D8B001A7B42 /* PBXTargetDependency */,
+				41AE1D0728974D8B001A7B42 /* PBXTargetDependency */,
+				41AE1D0928974D8B001A7B42 /* PBXTargetDependency */,
+			);
+			name = Package;
+			passBuildSettingsInEnvironment = 1;
+			productName = Package;
+		};
+/* End PBXLegacyTarget section */
+
 /* Begin PBXNativeTarget section */
 		417C97912892184C00CFE0B2 /* hvshutdown */ = {
 			isa = PBXNativeTarget;
@@ -784,6 +830,9 @@
 					417C97912892184C00CFE0B2 = {
 						CreatedOnToolsVersion = 13.4.1;
 					};
+					41AE1D0028974D81001A7B42 = {
+						CreatedOnToolsVersion = 13.4.1;
+					};
 					41BE4103263EDE370018C52B = {
 						CreatedOnToolsVersion = 12.4;
 					};
@@ -802,6 +851,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				41AE1D0028974D81001A7B42 /* Package */,
 				41BE4103263EDE370018C52B /* MacHyperVSupport */,
 				41BF45D6288CDF1200813670 /* MacHyperVSupportMonterey */,
 				417C97912892184C00CFE0B2 /* hvshutdown */,
@@ -826,7 +876,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd \"${TARGET_BUILD_DIR}\"\n\nstrip -S \"${EXECUTABLE_PATH}\"\nif [ \"$CONFIGURATION\" == \"Release\" ]; then\n  strip -x -T \"${EXECUTABLE_PATH}\" &>/dev/null || strip -x \"${EXECUTABLE_PATH}\"\nfi\n\nif [ -z \"${OVERRIDE_PYTHON3}\" ]; then\n  # Use whatever is in PATH\n  OVERRIDE_PYTHON3=python3\nfi\n\nif [[ \"$ARCHS\" == *\"ACID32\"* ]]; then\n  \"${OVERRIDE_PYTHON3}\" ${SRCROOT}/clang32/fix-macho32 \"${EXECUTABLE_PATH}\" || exit 1\nfi\n";
+			shellScript = "cd \"${TARGET_BUILD_DIR}\"\n\nstrip -S \"${EXECUTABLE_PATH}\"\nif [ \"$CONFIGURATION\" == \"Release\" ]; then\n  strip -x -T \"${EXECUTABLE_PATH}\" &>/dev/null || strip -x \"${EXECUTABLE_PATH}\"\nfi\n";
 		};
 		41F2E38D265F154B00CE26CE /* Archive */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -844,7 +894,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd \"${TARGET_BUILD_DIR}\"\n\ndist=(\"$FULL_PRODUCT_NAME\")\ndist+=(\"MacHyperVSupportMonterey.kext\")\nif [ -d \"$DWARF_DSYM_FILE_NAME\" ]; then dist+=(\"$DWARF_DSYM_FILE_NAME\" \"MacHyperVSupportMonterey.kext.dSYM\"); fi\n\narchive=\"${PRODUCT_NAME}-${MODULE_VERSION}-$(echo $CONFIGURATION | tr /a-z/ /A-Z/).zip\"\nrm -rf *.zip\n\nstrip -S \"${EXECUTABLE_PATH}\"\nif [ \"$CONFIGURATION\" == \"Release\" ]; then\n  strip -x -T \"${EXECUTABLE_PATH}\" &>/dev/null || strip -x \"${EXECUTABLE_PATH}\"\nfi\n\nif [ -z \"${OVERRIDE_PYTHON3}\" ]; then\n  # Use whatever is in PATH\n  OVERRIDE_PYTHON3=python3\nfi\n\nif [[ \"$ARCHS\" == *\"ACID32\"* ]]; then\n  \"${OVERRIDE_PYTHON3}\" ${SRCROOT}/clang32/fix-macho32 \"${EXECUTABLE_PATH}\" || exit 1\nfi\n\nzip -qry -FS \"${archive}\" \"${dist[@]}\"\n";
+			shellScript = "cd \"${TARGET_BUILD_DIR}\"\n\nstrip -S \"${EXECUTABLE_PATH}\"\nif [ \"$CONFIGURATION\" == \"Release\" ]; then\n  strip -x -T \"${EXECUTABLE_PATH}\" &>/dev/null || strip -x \"${EXECUTABLE_PATH}\"\nfi\n\nif [ -z \"${OVERRIDE_PYTHON3}\" ]; then\n  # Use whatever is in PATH\n  OVERRIDE_PYTHON3=python3\nfi\n\nif [[ \"$ARCHS\" == *\"ACID32\"* ]]; then\n  \"${OVERRIDE_PYTHON3}\" ${SRCROOT}/clang32/fix-macho32 \"${EXECUTABLE_PATH}\" || exit 1\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -931,6 +981,24 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		41AE1D0528974D8B001A7B42 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41BE4103263EDE370018C52B /* MacHyperVSupport */;
+			targetProxy = 41AE1D0428974D8B001A7B42 /* PBXContainerItemProxy */;
+		};
+		41AE1D0728974D8B001A7B42 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41BF45D6288CDF1200813670 /* MacHyperVSupportMonterey */;
+			targetProxy = 41AE1D0628974D8B001A7B42 /* PBXContainerItemProxy */;
+		};
+		41AE1D0928974D8B001A7B42 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 417C97912892184C00CFE0B2 /* hvshutdown */;
+			targetProxy = 41AE1D0828974D8B001A7B42 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
 		417C97972892184C00CFE0B2 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -942,8 +1010,17 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
+				"OTHER_CFLAGS[arch=ACID32]" = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				"OTHER_LDFLAGS[arch=ACID32]" = (
+					"-target",
+					"i386-apple-macos10.4",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				VALID_ARCHS = x86_64;
 			};
 			name = Debug;
 		};
@@ -957,6 +1034,52 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				"OTHER_CFLAGS[arch=ACID32]" = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				"OTHER_LDFLAGS[arch=ACID32]" = (
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				VALID_ARCHS = x86_64;
+			};
+			name = Release;
+		};
+		41AE1D0228974D81001A7B42 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUGGING_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		41AE1D0328974D81001A7B42 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -1016,6 +1139,7 @@
 				KERNEL_EXTENSION_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/MacKernelSDK/Headers";
 				KERNEL_FRAMEWORK_HEADERS = "$(PROJECT_DIR)/MacKernelSDK/Headers";
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MODULE_VERSION = 0.9;
 				SDKROOT = macosx;
 				VALID_ARCHS = "x86_64 ACID32";
 			};
@@ -1072,6 +1196,7 @@
 				KERNEL_EXTENSION_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/MacKernelSDK/Headers";
 				KERNEL_FRAMEWORK_HEADERS = "$(PROJECT_DIR)/MacKernelSDK/Headers";
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MODULE_VERSION = 0.9;
 				SDKROOT = macosx;
 				VALID_ARCHS = "x86_64 ACID32";
 			};
@@ -1109,7 +1234,6 @@
 				MODULE_NAME = fish.goldfish64.MacHyperVSupport;
 				MODULE_START = "$(PRODUCT_NAME)_kern_start";
 				MODULE_STOP = "$(PRODUCT_NAME)_kern_stop";
-				MODULE_VERSION = 0.9;
 				OTHER_CFLAGS = (
 					"-mmmx",
 					"-msse",
@@ -1192,7 +1316,6 @@
 				MODULE_NAME = fish.goldfish64.MacHyperVSupport;
 				MODULE_START = "$(PRODUCT_NAME)_kern_start";
 				MODULE_STOP = "$(PRODUCT_NAME)_kern_stop";
-				MODULE_VERSION = 0.9;
 				OTHER_CFLAGS = (
 					"-mmmx",
 					"-msse",
@@ -1270,7 +1393,6 @@
 				MODULE_NAME = fish.goldfish64.MacHyperVSupport;
 				MODULE_START = "$(PRODUCT_NAME)_kern_start";
 				MODULE_STOP = "$(PRODUCT_NAME)_kern_stop";
-				MODULE_VERSION = 0.9;
 				OTHER_CFLAGS = (
 					"-mmmx",
 					"-msse",
@@ -1291,6 +1413,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = fish.goldfish64.MacHyperVSupport;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RUN_CLANG_STATIC_ANALYZER = YES;
+				VALID_ARCHS = x86_64;
 				WRAPPER_EXTENSION = kext;
 			};
 			name = Debug;
@@ -1323,7 +1446,6 @@
 				MODULE_NAME = fish.goldfish64.MacHyperVSupport;
 				MODULE_START = "$(PRODUCT_NAME)_kern_start";
 				MODULE_STOP = "$(PRODUCT_NAME)_kern_stop";
-				MODULE_VERSION = 0.9;
 				OTHER_CFLAGS = (
 					"-mmmx",
 					"-msse",
@@ -1345,6 +1467,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				STRIP_STYLE = "non-global";
+				VALID_ARCHS = x86_64;
 				WRAPPER_EXTENSION = kext;
 			};
 			name = Release;
@@ -1357,6 +1480,15 @@
 			buildConfigurations = (
 				417C97972892184C00CFE0B2 /* Debug */,
 				417C97982892184C00CFE0B2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		41AE1D0128974D81001A7B42 /* Build configuration list for PBXLegacyTarget "Package" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41AE1D0228974D81001A7B42 /* Debug */,
+				41AE1D0328974D81001A7B42 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
