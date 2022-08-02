@@ -18,11 +18,17 @@ bool HyperVShutdown::start(IOService *provider) {
   }
   
   debugEnabled = checkKernelArgument("-hvshutdbg");
+  setICDebug(debugEnabled);
   hvDevice->setDebugMessagePrinting(checkKernelArgument("-hvshutmsgdbg"));
   registerService();
   
-  HVSYSLOG("Initialized Hyper-V Guest Shutdown");
+  HVDBGLOG("Initialized Hyper-V Guest Shutdown");
   return true;
+}
+
+void HyperVShutdown::stop(IOService *provider) {
+  super::stop(provider);
+  HVDBGLOG("Stopped Hyper-V Guest Shutdown");
 }
 
 bool HyperVShutdown::open(IOService *forClient, IOOptionBits options, void *arg) {

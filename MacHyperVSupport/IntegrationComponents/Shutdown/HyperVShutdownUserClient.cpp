@@ -17,29 +17,56 @@ bool HyperVShutdownUserClient::start(IOService *provider) {
     HVSYSLOG("Provider is not HyperVShutdown, aborting");
     return false;
   }
+  hvShutdown->retain();
   
   if (!super::start(provider)) {
     return false;
   }
   
-  debugEnabled = true;// checkKernelArgument("-hvshutucdbg");
-  HVDBGLOG("Initialized Hyper-V Guest Shutdown user client");
+  // Should only be one user client active at a time.
+  if (hvShutdown->isOpen() || !hvShutdown->open(this)) {
+    super::stop(provider);
+    return false;
+  }
   
+  // Populate notification message info.
+  notificationMsg.header.msgh_bits        = MACH_MSGH_BITS(MACH_MSG_TYPE_COPY_SEND, 0);
+  notificationMsg.header.msgh_size        = sizeof (notificationMsg);
+  notificationMsg.header.msgh_remote_port = MACH_PORT_NULL;
+  notificationMsg.header.msgh_local_port  = MACH_PORT_NULL;
+  notificationMsg.header.msgh_reserved    = 0;
+  notificationMsg.header.msgh_id          = 0;
+  
+  debugEnabled = checkKernelArgument("-hvshutdbg");
+  HVDBGLOG("Initialized Hyper-V Guest Shutdown user client");
   return true;
+}
+
+void HyperVShutdownUserClient::stop(IOService *provider) {
+  releaseNotificationPort(notificationMsg.header.msgh_remote_port);
+  hvShutdown->close(this);
+  hvShutdown->release();
+  super::stop(provider);
+  HVDBGLOG("Stopped Hyper-V Guest Shutdown user client");
 }
 
 IOReturn HyperVShutdownUserClient::message(UInt32 type, IOService *provider, void *argument) {
   if (OSDynamicCast(HyperVShutdown, provider) == hvShutdown) {
     HVDBGLOG("Message from provider of type 0x%X received", type);
     switch (type) {
-      // Indicates to provider we are ready to shutdown.
+      // Indicates from provider we are ready to shutdown.
       case kHyperVShutdownMessageTypeShutdownRequested:
         *(static_cast<bool*>(argument)) = true;
         return kIOReturnSuccess;
         
       // Send notification to userspace client application.
       case kHyperVShutdownMessageTypePerformShutdown:
-        return performShutdown();
+        return notifyShutdown();
+        
+      case kIOMessageServiceIsTerminated:
+        notifyClosure();
+        hvShutdown->close(this);
+        break;
         
       default:
         break;
@@ -50,49 +77,30 @@ IOReturn HyperVShutdownUserClient::message(UInt32 type, IOService *provider, voi
 }
 
 IOReturn HyperVShutdownUserClient::clientClose() {
-  detach(hvShutdown);
-  HVDBGLOG("Hyper-V Guest Shutdown user client is closed");
+  HVDBGLOG("Hyper-V Guest Shutdown user client is closing");
+  terminate();
   return kIOReturnSuccess;
 }
 
 IOReturn HyperVShutdownUserClient::registerNotificationPort(mach_port_t port, UInt32 type, UInt32 refCon) {
-  if (type != kHyperVShutdownNotificationTypePerformShutdown) {
-    return kIOReturnBadArgument;
-  }
   if (hvShutdown == nullptr) {
     return kIOReturnNotReady;
   }
-  if (hvShutdown->isOpen()) {
-    return kIOReturnExclusiveAccess;
-  }
-  if (isPortRegistered) {
-    return kIOReturnPortExists;
-  }
+  releaseNotificationPort(port);
   
-  // Should only be one userclient active at a time.
-  if (!hvShutdown->open(this)) {
-    return kIOReturnNotReady;
-  }
-  
-  HVDBGLOG("Registering notification port 0x%p type 0x%X", port, type);
-
-  isPortRegistered                        = true;
-  notificationMsg.header.msgh_bits        = MACH_MSGH_BITS(MACH_MSG_TYPE_COPY_SEND, 0);
-  notificationMsg.header.msgh_size        = sizeof (notificationMsg);
+  HVDBGLOG("Registering notification port 0x%p", port);
   notificationMsg.header.msgh_remote_port = port;
-  notificationMsg.header.msgh_local_port  = MACH_PORT_NULL;
-  notificationMsg.header.msgh_reserved    = 0;
-  notificationMsg.header.msgh_id          = 0;
-  notificationMsg.type                    = kHyperVShutdownNotificationTypePerformShutdown;
-  
   return kIOReturnSuccess;
 }
 
-IOReturn HyperVShutdownUserClient::performShutdown() {
-  if (!isPortRegistered) {
-    return kIOReturnNotReady;
-  }
-  
+IOReturn HyperVShutdownUserClient::notifyShutdown() {
   HVDBGLOG("Sending notification for shutdown");
+  notificationMsg.type = kHyperVShutdownNotificationTypePerformShutdown;
+  return mach_msg_send_from_kernel(&notificationMsg.header, notificationMsg.header.msgh_size);
+}
+
+IOReturn HyperVShutdownUserClient::notifyClosure() {
+  HVDBGLOG("Sending notification for service closing");
+  notificationMsg.type = kHyperVShutdownNotificationTypeClosed;
   return mach_msg_send_from_kernel(&notificationMsg.header, notificationMsg.header.msgh_size);
 }

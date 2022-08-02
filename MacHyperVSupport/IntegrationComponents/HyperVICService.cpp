@@ -10,41 +10,79 @@
 OSDefineMetaClassAndAbstractStructors(HyperVICService, super);
 
 bool HyperVICService::start(IOService *provider) {
+  bool      result = false;
+  IOReturn  status;
+  
   if (!super::start(provider)) {
     return false;
   }
   
-  //
-  // Get parent VMBus device object.
-  //
-  hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
-  if (hvDevice == NULL) {
-    super::stop(provider);
-    return false;
+  do {
+    //
+    // Get parent VMBus device object.
+    //
+    hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
+    if (hvDevice == nullptr) {
+      HVSYSLOG("Unable to get parent VMBus device nub");
+      break;
+    }
+    hvDevice->retain();
+    
+    //
+    // Configure interrupt.
+    //
+    interruptSource = IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVICService::handleInterrupt), provider, 0);
+    if (interruptSource == nullptr) {
+      HVSYSLOG("Unable to initialize interrupt");
+      break;
+    }
+    
+    status = getWorkLoop()->addEventSource(interruptSource);
+    if (status != kIOReturnSuccess) {
+      HVSYSLOG("Unable to add interrupt event source: 0x%X", status);
+      break;
+    }
+    interruptSource->enable();
+    
+    //
+    // Configure and open the VMBus channel.
+    //
+    if (!hvDevice->openChannel(kHyperVICBufferSize, kHyperVICBufferSize)) {
+      HVSYSLOG("Unable to configure VMBus channel");
+      break;
+    }
+    
+    result = true;
+  } while (false);
+  
+  if (!result) {
+    if (interruptSource != nullptr) {
+      interruptSource->disable();
+      getWorkLoop()->removeEventSource(interruptSource);
+      interruptSource->release();
+    }
+    OSSafeReleaseNULL(hvDevice);
   }
-  hvDevice->retain();
   
-  //
-  // Configure interrupt.
-  //
-  interruptSource = IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVICService::handleInterrupt), provider, 0);
-  getWorkLoop()->addEventSource(interruptSource);
-  interruptSource->enable();
-  
-  //
-  // Configure the channel.
-  //
-  if (!hvDevice->openChannel(kHyperVICBufferSize, kHyperVICBufferSize)) {
-    super::stop(provider);
-    return false;
-  }
-  
-  return true;
+  return result;
 }
 
 void HyperVICService::stop(IOService *provider) {
-  if (hvDevice != NULL) {
+  //
+  // Release interrupt.
+  //
+  if (interruptSource != nullptr) {
+    interruptSource->disable();
+    getWorkLoop()->removeEventSource(interruptSource);
+    interruptSource->release();
+  }
+  
+  //
+  // Close channel and release parent VMBus device object.
+  //
+  if (hvDevice != nullptr) {
     hvDevice->closeChannel();
+    hvDevice->release();
   }
   
   super::stop(provider);

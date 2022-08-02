@@ -23,10 +23,11 @@ class HyperVICService : public IOService {
 
 private:
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
-  IOInterruptEventSource  *interruptSource;
+  IOInterruptEventSource *interruptSource = nullptr;
   
 protected:
-  HyperVVMBusDevice *hvDevice;
+  HyperVVMBusDevice *hvDevice = nullptr;
+  void setICDebug(bool debug) { debugEnabled = debug; }
   
   virtual bool processMessage() = 0;
   

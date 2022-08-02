@@ -21,18 +21,18 @@ class HyperVShutdownUserClient : public IOUserClient {
   typedef IOUserClient super;
   
 private:
-  HyperVShutdown  *hvShutdown;
-  
-  bool                              isPortRegistered = false;
+  HyperVShutdown                    *hvShutdown;
   HyperVShutdownNotificationMessage notificationMsg;
   
-  IOReturn performShutdown();
+  IOReturn notifyShutdown();
+  IOReturn notifyClosure();
   
 public:
   //
   // IOService overrides.
   //
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
+  void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
   IOReturn message(UInt32 type, IOService *provider, void *argument = NULL) APPLE_KEXT_OVERRIDE;
   
   //

@@ -66,7 +66,7 @@ static mach_port_t hvShutdownSetupPort(io_connect_t connection) {
     mach_port_deallocate(mach_task_self(), port);
     return MACH_PORT_NULL;
   }
-  HVDBGLOG(stdout, "Port 0x%p created for shutdown notifications", port);
+  HVDBGLOG(stdout, "Port 0x%p created for notifications", port);
   
   //
   // Setup notification for shutdown requests.
@@ -77,7 +77,7 @@ static mach_port_t hvShutdownSetupPort(io_connect_t connection) {
     mach_port_deallocate(mach_task_self(), port);
     return MACH_PORT_NULL;
   }
-  HVDBGLOG(stdout, "Port 0x%p setup for shutdown notfications", port);
+  HVDBGLOG(stdout, "Port 0x%p setup for notfications", port);
   
   return port;
 }
@@ -88,9 +88,10 @@ static void hvShutdownTeardown(io_connect_t connection, mach_port_t port) {
   //
   IOServiceClose(connection);
   mach_port_deallocate(mach_task_self(), port);
+  HVSYSLOG(stdout, "Connection torn down");
 }
 
-static kern_return_t hvShutdownWaitForNotification(mach_port_t port) {
+static kern_return_t hvShutdownWaitForNotification(mach_port_t port, HyperVShutdownNotificationType *msgType) {
   kern_return_t                     result;
   HyperVShutdownNotificationMessage msg;
   
@@ -101,13 +102,17 @@ static kern_return_t hvShutdownWaitForNotification(mach_port_t port) {
   if (result != kIOReturnSuccess) {
     HVSYSLOG(stderr, "Failure while waiting for notification: 0x%X", result);
   }
+  
+  *msgType = msg.type;
+  HVDBGLOG(stdout, "Received notification of type 0x%X", *msgType);
   return result;
 }
 
 int main(int argc, const char * argv[]) {
-  kern_return_t result;
-  io_connect_t  hvConnection;
-  mach_port_t   shutdownPort;
+  kern_return_t                   result;
+  io_connect_t                    hvConnection;
+  mach_port_t                     shutdownPort;
+  HyperVShutdownNotificationType  msgType;
   
   //
   // Connect to HyperVShutdown.
@@ -127,31 +132,36 @@ int main(int argc, const char * argv[]) {
     hvShutdownTeardown(hvConnection, shutdownPort);
     return -1;
   }
-  result = hvShutdownWaitForNotification(shutdownPort);
+  result = hvShutdownWaitForNotification(shutdownPort, &msgType);
   if (result != kIOReturnSuccess) {
     hvShutdownTeardown(hvConnection, shutdownPort);
     return -1;
   }
   
-  HVSYSLOG(stdout, "Shutdown request received, performing shutdown");
-  hvShutdownTeardown(hvConnection, shutdownPort);
-  
-  //
-  // Shutdown has been requested, invoke /sbin/shutdown.
-  //
-  char *shutdownArgs[] = {
-    SHUTDOWN_BIN_PATH,
-    "-h",
-    "now",
-    NULL
-  };
-  
-  //
-  // This should not return.
-  //
-  int ret = execv(shutdownArgs[0], shutdownArgs);
-  if (ret == -1) {
-    HVSYSLOG(stderr, "Failed to execute %s", shutdownArgs[0]);
+  if (msgType == kHyperVShutdownNotificationTypeClosed) {
+    HVSYSLOG(stdout, "Closure request received");
+    hvShutdownTeardown(hvConnection, shutdownPort);
+  } else {
+    HVSYSLOG(stdout, "Shutdown request received, performing shutdown");
+    hvShutdownTeardown(hvConnection, shutdownPort);
+    
+    //
+    // Shutdown has been requested, invoke /sbin/shutdown.
+    //
+    char *shutdownArgs[] = {
+      SHUTDOWN_BIN_PATH,
+      "-h",
+      "now",
+      NULL
+    };
+    
+    //
+    // This should not return.
+    //
+    int ret = execv(shutdownArgs[0], shutdownArgs);
+    if (ret == -1) {
+      HVSYSLOG(stderr, "Failed to execute %s", shutdownArgs[0]);
+    }
   }
   
   return 0;
