@@ -43,7 +43,6 @@ bool HyperVShutdownUserClient::start(IOService *provider) {
 }
 
 void HyperVShutdownUserClient::stop(IOService *provider) {
-  releaseNotificationPort(notificationMsg.header.msgh_remote_port);
   hvShutdown->close(this);
   hvShutdown->release();
   super::stop(provider);
