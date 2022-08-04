@@ -64,7 +64,6 @@ IOReturn HyperVShutdownUserClient::message(UInt32 type, IOService *provider, voi
         return notifyShutdown();
         
       case kIOMessageServiceIsTerminated:
-        notifyClosure();
         hvShutdown->close(this);
         break;
         
@@ -86,7 +85,6 @@ IOReturn HyperVShutdownUserClient::registerNotificationPort(mach_port_t port, UI
   if (hvShutdown == nullptr) {
     return kIOReturnNotReady;
   }
-  releaseNotificationPort(port);
   
   HVDBGLOG("Registering notification port 0x%p", port);
   notificationMsg.header.msgh_remote_port = port;
@@ -96,11 +94,5 @@ IOReturn HyperVShutdownUserClient::registerNotificationPort(mach_port_t port, UI
 IOReturn HyperVShutdownUserClient::notifyShutdown() {
   HVDBGLOG("Sending notification for shutdown");
   notificationMsg.type = kHyperVShutdownNotificationTypePerformShutdown;
-  return mach_msg_send_from_kernel(&notificationMsg.header, notificationMsg.header.msgh_size);
-}
-
-IOReturn HyperVShutdownUserClient::notifyClosure() {
-  HVDBGLOG("Sending notification for service closing");
-  notificationMsg.type = kHyperVShutdownNotificationTypeClosed;
   return mach_msg_send_from_kernel(&notificationMsg.header, notificationMsg.header.msgh_size);
 }

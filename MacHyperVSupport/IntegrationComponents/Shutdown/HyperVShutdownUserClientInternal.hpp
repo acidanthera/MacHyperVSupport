@@ -25,7 +25,6 @@ private:
   HyperVShutdownNotificationMessage notificationMsg;
   
   IOReturn notifyShutdown();
-  IOReturn notifyClosure();
   
 public:
   //

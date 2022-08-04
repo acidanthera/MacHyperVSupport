@@ -12,8 +12,7 @@
 #include <mach/message.h>
 
 typedef enum : UInt32 {
-  kHyperVShutdownNotificationTypePerformShutdown,
-  kHyperVShutdownNotificationTypeClosed
+  kHyperVShutdownNotificationTypePerformShutdown
 } HyperVShutdownNotificationType;
 
 typedef struct {
