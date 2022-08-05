@@ -12,7 +12,7 @@
 
 class HyperVHeartbeat : public HyperVICService {
   OSDeclareDefaultStructors(HyperVHeartbeat);
-  HVDeclareLogFunctionsVMBusChild();
+  HVDeclareLogFunctionsVMBusChild("heart");
   typedef HyperVICService super;
 
 private:

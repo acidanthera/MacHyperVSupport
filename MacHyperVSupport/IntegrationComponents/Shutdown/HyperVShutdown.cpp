@@ -8,18 +8,15 @@
 #include "HyperVShutdown.hpp"
 #include "HyperVPlatformProvider.hpp"
 
-#include <Headers/kern_api.hpp>
-
 OSDefineMetaClassAndStructors(HyperVShutdown, super);
 
 bool HyperVShutdown::start(IOService *provider) {
-  if (!super::start(provider)) {
+  if (HVCheckOffArg() || !super::start(provider)) {
     return false;
   }
-  
-  debugEnabled = checkKernelArgument("-hvshutdbg");
+  HVCheckDebugArgs();
   setICDebug(debugEnabled);
-  hvDevice->setDebugMessagePrinting(checkKernelArgument("-hvshutmsgdbg"));
+  
   registerService();
   
   HVDBGLOG("Initialized Hyper-V Guest Shutdown");

@@ -6,17 +6,16 @@
 //
 
 #include "HyperVModuleDevice.hpp"
-#include <Headers/kern_api.hpp>
-
 #include "AppleACPIRange.hpp"
 
 OSDefineMetaClassAndStructors(HyperVModuleDevice, super);
 
 bool HyperVModuleDevice::start(IOService *provider) {
+  HVCheckDebugArgs();
+  
   if (!super::start(provider)) {
     return false;
   }
-  debugEnabled = checkKernelArgument("-hvmoddbg");
   
   //
   // Add memory ranges from ACPI.

@@ -11,8 +11,6 @@
 #include <IOKit/IOPlatformExpert.h>
 #include <IOKit/IODeviceTreeSupport.h>
 
-#include <Headers/kern_api.hpp>
-
 OSDefineMetaClassAndStructors(HyperVGraphics, super);
 
 void HyperVGraphics::fillFakePCIDeviceSpace() {
@@ -38,18 +36,19 @@ bool HyperVGraphics::configure(IOService *provider) {
 }
 
 bool HyperVGraphics::start(IOService *provider) {
+  if (HVCheckOffArg()) {
+    return false;
+  }
+  
   //
   // Get parent VMBus device object.
   //
   hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
   if (hvDevice == NULL) {
-    super::stop(provider);
     return false;
   }
   hvDevice->retain();
-  
-  debugEnabled = checkKernelArgument("-hvgfxdbg");
-  hvDevice->setDebugMessagePrinting(checkKernelArgument("-hvgfxmsgdbg"));
+  HVCheckDebugArgs();
   
   //
   // Do not start on Gen1 VMs.

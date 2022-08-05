@@ -35,6 +35,24 @@ Hyper-V integration services for macOS. Requires a Generation 2 virtual machine 
   - DMGs need to be in a read/write format first.
   - `qemu-img convert -f raw -O vhdx Installer.dmg Installer.vhdx`
 
+#### Boot arguments
+| Module              | Debug            | Message Debug     | Off               |
+|---------------------|------------------|-------------------|-------------------|
+| CPU disabler (10.4) | -hvcpudbg        | N/A               | N/A               |
+| Graphics            | -hvgfxdbg        | -hvgfxmsgdbg      | -hvgfxoff         |
+| Heartbeat           | -hvheartdbg      | -hvheartmsgdbg    | -hvheartoff       |
+| Keyboard            | -hvkbddbg        | -hvkbdmsgdbg      | -hvkbdoff         |
+| Mouse               | -hvmousdbg       | -hvmousmsgdbg     | -hvmousoff        |
+| Network             | -hvnetdbg        | -hvnetmsgdbg      | -hvnetoff         |
+| PCI bridge          | -hvpcibdbg       | -hvpcibmsgdbg     | -hvpciboff        |
+| PCI module support  | -hvpcimdbg       | N/A               | N/A               |
+| PCI provider        | -hvpcipdbg       | N/A               | N/A               |
+| PCI root bridge     | -hvpcirdbg       | N/A               | N/A               |
+| Shutdown            | -hvshutdbg       | -hvshutmsgdbg     | -hvshutoff        |
+| Storage             | -hvstordbg       | -hvstormsgdbg     | -hvstoroff        |
+| VMBus controller    | -hvvmbusdbg      | N/A               | N/A               |
+| VMBus device nub    | -hvvmbusdevdbg   | N/A               | N/A               |
+
 #### Credits
 - [Apple](https://www.apple.com) for macOS
 - [Goldfish64](https://github.com/Goldfish64) for this software

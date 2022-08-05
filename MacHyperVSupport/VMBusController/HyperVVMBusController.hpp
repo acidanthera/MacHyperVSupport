@@ -69,7 +69,7 @@ typedef struct {
 
 class HyperVVMBusController : public IOInterruptController {
   OSDeclareDefaultStructors(HyperVVMBusController);
-  HVDeclareLogFunctions();
+  HVDeclareLogFunctions("vmbus");
   typedef IOInterruptController super;
   
 private:

@@ -15,7 +15,7 @@
 
 class HyperVGraphics : public HV_PCIBRIDGE_CLASS {
   OSDeclareDefaultStructors(HyperVGraphics);
-  HVDeclareLogFunctionsVMBusChild();
+  HVDeclareLogFunctionsVMBusChild("gfx");
   typedef HV_PCIBRIDGE_CLASS super;
   
 private:

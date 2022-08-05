@@ -9,6 +9,7 @@
 #define HyperV_hpp
 
 #include <IOKit/IOLib.h>
+#include <Headers/kern_api.hpp>
 
 #define kHyperVStatusSuccess    0
 #define kHyperVStatusFail       0x80004005
@@ -42,9 +43,12 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
 //
 // Log functions for normal modules.
 //
-#define HVDeclareLogFunctions() \
+#define HVDeclareLogFunctions(a) \
   private: \
   bool debugEnabled = false; \
+  inline void HVCheckDebugArgs() { \
+    debugEnabled = checkKernelArgument("-hv" a "dbg"); \
+  } \
   inline void HVDBGLOG_PRINT(const char *func, const char *str, ...) const { \
     if (this->debugEnabled) { \
       va_list args; \
@@ -65,14 +69,21 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
 //
 // Log functions for VMBus child modules.
 //
-#define HVDeclareLogFunctionsVMBusChild() \
+#define HVDeclareLogFunctionsVMBusChild(a) \
   private: \
   bool debugEnabled = false; \
+  inline bool HVCheckOffArg() { \
+    return checkKernelArgument("-hv" a "off");; \
+  } \
+  inline void HVCheckDebugArgs() { \
+    debugEnabled = checkKernelArgument("-hv" a "dbg"); \
+    hvDevice->setDebugMessagePrinting(checkKernelArgument("-hv" a "msgdbg")); \
+  } \
   inline void HVDBGLOG_PRINT(const char *func, const char *str, ...) const { \
-    if (this->debugEnabled) { \
+    if (debugEnabled) { \
       va_list args; \
       va_start(args, str); \
-      logPrint(this->getMetaClass()->getClassName(), func, true, hvDevice->getChannelId(), str, args); \
+      logPrint(getMetaClass()->getClassName(), func, true, hvDevice->getChannelId(), str, args); \
       va_end(args); \
     } \
   } \
@@ -80,7 +91,7 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
   inline void HVSYSLOG_PRINT(const char *func, const char *str, ...) const { \
     va_list args; \
     va_start(args, str); \
-    logPrint(this->getMetaClass()->getClassName(), func, true, hvDevice->getChannelId(), str, args); \
+    logPrint(getMetaClass()->getClassName(), func, true, hvDevice->getChannelId(), str, args); \
     va_end(args); \
   } \
   protected:
@@ -88,10 +99,13 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
 //
 // Log functions for the VMBus device nub module.
 //
-#define HVDeclareLogFunctionsVMBusDeviceNub() \
+#define HVDeclareLogFunctionsVMBusDeviceNub(a) \
   private: \
   bool debugEnabled = false; \
   bool debugPackets = false; \
+  inline void HVCheckDebugArgs() { \
+    debugEnabled = checkKernelArgument("-hv" a "dbg"); \
+  } \
   inline void HVDBGLOG_PRINT(const char *func, const char *str, ...) const { \
     if (this->debugEnabled) { \
       va_list args; \
@@ -148,9 +162,10 @@ inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId,
 //
 // Log functions for normal modules.
 //
-#define HVDeclareLogFunctions() \
+#define HVDeclareLogFunctions(a) \
   private: \
   bool debugEnabled = false; \
+  inline void HVCheckDebugArgs() { } \
   inline void HVDBGLOG(const char *str, ...) const { } \
     \
   inline void HVSYSLOG(const char *str, ...) const { \
@@ -164,9 +179,13 @@ inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId,
 //
 // Log functions for VMBus child modules.
 //
-#define HVDeclareLogFunctionsVMBusChild() \
+#define HVDeclareLogFunctionsVMBusChild(a) \
   private: \
   bool debugEnabled = false; \
+  inline bool HVCheckOffArg() { \
+    return checkKernelArgument("-hv" a "off");; \
+  } \
+  inline void HVCheckDebugArgs() { } \
   inline void HVDBGLOG(const char *str, ...) const { } \
     \
   inline void HVSYSLOG(const char *str, ...) const { \
@@ -180,10 +199,11 @@ inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId,
 //
 // Log functions for the VMBus device nub module.
 //
-#define HVDeclareLogFunctionsVMBusDeviceNub() \
+#define HVDeclareLogFunctionsVMBusDeviceNub(a) \
   private: \
   bool debugEnabled = false; \
   bool debugPackets = false; \
+  inline void HVCheckDebugArgs() { } \
   inline void HVDBGLOG(const char *str, ...) const { } \
     \
   inline void HVSYSLOG(const char *str, ...) const { \

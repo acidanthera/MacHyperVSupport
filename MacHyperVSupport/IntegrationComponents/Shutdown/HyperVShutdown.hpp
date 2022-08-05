@@ -17,7 +17,7 @@ typedef enum : UInt32 {
 
 class HyperVShutdown : public HyperVICService {
   OSDeclareDefaultStructors(HyperVShutdown);
-  HVDeclareLogFunctionsVMBusChild();
+  HVDeclareLogFunctionsVMBusChild("shut");
   typedef HyperVICService super;
 
 private:

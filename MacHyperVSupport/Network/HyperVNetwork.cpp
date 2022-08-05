@@ -6,12 +6,11 @@
 //
 
 #include "HyperVNetwork.hpp"
-#include <Headers/kern_api.hpp>
 
 OSDefineMetaClassAndStructors(HyperVNetwork, super);
 
 bool HyperVNetwork::start(IOService *provider) {
-  if (!super::start(provider)) {
+  if (HVCheckOffArg() || !super::start(provider)) {
     return false;
   }
   
@@ -24,9 +23,8 @@ bool HyperVNetwork::start(IOService *provider) {
     return false;
   }
   hvDevice->retain();
+  HVCheckDebugArgs();
   
-  debugEnabled = checkKernelArgument("-hvnetdbg");
-  hvDevice->setDebugMessagePrinting(checkKernelArgument("-hvnetmsgdbg"));
   HVDBGLOG("Initializing Hyper-V Synthetic Networking");
   
   //

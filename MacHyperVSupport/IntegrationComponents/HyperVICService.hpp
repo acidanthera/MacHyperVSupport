@@ -18,7 +18,7 @@
 
 class HyperVICService : public IOService {
   OSDeclareDefaultStructors(HyperVICService);
-  HVDeclareLogFunctionsVMBusChild();
+  HVDeclareLogFunctionsVMBusChild("ic");
   typedef IOService super;
 
 private:

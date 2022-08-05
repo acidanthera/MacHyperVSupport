@@ -23,6 +23,8 @@ IOService* HyperVPCIProvider::probe(IOService *provider, SInt32 *score) {
 }
 
 bool HyperVPCIProvider::start(IOService *provider) {
+  HVCheckDebugArgs();
+  
   //
   // Required by AppleACPIPlatform.
   //

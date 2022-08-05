@@ -40,7 +40,7 @@ typedef struct HyperVNetworkRNDISRequest {
 
 class HyperVNetwork : public IOEthernetController {
   OSDeclareDefaultStructors(HyperVNetwork);
-  HVDeclareLogFunctionsVMBusChild();
+  HVDeclareLogFunctionsVMBusChild("net");
   typedef IOEthernetController super;
 
 private:

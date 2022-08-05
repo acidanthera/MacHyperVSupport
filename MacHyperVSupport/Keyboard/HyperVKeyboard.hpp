@@ -16,7 +16,7 @@
 
 class HyperVKeyboard : public IOHIKeyboard {
   OSDeclareDefaultStructors(HyperVKeyboard);
-  HVDeclareLogFunctionsVMBusChild();
+  HVDeclareLogFunctionsVMBusChild("kbd");
   typedef IOHIKeyboard super;
 
 private:

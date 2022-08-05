@@ -7,8 +7,6 @@
 
 #include "HyperVShutdownUserClientInternal.hpp"
 
-#include <Headers/kern_api.hpp>
-
 OSDefineMetaClassAndStructors(HyperVShutdownUserClient, super);
 
 bool HyperVShutdownUserClient::start(IOService *provider) {
@@ -18,6 +16,7 @@ bool HyperVShutdownUserClient::start(IOService *provider) {
     return false;
   }
   hvShutdown->retain();
+  HVCheckDebugArgs();
   
   if (!super::start(provider)) {
     return false;
@@ -37,7 +36,6 @@ bool HyperVShutdownUserClient::start(IOService *provider) {
   notificationMsg.header.msgh_reserved    = 0;
   notificationMsg.header.msgh_id          = 0;
   
-  debugEnabled = checkKernelArgument("-hvshutdbg");
   HVDBGLOG("Initialized Hyper-V Guest Shutdown user client");
   return true;
 }

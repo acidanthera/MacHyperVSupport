@@ -10,8 +10,6 @@
 
 #include "HyperV.hpp"
 
-#include <Headers/kern_api.hpp>
-
 extern "C" int cpu_number(void);
 
 #endif

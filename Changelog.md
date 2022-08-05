@@ -6,6 +6,7 @@ MacHyperVSupport Changelog
 - Fix crash related to IOPCIBridge on 12.0 and newer
 - Added support for macOS 10.4 and 10.5
 - Added hvshutdown daemon to support shutdowns from Hyper-V
+- Standardized boot arguments
 
 #### v0.8
 - Latest Windows support

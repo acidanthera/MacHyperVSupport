@@ -27,6 +27,7 @@ bool HyperVICService::start(IOService *provider) {
       break;
     }
     hvDevice->retain();
+    HVCheckDebugArgs();
     
     //
     // Configure interrupt.

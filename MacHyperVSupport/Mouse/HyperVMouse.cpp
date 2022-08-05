@@ -7,12 +7,10 @@
 
 #include "HyperVMouse.hpp"
 
-#include <Headers/kern_api.hpp>
-
 OSDefineMetaClassAndStructors(HyperVMouse, super);
 
 bool HyperVMouse::handleStart(IOService *provider) {
-  if (!super::handleStart(provider)) {
+  if (HVCheckOffArg() || !super::handleStart(provider)) {
     return false;
   }
 
@@ -24,9 +22,7 @@ bool HyperVMouse::handleStart(IOService *provider) {
     return false;
   }
   hvDevice->retain();
-  
-  debugEnabled = checkKernelArgument("-hvmousdbg");
-  hvDevice->setDebugMessagePrinting(checkKernelArgument("-hvmousmsgdbg"));
+  HVCheckDebugArgs();
   
   //
   // HIDDefaultBehavior needs to be set to Mouse for the device to

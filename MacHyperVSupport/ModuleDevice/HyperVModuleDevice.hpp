@@ -15,7 +15,7 @@
 
 class HyperVModuleDevice : public IOService {
   OSDeclareDefaultStructors(HyperVModuleDevice);
-  HVDeclareLogFunctions();
+  HVDeclareLogFunctions("pcim");
   typedef IOService super;
   
 private:

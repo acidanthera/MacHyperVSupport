@@ -6,12 +6,15 @@
 //
 
 #include "HyperVPCIBridge.hpp"
-#include <Headers/kern_api.hpp>
 #include "HyperVPCIRoot.hpp"
 
 OSDefineMetaClassAndStructors(HyperVPCIBridge, super);
 
 bool HyperVPCIBridge::start(IOService *provider) {
+  if (HVCheckOffArg()) {
+    return false;
+  }
+  
   //
   // Get parent VMBus device object.
   //
@@ -20,9 +23,7 @@ bool HyperVPCIBridge::start(IOService *provider) {
     return false;
   }
   hvDevice->retain();
-  
-  debugEnabled = checkKernelArgument("-hvpcidbg");
-  hvDevice->setDebugMessagePrinting(checkKernelArgument("-hvpcimsgdbg"));
+  HVCheckDebugArgs();
   
   //
   // Configure interrupt.

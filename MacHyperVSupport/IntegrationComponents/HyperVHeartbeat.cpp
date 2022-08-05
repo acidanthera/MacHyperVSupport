@@ -7,18 +7,14 @@
 
 #include "HyperVHeartbeat.hpp"
 
-#include <IOKit/IOPlatformExpert.h>
-#include <Headers/kern_api.hpp>
-
 OSDefineMetaClassAndStructors(HyperVHeartbeat, super);
 
 bool HyperVHeartbeat::start(IOService *provider) {
-  if (!super::start(provider)) {
+  if (HVCheckOffArg() || !super::start(provider)) {
     return false;
   }
-  
-  debugEnabled = checkKernelArgument("-hvheartdbg");
-  hvDevice->setDebugMessagePrinting(checkKernelArgument("-hvheartmsgdbg"));
+  HVCheckDebugArgs();
+  setICDebug(debugEnabled);
   
   HVDBGLOG("Initialized Hyper-V Heartbeat");
   return true;

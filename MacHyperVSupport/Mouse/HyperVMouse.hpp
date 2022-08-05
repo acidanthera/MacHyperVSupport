@@ -15,7 +15,7 @@
 
 class HyperVMouse : public IOHIDDevice {
   OSDeclareDefaultStructors(HyperVMouse);
-  HVDeclareLogFunctionsVMBusChild();
+  HVDeclareLogFunctionsVMBusChild("mous");
   typedef IOHIDDevice super;
 
 private:

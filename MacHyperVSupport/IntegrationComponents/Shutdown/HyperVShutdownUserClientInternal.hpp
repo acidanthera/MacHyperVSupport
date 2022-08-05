@@ -17,7 +17,7 @@
 
 class HyperVShutdownUserClient : public IOUserClient {
   OSDeclareDefaultStructors(HyperVShutdownUserClient);
-  HVDeclareLogFunctions();
+  HVDeclareLogFunctions("shut");
   typedef IOUserClient super;
   
 private:

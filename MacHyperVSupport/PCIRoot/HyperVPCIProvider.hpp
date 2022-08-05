@@ -13,7 +13,7 @@
 
 class HyperVPCIProvider : public IOACPIPlatformDevice {
   OSDeclareDefaultStructors(HyperVPCIProvider);
-  HVDeclareLogFunctions();
+  HVDeclareLogFunctions("pcip");
   typedef IOACPIPlatformDevice super;
   
 public:

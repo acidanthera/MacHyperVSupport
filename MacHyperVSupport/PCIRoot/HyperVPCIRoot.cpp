@@ -62,7 +62,7 @@ bool HyperVPCIRoot::registerChildPCIBridge(IOPCIBridge *pciBridge) {
 }
 
 bool HyperVPCIRoot::start(IOService *provider) {
-  HVSYSLOG("START CLALLED");
+  HVCheckDebugArgs();
   pciLock = IOSimpleLockAlloc();
   
   //

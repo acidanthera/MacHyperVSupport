@@ -17,7 +17,7 @@
 
 class HyperVPCIBridge : public HV_PCIBRIDGE_CLASS {
   OSDeclareDefaultStructors(HyperVPCIBridge);
-  HVDeclareLogFunctionsVMBusChild();
+  HVDeclareLogFunctionsVMBusChild("pcib");
   typedef HV_PCIBRIDGE_CLASS super;
   
 private:

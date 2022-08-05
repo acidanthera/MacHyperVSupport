@@ -166,10 +166,11 @@ void HyperVVMBusController::freeDmaBuffer(HyperVDMABuffer *dmaBuf) {
 }
 
 bool HyperVVMBusController::start(IOService *provider) {
+  HVCheckDebugArgs();
+  
   if (!super::start(provider)) {
     return false;
   }
-  debugEnabled = checkKernelArgument("-hvvmbusdbg");
   
   //
   // Verify we are on Hyper-V.

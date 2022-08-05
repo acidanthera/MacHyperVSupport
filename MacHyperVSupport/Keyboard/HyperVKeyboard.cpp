@@ -8,12 +8,10 @@
 #include "HyperVKeyboard.hpp"
 #include "HyperVADBMap.hpp"
 
-#include <Headers/kern_api.hpp>
-
 OSDefineMetaClassAndStructors(HyperVKeyboard, super);
 
 bool HyperVKeyboard::start(IOService *provider) {
-  if (!super::start(provider)) {
+  if (HVCheckOffArg() || !super::start(provider)) {
     return false;
   }
   
@@ -26,9 +24,7 @@ bool HyperVKeyboard::start(IOService *provider) {
     return false;
   }
   hvDevice->retain();
-  
-  debugEnabled = checkKernelArgument("-hvkbddbg");
-  hvDevice->setDebugMessagePrinting(checkKernelArgument("-hvkbdmsgdbg"));
+  HVCheckDebugArgs();
   
   HVDBGLOG("Initializing Hyper-V Synthetic Keyboard");
   

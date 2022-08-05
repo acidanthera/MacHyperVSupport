@@ -13,7 +13,7 @@
 
 class HyperVPCIRoot : public HV_PCIBRIDGE_CLASS {
   OSDeclareDefaultStructors(HyperVPCIRoot);
-  HVDeclareLogFunctions();
+  HVDeclareLogFunctions("pcir");
   typedef HV_PCIBRIDGE_CLASS super;
   
 private:

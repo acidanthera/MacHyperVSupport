@@ -7,8 +7,6 @@
 
 #include "HyperVStorage.hpp"
 
-#include <Headers/kern_api.hpp>
-
 OSDefineMetaClassAndStructors(HyperVStorage, super);
 
 //
@@ -45,6 +43,10 @@ static const HyperVStorageProtocol storageProtocols[] = {
 bool HyperVStorage::InitializeController() {
   HyperVStoragePacket packet;
   
+  if (HVCheckOffArg()) {
+    return false;
+  }
+  
   //
   // Get parent VMBus device object.
   //
@@ -53,9 +55,7 @@ bool HyperVStorage::InitializeController() {
     return false;
   }
   hvDevice->retain();
-  
-  debugEnabled = checkKernelArgument("-hvstordbg");
-  hvDevice->setDebugMessagePrinting(checkKernelArgument("-hvstormsgdbg"));
+  HVCheckDebugArgs();
   
   HVDBGLOG("Initializing Hyper-V Synthetic Storage controller");
   

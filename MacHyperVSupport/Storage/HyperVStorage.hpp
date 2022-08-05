@@ -22,7 +22,7 @@
 
 class HyperVStorage : public IOSCSIParallelInterfaceController {
   OSDeclareDefaultStructors(HyperVStorage);
-  HVDeclareLogFunctionsVMBusChild();
+  HVDeclareLogFunctionsVMBusChild("stor");
   typedef IOSCSIParallelInterfaceController super;
 
 private:

@@ -32,7 +32,7 @@ typedef struct HyperVVMBusDeviceRequest {
 
 class HyperVVMBusDevice : public IOService {
   OSDeclareDefaultStructors(HyperVVMBusDevice);
-  HVDeclareLogFunctionsVMBusDeviceNub();
+  HVDeclareLogFunctionsVMBusDeviceNub("vmbusdev");
   typedef IOService super;
   
 private:
