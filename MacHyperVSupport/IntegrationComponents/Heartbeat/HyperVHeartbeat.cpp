@@ -10,14 +10,26 @@
 OSDefineMetaClassAndStructors(HyperVHeartbeat, super);
 
 bool HyperVHeartbeat::start(IOService *provider) {
-  if (HVCheckOffArg() || !super::start(provider)) {
+  if (!super::start(provider)) {
     return false;
   }
+  
   HVCheckDebugArgs();
   setICDebug(debugEnabled);
   
-  HVDBGLOG("Initialized Hyper-V Heartbeat");
+  if (HVCheckOffArg()) {
+    HVSYSLOG("Disabling Hyper-V Heartbeat due to boot arg");
+    super::stop(provider);
+    return false;
+  }
+  
+  HVDBGLOG("Initializing Hyper-V Heartbeat");
   return true;
+}
+
+void HyperVHeartbeat::stop(IOService *provider) {
+  super::stop(provider);
+  HVDBGLOG("Stopped Hyper-V Heartbeat");
 }
 
 bool HyperVHeartbeat::processMessage() {
@@ -48,12 +60,12 @@ bool HyperVHeartbeat::processMessage() {
       // Increment sequence.
       // Host will increment this further before sending a message back.
       //
-      //HVDBGLOG("Got heartbeat, seq = %u", heartbeatMsg.heartbeat.sequence);
+      HVDBGLOG("Got heartbeat, seq = %u", heartbeatMsg.heartbeat.sequence);
       heartbeatMsg.heartbeat.sequence++;
 
       if (!firstHeartbeatReceived) {
         firstHeartbeatReceived = true;
-        HVSYSLOG("Initialized Hyper-V Heartbeat");
+        HVDBGLOG("Initialized Hyper-V Heartbeat");
       }
       break;
 

@@ -25,7 +25,8 @@ public:
   //
   // IOService overrides.
   //
-  virtual bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
+  bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
+  void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
 };
 
 #endif
