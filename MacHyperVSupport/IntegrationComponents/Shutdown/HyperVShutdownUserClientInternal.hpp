@@ -13,8 +13,6 @@
 #include "HyperVShutdown.hpp"
 #include "HyperVShutdownUserClient.h"
 
-#include <mach/mach_port.h>
-
 class HyperVShutdownUserClient : public IOUserClient {
   OSDeclareDefaultStructors(HyperVShutdownUserClient);
   HVDeclareLogFunctions("shut");

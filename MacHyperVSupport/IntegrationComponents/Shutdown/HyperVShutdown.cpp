@@ -6,20 +6,26 @@
 //
 
 #include "HyperVShutdown.hpp"
-#include "HyperVPlatformProvider.hpp"
 
 OSDefineMetaClassAndStructors(HyperVShutdown, super);
 
 bool HyperVShutdown::start(IOService *provider) {
-  if (HVCheckOffArg() || !super::start(provider)) {
+  if (!super::start(provider)) {
     return false;
   }
+  
   HVCheckDebugArgs();
   setICDebug(debugEnabled);
   
-  registerService();
+  if (HVCheckOffArg()) {
+    HVSYSLOG("Disabling Hyper-V Guest Shutdown due to boot arg");
+    super::stop(provider);
+    return false;
+  }
   
   HVDBGLOG("Initialized Hyper-V Guest Shutdown");
+  registerService();
+  
   return true;
 }
 
