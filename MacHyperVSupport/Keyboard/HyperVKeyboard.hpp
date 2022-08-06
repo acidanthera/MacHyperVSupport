@@ -20,8 +20,8 @@ class HyperVKeyboard : public IOHIKeyboard {
   typedef IOHIKeyboard super;
 
 private:
-  HyperVVMBusDevice       *hvDevice;
-  IOInterruptEventSource  *interruptSource;
+  HyperVVMBusDevice       *hvDevice         = nullptr;
+  IOInterruptEventSource  *interruptSource  = nullptr;
   
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
   OSReturn connectKeyboard();

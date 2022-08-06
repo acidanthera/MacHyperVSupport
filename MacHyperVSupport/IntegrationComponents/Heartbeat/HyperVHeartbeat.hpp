@@ -16,7 +16,7 @@ class HyperVHeartbeat : public HyperVICService {
   typedef HyperVICService super;
 
 private:
-  bool firstHeartbeatReceived;
+  bool firstHeartbeatReceived = false;
 
 protected:
   bool processMessage() APPLE_KEXT_OVERRIDE;

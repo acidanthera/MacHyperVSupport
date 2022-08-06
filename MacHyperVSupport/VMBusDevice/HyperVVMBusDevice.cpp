@@ -18,7 +18,7 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
   HVCheckDebugArgs();
   
   //
-  // Get channel number and instance GUID.
+  // Get channel number and GUIDs.
   //
   OSString *typeIdString  = OSDynamicCast(OSString, getProperty(kHyperVVMBusDeviceChannelTypeKey));
   OSNumber *channelNumber = OSDynamicCast(OSNumber, getProperty(kHyperVVMBusDeviceChannelIDKey));
@@ -27,7 +27,12 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
   if (typeIdString == nullptr || channelNumber == nullptr || instanceBytes == nullptr || vmbusProvider == nullptr) {
     return false;
   }
-  strncpy(typeId, typeIdString->getCStringNoCopy(), sizeof (typeId));
+  
+  //
+  // Copy channel number and GUIDs.
+  // uuid_string_t size includes null terminator.
+  //
+  strncpy(typeId, typeIdString->getCStringNoCopy(), sizeof (typeId) - 1);
   channelId = channelNumber->unsigned32BitValue();
   HVDBGLOG("Attaching nub type %s for channel %u", typeId, channelId);
   memcpy(instanceId, instanceBytes->getBytesNoCopy(), instanceBytes->getLength());

@@ -19,8 +19,8 @@ class HyperVShutdownUserClient : public IOUserClient {
   typedef IOUserClient super;
   
 private:
-  HyperVShutdown                    *hvShutdown;
-  HyperVShutdownNotificationMessage notificationMsg;
+  HyperVShutdown                    *hvShutdown     = nullptr;
+  HyperVShutdownNotificationMessage notificationMsg = { };
   
   IOReturn notifyShutdown();
   
