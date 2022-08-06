@@ -23,6 +23,7 @@ private:
   HyperVVMBusDevice       *hvDevice         = nullptr;
   IOInterruptEventSource  *interruptSource  = nullptr;
   
+  void freeStructures();
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
   OSReturn connectKeyboard();
   

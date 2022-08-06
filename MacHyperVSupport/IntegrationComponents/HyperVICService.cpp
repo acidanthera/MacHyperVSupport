@@ -10,7 +10,8 @@
 OSDefineMetaClassAndAbstractStructors(HyperVICService, super);
 
 bool HyperVICService::start(IOService *provider) {
-  bool      result = false;
+  bool      result  = false;
+  bool      started = false;
   IOReturn  status;
   
   do {
@@ -25,7 +26,8 @@ bool HyperVICService::start(IOService *provider) {
     hvDevice->retain();
     HVCheckDebugArgs();
     
-    if (!super::start(provider)) {
+    started = super::start(provider);
+    if (!started) {
       HVSYSLOG("Superclass start function failed");
       break;
     }
@@ -58,21 +60,9 @@ bool HyperVICService::start(IOService *provider) {
   } while (false);
   
   if (!result) {
-    //
-    // Release interrupt.
-    //
-    if (interruptSource != nullptr) {
-      interruptSource->disable();
-      getWorkLoop()->removeEventSource(interruptSource);
-      interruptSource->release();
-    }
-    
-    //
-    // Close channel and release parent VMBus device object.
-    //
-    if (hvDevice != nullptr) {
-      hvDevice->closeChannel();
-      hvDevice->release();
+    freeStructures();
+    if (started) {
+      super::stop(provider);
     }
   }
   
@@ -80,23 +70,7 @@ bool HyperVICService::start(IOService *provider) {
 }
 
 void HyperVICService::stop(IOService *provider) {
-  //
-  // Release interrupt.
-  //
-  if (interruptSource != nullptr) {
-    interruptSource->disable();
-    getWorkLoop()->removeEventSource(interruptSource);
-    interruptSource->release();
-  }
-  
-  //
-  // Close channel and release parent VMBus device object.
-  //
-  if (hvDevice != nullptr) {
-    hvDevice->closeChannel();
-    hvDevice->release();
-  }
-  
+  freeStructures();
   super::stop(provider);
 }
 
@@ -146,6 +120,25 @@ bool HyperVICService::createNegotiationResponse(VMBusICMessageNegotiate *negMsg,
   }
   
   return foundFwMatch && foundMsgMatch;
+}
+
+void HyperVICService::freeStructures() {
+  //
+  // Release interrupt.
+  //
+  if (interruptSource != nullptr) {
+    interruptSource->disable();
+    getWorkLoop()->removeEventSource(interruptSource);
+    interruptSource->release();
+  }
+  
+  //
+  // Close channel and release parent VMBus device object.
+  //
+  if (hvDevice != nullptr) {
+    hvDevice->closeChannel();
+    hvDevice->release();
+  }
 }
 
 void HyperVICService::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {

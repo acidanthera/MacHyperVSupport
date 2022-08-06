@@ -22,6 +22,7 @@ class HyperVICService : public IOService {
   typedef IOService super;
 
 private:
+  void freeStructures();
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
   IOInterruptEventSource *interruptSource = nullptr;
   

@@ -11,7 +11,8 @@
 OSDefineMetaClassAndStructors(HyperVKeyboard, super);
 
 bool HyperVKeyboard::start(IOService *provider) {
-  bool      result = false;
+  bool      result  = false;
+  bool      started = false;
   IOReturn  status;
   
   //
@@ -33,7 +34,8 @@ bool HyperVKeyboard::start(IOService *provider) {
       break;
     }
     
-    if (!super::start(provider)) {
+    started = super::start(provider);
+    if (!started) {
       HVSYSLOG("Superclass start function failed");
       break;
     }
@@ -70,17 +72,14 @@ bool HyperVKeyboard::start(IOService *provider) {
     }
     
     result = true;
+    HVDBGLOG("Initialized Hyper-V Synthetic Keyboard");
   } while (false);
   
   if (!result) {
-    if (interruptSource != nullptr) {
-      interruptSource->disable();
-      getWorkLoop()->removeEventSource(interruptSource);
-      interruptSource->release();
+    freeStructures();
+    if (started) {
+      super::stop(provider);
     }
-    OSSafeReleaseNULL(hvDevice);
-  } else {
-    HVDBGLOG("Initialized Hyper-V Synthetic Keyboard");
   }
   
   return result;
@@ -89,23 +88,7 @@ bool HyperVKeyboard::start(IOService *provider) {
 void HyperVKeyboard::stop(IOService *provider) {
   HVDBGLOG("Stopping Hyper-V Synthetic Keyboard");
   
-  //
-  // Release interrupt.
-  //
-  if (interruptSource != nullptr) {
-    interruptSource->disable();
-    getWorkLoop()->removeEventSource(interruptSource);
-    interruptSource->release();
-  }
-  
-  //
-  // Close channel and release parent VMBus device object.
-  //
-  if (hvDevice != nullptr) {
-    hvDevice->closeChannel();
-    hvDevice->release();
-  }
-  
+  freeStructures();
   super::stop(provider);
 }
 
@@ -131,6 +114,25 @@ inline UInt32 getKeyCode(HyperVKeyboardMessageKeystroke *keyEvent) {
   UInt8 keyCode = PS2ToADBMapStock[keyEvent->makeCode + (keyEvent->isE0 ? kADBConverterExStart : 0)];
   
   return keyCode;
+}
+
+void HyperVKeyboard::freeStructures() {
+  //
+  // Release interrupt.
+  //
+  if (interruptSource != nullptr) {
+    interruptSource->disable();
+    getWorkLoop()->removeEventSource(interruptSource);
+    interruptSource->release();
+  }
+  
+  //
+  // Close channel and release parent VMBus device object.
+  //
+  if (hvDevice != nullptr) {
+    hvDevice->closeChannel();
+    hvDevice->release();
+  }
 }
 
 void HyperVKeyboard::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
