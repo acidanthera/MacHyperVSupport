@@ -67,7 +67,7 @@ bool HyperVShutdown::processMessage() {
   //
   // Read and parse inbound inband packet.
   //
-  if (hvDevice->readInbandCompletionPacket(&shutdownMsg, sizeof (shutdownMsg), NULL) != kIOReturnSuccess) {
+  if (hvDevice->readInbandCompletionPacket(&shutdownMsg, sizeof (shutdownMsg), nullptr) != kIOReturnSuccess) {
     return false;
   }
 

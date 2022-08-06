@@ -18,7 +18,7 @@ bool HyperVKeyboard::start(IOService *provider) {
   // Get parent VMBus device object.
   //
   hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
-  if (hvDevice == NULL) {
+  if (hvDevice == nullptr) {
     HVSYSLOG("Unable to get parent VMBus device nub");
     return false;
   }
@@ -35,7 +35,7 @@ bool HyperVKeyboard::start(IOService *provider) {
     
     if (!super::start(provider)) {
       HVSYSLOG("Superclass start function failed");
-      return false;
+      break;
     }
     
     //
@@ -157,7 +157,7 @@ void HyperVKeyboard::handleInterrupt(OSObject *owner, IOInterruptEventSource *se
     //
     // Read next packet.
     //
-    if (hvDevice->readInbandCompletionPacket((void *)message, pktDataLength, NULL) == kIOReturnSuccess) {
+    if (hvDevice->readInbandCompletionPacket((void *)message, pktDataLength, nullptr) == kIOReturnSuccess) {
       switch (message->header.type) {
         case kHyperVKeyboardMessageTypeProtocolResponse:
           HVDBGLOG("Keyboard protocol status %u %u", message->protocolResponse.header.type, message->protocolResponse.status);
@@ -167,6 +167,7 @@ void HyperVKeyboard::handleInterrupt(OSObject *owner, IOInterruptEventSource *se
           UInt64 time;
           clock_get_uptime(&time);
           
+          HVDBGLOG("Got make code 0x%X (E0: %u, break: %u)", message->keystroke.makeCode, message->keystroke.isE0, message->keystroke.isBreak);
           dispatchKeyboardEvent(getKeyCode(&message->keystroke), !message->keystroke.isBreak, *(AbsoluteTime*)&time);
           break;
 

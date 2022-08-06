@@ -27,7 +27,7 @@ bool HyperVICService::start(IOService *provider) {
     
     if (!super::start(provider)) {
       HVSYSLOG("Superclass start function failed");
-      return false;
+      break;
     }
     
     //
