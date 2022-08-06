@@ -75,7 +75,7 @@ void HyperVVMBusDevice::detach(IOService *provider) {
 
 bool HyperVVMBusDevice::matchPropertyTable(OSDictionary *table, SInt32 *score) {
   if (!super::matchPropertyTable(table, score)) {
-    HVSYSLOG("Superclass failed to match property table");
+    HVDBGLOG("Superclass failed to match property table");
     return false;
   }
   
@@ -84,7 +84,7 @@ bool HyperVVMBusDevice::matchPropertyTable(OSDictionary *table, SInt32 *score) {
   //
   OSString *hvTypeString = OSDynamicCast(OSString, table->getObject(kHyperVVMBusDeviceChannelTypeKey));
   if (hvTypeString == nullptr) {
-    HVSYSLOG("Hyper-V device type ID not found or not a string");
+    HVDBGLOG("Hyper-V device type ID not found or not a string");
     return false;
   }
   
@@ -140,6 +140,14 @@ void HyperVVMBusDevice::closeChannel() {
 
 bool HyperVVMBusDevice::createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer) {
   return vmbusProvider->initVMBusChannelGpadl(channelId, bufferSize, gpadlHandle, buffer);
+}
+
+bool HyperVVMBusDevice::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size) {
+  return vmbusProvider->allocateDmaBuffer(dmaBuf, size);
+}
+
+void HyperVVMBusDevice::freeDmaBuffer(HyperVDMABuffer *dmaBuf) {
+  vmbusProvider->freeDmaBuffer(dmaBuf);
 }
 
 bool HyperVVMBusDevice::nextPacketAvailable(VMBusPacketType *type, UInt32 *packetHeaderLength, UInt32 *packetTotalLength) {

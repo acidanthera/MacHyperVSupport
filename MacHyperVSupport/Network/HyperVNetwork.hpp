@@ -34,8 +34,7 @@ typedef struct HyperVNetworkRNDISRequest {
   IOLock                    *lock;
   bool                      isSleeping;
   
-  IOBufferMemoryDescriptor  *memDescriptor;
-  mach_vm_address_t         messagePhysicalAddress;
+  HyperVDMABuffer           dmaBuffer;
 } HyperVNetworkRNDISRequest;
 
 class HyperVNetwork : public IOEthernetController {

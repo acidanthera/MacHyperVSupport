@@ -153,7 +153,7 @@ bool HyperVStorage::InitializeController() {
   }
   
   
-  allocateDmaBuffer(&dmaBufTest, 32000000);
+  hvDevice->allocateDmaBuffer(&dmaBufTest, 32000000);
   
   segs64 = (IODMACommand::Segment64*) IOMalloc(sizeof (IODMACommand::Segment64) * maxPageSegments);
 
@@ -163,31 +163,6 @@ bool HyperVStorage::InitializeController() {
   setHBAInfo();
   
   HVSYSLOG("Initialized Hyper-V Synthetic Storage controller");
-  return true;
-}
-
-bool HyperVStorage::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size) {
-  IOBufferMemoryDescriptor  *bufDesc;
-  
-  //
-  // Create DMA buffer with required specifications and get physical address.
-  //
-  bufDesc = IOBufferMemoryDescriptor::inTaskWithPhysicalMask(kernel_task,
-                                                             kIODirectionInOut | kIOMemoryPhysicallyContiguous | kIOMapInhibitCache | kIOMemoryMapperNone,
-                                                             size, 0xFFFFFFFFFFFFF000ULL);
-  if (bufDesc == NULL) {
-    HVSYSLOG("Failed to allocate DMA buffer memory of %u bytes", size);
-    return false;
-  }
-  bufDesc->prepare();
-  
-  dmaBuf->bufDesc  = bufDesc;
-  dmaBuf->physAddr = bufDesc->getPhysicalAddress();
-  dmaBuf->buffer   = bufDesc->getBytesNoCopy();
-  dmaBuf->size     = size;
-  
-  memset(dmaBuf->buffer, 0, dmaBuf->size);
-  HVDBGLOG("Mapped buffer of %u bytes to 0x%llX", dmaBuf->size, dmaBuf->physAddr);
   return true;
 }
 

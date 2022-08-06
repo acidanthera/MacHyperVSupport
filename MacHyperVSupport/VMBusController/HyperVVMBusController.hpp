@@ -67,10 +67,16 @@ typedef struct {
   bool              supportsHvVpIndex;
 } HyperVCPUData;
 
+class HyperVVMBusDevice;
+class SynICProcessor;
+
 class HyperVVMBusController : public IOInterruptController {
   OSDeclareDefaultStructors(HyperVVMBusController);
   HVDeclareLogFunctions("vmbus");
   typedef IOInterruptController super;
+  
+  friend class HyperVVMBusDevice;
+  friend class SynICProcessor;
   
 private:
   UInt32 hvMaxLeaf;
@@ -147,8 +153,8 @@ private:
   void sendSynICEOM(UInt32 cpu);
   void handleSynICInterrupt(OSObject *target, void *refCon, IOService *nub, int source);
   
-  
-  
+  void processIncomingVMBusMessage(UInt32 cpu);
+  IOWorkLoop *getSynICWorkLoop();
   
   //
   // VMBus functions.
@@ -166,8 +172,14 @@ private:
   void cleanupVMBusDevice(VMBusChannel *channel);
   
   //
-  // Private VMBus channel management.
+  // VMBus channel management.
   //
+  bool initVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VMBusRingBuffer **txBuffer, UInt32 rxBufferSize, VMBusRingBuffer **rxBuffer);
+  bool openVMBusChannel(UInt32 channelId);
+  void signalVMBusChannel(UInt32 channelId);
+  void closeVMBusChannel(UInt32 channelId);
+  void freeVMBusChannel(UInt32 channelId);
+  bool initVMBusChannelGpadl(UInt32 channelId, UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer);
   bool configureVMBusChannelGpadl(VMBusChannel *channel, HyperVDMABuffer *buffer, UInt32 *gpadlHandle);
   bool configureVMBusChannel(VMBusChannel *channel);
   
@@ -175,24 +187,7 @@ public:
   //
   // IOService functions.
   //
-  virtual bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
-  
-  //
-  // External SynIC process function.
-  //
-  void processIncomingVMBusMessage(UInt32 cpu);
-  IOWorkLoop *getSynICWorkLoop();
-  
-  //
-  // Public VMBus channel management.
-  //
-  bool initVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VMBusRingBuffer **txBuffer, UInt32 rxBufferSize, VMBusRingBuffer **rxBuffer);
-  bool openVMBusChannel(UInt32 channelId);
-  void signalVMBusChannel(UInt32 channelId);
-  void closeVMBusChannel(UInt32 channelId);
-  void freeVMBusChannel(UInt32 channelId);
-  
-  bool initVMBusChannelGpadl(UInt32 channelId, UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer);
+  bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
 };
 
 #endif

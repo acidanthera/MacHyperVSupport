@@ -29,6 +29,101 @@ struct IOMapperDisabler : public IOMapper {
   }
 };
 
+bool HyperVVMBusController::start(IOService *provider) {
+  HVCheckDebugArgs();
+  
+  if (!super::start(provider)) {
+    return false;
+  }
+  
+  bool result = false;
+  do {
+    //
+    // Verify we are on Hyper-V.
+    //
+    if (!identifyHyperV()) {
+      HVSYSLOG("This system is not Hyper-V, aborting...");
+      break;
+    }
+    
+    //
+    // Disable I/O mapper.
+    // With no PCI bus, the system will stall at waitForSystemMapper().
+    //
+    getPlatform()->removeProperty(kIOPlatformMapperPresentKey);
+    IOMapperDisabler::disableMapper();
+    
+    //
+    // Wait for HyperVPCIRoot to get registered.
+    //
+    // On certain macOS versions, there must be an IOPCIBridge class with an
+    // IOACPIPlatformDevice parent, otherwise the system will panic.
+    // This IOPCIBridge class must be loaded first.
+    //
+    OSDictionary *rootPciMatching = IOService::serviceMatching("HyperVPCIRoot");
+    if (rootPciMatching == nullptr) {
+      HVSYSLOG("Failure while creating HyperVPCIRoot matching dictionary");
+      break;
+    }
+    
+    HVDBGLOG("Waiting for HyperVPCIRoot");
+#if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
+    IOService *rootPciService = IOService::waitForService(rootPciMatching);
+    if (rootPciService != nullptr) {
+      rootPciService->retain();
+    }
+#else
+    IOService *rootPciService = waitForMatchingService(rootPciMatching);
+    rootPciMatching->release();
+#endif
+    
+    if (rootPciService == nullptr) {
+      HVSYSLOG("Failed to locate HyperVPCIRoot");
+      break;
+    }
+    rootPciService->release();
+    HVDBGLOG("HyperVPCIRoot is now loaded");
+    
+    //
+    // Setup hypercalls.
+    //
+    if (!initHypercalls()) {
+      HVSYSLOG("Failure while initializing hypercalls");
+      break;
+    }
+    
+    if (!initSynIC()) {
+      HVSYSLOG("Failure while initializing SynIC");
+      break;
+    }
+    
+    if (!allocateVMBusBuffers()) {
+      HVSYSLOG("Failure while allocating VMBus buffers");
+      break;
+    }
+    
+    cmdGate = IOCommandGate::commandGate(this);
+    workloop->addEventSource(cmdGate);
+    
+    if (!connectVMBus()) {
+      HVSYSLOG("Failure while connecting to the VMBus");
+      break;
+    }
+    
+    if (!scanVMBus()) {
+      HVSYSLOG("Failure while scanning VMBus");
+      break;
+    }
+    
+    result = true;
+  } while (false);
+  
+  if (!result) {
+    super::stop(provider);
+  }
+  return result;
+}
+
 bool HyperVVMBusController::identifyHyperV() {
   bool isHyperV = false;
   uint32_t regs[4];
@@ -134,7 +229,7 @@ bool HyperVVMBusController::identifyHyperV() {
 }
 
 bool HyperVVMBusController::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size) {
-  IOBufferMemoryDescriptor  *bufDesc;
+  IOBufferMemoryDescriptor *bufDesc;
   
   //
   // Create DMA buffer with required specifications and get physical address.
@@ -159,92 +254,10 @@ bool HyperVVMBusController::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t si
 }
 
 void HyperVVMBusController::freeDmaBuffer(HyperVDMABuffer *dmaBuf) {
-  dmaBuf->bufDesc->complete();
-  dmaBuf->bufDesc->release();
+  IOBufferMemoryDescriptor *bufDesc = dmaBuf->bufDesc;
   
   memset(dmaBuf, 0, sizeof (*dmaBuf));
-}
-
-bool HyperVVMBusController::start(IOService *provider) {
-  HVCheckDebugArgs();
   
-  if (!super::start(provider)) {
-    return false;
-  }
-  
-  //
-  // Verify we are on Hyper-V.
-  //
-  if (!identifyHyperV()) {
-    HVSYSLOG("This system is not Hyper-V, aborting...");
-    super::stop(provider);
-    return false;
-  }
-  
-  //
-  // Disable I/O mapper.
-  // With no PCI bus, the system will stall at waitForSystemMapper().
-  //
-  getPlatform()->removeProperty(kIOPlatformMapperPresentKey);
-  IOMapperDisabler::disableMapper();
-  
-  //
-  // Wait for HyperVPCIRoot to get registered.
-  //
-  // On certain macOS versions, there must be an IOPCIBridge class with an
-  // IOACPIPlatformDevice parent, otherwise the system will panic.
-  // This IOPCIBridge class must be loaded first.
-  //
-  OSDictionary *pciMatching = IOService::serviceMatching("HyperVPCIRoot");
-  if (pciMatching == NULL) {
-    HVSYSLOG("Failed to create HyperVPCIRoot matching dictionary");
-    super::stop(provider);
-    return false;
-  }
-  
-  HVDBGLOG("Waiting for HyperVPCIRoot");
-#if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
-  IOService *pciService = IOService::waitForService(pciMatching);
-  if (pciService != NULL) {
-    pciService->retain();
-  }
-#else
-  IOService *pciService = waitForMatchingService(pciMatching);
-  pciMatching->release();
-#endif
-  
-  if (pciService == NULL) {
-    HVSYSLOG("Failed to locate HyperVPCIRoot");
-    super::stop(provider);
-    return false;
-  }
-  pciService->release();
-  HVDBGLOG("HyperVPCIRoot is now loaded");
-  
-
-  
-  //
-  // Setup hypercalls.
-  //
-  bool result = initHypercalls();
-  HVDBGLOG("Hypercall init result %u", result);
-  if (!result) {
-    return false;
-  }
-  
-  initSynIC();
-      
-  
-  allocateVMBusBuffers();
-  
-  cmdGate = IOCommandGate::commandGate(this);
-  workloop->addEventSource(cmdGate);
-  
-  if (!connectVMBus()) {
-    return false;
-  }
-  scanVMBus();
-
-  
-  return true;
+  bufDesc->complete();
+  bufDesc->release();
 }

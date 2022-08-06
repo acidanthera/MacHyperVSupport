@@ -54,9 +54,6 @@ private:
     memset(packet, 0, sizeof (*packet));
   }
   
-
-  bool allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size);
-  
   void setHBAInfo();
   
   void completeIO(HyperVStoragePacket *packet);

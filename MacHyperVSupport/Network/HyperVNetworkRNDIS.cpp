@@ -100,8 +100,8 @@ void HyperVNetwork::releaseSendIndex(UInt32 sendIndex) {
 }
 
 HyperVNetworkRNDISRequest* HyperVNetwork::allocateRNDISRequest() {
+  HyperVDMABuffer           dmaBuffer;
   HyperVNetworkRNDISRequest *rndisRequest;
-  IOBufferMemoryDescriptor  *bufDesc;
   IOLock                    *lock;
   
   //
@@ -116,32 +116,25 @@ HyperVNetworkRNDISRequest* HyperVNetwork::allocateRNDISRequest() {
   //
   // Create DMA buffer with required specifications and get physical address.
   //
-  bufDesc = IOBufferMemoryDescriptor::inTaskWithPhysicalMask(kernel_task,
-                                                             kIODirectionInOut | kIOMemoryPhysicallyContiguous | kIOMapInhibitCache | kIOMemoryMapperNone,
-                                                             sizeof (HyperVNetworkRNDISRequest), 0xFFFFFFFFFFFFF000ULL);
-  if (bufDesc == NULL) {
+  if (!hvDevice->allocateDmaBuffer(&dmaBuffer, sizeof (HyperVNetworkRNDISRequest))) {
     HVSYSLOG("Failed to allocate buffer memory for RNDIS request");
     IOLockFree(lock);
-    return NULL;
   }
-  bufDesc->prepare();
   
-  rndisRequest = (HyperVNetworkRNDISRequest*)bufDesc->getBytesNoCopy();
+  rndisRequest = (HyperVNetworkRNDISRequest*)dmaBuffer.buffer;
   memset(rndisRequest, 0, sizeof (HyperVNetworkRNDISRequest));
   
   rndisRequest->lock = lock;
   rndisRequest->isSleeping = false;
-  rndisRequest->memDescriptor = bufDesc;
-  rndisRequest->messagePhysicalAddress = bufDesc->getPhysicalAddress();
-  HVDBGLOG("Mapped RNDIS request buffer 0x%llX to phys 0x%llX", rndisRequest, rndisRequest->messagePhysicalAddress);
+  memcpy(&rndisRequest->dmaBuffer, &dmaBuffer, sizeof (rndisRequest->dmaBuffer));
+  HVDBGLOG("Mapped RNDIS request buffer 0x%llX to phys 0x%llX", rndisRequest, rndisRequest->dmaBuffer.physAddr);
   
   return rndisRequest;
 }
 
 void HyperVNetwork::freeRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest) {
   IOLockFree(rndisRequest->lock);
-  rndisRequest->memDescriptor->complete();
-  rndisRequest->memDescriptor->release();
+  hvDevice->freeDmaBuffer(&rndisRequest->dmaBuffer);
 }
 
 UInt32 HyperVNetwork::getNextRNDISTransId() {
@@ -159,7 +152,7 @@ bool HyperVNetwork::sendRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest, bo
   VMBusSinglePageBuffer pageBuffer;
   pageBuffer.length = rndisRequest->message.msgLength;
   pageBuffer.offset = 0;
-  pageBuffer.pfn = rndisRequest->messagePhysicalAddress >> PAGE_SHIFT;
+  pageBuffer.pfn = rndisRequest->dmaBuffer.physAddr >> PAGE_SHIFT;
   
   //
   // Create packet for sending the RNDIS request.

@@ -101,6 +101,8 @@ public:
   bool openChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId = UINT64_MAX);
   void closeChannel();
   bool createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer);
+  bool allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size);
+  void freeDmaBuffer(HyperVDMABuffer *dmaBuf);
   UInt32 getChannelId() { return channelId; }
   uuid_t* getInstanceId() { return &instanceId; }
   
