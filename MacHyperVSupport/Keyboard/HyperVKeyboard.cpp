@@ -11,64 +11,112 @@
 OSDefineMetaClassAndStructors(HyperVKeyboard, super);
 
 bool HyperVKeyboard::start(IOService *provider) {
+  bool      result = false;
+  IOReturn  status;
+  
   //
   // Get parent VMBus device object.
   //
   hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
   if (hvDevice == NULL) {
+    HVSYSLOG("Unable to get parent VMBus device nub");
     return false;
   }
   hvDevice->retain();
   HVCheckDebugArgs();
   
-  if (HVCheckOffArg()) {
-    HVSYSLOG("Disabling Hyper-V Keyboard due to boot arg");
-    hvDevice->release();
-    return false;
+  do {
+    HVDBGLOG("Initializing Hyper-V Synthetic Keyboard");
+    
+    if (HVCheckOffArg()) {
+      HVSYSLOG("Disabling Hyper-V Synthetic Keyboard due to boot arg");
+      break;
+    }
+    
+    if (!super::start(provider)) {
+      HVSYSLOG("Superclass start function failed");
+      return false;
+    }
+    
+    //
+    // Configure interrupt.
+    //
+    interruptSource =
+      IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVKeyboard::handleInterrupt), provider, 0);
+    if (interruptSource == nullptr) {
+      HVSYSLOG("Unable to initialize interrupt");
+      break;
+    }
+    
+    status = getWorkLoop()->addEventSource(interruptSource);
+    if (status != kIOReturnSuccess) {
+      HVSYSLOG("Unable to add interrupt event source: 0x%X", status);
+      break;
+    }
+    interruptSource->enable();
+    
+    //
+    // Configure the channel.
+    //
+    if (!hvDevice->openChannel(kHyperVKeyboardRingBufferSize, kHyperVKeyboardRingBufferSize)) {
+      HVSYSLOG("Unable to configure VMBus channel");
+      break;
+    }
+    
+    status = connectKeyboard();
+    if (status != kIOReturnSuccess) {
+      HVSYSLOG("Unable to connect to keyboard device: 0x%X", status);
+      break;
+    }
+    
+    result = true;
+  } while (false);
+  
+  if (!result) {
+    if (interruptSource != nullptr) {
+      interruptSource->disable();
+      getWorkLoop()->removeEventSource(interruptSource);
+      interruptSource->release();
+    }
+    OSSafeReleaseNULL(hvDevice);
+  } else {
+    HVDBGLOG("Initialized Hyper-V Synthetic Keyboard");
   }
   
-  if (!super::start(provider)) {
-    hvDevice->release();
-    return false;
-  }
-  
-  HVDBGLOG("Initializing Hyper-V Synthetic Keyboard");
-  
-  //
-  // Configure interrupt.
-  //
-  interruptSource =
-    IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVKeyboard::handleInterrupt), provider, 0);
-  getWorkLoop()->addEventSource(interruptSource);
-  interruptSource->enable();
-  
-  //
-  // Configure the channel.
-  //
-  if (!hvDevice->openChannel(kHyperVKeyboardRingBufferSize, kHyperVKeyboardRingBufferSize)) {
-    interruptSource->disable();
-    getWorkLoop()->removeEventSource(interruptSource);
-    OSSafeReleaseNULL(interruptSource);
-    super::stop(provider);
-    return false;
-  }
-  
-  connectKeyboard();
-  
-  HVSYSLOG("Initialized Hyper-V Synthetic Keyboard");
-  return true;
+  return result;
 }
 
-bool HyperVKeyboard::connectKeyboard() {
+void HyperVKeyboard::stop(IOService *provider) {
+  HVDBGLOG("Stopping Hyper-V Synthetic Keyboard");
+  
+  //
+  // Release interrupt.
+  //
+  if (interruptSource != nullptr) {
+    interruptSource->disable();
+    getWorkLoop()->removeEventSource(interruptSource);
+    interruptSource->release();
+  }
+  
+  //
+  // Close channel and release parent VMBus device object.
+  //
+  if (hvDevice != nullptr) {
+    hvDevice->closeChannel();
+    hvDevice->release();
+  }
+  
+  super::stop(provider);
+}
+
+OSReturn HyperVKeyboard::connectKeyboard() {
   HVDBGLOG("Connecting to keyboard interface");
   
   HyperVKeyboardMessageProtocolRequest requestMsg;
   requestMsg.header.type = kHyperVKeyboardMessageTypeProtocolRequest;
   requestMsg.versionRequested = kHyperVKeyboardVersion;
   
-  hvDevice->writeInbandPacket(&requestMsg, sizeof (requestMsg), true);
-  
-  return true;
+  return hvDevice->writeInbandPacket(&requestMsg, sizeof (requestMsg), true);
 }
 
 UInt32 HyperVKeyboard::deviceType() {
