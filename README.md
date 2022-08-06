@@ -5,37 +5,79 @@ MacHyperVSupport
 
 Hyper-V integration services for macOS. Requires a Generation 2 virtual machine on Windows 8.1 or higher.
 
-#### Supported Hyper-V devices and services
+All Intel macOS versions are supported. macOS 12.0 and newer should use `MacHyperVSupportMonterey.kext` instead.
+
+### Supported Hyper-V devices and services
 - Heartbeat
 - Guest shutdown
+- PCI passthrough (partial support)
 - Synthetic graphics (partial support)
-- Synthetic mouse
 - Synthetic keyboard
-- Synthetic SCSI controller
+- Synthetic mouse
 - Synthetic network controller
+- Synthetic SCSI controller
 
-#### Additional information
-- The following SSDTs should be used for proper operation:
-  - [SSDT-HV-CPU](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-CPU.dsl): Required on Windows 10 as Hyper-V on this version may not expose processors as Processor objects
-  - [SSDT-HV-PLUG](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-PLUG.dsl): Ensures VMPlatformPlugin loads on Big Sur, avoids freezes with the default PlatformPlugin
-  - [SSDT-HV-VMBUS](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-VMBUS.dsl): Enables correct Startup Disk operation
+### OpenCore configuration
+#### ACPI
+- [SSDT-HV-CPU](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-CPU.dsl): Required on Windows 10 as Hyper-V on this version may not expose processors as Processor objects
+- [SSDT-HV-PLUG](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-PLUG.dsl): Ensures VMPlatformPlugin loads on Big Sur, avoids freezes with the default PlatformPlugin
+- [SSDT-HV-VMBUS](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-VMBUS.dsl): Enables correct Startup Disk operation, ensure patches described within are also configured
 
-- On older versions of macOS, IOSCSIParallelFamily (`com.apple.iokit.IOSCSIParallelFamily`) may need to be Force injected. Refer to the OpenCore Configuration manual for details.
-- Booter quirks
-  - `AllowRelocationBlock` - required for macOS 10.7 and older
-  - `AvoidRuntimeDefrag` - required
-  - `ForceExitBootServices` - required for macOS 10.7 and older
-  - `RebuildAppleMemoryMap` - required for macOS 10.6 and older
-- Kernel quirks
+#### Booter quirks
+- `AllowRelocationBlock` - required for macOS 10.7 and older
+- `AvoidRuntimeDefrag` - required
+- `ForceExitBootServices` - required for macOS 10.7 and older
+- `ProvideCustomSlide` - required
+- `RebuildAppleMemoryMap` - required for macOS 10.6 and older
+
+#### Kernel
+- Quirks
   - `ProvideCurrentCpuInfo` - required for proper TSC/FSB values and CPU topology values.
-- UEFI quirks
+- The following additional kernel extensions are required:
+  - [Lilu](https://github.com/acidanthera/Lilu) - patching and library functions
+  - [VirtualSMC](https://github.com/acidanthera/VirtualSMC) - SMC emulator
+- Block
+  - com.apple.driver.AppleEFIRuntime
+    - Required for 32-bit versions of macOS (10.4 and 10.5, and 10.6 in 32-bit mode). EFI runtime services and NVRAM are unavailable in those versions due to incompatiblities with the Hyper-V UEFI.
+- Force
+  - On older versions of macOS, the following kernel extensions may need to be Force injected. Refer to the OpenCore Configuration manual for details.
+  - IONetworkingFamily (`com.apple.iokit.IONetworkingFamily`)
+  - IOSCSIParallelFamily (`com.apple.iokit.IOSCSIParallelFamily`)
+- Patch
+  - Disable _hpet_init
+    - Arch = `i386`
+    - Base = `_hpet_init`
+    - Comment = `Disables _hpet_init due to no HPET hardware present`
+    - Count = `1`
+    - Identifier = `kernel`
+    - MaxKernel = `9.5.99`
+    - Replace = `C3`
+  - Disable IOHIDDeviceShim::newTransportString()
+    - Arch = `i386`
+    - Base = `__ZNK15IOHIDDeviceShim18newTransportStringEv`
+    - Comment = `Fix crash in IOHIDDeviceShim::newTransportString() caused by NULL _deviceType`
+    - Count = `1`
+    - Identifier = `com.apple.iokit.IOHIDFamily`
+    - MaxKernel = `9.6.99`
+    - MinKernel = `9.5.0`
+    - Replace = `31C0C3`
+- Emulate
+  - DummyPowerManagement and CPU spoofing may be required depending on the host CPU for older versions of macOS.
+
+#### NVRAM
+- Boot arguments
+  - `-legacy` is required for running 32-bit versions of macOS (10.4 - 10.5, 10.6 if running in 32-bit mode). 64-bit applications and NVRAM support are unavailable in those versions.
+
+#### UEFI
+- Quirks
   - `DisableSecurityPolicy` - required on Windows 10 and newer
-- [Lilu](https://github.com/acidanthera/Lilu) is required for patching and library functions
+
+### Installer image creation
 - Installer images can either be passed in from USB hard disks, or converted from a DMG to a VHDX image using `qemu-img`:
   - DMGs need to be in a read/write format first.
   - `qemu-img convert -f raw -O vhdx Installer.dmg Installer.vhdx`
 
-#### Boot arguments
+### Boot arguments
 | Module              | Debug            | Message Debug     | Off               |
 |---------------------|------------------|-------------------|-------------------|
 | CPU disabler (10.4) | -hvcpudbg        | N/A               | N/A               |
@@ -53,7 +95,7 @@ Hyper-V integration services for macOS. Requires a Generation 2 virtual machine 
 | VMBus controller    | -hvvmbusdbg      | N/A               | N/A               |
 | VMBus device nub    | -hvvmbusdevdbg   | N/A               | N/A               |
 
-#### Credits
+### Credits
 - [Apple](https://www.apple.com) for macOS
 - [Goldfish64](https://github.com/Goldfish64) for this software
 - [vit9696](https://github.com/vit9696) for [Lilu.kext](https://github.com/vit9696/Lilu) and providing assistance
