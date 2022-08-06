@@ -11,6 +11,7 @@ OSDefineMetaClassAndStructors(HyperVShutdown, super);
 
 bool HyperVShutdown::start(IOService *provider) {
   if (!super::start(provider)) {
+    HVSYSLOG("Superclass start function failed");
     return false;
   }
   
@@ -30,8 +31,8 @@ bool HyperVShutdown::start(IOService *provider) {
 }
 
 void HyperVShutdown::stop(IOService *provider) {
+  HVDBGLOG("Stopping Hyper-V Guest Shutdown");
   super::stop(provider);
-  HVDBGLOG("Stopped Hyper-V Guest Shutdown");
 }
 
 bool HyperVShutdown::open(IOService *forClient, IOOptionBits options, void *arg) {
@@ -96,7 +97,7 @@ bool HyperVShutdown::processMessage() {
   // Shutdown machine if requested. This should not return.
   //
   if (doShutdown) {
-    HVSYSLOG("Shutdown request received, notifying userspace");
+    HVDBGLOG("Shutdown request received, notifying userspace");
     messageClients(kHyperVShutdownMessageTypePerformShutdown);
   }
   return true;

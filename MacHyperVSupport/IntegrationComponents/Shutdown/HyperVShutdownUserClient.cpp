@@ -12,19 +12,23 @@ OSDefineMetaClassAndStructors(HyperVShutdownUserClient, super);
 bool HyperVShutdownUserClient::start(IOService *provider) {
   hvShutdown = OSDynamicCast(HyperVShutdown, provider);
   if (hvShutdown == nullptr) {
-    HVSYSLOG("Provider is not HyperVShutdown, aborting");
+    HVSYSLOG("Unable to get parent HyperVShutdown device");
     return false;
   }
   hvShutdown->retain();
   HVCheckDebugArgs();
   
   if (!super::start(provider)) {
+    HVSYSLOG("Superclass start function failed");
+    hvShutdown->release();
     return false;
   }
   
   // Should only be one user client active at a time.
   if (hvShutdown->isOpen() || !hvShutdown->open(this)) {
+    HVSYSLOG("Unable to open additional user clients, only one at a time is allowed");
     super::stop(provider);
+    hvShutdown->release();
     return false;
   }
   
@@ -41,10 +45,10 @@ bool HyperVShutdownUserClient::start(IOService *provider) {
 }
 
 void HyperVShutdownUserClient::stop(IOService *provider) {
+  HVDBGLOG("Stopping Hyper-V Guest Shutdown user client");
   hvShutdown->close(this);
   hvShutdown->release();
   super::stop(provider);
-  HVDBGLOG("Stopped Hyper-V Guest Shutdown user client");
 }
 
 IOReturn HyperVShutdownUserClient::message(UInt32 type, IOService *provider, void *argument) {

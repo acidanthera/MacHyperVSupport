@@ -11,6 +11,7 @@ OSDefineMetaClassAndStructors(HyperVHeartbeat, super);
 
 bool HyperVHeartbeat::start(IOService *provider) {
   if (!super::start(provider)) {
+    HVSYSLOG("Superclass start function failed");
     return false;
   }
   
@@ -28,8 +29,8 @@ bool HyperVHeartbeat::start(IOService *provider) {
 }
 
 void HyperVHeartbeat::stop(IOService *provider) {
+  HVDBGLOG("Stopping Hyper-V Heartbeat");
   super::stop(provider);
-  HVDBGLOG("Stopped Hyper-V Heartbeat");
 }
 
 bool HyperVHeartbeat::processMessage() {

@@ -13,10 +13,6 @@ bool HyperVICService::start(IOService *provider) {
   bool      result = false;
   IOReturn  status;
   
-  if (!super::start(provider)) {
-    return false;
-  }
-  
   do {
     //
     // Get parent VMBus device object.
@@ -28,6 +24,11 @@ bool HyperVICService::start(IOService *provider) {
     }
     hvDevice->retain();
     HVCheckDebugArgs();
+    
+    if (!super::start(provider)) {
+      HVSYSLOG("Superclass start function failed");
+      return false;
+    }
     
     //
     // Configure interrupt.
@@ -57,12 +58,22 @@ bool HyperVICService::start(IOService *provider) {
   } while (false);
   
   if (!result) {
+    //
+    // Release interrupt.
+    //
     if (interruptSource != nullptr) {
       interruptSource->disable();
       getWorkLoop()->removeEventSource(interruptSource);
       interruptSource->release();
     }
-    OSSafeReleaseNULL(hvDevice);
+    
+    //
+    // Close channel and release parent VMBus device object.
+    //
+    if (hvDevice != nullptr) {
+      hvDevice->closeChannel();
+      hvDevice->release();
+    }
   }
   
   return result;
