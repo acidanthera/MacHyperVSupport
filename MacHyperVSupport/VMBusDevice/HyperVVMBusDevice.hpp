@@ -37,9 +37,10 @@ class HyperVVMBusDevice : public IOService {
   
 private:
   HyperVVMBusController   *vmbusProvider;
+  uuid_string_t           typeId;
   UInt32                  channelId;
   uuid_t                  instanceId;
-  bool                    channelIsOpen;
+  bool                    channelIsOpen = false;
   
   IOWorkLoop              *workLoop;
   IOCommandGate           *commandGate;
@@ -86,12 +87,12 @@ private:
   }
 
 public:
-  
   //
   // IOService overrides.
   //
-  virtual bool attach(IOService *provider) APPLE_KEXT_OVERRIDE;
-  virtual void detach(IOService *provider) APPLE_KEXT_OVERRIDE;
+  bool attach(IOService *provider) APPLE_KEXT_OVERRIDE;
+  void detach(IOService *provider) APPLE_KEXT_OVERRIDE;
+  bool matchPropertyTable(OSDictionary *table, SInt32 *score) APPLE_KEXT_OVERRIDE;
   
   //
   // General functions.

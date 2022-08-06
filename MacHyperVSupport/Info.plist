@@ -26,13 +26,10 @@
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>IOClass</key>
 			<string>HyperVGraphics</string>
-			<key>IOPropertyMatch</key>
-			<dict>
-				<key>HVType</key>
-				<string>da0a7802-e377-4aac-8e77-0558eb1073f8</string>
-			</dict>
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
+			<key>HVType</key>
+			<string>da0a7802-e377-4aac-8e77-0558eb1073f8</string>
 		</dict>
 		<key>HyperVHeartbeat</key>
 		<dict>
@@ -40,13 +37,10 @@
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>IOClass</key>
 			<string>HyperVHeartbeat</string>
-			<key>IOPropertyMatch</key>
-			<dict>
-				<key>HVType</key>
-				<string>57164f39-9115-4e78-ab55-382f3bd5422d</string>
-			</dict>
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
+			<key>HVType</key>
+			<string>57164f39-9115-4e78-ab55-382f3bd5422d</string>
 		</dict>
 		<key>HyperVKeyboard</key>
 		<dict>
@@ -54,13 +48,10 @@
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>IOClass</key>
 			<string>HyperVKeyboard</string>
-			<key>IOPropertyMatch</key>
-			<dict>
-				<key>HVType</key>
-				<string>f912ad6d-2b17-48ea-bd65-f927a61c7684</string>
-			</dict>
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
+			<key>HVType</key>
+			<string>f912ad6d-2b17-48ea-bd65-f927a61c7684</string>
 		</dict>
 		<key>HyperVMouse</key>
 		<dict>
@@ -70,13 +61,10 @@
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>IOClass</key>
 			<string>HyperVMouse</string>
-			<key>IOPropertyMatch</key>
-			<dict>
-				<key>HVType</key>
-				<string>cfa8b69e-5b4a-4cc0-b98b-8ba1a1f3f95a</string>
-			</dict>
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
+			<key>HVType</key>
+			<string>cfa8b69e-5b4a-4cc0-b98b-8ba1a1f3f95a</string>
 		</dict>
 		<key>HyperVMouseHID</key>
 		<dict>
@@ -99,13 +87,10 @@
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>IOClass</key>
 			<string>HyperVNetwork</string>
-			<key>IOPropertyMatch</key>
-			<dict>
-				<key>HVType</key>
-				<string>f8615163-df3e-46c5-913f-f2d2f965ed0e</string>
-			</dict>
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
+			<key>HVType</key>
+			<string>f8615163-df3e-46c5-913f-f2d2f965ed0e</string>
 		</dict>
 		<key>HyperVPCIBridge</key>
 		<dict>
@@ -113,13 +98,10 @@
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>IOClass</key>
 			<string>HyperVPCIBridge</string>
-			<key>IOPropertyMatch</key>
-			<dict>
-				<key>HVType</key>
-				<string>44c4f61d-4444-4400-9d52-802e27ede19f</string>
-			</dict>
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
+			<key>HVType</key>
+			<string>44c4f61d-4444-4400-9d52-802e27ede19f</string>
 		</dict>
 		<key>HyperVPCIProviderGen2</key>
 		<dict>
@@ -158,15 +140,12 @@
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>IOClass</key>
 			<string>HyperVShutdown</string>
-			<key>IOPropertyMatch</key>
-			<dict>
-				<key>HVType</key>
-				<string>0e0b6031-5213-4934-818b-38d90ced39db</string>
-			</dict>
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
 			<key>IOUserClientClass</key>
 			<string>HyperVShutdownUserClient</string>
+			<key>HVType</key>
+			<string>0e0b6031-5213-4934-818b-38d90ced39db</string>
 		</dict>
 		<key>HyperVStorage</key>
 		<dict>
@@ -174,11 +153,6 @@
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>IOClass</key>
 			<string>HyperVStorage</string>
-			<key>IOPropertyMatch</key>
-			<dict>
-				<key>HVType</key>
-				<string>ba6163d9-04a1-4d29-b605-72e2ffb1dc7f</string>
-			</dict>
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
 			<key>Protocol Characteristics</key>
@@ -188,6 +162,8 @@
 				<key>Physical Interconnect Location</key>
 				<string>Internal</string>
 			</dict>
+			<key>HVType</key>
+			<string>ba6163d9-04a1-4d29-b605-72e2ffb1dc7f</string>
 		</dict>
 		<key>HyperVVMBusController</key>
 		<dict>

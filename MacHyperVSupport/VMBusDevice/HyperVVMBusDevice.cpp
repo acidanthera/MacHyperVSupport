@@ -15,26 +15,27 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
   if (!super::attach(provider)) {
     return false;
   }
-  
-  channelIsOpen = false;
+  HVCheckDebugArgs();
   
   //
   // Get channel number and instance GUID.
   //
+  OSString *typeIdString  = OSDynamicCast(OSString, getProperty(kHyperVVMBusDeviceChannelTypeKey));
   OSNumber *channelNumber = OSDynamicCast(OSNumber, getProperty(kHyperVVMBusDeviceChannelIDKey));
   OSData *instanceBytes   = OSDynamicCast(OSData, getProperty(kHyperVVMBusDeviceChannelInstanceKey));
   vmbusProvider = OSDynamicCast(HyperVVMBusController, getProvider());
-  if (channelNumber == NULL || instanceBytes == NULL || vmbusProvider == NULL) {
+  if (typeIdString == nullptr || channelNumber == nullptr || instanceBytes == nullptr || vmbusProvider == nullptr) {
     return false;
   }
+  strncpy(typeId, typeIdString->getCStringNoCopy(), sizeof (typeId));
   channelId = channelNumber->unsigned32BitValue();
-  HVDBGLOG("Attaching nub for channel %u", channelId);
+  HVDBGLOG("Attaching nub type %s for channel %u", typeId, channelId);
   memcpy(instanceId, instanceBytes->getBytesNoCopy(), instanceBytes->getLength());
   
   //
   // Set location to ensure unique names in I/O Registry.
   //
-  snprintf(channelLocation, sizeof (channelLocation), "%x", channelId);
+  snprintf(channelLocation, sizeof (channelLocation), "%x", (unsigned int) channelId);
   setLocation(channelLocation);
   
   //
@@ -70,6 +71,29 @@ void HyperVVMBusDevice::detach(IOService *provider) {
   IOLockFree(threadZeroRequest.lock);
   
   super::detach(provider);
+}
+
+bool HyperVVMBusDevice::matchPropertyTable(OSDictionary *table, SInt32 *score) {
+  if (!super::matchPropertyTable(table, score)) {
+    HVSYSLOG("Superclass failed to match property table");
+    return false;
+  }
+  
+  //
+  // Get device type ID.
+  //
+  OSString *hvTypeString = OSDynamicCast(OSString, table->getObject(kHyperVVMBusDeviceChannelTypeKey));
+  if (hvTypeString == nullptr) {
+    HVSYSLOG("Hyper-V device type ID not found or not a string");
+    return false;
+  }
+  
+  if (strcmp(typeId, hvTypeString->getCStringNoCopy()) != 0) {
+    return false;
+  }
+  
+  HVDBGLOG("Matched type ID %s", typeId);
+  return true;
 }
 
 bool HyperVVMBusDevice::openChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId) {
