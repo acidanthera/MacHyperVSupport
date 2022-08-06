@@ -11,20 +11,26 @@
 OSDefineMetaClassAndStructors(HyperVKeyboard, super);
 
 bool HyperVKeyboard::start(IOService *provider) {
-  if (HVCheckOffArg() || !super::start(provider)) {
-    return false;
-  }
-  
   //
   // Get parent VMBus device object.
   //
   hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
   if (hvDevice == NULL) {
-    super::stop(provider);
     return false;
   }
   hvDevice->retain();
   HVCheckDebugArgs();
+  
+  if (HVCheckOffArg()) {
+    HVSYSLOG("Disabling Hyper-V Keyboard due to boot arg");
+    hvDevice->release();
+    return false;
+  }
+  
+  if (!super::start(provider)) {
+    hvDevice->release();
+    return false;
+  }
   
   HVDBGLOG("Initializing Hyper-V Synthetic Keyboard");
   
