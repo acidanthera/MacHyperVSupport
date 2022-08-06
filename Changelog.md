@@ -1,6 +1,6 @@
 MacHyperVSupport Changelog
 ============================
-#### v1.0
+#### v0.9.1
 - Added initial PCI passthrough support
 - Fix crash related to IOPCIBridge on 12.0 and newer
 - Added support for macOS 10.4 and 10.5
