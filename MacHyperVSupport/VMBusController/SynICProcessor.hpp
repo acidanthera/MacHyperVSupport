@@ -17,9 +17,9 @@ class SynICProcessor : public OSObject {
   OSDeclareDefaultStructors(SynICProcessor)
   
 private:
-  UInt32                  cpu;
-  HyperVVMBusController   *vmbus;
-  IOInterruptEventSource  *interruptEventSource;
+  UInt32                  cpu                   = 0;
+  HyperVVMBusController   *vmbus                = nullptr;
+  IOInterruptEventSource  *interruptEventSource = nullptr;
   
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
   

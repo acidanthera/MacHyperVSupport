@@ -28,9 +28,9 @@ private:
   //
   // HID structures.
   //
-  HyperVMouseDeviceInfo   mouseInfo;
-  void                    *hidDescriptor;
-  size_t                  hidDescriptorLength;
+  HyperVMouseDeviceInfo   mouseInfo           = { };
+  void                    *hidDescriptor      = nullptr;
+  size_t                  hidDescriptorLength = 0;
 
   void freeStructures();
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
@@ -44,21 +44,21 @@ protected:
   //
   // IOHIDDevice overrides.
   //
-  virtual bool handleStart(IOService *provider) APPLE_KEXT_OVERRIDE;
-  virtual void handleStop(IOService *provider) APPLE_KEXT_OVERRIDE;
+  bool handleStart(IOService *provider) APPLE_KEXT_OVERRIDE;
+  void handleStop(IOService *provider) APPLE_KEXT_OVERRIDE;
 
 public:  
   //
   // IOHIDDevice overrides.
   //
-  virtual OSString *newTransportString() const APPLE_KEXT_OVERRIDE;
-  virtual OSString *newManufacturerString() const APPLE_KEXT_OVERRIDE;
-  virtual OSString *newProductString() const APPLE_KEXT_OVERRIDE;
-  virtual OSNumber *newVendorIDNumber() const APPLE_KEXT_OVERRIDE;
-  virtual OSNumber *newProductIDNumber() const APPLE_KEXT_OVERRIDE;
-  virtual OSNumber *newVersionNumber() const APPLE_KEXT_OVERRIDE;
+  OSString *newTransportString() const APPLE_KEXT_OVERRIDE;
+  OSString *newManufacturerString() const APPLE_KEXT_OVERRIDE;
+  OSString *newProductString() const APPLE_KEXT_OVERRIDE;
+  OSNumber *newVendorIDNumber() const APPLE_KEXT_OVERRIDE;
+  OSNumber *newProductIDNumber() const APPLE_KEXT_OVERRIDE;
+  OSNumber *newVersionNumber() const APPLE_KEXT_OVERRIDE;
 
-  virtual IOReturn newReportDescriptor(IOMemoryDescriptor **descriptor) const APPLE_KEXT_OVERRIDE;
+  IOReturn newReportDescriptor(IOMemoryDescriptor **descriptor) const APPLE_KEXT_OVERRIDE;
 };
 
 #endif /* HyperVMouse_hpp */

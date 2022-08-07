@@ -12,18 +12,18 @@ OSDefineMetaClassAndStructors(SynICProcessor, OSObject);
 
 SynICProcessor *SynICProcessor::syncICProcessor(UInt32 cpu, HyperVVMBusController *vmbus) {
   SynICProcessor *me = new SynICProcessor;
-  if (me == NULL) {
-    return NULL;
+  if (me == nullptr) {
+    return nullptr;
   }
   
-  me->cpu = cpu;
+  me->cpu   = cpu;
   me->vmbus = vmbus;
   return me;
 }
 
 bool SynICProcessor::setupInterrupt() {
   interruptEventSource = IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &SynICProcessor::handleInterrupt));
-  if (interruptEventSource == NULL) {
+  if (interruptEventSource == nullptr) {
     return false;
   }
   interruptEventSource->enable();
