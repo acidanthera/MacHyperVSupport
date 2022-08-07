@@ -7,6 +7,33 @@
 
 #include "HyperVMouse.hpp"
 
+void HyperVMouse::freeStructures() {
+  //
+  // Free HID descriptor.
+  //
+  if (hidDescriptor != nullptr) {
+      IOFree(hidDescriptor, hidDescriptorLength);
+      hidDescriptor = nullptr;
+    }
+  
+  //
+  // Release interrupt.
+  //
+  if (interruptSource != nullptr) {
+    interruptSource->disable();
+    getWorkLoop()->removeEventSource(interruptSource);
+    interruptSource->release();
+  }
+  
+  //
+  // Close channel and release parent VMBus device object.
+  //
+  if (hvDevice != nullptr) {
+    hvDevice->closeChannel();
+    hvDevice->release();
+  }
+}
+
 void HyperVMouse::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
   UInt8 data128[128];
 
@@ -147,6 +174,19 @@ void HyperVMouse::handleDeviceInfo(HyperVMouseMessageInitialDeviceInfo *deviceIn
 }
 
 void HyperVMouse::handleInputReport(HyperVMouseMessageInputReport *inputReport) {
+#if DEBUG
+  typedef struct __attribute__((packed)) {
+    UInt8   buttons;
+    UInt16  x;
+    UInt16  y;
+    SInt8   wheel;
+    SInt8   pan;
+  } HIDABSReport;
+  
+  HIDABSReport *report = (HIDABSReport*)inputReport->data;
+  HVDBGLOG("Got mouse input buttons %u X: %u Y: %u wheel: %d pan: %d", report->buttons, report->x, report->y, report->wheel, report->pan);
+#endif
+  
   //
   // Send new report to HID system.
   //

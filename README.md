@@ -61,6 +61,15 @@ All Intel macOS versions are supported. macOS 12.0 and newer should use `MacHype
     - MaxKernel = `9.6.99`
     - MinKernel = `9.5.0`
     - Replace = `31C0C3`
+  - Disable scaling factor for X/Y mouse movement
+    - Arch = `i386`
+    - Base = `__ZN16IOHIDEventDriver21handleInterruptReportE12UnsignedWideP18IOMemoryDescriptor15IOHIDReportTypem`
+    - Comment = `Workaround for absence of AbsoluteAxisBoundsRemovalPercentage in 10.4`
+    - Identifier = `com.apple.iokit.IOHIDFamily`
+    - Find = `BA1F85EB51`
+    - MaxKernel = `8.11.99`
+    - MinKernel = `8.0.0`
+    - Replace = `BA00000000`
 - Emulate
   - DummyPowerManagement and CPU spoofing may be required depending on the host CPU for older versions of macOS.
 

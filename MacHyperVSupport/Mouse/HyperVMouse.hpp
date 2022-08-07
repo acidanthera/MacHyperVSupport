@@ -32,6 +32,7 @@ private:
   void                    *hidDescriptor;
   size_t                  hidDescriptorLength;
 
+  void freeStructures();
   void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
 
   bool setupMouse();

@@ -10,67 +10,84 @@
 OSDefineMetaClassAndStructors(HyperVMouse, super);
 
 bool HyperVMouse::handleStart(IOService *provider) {
-  if (HVCheckOffArg() || !super::handleStart(provider)) {
-    return false;
-  }
-
+  bool      result  = false;
+  IOReturn  status;
+  
   //
   // Get parent VMBus device object.
   //
   hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
-  if (hvDevice == NULL) {
+  if (hvDevice == nullptr) {
+    HVSYSLOG("Unable to get parent VMBus device nub");
     return false;
   }
   hvDevice->retain();
   HVCheckDebugArgs();
   
-  //
-  // HIDDefaultBehavior needs to be set to Mouse for the device to
-  // get exposed as a mouse to userspace.
-  //
-  HVDBGLOG("Initializing Hyper-V Synthetic Mouse");
-  setProperty("HIDDefaultBehavior", "Mouse");
-  
-  //
-  // Configure interrupt.
-  //
-  interruptSource =
-    IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVMouse::handleInterrupt), provider, 0);
-  getWorkLoop()->addEventSource(interruptSource);
-  interruptSource->enable();
+  do {
+    HVDBGLOG("Initializing Hyper-V Synthetic Mouse");
+    
+    if (HVCheckOffArg()) {
+      HVSYSLOG("Disabling Hyper-V Synthetic Mouse due to boot arg");
+      break;
+    }
+    
+    if (!super::handleStart(provider)) {
+      HVSYSLOG("Superclass start function failed");
+      break;
+    }
+    
+    //
+    // HIDDefaultBehavior needs to be set to Mouse for the device to
+    // get exposed as a mouse to userspace.
+    //
+    setProperty("HIDDefaultBehavior", "Mouse");
+    
+    //
+    // Configure interrupt.
+    //
+    interruptSource =
+      IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVMouse::handleInterrupt), provider, 0);
+    if (interruptSource == nullptr) {
+      HVSYSLOG("Unable to initialize interrupt");
+      break;
+    }
+    
+    status = getWorkLoop()->addEventSource(interruptSource);
+    if (status != kIOReturnSuccess) {
+      HVSYSLOG("Unable to add interrupt event source: 0x%X", status);
+      break;
+    }
+    interruptSource->enable();
+    
+    //
+    // Configure the channel.
+    //
+    if (!hvDevice->openChannel(kHyperVMouseRingBufferSize, kHyperVMouseRingBufferSize)) {
+      HVSYSLOG("Unable to configure VMBus channel");
+      break;
+    }
+    
+    if (!setupMouse()) {
+      HVSYSLOG("Unable to setup mouse device");
+      return false;
+    }
+    
+    result = true;
+    HVDBGLOG("Initialized Hyper-V Synthetic Mouse");
+  } while (false);
 
-  //
-  // Configure the channel.
-  //
-  if (!hvDevice->openChannel(kHyperVMouseRingBufferSize, kHyperVMouseRingBufferSize)) {
-    return false;
-  }
-
-  if (!setupMouse()) {
-    HVSYSLOG("Failed to set up device");
-    return false;
+  if (!result) {
+    freeStructures();
   }
   
-  HVSYSLOG("Initialized Hyper-V Synthetic Mouse");
-  return true;
+  return result;
 }
 
 void HyperVMouse::handleStop(IOService *provider) {
-  HVDBGLOG("Hyper-V Mouse is stopping");
+  HVDBGLOG("Hyper-V Synthetic Mouse is stopping");
 
-  if (hidDescriptor != NULL) {
-    IOFree(hidDescriptor, hidDescriptorLength);
-    hidDescriptor = NULL;
-  }
-
-  //
-  // Close channel and remove interrupt sources.
-  //
-  if (hvDevice != NULL) {
-    hvDevice->closeChannel();
-    hvDevice->release();
-  }
-
+  freeStructures();
   super::handleStop(provider);
 }
 
