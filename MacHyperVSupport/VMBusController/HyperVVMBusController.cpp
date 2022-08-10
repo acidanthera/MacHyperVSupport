@@ -232,10 +232,10 @@ bool HyperVVMBusController::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t si
   IOBufferMemoryDescriptor *bufDesc;
   
   //
-  // Create DMA buffer with required specifications and get physical address.
+  // Create page-aligned DMA buffer and get physical address.
   //
   bufDesc = IOBufferMemoryDescriptor::inTaskWithPhysicalMask(kernel_task,
-                                                             kIODirectionInOut | kIOMemoryPhysicallyContiguous | kIOMapInhibitCache,
+                                                             kIODirectionInOut | kIOMemoryPhysicallyContiguous,
                                                              size, 0xFFFFFFFFFFFFF000ULL);
   if (bufDesc == NULL) {
     HVSYSLOG("Failed to allocate DMA buffer memory of %u bytes", size);
