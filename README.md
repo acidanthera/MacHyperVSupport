@@ -19,7 +19,7 @@ All Intel macOS versions are supported. macOS 12.0 and newer should use `MacHype
 
 ### OpenCore configuration
 #### ACPI
-- [SSDT-HV-CPU](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-CPU.dsl): Required on Windows 10 as Hyper-V on this version may not expose processors as Processor objects
+- [SSDT-HV-DEV](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-DEV.dsl): Required on Windows 10 and newer, provides proper processor objects and disables incompatible virtual devices under macOS
 - [SSDT-HV-PLUG](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-PLUG.dsl): Ensures VMPlatformPlugin loads on Big Sur, avoids freezes with the default PlatformPlugin
 - [SSDT-HV-VMBUS](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-VMBUS.dsl): Enables correct Startup Disk operation, ensure patches described within are also configured
 
