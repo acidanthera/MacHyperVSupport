@@ -261,6 +261,7 @@
 		41BF462A288CDF1200813670 /* MacHyperVSupportMonterey.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacHyperVSupportMonterey.kext; sourceTree = BUILT_PRODUCTS_DIR; };
 		41BF462D289209EA00813670 /* HyperVShutdownUserClient.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVShutdownUserClient.cpp; sourceTree = "<group>"; };
 		41BF462E289209EA00813670 /* HyperVShutdownUserClientInternal.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVShutdownUserClientInternal.hpp; sourceTree = "<group>"; };
+		41C604AB28B2F87600FB77ED /* HyperV-versions.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HyperV-versions.md"; sourceTree = "<group>"; };
 		41E2EC77263F894300BBE18F /* SynIC.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SynIC.cpp; sourceTree = "<group>"; };
 		41F2E3D32665B42100CE26CE /* kern_config.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_config.hpp; sourceTree = "<group>"; };
 		41F2E3D42665B42100CE26CE /* hde64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hde64.h; sourceTree = "<group>"; };
@@ -460,6 +461,7 @@
 		41BE40FA263EDE370018C52B = {
 			isa = PBXGroup;
 			children = (
+				41C604AA28B2F81200FB77ED /* Docs */,
 				41BE4112263EDEA10018C52B /* Frameworks */,
 				41F2E3D12665B41200CE26CE /* LiluSDK */,
 				41BE4106263EDE380018C52B /* MacHyperVSupport */,
@@ -528,6 +530,14 @@
 				418F051D2647223E00E1D14C /* VMBusDriver.hpp */,
 			);
 			path = VMBusController;
+			sourceTree = "<group>";
+		};
+		41C604AA28B2F81200FB77ED /* Docs */ = {
+			isa = PBXGroup;
+			children = (
+				41C604AB28B2F87600FB77ED /* HyperV-versions.md */,
+			);
+			path = Docs;
 			sourceTree = "<group>";
 		};
 		41F2E3D12665B41200CE26CE /* LiluSDK */ = {
