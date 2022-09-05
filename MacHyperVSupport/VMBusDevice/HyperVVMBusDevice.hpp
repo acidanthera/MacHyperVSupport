@@ -36,7 +36,7 @@ class HyperVVMBusDevice : public IOService {
   typedef IOService super;
   
 private:
-  HyperVVMBusController   *vmbusProvider;
+  HyperVVMBus             *vmbusProvider;
   uuid_string_t           typeId;
   UInt32                  channelId;
   uuid_t                  instanceId;

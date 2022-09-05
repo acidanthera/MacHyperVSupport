@@ -2,13 +2,16 @@
 //  HyperV.hpp
 //  Hyper-V register and structures header
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperV_hpp
 #define HyperV_hpp
 
+#include <IOKit/IOBufferMemoryDescriptor.h>
+#include <IOKit/IODMACommand.h>
 #include <IOKit/IOLib.h>
+
 #include <Headers/kern_api.hpp>
 
 #define kHyperVStatusSuccess    0
@@ -223,6 +226,89 @@ inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId,
 #define HV_PCIBRIDGE_CLASS IOPCIBridge
 #endif
 
+//
+// Bit functions.
+//
+#define ADDR (*(volatile long *)addr)
+
+static inline void sync_set_bit(long nr, volatile void *addr) {
+  asm volatile("lock; bts %1,%0"
+         : "+m" (ADDR)
+         : "Ir" (nr)
+         : "memory");
+}
+
+/**
+ * sync_clear_bit - Clears a bit in memory
+ * @nr: Bit to clear
+ * @addr: Address to start counting from
+ *
+ * sync_clear_bit() is atomic and may not be reordered.  However, it does
+ * not contain a memory barrier, so if it is used for locking purposes,
+ * you should call smp_mb__before_atomic() and/or smp_mb__after_atomic()
+ * in order to ensure changes are visible on other processors.
+ */
+static inline void sync_clear_bit(long nr, volatile void *addr)
+{
+  asm volatile("lock; btr %1,%0"
+         : "+m" (ADDR)
+         : "Ir" (nr)
+         : "memory");
+}
+
+/**
+ * sync_change_bit - Toggle a bit in memory
+ * @nr: Bit to change
+ * @addr: Address to start counting from
+ *
+ * sync_change_bit() is atomic and may not be reordered.
+ * Note that @nr may be almost arbitrarily large; this function is not
+ * restricted to acting on a single-word quantity.
+ */
+static inline void sync_change_bit(long nr, volatile void *addr)
+{
+  asm volatile("lock; btc %1,%0"
+         : "+m" (ADDR)
+         : "Ir" (nr)
+         : "memory");
+}
+
+/**
+ * sync_test_and_set_bit - Set a bit and return its old value
+ * @nr: Bit to set
+ * @addr: Address to count from
+ *
+ * This operation is atomic and cannot be reordered.
+ * It also implies a memory barrier.
+ */
+static inline int sync_test_and_set_bit(long nr, volatile void *addr)
+{
+  int oldbit;
+
+  asm volatile("lock; bts %2,%1\n\tsbbl %0,%0"
+         : "=r" (oldbit), "+m" (ADDR)
+         : "Ir" (nr) : "memory");
+  return oldbit;
+}
+
+/**
+ * sync_test_and_clear_bit - Clear a bit and return its old value
+ * @nr: Bit to clear
+ * @addr: Address to count from
+ *
+ * This operation is atomic and cannot be reordered.
+ * It also implies a memory barrier.
+ */
+static inline int sync_test_and_clear_bit(long nr, volatile void *addr)
+{
+  int oldbit;
+
+  asm volatile("lock; btr %2,%1\n\tsbbl %0,%0"
+         : "=r" (oldbit), "+m" (ADDR)
+         : "Ir" (nr) : "memory");
+  return oldbit;
+}
+
 template <class T, size_t N>
 constexpr size_t ARRAY_SIZE(const T (&array)[N]) {
   return N;
@@ -422,13 +508,17 @@ typedef struct {
   UInt64  pfnArray[];
 } HyperVGPARange;
 
-#define HyperVEventFlagsByteCount 256
+#define kHyperVEventFlagsByteCount  256
+#define kHyperVEventFlagsDwordCount (kHyperVEventFlagsByteCount / sizeof (UInt32))
 
 //
 // Event flags.
 //
 typedef struct __attribute__((packed)) {
-  UInt8 flags[HyperVEventFlagsByteCount];
+  union {
+    UInt8   flags8[kHyperVEventFlagsByteCount];
+    UInt32  flags32[kHyperVEventFlagsDwordCount];
+  };
 } HyperVEventFlags;
 
 typedef struct __attribute__((packed)) {
@@ -436,5 +526,24 @@ typedef struct __attribute__((packed)) {
   UInt16 eventFlagsOffset;
   UInt16 reserved;
 } HyperVMonitorNotificationParameter;
+
+//
+// DMA buffer structure.
+//
+typedef struct {
+  IOBufferMemoryDescriptor  *bufDesc;
+  IODMACommand              *dmaCmd;
+  mach_vm_address_t         physAddr;
+  void                      *buffer;
+  size_t                    size;
+} HyperVDMABuffer;
+
+//
+// XNU CPU external functions/variables from mp.c.
+//
+extern unsigned int real_ncpus;    /* real number of cpus */
+extern "C" {
+  int cpu_number(void);
+}
 
 #endif

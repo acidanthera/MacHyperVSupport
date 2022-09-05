@@ -23,7 +23,7 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
   OSString *typeIdString  = OSDynamicCast(OSString, getProperty(kHyperVVMBusDeviceChannelTypeKey));
   OSNumber *channelNumber = OSDynamicCast(OSNumber, getProperty(kHyperVVMBusDeviceChannelIDKey));
   OSData *instanceBytes   = OSDynamicCast(OSData, getProperty(kHyperVVMBusDeviceChannelInstanceKey));
-  vmbusProvider = OSDynamicCast(HyperVVMBusController, getProvider());
+  vmbusProvider = OSDynamicCast(HyperVVMBus, getProvider());
   if (typeIdString == nullptr || channelNumber == nullptr || instanceBytes == nullptr || vmbusProvider == nullptr) {
     return false;
   }

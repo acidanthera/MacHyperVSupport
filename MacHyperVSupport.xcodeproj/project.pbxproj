@@ -7,16 +7,25 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		41078473264603F1005894D4 /* VMBusChannel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41078472264603F1005894D4 /* VMBusChannel.cpp */; };
-		41225F3C2642086300574E86 /* SynICProcessor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41225F3A2642086300574E86 /* SynICProcessor.cpp */; };
-		41225F3D2642086300574E86 /* SynICProcessor.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41225F3B2642086300574E86 /* SynICProcessor.hpp */; };
+		410F5CC828C58D1800EBB105 /* HyperVVMBusPrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 410F5CC728C58D1800EBB105 /* HyperVVMBusPrivate.cpp */; };
+		410F5CC928C58D1800EBB105 /* HyperVVMBusPrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 410F5CC728C58D1800EBB105 /* HyperVVMBusPrivate.cpp */; };
 		41225F512644C34300574E86 /* HyperVVMBusDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41225F4F2644C34300574E86 /* HyperVVMBusDevice.cpp */; };
 		41225F522644C34300574E86 /* HyperVVMBusDevice.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41225F502644C34300574E86 /* HyperVVMBusDevice.hpp */; };
 		41225F572644D98500574E86 /* HyperVHeartbeat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41225F552644D98500574E86 /* HyperVHeartbeat.cpp */; };
 		41225F582644D98500574E86 /* HyperVHeartbeat.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41225F562644D98500574E86 /* HyperVHeartbeat.hpp */; };
+		412E10A028C589DF00B8A699 /* HyperVVMBus.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 412E109E28C589DF00B8A699 /* HyperVVMBus.cpp */; };
+		412E10A128C589DF00B8A699 /* HyperVVMBus.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 412E109E28C589DF00B8A699 /* HyperVVMBus.cpp */; };
+		412E10A228C589DF00B8A699 /* HyperVVMBus.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 412E109F28C589DF00B8A699 /* HyperVVMBus.hpp */; };
+		412E10A328C589DF00B8A699 /* HyperVVMBus.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 412E109F28C589DF00B8A699 /* HyperVVMBus.hpp */; };
+		414678B728C4F0E5000E8F83 /* HyperVInterruptController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 414678B528C4F0E5000E8F83 /* HyperVInterruptController.cpp */; };
+		414678B828C4F0E5000E8F83 /* HyperVInterruptController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 414678B528C4F0E5000E8F83 /* HyperVInterruptController.cpp */; };
+		414678B928C4F0E5000E8F83 /* HyperVInterruptController.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 414678B628C4F0E5000E8F83 /* HyperVInterruptController.hpp */; };
+		414678BA28C4F0E5000E8F83 /* HyperVInterruptController.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 414678B628C4F0E5000E8F83 /* HyperVInterruptController.hpp */; };
 		416E4180264A0D5D006DED6D /* HyperVStoragePrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 416E417E264A0D5D006DED6D /* HyperVStoragePrivate.cpp */; };
 		416E418E2651E42E006DED6D /* HyperVMousePrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 416E418D2651E42E006DED6D /* HyperVMousePrivate.cpp */; };
 		416E429D265751CC006DED6D /* HyperVVMBusDevicePrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 416E429C265751CC006DED6D /* HyperVVMBusDevicePrivate.cpp */; };
+		417C576128C64B92003A177C /* HyperVVMBusInterrupts.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 417C576028C64B92003A177C /* HyperVVMBusInterrupts.cpp */; };
+		417C576228C64B92003A177C /* HyperVVMBusInterrupts.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 417C576028C64B92003A177C /* HyperVVMBusInterrupts.cpp */; };
 		417C97952892184C00CFE0B2 /* hvshutdown.c in Sources */ = {isa = PBXBuildFile; fileRef = 417C97942892184C00CFE0B2 /* hvshutdown.c */; };
 		418219662648607600619C15 /* HyperVKeyboard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 418219642648607600619C15 /* HyperVKeyboard.cpp */; };
 		418219672648607600619C15 /* HyperVKeyboard.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 418219652648607600619C15 /* HyperVKeyboard.hpp */; };
@@ -28,8 +37,7 @@
 		418F84352648B07F003F8520 /* HyperVMouse.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 418F84332648B07E003F8520 /* HyperVMouse.hpp */; };
 		418F843D2648BA38003F8520 /* HyperVStorage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 418F843B2648BA38003F8520 /* HyperVStorage.cpp */; };
 		418F843E2648BA38003F8520 /* HyperVStorage.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 418F843C2648BA38003F8520 /* HyperVStorage.hpp */; };
-		419B88C2263F0169005A9977 /* Hypercalls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 419B88C1263F0169005A9977 /* Hypercalls.cpp */; };
-		419B88C5263F1F85005A9977 /* VMBus.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 419B88C4263F1F85005A9977 /* VMBus.cpp */; };
+		419B88C2263F0169005A9977 /* HyperVControllerHypercalls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 419B88C1263F0169005A9977 /* HyperVControllerHypercalls.cpp */; };
 		41AE1D0E289C95A9001A7B42 /* HyperVCPU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */; };
 		41AE1D0F289C95A9001A7B42 /* HyperVCPU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */; };
 		41AE1D10289C95A9001A7B42 /* HyperVCPU.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41AE1D0D289C95A9001A7B42 /* HyperVCPU.hpp */; };
@@ -38,8 +46,6 @@
 		41B41BDE26C74B4C00926A0D /* HyperVNetwork.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41B41BDC26C74B4C00926A0D /* HyperVNetwork.hpp */; };
 		41B41BE426C84A9F00926A0D /* HyperVNetworkPrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41B41BE326C84A9F00926A0D /* HyperVNetworkPrivate.cpp */; };
 		41B41BE726CDC42D00926A0D /* HyperVNetworkRNDIS.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41B41BE626CDC42D00926A0D /* HyperVNetworkRNDIS.cpp */; };
-		41BE411A263EDFAF0018C52B /* HyperVVMBusController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41BE4118263EDFAF0018C52B /* HyperVVMBusController.cpp */; };
-		41BE411B263EDFAF0018C52B /* HyperVVMBusController.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41BE4119263EDFAF0018C52B /* HyperVVMBusController.hpp */; };
 		41BF45D8288CDF1200813670 /* HyperVModuleDevice.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F9B8FE284BA20700E0DCB2 /* HyperVModuleDevice.hpp */; };
 		41BF45D9288CDF1200813670 /* kern_compat.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3F12665B42200CE26CE /* kern_compat.hpp */; };
 		41BF45DA288CDF1200813670 /* arm.h in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3EA2665B42200CE26CE /* arm.h */; };
@@ -58,7 +64,6 @@
 		41BF45E7288CDF1200813670 /* kern_time.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3D52665B42100CE26CE /* kern_time.hpp */; };
 		41BF45E8288CDF1200813670 /* HyperVPCIBridge.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F9B8EF2849792200E0DCB2 /* HyperVPCIBridge.hpp */; };
 		41BF45E9288CDF1200813670 /* kern_policy.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3DA2665B42100CE26CE /* kern_policy.hpp */; };
-		41BF45EA288CDF1200813670 /* HyperVVMBusController.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41BE4119263EDFAF0018C52B /* HyperVVMBusController.hpp */; };
 		41BF45EB288CDF1200813670 /* kern_iokit.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3DD2665B42100CE26CE /* kern_iokit.hpp */; };
 		41BF45EC288CDF1200813670 /* kern_patcher.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3F02665B42200CE26CE /* kern_patcher.hpp */; };
 		41BF45ED288CDF1200813670 /* HyperVPCIProvider.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E44A2666F37B00CE26CE /* HyperVPCIProvider.hpp */; };
@@ -73,7 +78,6 @@
 		41BF45F6288CDF1200813670 /* xcore.h in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3EE2665B42200CE26CE /* xcore.h */; };
 		41BF45F7288CDF1200813670 /* mips.h in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3E72665B42200CE26CE /* mips.h */; };
 		41BF45F8288CDF1200813670 /* HyperVMouse.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 418F84332648B07E003F8520 /* HyperVMouse.hpp */; };
-		41BF45F9288CDF1200813670 /* SynICProcessor.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41225F3B2642086300574E86 /* SynICProcessor.hpp */; };
 		41BF45FA288CDF1200813670 /* kern_file.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3E22665B42200CE26CE /* kern_file.hpp */; };
 		41BF45FB288CDF1200813670 /* HyperVShutdown.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 418F052B2648451200E1D14C /* HyperVShutdown.hpp */; };
 		41BF45FC288CDF1200813670 /* kern_user.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3DB2665B42100CE26CE /* kern_user.hpp */; };
@@ -92,19 +96,16 @@
 		41BF460A288CDF1200813670 /* plugin_start.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E41B2665B42900CE26CE /* plugin_start.cpp */; };
 		41BF460B288CDF1200813670 /* kern_start.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E4272665B4C100CE26CE /* kern_start.cpp */; };
 		41BF460C288CDF1200813670 /* HyperVMouse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 418F84322648B07E003F8520 /* HyperVMouse.cpp */; };
-		41BF460D288CDF1200813670 /* VMBus.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 419B88C4263F1F85005A9977 /* VMBus.cpp */; };
 		41BF460E288CDF1200813670 /* HyperVShutdown.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 418F052A2648451200E1D14C /* HyperVShutdown.cpp */; };
 		41BF460F288CDF1200813670 /* HyperVKeyboard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 418219642648607600619C15 /* HyperVKeyboard.cpp */; };
 		41BF4610288CDF1200813670 /* HyperVPCIBridgePrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F9B8F7284983FF00E0DCB2 /* HyperVPCIBridgePrivate.cpp */; };
 		41BF4611288CDF1200813670 /* HyperVVMBusDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41225F4F2644C34300574E86 /* HyperVVMBusDevice.cpp */; };
-		41BF4612288CDF1200813670 /* SynICProcessor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41225F3A2642086300574E86 /* SynICProcessor.cpp */; };
-		41BF4613288CDF1200813670 /* Hypercalls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 419B88C1263F0169005A9977 /* Hypercalls.cpp */; };
+		41BF4613288CDF1200813670 /* HyperVControllerHypercalls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 419B88C1263F0169005A9977 /* HyperVControllerHypercalls.cpp */; };
 		41BF4614288CDF1200813670 /* HyperVICService.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 418F052026483C8300E1D14C /* HyperVICService.cpp */; };
 		41BF4615288CDF1200813670 /* HyperVMousePrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 416E418D2651E42E006DED6D /* HyperVMousePrivate.cpp */; };
-		41BF4616288CDF1200813670 /* HyperVVMBusController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41BE4118263EDFAF0018C52B /* HyperVVMBusController.cpp */; };
 		41BF4617288CDF1200813670 /* HyperVStoragePrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 416E417E264A0D5D006DED6D /* HyperVStoragePrivate.cpp */; };
 		41BF4618288CDF1200813670 /* HyperVGraphics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E43A2666E6A100CE26CE /* HyperVGraphics.cpp */; };
-		41BF4619288CDF1200813670 /* SynIC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41E2EC77263F894300BBE18F /* SynIC.cpp */; };
+		41BF4619288CDF1200813670 /* HyperVControllerInterrupts.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41E2EC77263F894300BBE18F /* HyperVControllerInterrupts.cpp */; };
 		41BF461A288CDF1200813670 /* HyperVVMBusDevicePrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 416E429C265751CC006DED6D /* HyperVVMBusDevicePrivate.cpp */; };
 		41BF461B288CDF1200813670 /* HyperVPCIProvider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E4492666F37B00CE26CE /* HyperVPCIProvider.cpp */; };
 		41BF461C288CDF1200813670 /* HyperVModuleDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F9B8FD284BA20700E0DCB2 /* HyperVModuleDevice.cpp */; };
@@ -115,12 +116,15 @@
 		41BF4621288CDF1200813670 /* HyperVNetwork.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41B41BDB26C74B4C00926A0D /* HyperVNetwork.cpp */; };
 		41BF4622288CDF1200813670 /* HyperVNetworkRNDIS.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41B41BE626CDC42D00926A0D /* HyperVNetworkRNDIS.cpp */; };
 		41BF4623288CDF1200813670 /* HyperVPCIBridge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F9B8EE2849792200E0DCB2 /* HyperVPCIBridge.cpp */; };
-		41BF4624288CDF1200813670 /* VMBusChannel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41078472264603F1005894D4 /* VMBusChannel.cpp */; };
 		41BF462F289209EA00813670 /* HyperVShutdownUserClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41BF462D289209EA00813670 /* HyperVShutdownUserClient.cpp */; };
 		41BF4630289209EA00813670 /* HyperVShutdownUserClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41BF462D289209EA00813670 /* HyperVShutdownUserClient.cpp */; };
 		41BF4631289209EA00813670 /* HyperVShutdownUserClientInternal.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41BF462E289209EA00813670 /* HyperVShutdownUserClientInternal.hpp */; };
 		41BF4632289209EA00813670 /* HyperVShutdownUserClientInternal.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41BF462E289209EA00813670 /* HyperVShutdownUserClientInternal.hpp */; };
-		41E2EC78263F894300BBE18F /* SynIC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41E2EC77263F894300BBE18F /* SynIC.cpp */; };
+		41E2EC78263F894300BBE18F /* HyperVControllerInterrupts.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41E2EC77263F894300BBE18F /* HyperVControllerInterrupts.cpp */; };
+		41E5E20C28C5766700E6E84F /* HyperVController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41E5E20A28C5766700E6E84F /* HyperVController.cpp */; };
+		41E5E20D28C5766700E6E84F /* HyperVController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41E5E20A28C5766700E6E84F /* HyperVController.cpp */; };
+		41E5E20E28C5766700E6E84F /* HyperVController.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41E5E20B28C5766700E6E84F /* HyperVController.hpp */; };
+		41E5E20F28C5766700E6E84F /* HyperVController.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41E5E20B28C5766700E6E84F /* HyperVController.hpp */; };
 		41F2E3F42665B42200CE26CE /* kern_config.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3D32665B42100CE26CE /* kern_config.hpp */; };
 		41F2E3F52665B42200CE26CE /* hde64.h in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3D42665B42100CE26CE /* hde64.h */; };
 		41F2E3F62665B42200CE26CE /* kern_time.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3D52665B42100CE26CE /* kern_time.hpp */; };
@@ -207,26 +211,27 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		410784702645FF17005894D4 /* HyperVVMBusInternal.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVVMBusInternal.hpp; sourceTree = "<group>"; };
-		41078472264603F1005894D4 /* VMBusChannel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = VMBusChannel.cpp; sourceTree = "<group>"; };
-		41225F3A2642086300574E86 /* SynICProcessor.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SynICProcessor.cpp; sourceTree = "<group>"; };
-		41225F3B2642086300574E86 /* SynICProcessor.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SynICProcessor.hpp; sourceTree = "<group>"; };
+		410F5CC728C58D1800EBB105 /* HyperVVMBusPrivate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVVMBusPrivate.cpp; sourceTree = "<group>"; };
 		41225F4226422D1600574E86 /* VMBus.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = VMBus.hpp; sourceTree = "<group>"; };
 		41225F4D2643993400574E86 /* HyperV.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperV.hpp; sourceTree = "<group>"; };
 		41225F4F2644C34300574E86 /* HyperVVMBusDevice.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVVMBusDevice.cpp; sourceTree = "<group>"; };
 		41225F502644C34300574E86 /* HyperVVMBusDevice.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVVMBusDevice.hpp; sourceTree = "<group>"; };
 		41225F552644D98500574E86 /* HyperVHeartbeat.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVHeartbeat.cpp; sourceTree = "<group>"; };
 		41225F562644D98500574E86 /* HyperVHeartbeat.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVHeartbeat.hpp; sourceTree = "<group>"; };
+		412E109E28C589DF00B8A699 /* HyperVVMBus.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVVMBus.cpp; sourceTree = "<group>"; };
+		412E109F28C589DF00B8A699 /* HyperVVMBus.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVVMBus.hpp; sourceTree = "<group>"; };
+		414678B528C4F0E5000E8F83 /* HyperVInterruptController.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVInterruptController.cpp; sourceTree = "<group>"; };
+		414678B628C4F0E5000E8F83 /* HyperVInterruptController.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVInterruptController.hpp; sourceTree = "<group>"; };
 		416E417E264A0D5D006DED6D /* HyperVStoragePrivate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVStoragePrivate.cpp; sourceTree = "<group>"; };
 		416E418D2651E42E006DED6D /* HyperVMousePrivate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVMousePrivate.cpp; sourceTree = "<group>"; };
 		416E429C265751CC006DED6D /* HyperVVMBusDevicePrivate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVVMBusDevicePrivate.cpp; sourceTree = "<group>"; };
+		417C576028C64B92003A177C /* HyperVVMBusInterrupts.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVVMBusInterrupts.cpp; sourceTree = "<group>"; };
 		417C978B28920FB400CFE0B2 /* HyperVShutdownUserClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HyperVShutdownUserClient.h; sourceTree = "<group>"; };
 		417C97922892184C00CFE0B2 /* hvshutdown */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = hvshutdown; sourceTree = BUILT_PRODUCTS_DIR; };
 		417C97942892184C00CFE0B2 /* hvshutdown.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = hvshutdown.c; sourceTree = "<group>"; };
 		418219642648607600619C15 /* HyperVKeyboard.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVKeyboard.cpp; sourceTree = "<group>"; };
 		418219652648607600619C15 /* HyperVKeyboard.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVKeyboard.hpp; sourceTree = "<group>"; };
 		418219692648659B00619C15 /* HyperVKeyboardRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVKeyboardRegs.hpp; sourceTree = "<group>"; };
-		418F051D2647223E00E1D14C /* VMBusDriver.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = VMBusDriver.hpp; sourceTree = "<group>"; };
 		418F052026483C8300E1D14C /* HyperVICService.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVICService.cpp; sourceTree = "<group>"; };
 		418F052126483C8300E1D14C /* HyperVICService.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVICService.hpp; sourceTree = "<group>"; };
 		418F052726483CAE00E1D14C /* HyperVIC.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVIC.hpp; sourceTree = "<group>"; };
@@ -239,8 +244,7 @@
 		418F843B2648BA38003F8520 /* HyperVStorage.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVStorage.cpp; sourceTree = "<group>"; };
 		418F843C2648BA38003F8520 /* HyperVStorage.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVStorage.hpp; sourceTree = "<group>"; };
 		418F84412648BA88003F8520 /* HyperVStorageRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVStorageRegs.hpp; sourceTree = "<group>"; };
-		419B88C1263F0169005A9977 /* Hypercalls.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Hypercalls.cpp; sourceTree = "<group>"; };
-		419B88C4263F1F85005A9977 /* VMBus.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = VMBus.cpp; sourceTree = "<group>"; };
+		419B88C1263F0169005A9977 /* HyperVControllerHypercalls.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVControllerHypercalls.cpp; sourceTree = "<group>"; };
 		41A71CA6289EB5A400CAE2FF /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		41A71CA7289EB5A400CAE2FF /* Changelog.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Changelog.md; sourceTree = "<group>"; };
 		41AE1CFF28974C7E001A7B42 /* package.tool */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = package.tool; sourceTree = "<group>"; };
@@ -256,13 +260,13 @@
 		41BE4104263EDE380018C52B /* MacHyperVSupport.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacHyperVSupport.kext; sourceTree = BUILT_PRODUCTS_DIR; };
 		41BE410B263EDE380018C52B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		41BE4113263EDEA10018C52B /* libkmod.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libkmod.a; path = MacKernelSDK/Library/x86_64/libkmod.a; sourceTree = "<group>"; };
-		41BE4118263EDFAF0018C52B /* HyperVVMBusController.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVVMBusController.cpp; sourceTree = "<group>"; };
-		41BE4119263EDFAF0018C52B /* HyperVVMBusController.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVVMBusController.hpp; sourceTree = "<group>"; };
 		41BF462A288CDF1200813670 /* MacHyperVSupportMonterey.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacHyperVSupportMonterey.kext; sourceTree = BUILT_PRODUCTS_DIR; };
 		41BF462D289209EA00813670 /* HyperVShutdownUserClient.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVShutdownUserClient.cpp; sourceTree = "<group>"; };
 		41BF462E289209EA00813670 /* HyperVShutdownUserClientInternal.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVShutdownUserClientInternal.hpp; sourceTree = "<group>"; };
 		41C604AB28B2F87600FB77ED /* HyperV-versions.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HyperV-versions.md"; sourceTree = "<group>"; };
-		41E2EC77263F894300BBE18F /* SynIC.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SynIC.cpp; sourceTree = "<group>"; };
+		41E2EC77263F894300BBE18F /* HyperVControllerInterrupts.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVControllerInterrupts.cpp; sourceTree = "<group>"; };
+		41E5E20A28C5766700E6E84F /* HyperVController.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVController.cpp; sourceTree = "<group>"; };
+		41E5E20B28C5766700E6E84F /* HyperVController.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVController.hpp; sourceTree = "<group>"; };
 		41F2E3D32665B42100CE26CE /* kern_config.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_config.hpp; sourceTree = "<group>"; };
 		41F2E3D42665B42100CE26CE /* hde64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hde64.h; sourceTree = "<group>"; };
 		41F2E3D52665B42100CE26CE /* kern_time.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_time.hpp; sourceTree = "<group>"; };
@@ -360,6 +364,27 @@
 				416E429C265751CC006DED6D /* HyperVVMBusDevicePrivate.cpp */,
 			);
 			path = VMBusDevice;
+			sourceTree = "<group>";
+		};
+		412E109D28C589BC00B8A699 /* VMBus */ = {
+			isa = PBXGroup;
+			children = (
+				41225F4226422D1600574E86 /* VMBus.hpp */,
+				412E109E28C589DF00B8A699 /* HyperVVMBus.cpp */,
+				412E109F28C589DF00B8A699 /* HyperVVMBus.hpp */,
+				410F5CC728C58D1800EBB105 /* HyperVVMBusPrivate.cpp */,
+				417C576028C64B92003A177C /* HyperVVMBusInterrupts.cpp */,
+			);
+			path = VMBus;
+			sourceTree = "<group>";
+		};
+		414678B428C4F091000E8F83 /* InterruptController */ = {
+			isa = PBXGroup;
+			children = (
+				414678B528C4F0E5000E8F83 /* HyperVInterruptController.cpp */,
+				414678B628C4F0E5000E8F83 /* HyperVInterruptController.hpp */,
+			);
+			path = InterruptController;
 			sourceTree = "<group>";
 		};
 		417C978C289217CA00CFE0B2 /* Tools */ = {
@@ -488,9 +513,11 @@
 				41BE410B263EDE380018C52B /* Info.plist */,
 				41F2E4272665B4C100CE26CE /* kern_start.cpp */,
 				41AE1CFF28974C7E001A7B42 /* package.tool */,
+				41E5E20928C5765300E6E84F /* Controller */,
 				41AE1D0B289C9595001A7B42 /* CPU */,
 				41F2E4392666E62F00CE26CE /* Graphics */,
 				418F051F26483C3C00E1D14C /* IntegrationComponents */,
+				414678B428C4F091000E8F83 /* InterruptController */,
 				418219632648605D00619C15 /* Keyboard */,
 				41F9B8FC284BA1D900E0DCB2 /* ModuleDevice */,
 				418F84312648B06E003F8520 /* Mouse */,
@@ -499,7 +526,7 @@
 				41F2E45926683AF900CE26CE /* PCIRoot */,
 				41F2E42A2665B61800CE26CE /* PlatformProvider */,
 				418F843A2648B9AA003F8520 /* Storage */,
-				41BE411E263EEAFF0018C52B /* VMBusController */,
+				412E109D28C589BC00B8A699 /* VMBus */,
 				41225F5A2645F53000574E86 /* VMBusDevice */,
 			);
 			path = MacHyperVSupport;
@@ -513,31 +540,24 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		41BE411E263EEAFF0018C52B /* VMBusController */ = {
-			isa = PBXGroup;
-			children = (
-				419B88C1263F0169005A9977 /* Hypercalls.cpp */,
-				41225F4D2643993400574E86 /* HyperV.hpp */,
-				41BE4118263EDFAF0018C52B /* HyperVVMBusController.cpp */,
-				41BE4119263EDFAF0018C52B /* HyperVVMBusController.hpp */,
-				410784702645FF17005894D4 /* HyperVVMBusInternal.hpp */,
-				41E2EC77263F894300BBE18F /* SynIC.cpp */,
-				41225F3A2642086300574E86 /* SynICProcessor.cpp */,
-				41225F3B2642086300574E86 /* SynICProcessor.hpp */,
-				419B88C4263F1F85005A9977 /* VMBus.cpp */,
-				41225F4226422D1600574E86 /* VMBus.hpp */,
-				41078472264603F1005894D4 /* VMBusChannel.cpp */,
-				418F051D2647223E00E1D14C /* VMBusDriver.hpp */,
-			);
-			path = VMBusController;
-			sourceTree = "<group>";
-		};
 		41C604AA28B2F81200FB77ED /* Docs */ = {
 			isa = PBXGroup;
 			children = (
 				41C604AB28B2F87600FB77ED /* HyperV-versions.md */,
 			);
 			path = Docs;
+			sourceTree = "<group>";
+		};
+		41E5E20928C5765300E6E84F /* Controller */ = {
+			isa = PBXGroup;
+			children = (
+				41225F4D2643993400574E86 /* HyperV.hpp */,
+				41E5E20A28C5766700E6E84F /* HyperVController.cpp */,
+				41E5E20B28C5766700E6E84F /* HyperVController.hpp */,
+				419B88C1263F0169005A9977 /* HyperVControllerHypercalls.cpp */,
+				41E2EC77263F894300BBE18F /* HyperVControllerInterrupts.cpp */,
+			);
+			path = Controller;
 			sourceTree = "<group>";
 		};
 		41F2E3D12665B41200CE26CE /* LiluSDK */ = {
@@ -693,7 +713,6 @@
 				41F2E3F62665B42200CE26CE /* kern_time.hpp in Headers */,
 				41F9B8F12849792200E0DCB2 /* HyperVPCIBridge.hpp in Headers */,
 				41F2E3FB2665B42200CE26CE /* kern_policy.hpp in Headers */,
-				41BE411B263EDFAF0018C52B /* HyperVVMBusController.hpp in Headers */,
 				41F2E3FE2665B42200CE26CE /* kern_iokit.hpp in Headers */,
 				41F2E4102665B42200CE26CE /* kern_patcher.hpp in Headers */,
 				41F2E44C2666F37B00CE26CE /* HyperVPCIProvider.hpp in Headers */,
@@ -709,11 +728,12 @@
 				41F2E40E2665B42200CE26CE /* xcore.h in Headers */,
 				41F2E4072665B42200CE26CE /* mips.h in Headers */,
 				418F84352648B07F003F8520 /* HyperVMouse.hpp in Headers */,
-				41225F3D2642086300574E86 /* SynICProcessor.hpp in Headers */,
+				414678B928C4F0E5000E8F83 /* HyperVInterruptController.hpp in Headers */,
 				41F2E4032665B42200CE26CE /* kern_file.hpp in Headers */,
 				418F052D2648451200E1D14C /* HyperVShutdown.hpp in Headers */,
 				41F2E3FC2665B42200CE26CE /* kern_user.hpp in Headers */,
 				41225F582644D98500574E86 /* HyperVHeartbeat.hpp in Headers */,
+				41E5E20E28C5766700E6E84F /* HyperVController.hpp in Headers */,
 				41AE1D10289C95A9001A7B42 /* HyperVCPU.hpp in Headers */,
 				41F2E45D26683B2C00CE26CE /* HyperVPCIRoot.hpp in Headers */,
 				41F2E4052665B42200CE26CE /* kern_disasm.hpp in Headers */,
@@ -724,6 +744,7 @@
 				418F843E2648BA38003F8520 /* HyperVStorage.hpp in Headers */,
 				41F2E4042665B42200CE26CE /* kern_rtc.hpp in Headers */,
 				41F2E4092665B42200CE26CE /* systemz.h in Headers */,
+				412E10A228C589DF00B8A699 /* HyperVVMBus.hpp in Headers */,
 				41F2E4002665B42200CE26CE /* kern_mach.hpp in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -750,7 +771,6 @@
 				41BF45E7288CDF1200813670 /* kern_time.hpp in Headers */,
 				41BF45E8288CDF1200813670 /* HyperVPCIBridge.hpp in Headers */,
 				41BF45E9288CDF1200813670 /* kern_policy.hpp in Headers */,
-				41BF45EA288CDF1200813670 /* HyperVVMBusController.hpp in Headers */,
 				41BF45EB288CDF1200813670 /* kern_iokit.hpp in Headers */,
 				41BF45EC288CDF1200813670 /* kern_patcher.hpp in Headers */,
 				41BF45ED288CDF1200813670 /* HyperVPCIProvider.hpp in Headers */,
@@ -766,11 +786,12 @@
 				41BF45F6288CDF1200813670 /* xcore.h in Headers */,
 				41BF45F7288CDF1200813670 /* mips.h in Headers */,
 				41BF45F8288CDF1200813670 /* HyperVMouse.hpp in Headers */,
-				41BF45F9288CDF1200813670 /* SynICProcessor.hpp in Headers */,
+				414678BA28C4F0E5000E8F83 /* HyperVInterruptController.hpp in Headers */,
 				41BF45FA288CDF1200813670 /* kern_file.hpp in Headers */,
 				41BF45FB288CDF1200813670 /* HyperVShutdown.hpp in Headers */,
 				41BF45FC288CDF1200813670 /* kern_user.hpp in Headers */,
 				41BF45FD288CDF1200813670 /* HyperVHeartbeat.hpp in Headers */,
+				41E5E20F28C5766700E6E84F /* HyperVController.hpp in Headers */,
 				41AE1D11289C95A9001A7B42 /* HyperVCPU.hpp in Headers */,
 				41BF45FE288CDF1200813670 /* HyperVPCIRoot.hpp in Headers */,
 				41BF45FF288CDF1200813670 /* kern_disasm.hpp in Headers */,
@@ -781,6 +802,7 @@
 				41BF4604288CDF1200813670 /* HyperVStorage.hpp in Headers */,
 				41BF4605288CDF1200813670 /* kern_rtc.hpp in Headers */,
 				41BF4606288CDF1200813670 /* systemz.h in Headers */,
+				412E10A328C589DF00B8A699 /* HyperVVMBus.hpp in Headers */,
 				41BF4607288CDF1200813670 /* kern_mach.hpp in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -954,23 +976,25 @@
 			buildActionMask = 2147483647;
 			files = (
 				41F2E45C26683B2C00CE26CE /* HyperVPCIRoot.cpp in Sources */,
+				414678B728C4F0E5000E8F83 /* HyperVInterruptController.cpp in Sources */,
 				41F2E4202665B42900CE26CE /* plugin_start.cpp in Sources */,
 				41F2E4282665B4C100CE26CE /* kern_start.cpp in Sources */,
+				412E10A028C589DF00B8A699 /* HyperVVMBus.cpp in Sources */,
+				410F5CC828C58D1800EBB105 /* HyperVVMBusPrivate.cpp in Sources */,
 				418F84342648B07F003F8520 /* HyperVMouse.cpp in Sources */,
-				419B88C5263F1F85005A9977 /* VMBus.cpp in Sources */,
 				418F052C2648451200E1D14C /* HyperVShutdown.cpp in Sources */,
+				41E5E20C28C5766700E6E84F /* HyperVController.cpp in Sources */,
 				418219662648607600619C15 /* HyperVKeyboard.cpp in Sources */,
 				41F9B8F8284983FF00E0DCB2 /* HyperVPCIBridgePrivate.cpp in Sources */,
 				41225F512644C34300574E86 /* HyperVVMBusDevice.cpp in Sources */,
-				41225F3C2642086300574E86 /* SynICProcessor.cpp in Sources */,
-				419B88C2263F0169005A9977 /* Hypercalls.cpp in Sources */,
+				419B88C2263F0169005A9977 /* HyperVControllerHypercalls.cpp in Sources */,
 				418F052226483C8300E1D14C /* HyperVICService.cpp in Sources */,
+				417C576128C64B92003A177C /* HyperVVMBusInterrupts.cpp in Sources */,
 				416E418E2651E42E006DED6D /* HyperVMousePrivate.cpp in Sources */,
-				41BE411A263EDFAF0018C52B /* HyperVVMBusController.cpp in Sources */,
 				41AE1D0E289C95A9001A7B42 /* HyperVCPU.cpp in Sources */,
 				416E4180264A0D5D006DED6D /* HyperVStoragePrivate.cpp in Sources */,
 				41F2E43C2666E6A100CE26CE /* HyperVGraphics.cpp in Sources */,
-				41E2EC78263F894300BBE18F /* SynIC.cpp in Sources */,
+				41E2EC78263F894300BBE18F /* HyperVControllerInterrupts.cpp in Sources */,
 				416E429D265751CC006DED6D /* HyperVVMBusDevicePrivate.cpp in Sources */,
 				41F2E44B2666F37B00CE26CE /* HyperVPCIProvider.cpp in Sources */,
 				41F9B8FF284BA20700E0DCB2 /* HyperVModuleDevice.cpp in Sources */,
@@ -981,7 +1005,6 @@
 				41B41BDD26C74B4C00926A0D /* HyperVNetwork.cpp in Sources */,
 				41B41BE726CDC42D00926A0D /* HyperVNetworkRNDIS.cpp in Sources */,
 				41F9B8F02849792200E0DCB2 /* HyperVPCIBridge.cpp in Sources */,
-				41078473264603F1005894D4 /* VMBusChannel.cpp in Sources */,
 				41BF462F289209EA00813670 /* HyperVShutdownUserClient.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -991,23 +1014,25 @@
 			buildActionMask = 2147483647;
 			files = (
 				41BF4609288CDF1200813670 /* HyperVPCIRoot.cpp in Sources */,
+				414678B828C4F0E5000E8F83 /* HyperVInterruptController.cpp in Sources */,
 				41BF460A288CDF1200813670 /* plugin_start.cpp in Sources */,
 				41BF460B288CDF1200813670 /* kern_start.cpp in Sources */,
+				412E10A128C589DF00B8A699 /* HyperVVMBus.cpp in Sources */,
+				410F5CC928C58D1800EBB105 /* HyperVVMBusPrivate.cpp in Sources */,
 				41BF460C288CDF1200813670 /* HyperVMouse.cpp in Sources */,
-				41BF460D288CDF1200813670 /* VMBus.cpp in Sources */,
 				41BF460E288CDF1200813670 /* HyperVShutdown.cpp in Sources */,
+				41E5E20D28C5766700E6E84F /* HyperVController.cpp in Sources */,
 				41BF460F288CDF1200813670 /* HyperVKeyboard.cpp in Sources */,
 				41BF4610288CDF1200813670 /* HyperVPCIBridgePrivate.cpp in Sources */,
 				41BF4611288CDF1200813670 /* HyperVVMBusDevice.cpp in Sources */,
-				41BF4612288CDF1200813670 /* SynICProcessor.cpp in Sources */,
-				41BF4613288CDF1200813670 /* Hypercalls.cpp in Sources */,
+				41BF4613288CDF1200813670 /* HyperVControllerHypercalls.cpp in Sources */,
 				41BF4614288CDF1200813670 /* HyperVICService.cpp in Sources */,
+				417C576228C64B92003A177C /* HyperVVMBusInterrupts.cpp in Sources */,
 				41BF4615288CDF1200813670 /* HyperVMousePrivate.cpp in Sources */,
-				41BF4616288CDF1200813670 /* HyperVVMBusController.cpp in Sources */,
 				41AE1D0F289C95A9001A7B42 /* HyperVCPU.cpp in Sources */,
 				41BF4617288CDF1200813670 /* HyperVStoragePrivate.cpp in Sources */,
 				41BF4618288CDF1200813670 /* HyperVGraphics.cpp in Sources */,
-				41BF4619288CDF1200813670 /* SynIC.cpp in Sources */,
+				41BF4619288CDF1200813670 /* HyperVControllerInterrupts.cpp in Sources */,
 				41BF461A288CDF1200813670 /* HyperVVMBusDevicePrivate.cpp in Sources */,
 				41BF461B288CDF1200813670 /* HyperVPCIProvider.cpp in Sources */,
 				41BF461C288CDF1200813670 /* HyperVModuleDevice.cpp in Sources */,
@@ -1018,7 +1043,6 @@
 				41BF4621288CDF1200813670 /* HyperVNetwork.cpp in Sources */,
 				41BF4622288CDF1200813670 /* HyperVNetworkRNDIS.cpp in Sources */,
 				41BF4623288CDF1200813670 /* HyperVPCIBridge.cpp in Sources */,
-				41BF4624288CDF1200813670 /* VMBusChannel.cpp in Sources */,
 				41BF4630289209EA00813670 /* HyperVShutdownUserClient.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
