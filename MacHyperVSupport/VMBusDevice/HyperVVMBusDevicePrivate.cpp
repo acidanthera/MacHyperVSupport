@@ -11,10 +11,7 @@ bool HyperVVMBusDevice::setupCommandGate() {
   bool initialized = false;
   
   do {    
-    workLoop = IOWorkLoop::workLoop();
-    if (workLoop == NULL) {
-      break;
-    }
+
     
     commandGate = IOCommandGate::commandGate(this);
     if (commandGate == NULL) {
@@ -40,12 +37,11 @@ void HyperVVMBusDevice::teardownCommandGate() {
   workLoop->removeEventSource(commandGate);
 
   commandGate->release();
-  workLoop->release();
+ // workLoop->release();
 
   commandGate = NULL;
-  workLoop = NULL;
+ // workLoop = NULL;
 }
-
 
 IOReturn HyperVVMBusDevice::writePacketInternal(void *buffer, UInt32 bufferLength, VMBusPacketType packetType, UInt64 transactionId,
                                                 bool responseRequired, void *responseBuffer, UInt32 responseBufferLength) {

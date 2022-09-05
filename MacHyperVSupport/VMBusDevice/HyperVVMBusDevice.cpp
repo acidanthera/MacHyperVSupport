@@ -12,6 +12,12 @@ OSDefineMetaClassAndStructors(HyperVVMBusDevice, super);
 bool HyperVVMBusDevice::attach(IOService *provider) {
   char channelLocation[10];
   
+  workLoop = IOWorkLoop::workLoop();
+  if (workLoop == NULL) {
+    return false; // TODO;
+  }
+  workLoop->retain();
+  
   if (!super::attach(provider)) {
     return false;
   }
@@ -99,6 +105,10 @@ bool HyperVVMBusDevice::matchPropertyTable(OSDictionary *table, SInt32 *score) {
   
   HVDBGLOG("Matched type ID %s", typeId);
   return true;
+}
+
+IOWorkLoop* HyperVVMBusDevice::getWorkLoop() const {
+  return workLoop;
 }
 
 bool HyperVVMBusDevice::openChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId) {

@@ -42,7 +42,7 @@ private:
   uuid_t                  instanceId;
   bool                    channelIsOpen = false;
   
-  IOWorkLoop              *workLoop;
+  IOWorkLoop              *workLoop = nullptr;
   IOCommandGate           *commandGate;
   bool                    commandLock;
   
@@ -93,6 +93,7 @@ public:
   bool attach(IOService *provider) APPLE_KEXT_OVERRIDE;
   void detach(IOService *provider) APPLE_KEXT_OVERRIDE;
   bool matchPropertyTable(OSDictionary *table, SInt32 *score) APPLE_KEXT_OVERRIDE;
+  IOWorkLoop* getWorkLoop() const APPLE_KEXT_OVERRIDE;
   
   //
   // General functions.
