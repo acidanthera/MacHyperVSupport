@@ -12,7 +12,7 @@
 #include <IOKit/IOService.h>
 #include <IOKit/IOInterruptEventSource.h>
 
-#include "HyperVVMBusController.hpp"
+#include "HyperVVMBus.hpp"
 #include "HyperV.hpp"
 #include "VMBus.hpp"
 
