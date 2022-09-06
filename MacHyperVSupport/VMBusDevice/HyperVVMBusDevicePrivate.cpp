@@ -17,24 +17,24 @@ bool HyperVVMBusDevice::setupCommandGate() {
     if (commandGate == NULL) {
       break;
     }
-    workLoop->addEventSource(commandGate);
+    _workLoop->addEventSource(commandGate);
     initialized = true;
     
   } while (false);
   
   if (!initialized) {
     OSSafeReleaseNULL(commandGate);
-    OSSafeReleaseNULL(workLoop);
+    //OSSafeReleaseNULL(workLoop);
 
     commandGate = NULL;
-    workLoop = NULL;
+   // workLoop = NULL;
   }
   
   return initialized;
 }
 
 void HyperVVMBusDevice::teardownCommandGate() {
-  workLoop->removeEventSource(commandGate);
+  _workLoop->removeEventSource(commandGate);
 
   commandGate->release();
  // workLoop->release();
@@ -200,10 +200,10 @@ IOReturn HyperVVMBusDevice::writeRawPacketGated(void *header, UInt32 *headerLeng
   //
   // Update write index and notify Hyper-V if needed.
   //
-  HVMSGLOG("RAW TX imask 0x%X, RX imask 0x%X, channel ID %u", txBuffer->interruptMask, rxBuffer->interruptMask, channelId);
+  HVMSGLOG("RAW TX imask 0x%X, RX imask 0x%X, channel ID %u", txBuffer->interruptMask, rxBuffer->interruptMask, _channelId);
   txBuffer->writeIndex = writeIndexNew;
   if (txBuffer->interruptMask == 0) {
-    vmbusProvider->signalVMBusChannel(channelId);
+    _vmbusProvider->signalVMBusChannel(_channelId);
   }
   HVMSGLOG("RAW TX read index 0x%X, new TX write index 0x%X", txBuffer->readIndex, txBuffer->writeIndex);
   return kIOReturnSuccess;

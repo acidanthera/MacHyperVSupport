@@ -2,15 +2,15 @@
 //  HyperVVMBusDevice.hpp
 //  Hyper-V VMBus device nub
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperVVMBusDevice_hpp
 #define HyperVVMBusDevice_hpp
 
+#include <IOKit/IOInterruptEventSource.h>
 #include <IOKit/IOLib.h>
 #include <IOKit/IOService.h>
-#include <IOKit/IOInterruptEventSource.h>
 
 #include "HyperVVMBus.hpp"
 #include "HyperV.hpp"
@@ -36,15 +36,21 @@ class HyperVVMBusDevice : public IOService {
   typedef IOService super;
   
 private:
-  HyperVVMBus             *vmbusProvider;
-  uuid_string_t           typeId;
-  UInt32                  channelId;
-  uuid_t                  instanceId;
-  bool                    channelIsOpen = false;
+  //
+  // VMBus channel information.
+  //
+  HyperVVMBus   *_vmbusProvider = nullptr;
+  uuid_string_t _typeId;
+  UInt32        _channelId      = 0;
+  uuid_t        _instanceId;
+  bool          _channelIsOpen = false;
   
-  IOWorkLoop              *workLoop = nullptr;
-  IOCommandGate           *commandGate;
-  bool                    commandLock;
+  //
+  // WorkLoop and interrupts.
+  //
+  IOWorkLoop    *_workLoop = nullptr;
+  IOCommandGate *commandGate;
+  bool          commandLock;
   
   VMBusRingBuffer         *txBuffer;
   UInt32                  txBufferSize;
@@ -104,8 +110,8 @@ public:
   bool createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer);
   bool allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size);
   void freeDmaBuffer(HyperVDMABuffer *dmaBuf);
-  UInt32 getChannelId() { return channelId; }
-  uuid_t* getInstanceId() { return &instanceId; }
+  UInt32 getChannelId() { return _channelId; }
+  uuid_t* getInstanceId() { return &_instanceId; }
   
   //
   // Messages.

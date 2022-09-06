@@ -151,14 +151,10 @@ private:
   //
   // VMBus channel management.
   //
-  bool initVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VMBusRingBuffer **txBuffer, UInt32 rxBufferSize, VMBusRingBuffer **rxBuffer);
-  bool openVMBusChannel(UInt32 channelId);
   void signalVMBusChannel(UInt32 channelId);
   void closeVMBusChannel(UInt32 channelId);
   void freeVMBusChannel(UInt32 channelId);
   bool initVMBusChannelGpadl(UInt32 channelId, UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer);
-  bool configureVMBusChannelGpadl(VMBusChannel *channel, HyperVDMABuffer *buffer, UInt32 *gpadlHandle);
-  bool configureVMBusChannel(VMBusChannel *channel);
   
 public:
   //
@@ -171,6 +167,13 @@ public:
   //
   bool allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size);
   void freeDmaBuffer(HyperVDMABuffer *dmaBuf);
+  
+  //
+  // VMBus channel management.
+  //
+  IOReturn openVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VMBusRingBuffer **txBuffer, UInt32 rxBufferSize, VMBusRingBuffer **rxBuffer);
+  IOReturn initVMBusChannelGPADL(UInt32 channelId, HyperVDMABuffer *dmaBuffer, UInt32 *gpadlHandle);
+  IOReturn freeVMBusChannelGPADL(UInt32 channelId, UInt32 gpadlHandle);
 };
 
 #endif

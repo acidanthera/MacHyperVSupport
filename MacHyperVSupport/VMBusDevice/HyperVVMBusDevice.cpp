@@ -10,72 +10,107 @@
 OSDefineMetaClassAndStructors(HyperVVMBusDevice, super);
 
 bool HyperVVMBusDevice::attach(IOService *provider) {
-  char channelLocation[10];
+  bool superAttached = false;
+  bool attached      = false;
   
-  workLoop = IOWorkLoop::workLoop();
-  if (workLoop == NULL) {
-    return false; // TODO;
-  }
-  workLoop->retain();
+  char     channelLocation[10];
+  OSString *typeIdString;
+  OSNumber *channelNumber;
+  OSData   *instanceBytes;
   
-  if (!super::attach(provider)) {
+  UInt8 builtInBytes = 0;
+  OSData *builtInData;
+  
+  //
+  // Get VMBus provider.
+  //
+  _vmbusProvider = OSDynamicCast(HyperVVMBus, provider);
+  if (_vmbusProvider == nullptr) {
+    HVSYSLOG("Provider is not HyperVVMBus");
     return false;
   }
+  _vmbusProvider->retain();
   HVCheckDebugArgs();
   
-  //
-  // Get channel number and GUIDs.
-  //
-  OSString *typeIdString  = OSDynamicCast(OSString, getProperty(kHyperVVMBusDeviceChannelTypeKey));
-  OSNumber *channelNumber = OSDynamicCast(OSNumber, getProperty(kHyperVVMBusDeviceChannelIDKey));
-  OSData *instanceBytes   = OSDynamicCast(OSData, getProperty(kHyperVVMBusDeviceChannelInstanceKey));
-  vmbusProvider = OSDynamicCast(HyperVVMBus, getProvider());
-  if (typeIdString == nullptr || channelNumber == nullptr || instanceBytes == nullptr || vmbusProvider == nullptr) {
+  superAttached = super::attach(provider);
+  if (!superAttached) {
+    HVSYSLOG("super::attach() returned false");
     return false;
   }
   
-  //
-  // Copy channel number and GUIDs.
-  // uuid_string_t size includes null terminator.
-  //
-  strncpy(typeId, typeIdString->getCStringNoCopy(), sizeof (typeId) - 1);
-  channelId = channelNumber->unsigned32BitValue();
-  HVDBGLOG("Attaching nub type %s for channel %u", typeId, channelId);
-  memcpy(instanceId, instanceBytes->getBytesNoCopy(), instanceBytes->getLength());
-  
-  //
-  // Set location to ensure unique names in I/O Registry.
-  //
-  snprintf(channelLocation, sizeof (channelLocation), "%x", (unsigned int) channelId);
-  setLocation(channelLocation);
-  
-  //
-  // built-in required for some devices, like networking.
-  //
-  UInt8 builtInBytes = 0;
-  OSData *builtInData = OSData::withBytes(&builtInBytes, sizeof (builtInBytes));
-  if (builtInData != NULL) {
+  do {
+    //
+    // Initialize work loop.
+    //
+    _workLoop = IOWorkLoop::workLoop();
+    if (_workLoop == nullptr) {
+      HVSYSLOG("Failed to initialize work loop");
+      break;
+    }
+    
+    //
+    // Get channel number and GUID properties.
+    //
+    typeIdString  = OSDynamicCast(OSString, getProperty(kHyperVVMBusDeviceChannelTypeKey));
+    channelNumber = OSDynamicCast(OSNumber, getProperty(kHyperVVMBusDeviceChannelIDKey));
+    instanceBytes = OSDynamicCast(OSData, getProperty(kHyperVVMBusDeviceChannelInstanceKey));
+    if (typeIdString == nullptr || channelNumber == nullptr || instanceBytes == nullptr) {
+      HVSYSLOG("Failed to get channel properties");
+      break;
+    }
+    
+    //
+    // Copy channel number and GUIDs.
+    // uuid_string_t size includes null terminator.
+    //
+    strncpy(_typeId, typeIdString->getCStringNoCopy(), sizeof (_typeId) - 1);
+    _channelId = channelNumber->unsigned32BitValue();
+    HVDBGLOG("Attaching nub type %s for channel %u", _typeId, _channelId);
+    memcpy(_instanceId, instanceBytes->getBytesNoCopy(), instanceBytes->getLength());
+    
+    //
+    // Set location to ensure unique names in I/O Registry.
+    //
+    snprintf(channelLocation, sizeof (channelLocation), "%x", (unsigned int) _channelId);
+    setLocation(channelLocation);
+    
+    //
+    // The built-in property is required for some devices, like networking.
+    //
+    builtInData = OSData::withBytes(&builtInBytes, sizeof (builtInBytes));
+    if (builtInData == nullptr) {
+      HVSYSLOG("Failed to initialize built-in property");
+      break;
+    }
     setProperty("built-in", builtInData);
     builtInData->release();
-  }
 
-  vmbusRequestsLock = IOLockAlloc();
-  vmbusTransLock = IOLockAlloc();
+    vmbusRequestsLock = IOLockAlloc();
+    vmbusTransLock = IOLockAlloc();
+    
+    threadZeroRequest.lock = IOLockAlloc();
+    prepareSleepThread();
+    
+    attached = true;
+  } while (false);
+
+  if (!attached) {
+    if (!superAttached) {
+      super::detach(provider);
+    }
+  }
   
-  threadZeroRequest.lock = IOLockAlloc();
-  prepareSleepThread();
-  
-  return true;
+  return attached;
 }
 
 void HyperVVMBusDevice::detach(IOService *provider) {
   //
   // Close and free channel.
   //
-  if (channelIsOpen) {
+  if (_channelIsOpen) {
     closeChannel();
   }
-  vmbusProvider->freeVMBusChannel(channelId);
+  _vmbusProvider->freeVMBusChannel(_channelId);
   
   IOLockFree(vmbusRequestsLock);
   IOLockFree(vmbusTransLock);
@@ -86,7 +121,7 @@ void HyperVVMBusDevice::detach(IOService *provider) {
 
 bool HyperVVMBusDevice::matchPropertyTable(OSDictionary *table, SInt32 *score) {
   if (!super::matchPropertyTable(table, score)) {
-    HVDBGLOG("Superclass failed to match property table");
+    HVDBGLOG("super::matchPropertyTable returned false");
     return false;
   }
   
@@ -99,24 +134,24 @@ bool HyperVVMBusDevice::matchPropertyTable(OSDictionary *table, SInt32 *score) {
     return false;
   }
   
-  if (strcmp(typeId, hvTypeString->getCStringNoCopy()) != 0) {
+  if (strcmp(_typeId, hvTypeString->getCStringNoCopy()) != 0) {
     return false;
   }
   
-  HVDBGLOG("Matched type ID %s", typeId);
+  HVDBGLOG("Matched type ID %s", _typeId);
   return true;
 }
 
 IOWorkLoop* HyperVVMBusDevice::getWorkLoop() const {
-  return workLoop;
+  return _workLoop;
 }
 
 bool HyperVVMBusDevice::openChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId) {
-  if (channelIsOpen) {
+  if (_channelIsOpen) {
     return true;
   }
   
-  HVDBGLOG("Opening channel for %u", channelId);
+  HVDBGLOG("Opening channel for %u", _channelId);
   txBufferSize = txSize;
   rxBufferSize = rxSize;
   
@@ -128,19 +163,13 @@ bool HyperVVMBusDevice::openChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAuto
   // Open channel.
   //
   vmbusMaxAutoTransId = maxAutoTransId;
-  if (!vmbusProvider->initVMBusChannel(channelId, txBufferSize, &txBuffer, rxBufferSize, &rxBuffer)) {
+  if (_vmbusProvider->openVMBusChannel(_channelId, txBufferSize, &txBuffer, rxBufferSize, &rxBuffer) != kIOReturnSuccess) {
     teardownCommandGate();
     return false;
   }
   
-  if (!vmbusProvider->openVMBusChannel(channelId)) {
-    vmbusProvider->closeVMBusChannel(channelId);
-    teardownCommandGate();
-    return false;
-  }
-  
-  channelIsOpen = true;
-  HVDBGLOG("Opened channel for %u", channelId);
+  _channelIsOpen = true;
+  HVDBGLOG("Opened channel for %u", _channelId);
   return true;
 }
 
@@ -148,21 +177,21 @@ void HyperVVMBusDevice::closeChannel() {
   //
   // Close channel and stop interrupts.
   //
-  vmbusProvider->closeVMBusChannel(channelId);
+  _vmbusProvider->closeVMBusChannel(_channelId);
   teardownCommandGate();
-  channelIsOpen = false;
+  _channelIsOpen = false;
 }
 
 bool HyperVVMBusDevice::createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer) {
-  return vmbusProvider->initVMBusChannelGpadl(channelId, bufferSize, gpadlHandle, buffer);
+  return _vmbusProvider->initVMBusChannelGpadl(_channelId, bufferSize, gpadlHandle, buffer);
 }
 
 bool HyperVVMBusDevice::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size) {
-  return vmbusProvider->allocateDmaBuffer(dmaBuf, size);
+  return _vmbusProvider->allocateDmaBuffer(dmaBuf, size);
 }
 
 void HyperVVMBusDevice::freeDmaBuffer(HyperVDMABuffer *dmaBuf) {
-  vmbusProvider->freeDmaBuffer(dmaBuf);
+  _vmbusProvider->freeDmaBuffer(dmaBuf);
 }
 
 bool HyperVVMBusDevice::nextPacketAvailable(VMBusPacketType *type, UInt32 *packetHeaderLength, UInt32 *packetTotalLength) {
