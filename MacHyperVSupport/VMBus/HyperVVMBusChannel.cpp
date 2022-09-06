@@ -33,9 +33,12 @@ IOReturn HyperVVMBus::openVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VM
   }
   
   channel = &vmbusChannels[channelId];
-  if (channel->status != kVMBusChannelStatusClosed) {
-    HVDBGLOG("Channel %u is not in a closed state: %X", channelId, channel->status);
-    return kIOReturnBadArgument;
+  if (channel->status == kVMBusChannelStatusOpen) {
+    HVDBGLOG("Channel %u is already open", channelId);
+    return kIOReturnStillOpen;
+  } else if (channel->status == kVMBusChannelStatusNotPresent) {
+    HVDBGLOG("Channel %u is not present", channelId);
+    return kIOReturnNotAttached;
   }
   HVDBGLOG("Channel %u flags 0x%X, monitor %u", channelId, channel->offerMessage.flags, channel->offerMessage.monitorAllocated);
   
@@ -106,6 +109,54 @@ IOReturn HyperVVMBus::openVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VM
   *rxBuffer = channel->rxBuffer;
   
   HVDBGLOG("Channel %u configured (TX size: %u bytes, RX size: %u bytes)", channelId, txBufferSize, rxBufferSize);
+  return kIOReturnSuccess;
+}
+
+IOReturn HyperVVMBus::closeVMBusChannel(UInt32 channelId) {
+  bool         result;
+  VMBusChannel *channel;
+  
+  VMBusChannelMessageChannelClose closeMsg;
+  
+  if (channelId == 0 || channelId > kVMBusMaxChannels) {
+    HVDBGLOG("One or more incorrect arguments provided");
+    return kIOReturnBadArgument;
+  }
+  channel = &vmbusChannels[channelId];
+  
+  if (channel->status == kVMBusChannelStatusClosed) {
+    HVDBGLOG("Channel %u is already closed", channelId);
+    return kIOReturnSuccess;
+  } else if (channel->status == kVMBusChannelStatusNotPresent) {
+    HVDBGLOG("Channel %u is not present", channelId);
+    return kIOReturnNotAttached;
+  }
+  
+  //
+  // Close channel.
+  //
+  channel->status = kVMBusChannelStatusClosed;
+  closeMsg.header.type      = kVMBusChannelMessageTypeChannelClose;
+  closeMsg.header.reserved  = 0;
+  closeMsg.channelId        = channelId;
+  
+  result = sendVMBusMessage((VMBusChannelMessage*) &closeMsg);
+  if (!result) {
+    HVSYSLOG("Failed to send channel close message for channel %u", channelId);
+  }
+
+  freeVMBusChannelGPADL(channelId, channel->dataGpadlHandle);
+  
+  //
+  // Free channel buffers.
+  //
+  channel->txBuffer    = nullptr;
+  channel->rxBuffer    = nullptr;
+  channel->rxPageIndex = 0;
+  freeDmaBuffer(&channel->dataBuffer);
+  freeDmaBuffer(&channel->eventBuffer);
+  
+  HVDBGLOG("Channel %u is now closed", channelId);
   return kIOReturnSuccess;
 }
 
@@ -292,9 +343,21 @@ IOReturn HyperVVMBus::freeVMBusChannelGPADL(UInt32 channelId, UInt32 gpadlHandle
                             kVMBusChannelMessageTypeGPADLTeardownResponse, (VMBusChannelMessage*) &gpadlTeardownResponseMsg);
   if (!result) {
     HVSYSLOG("Failed to send GPADL teardown message");
-    return kIOReturnIOError;
   }
   
   HVDBGLOG("GPADL freed for channel %u", channelId);
   return kIOReturnSuccess;
+}
+
+void HyperVVMBus::signalVMBusChannel(UInt32 channelId) {
+  VMBusChannel *channel = &vmbusChannels[channelId];
+  
+  //
+  // Signal Hyper-V the specified channel has data waiting on the TX ring.
+  // Set bit for channel if legacy event flags are being used.
+  //
+  if (useLegacyEventFlags) {
+    sync_set_bit(channelId, vmbusTxEventFlags->flags32);
+  }
+  hvController->hypercallSignalEvent(channel->offerMessage.connectionId);
 }

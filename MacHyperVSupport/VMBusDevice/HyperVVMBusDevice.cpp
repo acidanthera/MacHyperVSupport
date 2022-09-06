@@ -183,7 +183,15 @@ void HyperVVMBusDevice::closeChannel() {
 }
 
 bool HyperVVMBusDevice::createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer) {
-  return _vmbusProvider->initVMBusChannelGpadl(_channelId, bufferSize, gpadlHandle, buffer);
+  HyperVDMABuffer buf;
+  allocateDmaBuffer(&buf, bufferSize);
+  
+  if (_vmbusProvider->initVMBusChannelGPADL(_channelId, &buf, gpadlHandle) != kIOReturnSuccess) {
+    return false;
+  }
+  
+  *buffer = buf.buffer;
+  return true;
 }
 
 bool HyperVVMBusDevice::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size) {

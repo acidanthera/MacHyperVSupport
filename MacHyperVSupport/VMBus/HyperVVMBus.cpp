@@ -450,81 +450,6 @@ void HyperVVMBus::cleanupVMBusDevice(VMBusChannel *channel) {
   channel->status = kVMBusChannelStatusNotPresent;
 }
 
-void HyperVVMBus::signalVMBusChannel(UInt32 channelId) {
-  VMBusChannel *channel = &vmbusChannels[channelId];
-  
-  //
-  // Set bit for channel.
-  //
-  if (useLegacyEventFlags) {
-    sync_set_bit(channelId, vmbusTxEventFlags->flags32);
-    //vmbusTxEventFlags->flags[VMBUS_CHANNEL_EVENT_INDEX(channelId)] |= VMBUS_CHANNEL_EVENT_MASK(channelId);
-  }
-  
-  //
-  // Signal event for specified connection.
-  //
-  hvController->hypercallSignalEvent(channel->offerMessage.connectionId);
-}
-
-void HyperVVMBus::closeVMBusChannel(UInt32 channelId) {
-  VMBusChannel *channel = &vmbusChannels[channelId];
-
-  bool channelIsOpen = channel->status == kVMBusChannelStatusOpen;
-  bool result = true;
-  
-  //
-  // Prevent any further interrupts from reaching the VMBus device nub.
-  //
-  channel->status = kVMBusChannelStatusClosed;
-  
-  //
-  // Close channel.
-  //
-  if (channelIsOpen) {
-    VMBusChannelMessageChannelClose closeMsg;
-    closeMsg.header.type      = kVMBusChannelMessageTypeChannelClose;
-    closeMsg.header.reserved  = 0;
-    closeMsg.channelId        = channelId;
-    
-    result = sendVMBusMessage((VMBusChannelMessage*) &closeMsg);
-    if (!result) {
-      HVSYSLOG("Failed to send channel close message for channel %u", channelId);
-    }
-    HVDBGLOG("Channel %u is now closed", channelId);
-  }
-  
-  //
-  // Teardown GPADL.
-  //
-  VMBusChannelMessageGPADLTeardown gpadlTeardownMsg;
-  gpadlTeardownMsg.header.type      = kVMBusChannelMessageTypeGPADLTeardown;
-  gpadlTeardownMsg.header.reserved  = 0;
-  gpadlTeardownMsg.channelId        = channelId;
-  gpadlTeardownMsg.gpadl            = channel->dataGpadlHandle;
-  
-  VMBusChannelMessageGPADLTeardownResponse gpadlTeardownResponseMsg;
-  result = sendVMBusMessage((VMBusChannelMessage*) &gpadlTeardownMsg,
-                            kVMBusChannelMessageTypeGPADLTeardownResponse, (VMBusChannelMessage*) &gpadlTeardownResponseMsg);
-  if (!result) {
-    HVSYSLOG("Failed to send GPADL teardown message");
-  }
-  HVDBGLOG("GPADL torn down for channel %u", channelId);
-  
-  //
-  // Free ring buffers.
-  //
-  channel->rxPageIndex = 0;
-  channel->txBuffer = NULL;
-  channel->rxBuffer = NULL;
-  
-  //
-  // Allocate channel ring buffers.
-  //
-  freeDmaBuffer(&channel->dataBuffer);
-  freeDmaBuffer(&channel->eventBuffer);
-}
-
 void HyperVVMBus::freeVMBusChannel(UInt32 channelId) {
   VMBusChannel *channel = &vmbusChannels[channelId];
   
@@ -542,17 +467,6 @@ void HyperVVMBus::freeVMBusChannel(UInt32 channelId) {
   }
   HVDBGLOG("Channel %u is now freed", channelId);
   channel->status = kVMBusChannelStatusNotPresent;
-}
-
-bool HyperVVMBus::initVMBusChannelGpadl(UInt32 channelId, UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer) {
-  VMBusChannel *channel = &vmbusChannels[channelId];
-  
-  HyperVDMABuffer buf;
-  allocateDmaBuffer(&buf, bufferSize);
-  
-  initVMBusChannelGPADL(channelId, &buf, gpadlHandle);
-  *buffer = buf.buffer;
-  return true;
 }
 
 bool HyperVVMBus::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size) {

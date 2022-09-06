@@ -35,7 +35,6 @@ class VMBusInterruptProcessor;
 typedef enum {
   kVMBusChannelStatusNotPresent = 0,
   kVMBusChannelStatusClosed,
-  kVMBusChannelStatusGpadlConfigured,
   kVMBusChannelStatusOpen
 } VMBusChannelStatus;
 
@@ -151,10 +150,9 @@ private:
   //
   // VMBus channel management.
   //
-  void signalVMBusChannel(UInt32 channelId);
-  void closeVMBusChannel(UInt32 channelId);
+  
+
   void freeVMBusChannel(UInt32 channelId);
-  bool initVMBusChannelGpadl(UInt32 channelId, UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer);
   
 public:
   //
@@ -172,8 +170,10 @@ public:
   // VMBus channel management.
   //
   IOReturn openVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VMBusRingBuffer **txBuffer, UInt32 rxBufferSize, VMBusRingBuffer **rxBuffer);
+  IOReturn closeVMBusChannel(UInt32 channelId);
   IOReturn initVMBusChannelGPADL(UInt32 channelId, HyperVDMABuffer *dmaBuffer, UInt32 *gpadlHandle);
   IOReturn freeVMBusChannelGPADL(UInt32 channelId, UInt32 gpadlHandle);
+  void signalVMBusChannel(UInt32 channelId);
 };
 
 #endif
