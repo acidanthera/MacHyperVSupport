@@ -147,13 +147,10 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
 //
 // Release print function.
 //
-inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId, const char *format, ...) {
+inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId, const char *format, va_list va) {
   char tmp[256];
   tmp[0] = '\0';
-  va_list va;
-  va_start(va, format);
   vsnprintf(tmp, sizeof (tmp), format, va);
-  va_end(va);
   
   if (hasChannelId) {
     IOLog("%s(%u): %s\n", className, (unsigned int) channelId, tmp);
