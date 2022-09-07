@@ -169,6 +169,7 @@ public:
   //
   // VMBus channel management.
   //
+  VMBusChannelStatus getVMBusChannelStatus(UInt32 channelId);
   IOReturn openVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VMBusRingBuffer **txBuffer, UInt32 rxBufferSize, VMBusRingBuffer **rxBuffer);
   IOReturn closeVMBusChannel(UInt32 channelId);
   IOReturn initVMBusChannelGPADL(UInt32 channelId, HyperVDMABuffer *dmaBuffer, UInt32 *gpadlHandle);

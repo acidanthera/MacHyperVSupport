@@ -7,6 +7,14 @@
 
 #include "HyperVVMBus.hpp"
 
+VMBusChannelStatus HyperVVMBus::getVMBusChannelStatus(UInt32 channelId) {
+  if (channelId == 0 || channelId > kVMBusMaxChannels) {
+    HVDBGLOG("One or more incorrect arguments provided");
+    return kVMBusChannelStatusNotPresent;
+  }
+  return vmbusChannels[channelId].status;
+}
+
 IOReturn HyperVVMBus::openVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VMBusRingBuffer **txBuffer, UInt32 rxBufferSize, VMBusRingBuffer **rxBuffer) {
   IOReturn     status;
   VMBusChannel *channel;
