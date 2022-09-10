@@ -35,6 +35,10 @@ class HyperVVMBusDevice : public IOService {
   HVDeclareLogFunctionsVMBusDeviceNub("vmbusdev");
   typedef IOService super;
   
+public:
+  typedef void (*PacketReadyAction)(void *target, UInt8 *packet, UInt32 packetLength);
+  typedef bool (*WakePacketAction)(void *target, UInt8 *packet, UInt32 packetLength);
+  
 private:
   //
   // VMBus channel information.
@@ -46,27 +50,38 @@ private:
   bool          _channelIsOpen = false;
   
   //
-  // WorkLoop and interrupts.
+  // Work loop and related.
   //
-  IOWorkLoop    *_workLoop = nullptr;
-  IOCommandGate *commandGate;
-  bool          commandLock;
+  IOWorkLoop             *_workLoop           = nullptr;
+  IOCommandGate          *_commandGate        = nullptr;
+  bool                   _commandLock         = false;
+  IOInterruptEventSource *_interruptSource    = nullptr;
+  OSObject               *_packetActionTarget = nullptr;
+  PacketReadyAction     _packetReadyAction    = nullptr;
+  WakePacketAction      _wakePacketAction     = nullptr;
   
-  VMBusRingBuffer         *txBuffer;
-  UInt32                  txBufferSize;
-  VMBusRingBuffer         *rxBuffer;
-  UInt32                  rxBufferSize;
+  //
+  // Ring buffers for channel.
+  //
+  VMBusRingBuffer *_txBuffer    = nullptr;
+  UInt32          _txBufferSize = 0;
+  VMBusRingBuffer *_rxBuffer    = nullptr;
+  UInt32          _rxBufferSize = 0;
+  
+  UInt8           *_receivePacketBuffer      = nullptr;
+  UInt32          _receivePacketBufferLength = 0;
+  
+public:
+  UInt64                  txBufferWriteCount;
+  UInt64                  rxBufferReadCount;
   
   HyperVVMBusDeviceRequest      *vmbusRequests = NULL;
   IOLock                        *vmbusRequestsLock;
   UInt64                        vmbusTransId = 1; // Some devices have issues with 0 as a transaction ID.
-  UInt64                        vmbusMaxAutoTransId = UINT64_MAX;
+  UInt64                        _maxAutoTransId = UINT64_MAX;
   IOLock                        *vmbusTransLock;
   
   HyperVVMBusDeviceRequest      threadZeroRequest;
-
-  bool setupCommandGate();
-  void teardownCommandGate();
 
   
   IOReturn writePacketInternal(void *buffer, UInt32 bufferLength, VMBusPacketType packetType, UInt64 transactionId,
@@ -86,11 +101,27 @@ private:
   void sleepPacketRequest(HyperVVMBusDeviceRequest *vmbusRequest);
   void prepareSleepThread();
   
-  inline UInt32 getAvailableTxSpace() {
-    return (txBuffer->writeIndex >= txBuffer->readIndex) ?
-      (txBufferSize - (txBuffer->writeIndex - txBuffer->readIndex)) :
-      (txBuffer->readIndex - txBuffer->writeIndex);
+  //
+  // Ring buffer.
+  //
+  inline UInt32 getRingReadIndex(VMBusRingBuffer *ringBuffer) {
+    return ringBuffer->readIndex;
   }
+  inline UInt32 getRingWriteIndex(VMBusRingBuffer *ringBuffer) {
+    return ringBuffer->writeIndex;
+  }
+  inline void getAvailableRingSpace(VMBusRingBuffer *ringBuffer, UInt32 ringBufferSize, UInt32 *readBytes, UInt32 *writeBytes) {
+    __sync_synchronize();
+    UInt32 writeIndex = getRingWriteIndex(ringBuffer);
+    UInt32 readIndex  = getRingReadIndex(ringBuffer);
+    
+    *writeBytes = (writeIndex >= readIndex) ? (ringBufferSize - (writeIndex - readIndex)) : (readIndex - writeIndex);
+    *readBytes = ringBufferSize - *writeBytes;
+  }
+  
+private:
+  void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
+  IOReturn openVMBusChannelGated(UInt32 *txBufferSize, UInt32 *rxBufferSize);
 
 public:
   //
@@ -102,9 +133,39 @@ public:
   IOWorkLoop* getWorkLoop() const APPLE_KEXT_OVERRIDE;
   
   //
-  // General functions.
+  // Channel management.
+  //
+  IOReturn installPacketActions(OSObject *target, PacketReadyAction packetReadyAction, WakePacketAction wakePacketAction,
+                                UInt32 initialResponseBufferLength, bool registerInterrupt = true);
+  IOReturn openVMBusChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId = UINT64_MAX);
+  
+  //
+  // Ring buffer.
+  //
+  inline UInt32 getTxReadIndex() {
+    return getRingReadIndex(_txBuffer);
+  }
+  inline UInt32 getTxWriteIndex() {
+    return getRingWriteIndex(_txBuffer);
+  }
+  inline void getAvailableTxSpace(UInt32 *readBytes, UInt32 *writeBytes) {
+    getAvailableRingSpace(_txBuffer, _txBufferSize, readBytes, writeBytes);
+  }
+  inline UInt32 getRxReadIndex() {
+    return getRingReadIndex(_rxBuffer);
+  }
+  inline UInt32 getRxWriteIndex() {
+    return getRingWriteIndex(_rxBuffer);
+  }
+  inline void getAvailableRxSpace(UInt32 *readBytes, UInt32 *writeBytes) {
+    getAvailableRingSpace(_rxBuffer, _rxBufferSize, readBytes, writeBytes);
+  }
+  
+  //
+  // Misc.
   //
   void setDebugMessagePrinting(bool enabled) { debugPackets = enabled; }
+  
   bool openChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId = UINT64_MAX);
   void closeChannel();
   bool createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer);

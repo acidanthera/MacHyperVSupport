@@ -32,21 +32,28 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
   _vmbusProvider->retain();
   HVCheckDebugArgs();
   
-  superAttached = super::attach(provider);
-  if (!superAttached) {
-    HVSYSLOG("super::attach() returned false");
-    return false;
-  }
-  
   do {
+    superAttached = super::attach(provider);
+    if (!superAttached) {
+      HVSYSLOG("super::attach() returned false");
+      break;
+    }
+    
     //
-    // Initialize work loop.
+    // Initialize work loop and command gate.
     //
     _workLoop = IOWorkLoop::workLoop();
     if (_workLoop == nullptr) {
       HVSYSLOG("Failed to initialize work loop");
       break;
     }
+    
+    _commandGate = IOCommandGate::commandGate(this);
+    if (_commandGate == nullptr) {
+      HVSYSLOG("Failed to initialize command gate");
+      break;
+    }
+    _workLoop->addEventSource(_commandGate);
     
     //
     // Get channel number and GUID properties.
@@ -98,6 +105,13 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
     if (!superAttached) {
       super::detach(provider);
     }
+    
+    if (_commandGate != nullptr) {
+      _workLoop->removeEventSource(_commandGate);
+    }
+    OSSafeReleaseNULL(_commandGate);
+    OSSafeReleaseNULL(_workLoop);
+    OSSafeReleaseNULL(_vmbusProvider);
   }
   
   return attached;
@@ -146,25 +160,83 @@ IOWorkLoop* HyperVVMBusDevice::getWorkLoop() const {
   return _workLoop;
 }
 
+IOReturn HyperVVMBusDevice::installPacketActions(OSObject *target, PacketReadyAction packetReadyAction, WakePacketAction wakePacketAction,
+                                                 UInt32 initialResponseBufferLength, bool registerInterrupt) {
+  if (target == nullptr || packetReadyAction == nullptr) {
+    return kIOReturnBadArgument;
+  }
+  if (_packetActionTarget != nullptr) {
+    return kIOReturnExclusiveAccess;
+  }
+  
+  _receivePacketBufferLength = initialResponseBufferLength;
+  _receivePacketBuffer       = (UInt8*) IOMalloc(_receivePacketBufferLength);
+  
+  _packetActionTarget = target;
+  _packetReadyAction  = packetReadyAction;
+  _wakePacketAction   = wakePacketAction;
+  if (registerInterrupt) {
+    _interruptSource = IOInterruptEventSource::interruptEventSource(this,
+                                                                    OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVVMBusDevice::handleInterrupt),
+                                                                    this, 0);
+    if (_interruptSource == nullptr) {
+      HVSYSLOG("Failed to configure interrupt for channel %u", _channelId);
+      IOFree(_receivePacketBuffer, _receivePacketBufferLength);
+      return kIOReturnNoResources;
+    }
+    _workLoop->addEventSource(_interruptSource);
+    _interruptSource->enable();
+  }
+
+  HVDBGLOG("Data ready action handler installed (register interrupt: %u)", registerInterrupt);
+  return kIOReturnSuccess;
+}
+
+IOReturn HyperVVMBusDevice::openVMBusChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId) {
+  IOReturn status;
+  
+  if (txSize == 0 || rxSize == 0) {
+    return kIOReturnBadArgument;
+  }
+  
+  if (_channelIsOpen) {
+    return kIOReturnStillOpen;
+  }
+  HVDBGLOG("Attempting to open channel %u (TX size: %u, RX size: %u, max trans ID: 0x%llX)", _channelId, txSize, rxSize, maxAutoTransId);
+  
+  //
+  // Open channel through VMBus provider.
+  // The ability to have a maximum transaction ID is supported for some devices
+  // that require both rolling transaction IDs and specific transaction IDs at the same time.
+  //
+  // This call is gated to prevent interrupt handler from firing partway through channel open, as some
+  // devices will start sending data immediately after opening.
+  //
+  _maxAutoTransId = maxAutoTransId;
+  status = _commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::openVMBusChannelGated), &txSize, &rxSize);
+  if (status != kIOReturnSuccess) {
+    HVSYSLOG("Failed to open VMBus channel %u with status: 0x%X", _channelId, status);
+    return status;
+  }
+  HVDBGLOG("Channel %u is now open", _channelId);
+  
+  return kIOReturnSuccess;
+}
+
 bool HyperVVMBusDevice::openChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId) {
   if (_channelIsOpen) {
     return true;
   }
   
   HVDBGLOG("Opening channel for %u", _channelId);
-  txBufferSize = txSize;
-  rxBufferSize = rxSize;
-  
-  if (!setupCommandGate()) {
-    return false;
-  }
+  _txBufferSize = txSize;
+  _rxBufferSize = rxSize;
   
   //
   // Open channel.
   //
-  vmbusMaxAutoTransId = maxAutoTransId;
-  if (_vmbusProvider->openVMBusChannel(_channelId, txBufferSize, &txBuffer, rxBufferSize, &rxBuffer) != kIOReturnSuccess) {
-    teardownCommandGate();
+  _maxAutoTransId = maxAutoTransId;
+  if (_vmbusProvider->openVMBusChannel(_channelId, _txBufferSize, &_txBuffer, _rxBufferSize, &_rxBuffer) != kIOReturnSuccess) {
     return false;
   }
   
@@ -178,7 +250,6 @@ void HyperVVMBusDevice::closeChannel() {
   // Close channel and stop interrupts.
   //
   _vmbusProvider->closeVMBusChannel(_channelId);
-  teardownCommandGate();
   _channelIsOpen = false;
 }
 
@@ -203,7 +274,7 @@ void HyperVVMBusDevice::freeDmaBuffer(HyperVDMABuffer *dmaBuf) {
 }
 
 bool HyperVVMBusDevice::nextPacketAvailable(VMBusPacketType *type, UInt32 *packetHeaderLength, UInt32 *packetTotalLength) {
-  return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::nextPacketAvailableGated),
+  return _commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::nextPacketAvailableGated),
                                 type, packetHeaderLength, packetTotalLength) == kIOReturnSuccess;
 }
 
@@ -216,7 +287,7 @@ bool HyperVVMBusDevice::nextInbandPacketAvailable(UInt32 *packetDataLength) {
     return false;
   }
 
-  bool result = commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::nextPacketAvailableGated),
+  bool result = _commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::nextPacketAvailableGated),
                                        &pktType, &pktHeaderLength, &pktTotalLength) == kIOReturnSuccess;
   
   if (result) {
@@ -233,7 +304,7 @@ UInt64 HyperVVMBusDevice::getNextTransId() {
   IOLockLock(vmbusTransLock);
   UInt64 value = vmbusTransId;
   vmbusTransId++;
-  if (vmbusTransId > vmbusMaxAutoTransId) {
+  if (vmbusTransId > _maxAutoTransId) {
     // Some devices have issues with 0 as a transaction ID.
     vmbusTransId = 1;
   }
@@ -242,7 +313,7 @@ UInt64 HyperVVMBusDevice::getNextTransId() {
 }
 
 IOReturn HyperVVMBusDevice::readRawPacket(void *buffer, UInt32 bufferLength) {
-  return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::readRawPacketGated),
+  return _commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::readRawPacketGated),
                                 NULL, NULL, buffer, &bufferLength);
 }
 
@@ -250,7 +321,7 @@ IOReturn HyperVVMBusDevice::readInbandCompletionPacket(void *buffer, UInt32 buff
   VMBusPacketHeader pktHeader;
   UInt32 pktHeaderSize = sizeof (pktHeader);
   
-  IOReturn status = commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::readRawPacketGated),
+  IOReturn status = _commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::readRawPacketGated),
                                            &pktHeader, &pktHeaderSize, buffer, &bufferLength);
   if (status == kIOReturnSuccess) {
     if (pktHeader.type != kVMBusPacketTypeDataInband && pktHeader.type != kVMBusPacketTypeCompletion) {
@@ -266,7 +337,7 @@ IOReturn HyperVVMBusDevice::readInbandCompletionPacket(void *buffer, UInt32 buff
 }
 
 IOReturn HyperVVMBusDevice::writeRawPacket(void *buffer, UInt32 bufferLength) {
-  return commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::writeRawPacketGated),
+  return _commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::writeRawPacketGated),
                                 NULL, NULL, buffer, &bufferLength);
 }
 
@@ -323,7 +394,7 @@ IOReturn HyperVVMBusDevice::writeGPADirectSinglePagePacket(void *buffer, UInt32 
     addPacketRequest(&req);
   }
 
-  IOReturn status = commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::writeRawPacketGated),
+  IOReturn status = _commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::writeRawPacketGated),
                                 &pagePacket, &pagePacketLength, buffer, &bufferLength);
   
   if (responseBuffer != NULL) {
@@ -369,7 +440,7 @@ IOReturn HyperVVMBusDevice::writeGPADirectMultiPagePacket(void *buffer, UInt32 b
     addPacketRequest(&req);
   }
 
-  IOReturn status = commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::writeRawPacketGated),
+  IOReturn status = _commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::writeRawPacketGated),
                                 pagePacket, &pagePacketLength, buffer, &bufferLength);
   
   if (responseBuffer != NULL) {
