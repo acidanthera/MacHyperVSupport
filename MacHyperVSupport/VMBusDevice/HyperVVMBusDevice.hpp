@@ -9,6 +9,7 @@
 #define HyperVVMBusDevice_hpp
 
 #include <IOKit/IOInterruptEventSource.h>
+#include <IOKit/IOTimerEventSource.h>
 #include <IOKit/IOLib.h>
 #include <IOKit/IOService.h>
 
@@ -36,8 +37,15 @@ class HyperVVMBusDevice : public IOService {
   typedef IOService super;
   
 public:
+  //
+  // Packet action handlers.
+  //
   typedef void (*PacketReadyAction)(void *target, UInt8 *packet, UInt32 packetLength);
   typedef bool (*WakePacketAction)(void *target, UInt8 *packet, UInt32 packetLength);
+  
+#if DEBUG
+  typedef void (*TimerDebugAction)(void *target);
+#endif
   
 private:
   //
@@ -70,6 +78,19 @@ private:
   
   UInt8           *_receivePacketBuffer      = nullptr;
   UInt32          _receivePacketBufferLength = 0;
+  
+#if DEBUG
+  //
+  // Timer event source for debug prints.
+  //
+  IOTimerEventSource  *_debugTimerSource = nullptr;
+  OSObject            *_timerDebugTarget = nullptr;
+  TimerDebugAction    _timerDebugAction  = nullptr;
+  UInt64              _numInterrupts     = 0;
+  UInt64              _numPackets        = 0;
+  
+  void handleDebugPrintTimer(OSObject *owner, IOTimerEventSource *sender);
+#endif
   
 public:
   UInt64                  txBufferWriteCount;
@@ -202,7 +223,13 @@ public:
   void wakeTransaction(UInt64 transactionId);
   void doSleepThread();
   
-  
+  //
+  // Timer debug printing.
+  //
+#if DEBUG
+  void enableTimerDebugPrints();
+  void installTimerDebugPrintAction(OSObject *target, TimerDebugAction action);
+#endif
 };
 
 #endif

@@ -18,6 +18,10 @@ void HyperVVMBusDevice::handleInterrupt(OSObject *owner, IOInterruptEventSource 
   void *responseBuffer;
   UInt32 responseLength;
   
+#if DEBUG
+  _numInterrupts++;
+#endif
+  
   //
   // Flush RX buffer of all packets.
   //
@@ -51,6 +55,10 @@ void HyperVVMBusDevice::handleInterrupt(OSObject *owner, IOInterruptEventSource 
       pktHeader = (VMBusPacketHeader*) _receivePacketBuffer;
       headerLength = HV_GET_VMBUS_PACKETSIZE(pktHeader->headerLength);
       packetLength = HV_GET_VMBUS_PACKETSIZE(pktHeader->totalLength);
+      
+#if DEBUG
+      _numPackets++;
+#endif
       
       //
       // If a wake packet handler was specified, determine if this is a packet type that should be checked and woken up.
@@ -348,3 +356,25 @@ void HyperVVMBusDevice::prepareSleepThread() {
   threadZeroRequest.transactionId = 0;
   addPacketRequest(&threadZeroRequest);
 }
+
+#if DEBUG
+void HyperVVMBusDevice::enableTimerDebugPrints() {
+  _debugTimerSource = IOTimerEventSource::timerEventSource(this,
+                                                           OSMemberFunctionCast(IOTimerEventSource::Action, this, &HyperVVMBusDevice::handleDebugPrintTimer));
+  _workLoop->addEventSource(_debugTimerSource);
+  _debugTimerSource->enable();
+  _debugTimerSource->setTimeoutMS(5000);
+}
+
+void HyperVVMBusDevice::handleDebugPrintTimer(OSObject *owner, IOTimerEventSource *sender) {
+  HVSYSLOG("TXR 0x%X TXW 0x%X RXR 0x%X RXW 0x%X interrupts %llu packets %llu",
+           getTxReadIndex(), getTxWriteIndex(), getRxReadIndex(), getRxWriteIndex(),
+           _numInterrupts, _numPackets);
+  
+  if (_timerDebugAction != nullptr) {
+    (*_timerDebugAction)(_timerDebugTarget);
+  }
+  
+  _debugTimerSource->setTimeoutMS(5000);
+}
+#endif

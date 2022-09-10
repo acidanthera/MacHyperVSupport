@@ -516,3 +516,10 @@ void HyperVVMBusDevice::doSleepThread() {
   sleepPacketRequest(&threadZeroRequest);
   prepareSleepThread();
 }
+
+#if DEBUG
+void HyperVVMBusDevice::installTimerDebugPrintAction(OSObject *target, TimerDebugAction action) {
+  _timerDebugTarget = target;
+  _timerDebugAction = action;
+}
+#endif
