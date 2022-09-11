@@ -53,44 +53,29 @@ void HyperVShutdown::close(IOService *forClient, IOOptionBits options) {
   super::close(forClient, options);
 }
 
-bool HyperVShutdown::processMessage() {
-  VMBusICMessageShutdown shutdownMsg;
-
-  //
-  // Ignore errors and the acknowledgement interrupt (no data to read).
-  //
-  UInt32 pktDataLength;
-  if (!hvDevice->nextInbandPacketAvailable(&pktDataLength) || pktDataLength > sizeof (shutdownMsg)) {
-    return false;
-  }
-
-  //
-  // Read and parse inbound inband packet.
-  //
-  if (hvDevice->readInbandCompletionPacket(&shutdownMsg, sizeof (shutdownMsg), nullptr) != kIOReturnSuccess) {
-    return false;
-  }
+void HyperVShutdown::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
+  VMBusICMessageShutdown *shutdownMsg = (VMBusICMessageShutdown*) pktData;
 
   bool doShutdown = false;
-  switch (shutdownMsg.header.type) {
+  switch (shutdownMsg->header.type) {
     case kVMBusICMessageTypeNegotiate:
-      createNegotiationResponse(&shutdownMsg.negotiate, 3, 3);
+      createNegotiationResponse(&shutdownMsg->negotiate, 3, 3);
       break;
 
     case kVMBusICMessageTypeShutdown:
-      doShutdown = handleShutdown(&shutdownMsg.shutdown);
+      doShutdown = handleShutdown(&shutdownMsg->shutdown);
       break;
 
     default:
-      HVDBGLOG("Unknown shutdown message type %u", shutdownMsg.header.type);
-      shutdownMsg.header.status = kHyperVStatusFail;
+      HVDBGLOG("Unknown shutdown message type %u", shutdownMsg->header.type);
+      shutdownMsg->header.status = kHyperVStatusFail;
       break;
   }
 
   //
   // Send response back to Hyper-V. The packet size will always be the same as the original inbound one.
   //
-  shutdownMsg.header.flags = kVMBusICFlagTransaction | kVMBusICFlagResponse;
+  shutdownMsg->header.flags = kVMBusICFlagTransaction | kVMBusICFlagResponse;
   hvDevice->writeInbandPacket(&shutdownMsg, pktDataLength, false);
 
   //
@@ -100,7 +85,6 @@ bool HyperVShutdown::processMessage() {
     HVDBGLOG("Shutdown request received, notifying userspace");
     messageClients(kHyperVShutdownMessageTypePerformShutdown);
   }
-  return true;
 }
 
 bool HyperVShutdown::handleShutdown(VMBusICMessageShutdownData *shutdownData) {

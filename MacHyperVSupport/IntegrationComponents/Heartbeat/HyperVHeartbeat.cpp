@@ -33,36 +33,30 @@ void HyperVHeartbeat::stop(IOService *provider) {
   super::stop(provider);
 }
 
-bool HyperVHeartbeat::processMessage() {
-  VMBusICMessageHeartbeat heartbeatMsg;
+void HyperVHeartbeat::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
+  VMBusICMessageHeartbeat *heartbeatMsg = (VMBusICMessageHeartbeat*) pktData;
 
   //
-  // Ignore errors and the acknowledgement interrupt (no data to read).
+  // Process incoming heartbeat message.
   //
-  UInt32 pktDataLength;
-  if (!hvDevice->nextInbandPacketAvailable(&pktDataLength) || pktDataLength > sizeof (heartbeatMsg)) {
-    return false;
-  }
-
-  //
-  // Read and parse inbound inband packet.
-  //
-  if (hvDevice->readInbandCompletionPacket(&heartbeatMsg, sizeof (heartbeatMsg), nullptr) != kIOReturnSuccess) {
-    return false;
-  }
-  switch (heartbeatMsg.header.type) {
+  switch (heartbeatMsg->header.type) {
     case kVMBusICMessageTypeNegotiate:
+      //
+      // Determine supported protocol version and communicate back to Hyper-V.
+      //
       firstHeartbeatReceived = false;
-      createNegotiationResponse(&heartbeatMsg.negotiate, 3, 3);
+      if (!createNegotiationResponse(&heartbeatMsg->negotiate, 3, 3)) {
+        return;
+      }
       break;
 
     case kVMBusICMessageTypeHeartbeat:
       //
-      // Increment sequence.
-      // Host will increment this further before sending a message back.
+      // Normal heartbeat packet.
+      // The sequence number is incremented twice per cycle, once by the guest and once by Hyper-V.
       //
-      HVDBGLOG("Got heartbeat, seq = %u", heartbeatMsg.heartbeat.sequence);
-      heartbeatMsg.heartbeat.sequence++;
+      HVDBGLOG("Got heartbeat, seq = %u", heartbeatMsg->heartbeat.sequence);
+      heartbeatMsg->heartbeat.sequence++;
 
       if (!firstHeartbeatReceived) {
         firstHeartbeatReceived = true;
@@ -71,15 +65,14 @@ bool HyperVHeartbeat::processMessage() {
       break;
 
     default:
-      HVDBGLOG("Unknown heartbeat message type %u", heartbeatMsg.header.type);
-      heartbeatMsg.header.status = kHyperVStatusFail;
+      HVDBGLOG("Unknown heartbeat message type %u", heartbeatMsg->header.type);
+      heartbeatMsg->header.status = kHyperVStatusFail;
       break;
   }
 
   //
   // Send response back to Hyper-V. The packet size will always be the same as the original inbound one.
   //
-  heartbeatMsg.header.flags = kVMBusICFlagTransaction | kVMBusICFlagResponse;
-  hvDevice->writeInbandPacket(&heartbeatMsg, pktDataLength, false);
-  return true;
+  heartbeatMsg->header.flags = kVMBusICFlagTransaction | kVMBusICFlagResponse;
+  hvDevice->writeInbandPacket(heartbeatMsg, pktDataLength, false);
 }

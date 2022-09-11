@@ -46,8 +46,8 @@ private:
   
   bool fullBufferUsed;
   
-  bool wakePacketHandler(UInt8 *packet, UInt32 packetLength);
-  void handlePacket(UInt8 *packet, UInt32 packetLength);
+  bool wakePacketHandler(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
+  void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
   
   IOReturn executeCommand(HyperVStoragePacket *packet, bool checkCompletion);
   inline void clearPacket(HyperVStoragePacket *packet) {

@@ -86,8 +86,8 @@ private:
   UInt32                        currentMediumIndex;
   
   void handleTimer();
-  bool wakePacketHandler(UInt8 *packet, UInt32 packetLength);
-  void handlePacket(UInt8 *packet, UInt32 packetLength);
+  bool wakePacketHandler(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
+  void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
   
   
   bool negotiateProtocol(HyperVNetworkProtocolVersion protocolVersion);

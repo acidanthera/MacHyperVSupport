@@ -9,12 +9,14 @@
 
 void HyperVVMBusDevice::handleInterrupt(IOInterruptEventSource *sender, int count) {
   IOReturn status;
-  UInt32 readBytes;
+  UInt32 readBytes = 0;
   UInt32 writeBytes;
   
   VMBusPacketHeader *pktHeader;
-  UInt32 headerLength;
-  UInt32 packetLength;
+  UInt32            pktHeaderLength;
+  UInt8             *pktData;
+  UInt32            pktDataLength;
+  
   void *responseBuffer;
   UInt32 responseLength;
   
@@ -31,8 +33,10 @@ void HyperVVMBusDevice::handleInterrupt(IOInterruptEventSource *sender, int coun
   // During each cycle, invoke previously passed in handler function from client driver.
   //
   do {
-    _rxBuffer->interruptMask = 1;
-    __sync_synchronize();
+    if (_shouldFlushPackets) {
+      _rxBuffer->interruptMask = 1;
+      __sync_synchronize();
+    }
     
     while (true) {
       status = readRawPacket(_receivePacketBuffer, _receivePacketBufferLength);
@@ -53,8 +57,9 @@ void HyperVVMBusDevice::handleInterrupt(IOInterruptEventSource *sender, int coun
       }
       
       pktHeader = (VMBusPacketHeader*) _receivePacketBuffer;
-      headerLength = HV_GET_VMBUS_PACKETSIZE(pktHeader->headerLength);
-      packetLength = HV_GET_VMBUS_PACKETSIZE(pktHeader->totalLength);
+      pktHeaderLength = HV_GET_VMBUS_PACKETSIZE(pktHeader->headerLength);
+      pktDataLength = HV_GET_VMBUS_PACKETSIZE(pktHeader->totalLength) - pktHeaderLength;
+      pktData = &_receivePacketBuffer[pktHeaderLength];
       
 #if DEBUG
       _numPackets++;
@@ -63,9 +68,9 @@ void HyperVVMBusDevice::handleInterrupt(IOInterruptEventSource *sender, int coun
       //
       // If a wake packet handler was specified, determine if this is a packet type that should be checked and woken up.
       //
-      if (_wakePacketAction != nullptr && (*_wakePacketAction)(_packetActionTarget, _receivePacketBuffer, packetLength)) {
+      if (_wakePacketAction != nullptr && (*_wakePacketAction)(_packetActionTarget, pktHeader, pktHeaderLength, pktData, pktDataLength)) {
         if (getPendingTransaction(pktHeader->transactionId, &responseBuffer, &responseLength)) {
-          memcpy(responseBuffer, &_receivePacketBuffer[headerLength], responseLength);
+          memcpy(responseBuffer, pktData, responseLength);
           wakeTransaction(pktHeader->transactionId);
           continue;
         }
@@ -74,14 +79,16 @@ void HyperVVMBusDevice::handleInterrupt(IOInterruptEventSource *sender, int coun
       //
       // Invoke handler for child to process packet.
       //
-      (*_packetReadyAction)(_packetActionTarget, _receivePacketBuffer, packetLength);
+      (*_packetReadyAction)(_packetActionTarget, pktHeader, pktHeaderLength, pktData, pktDataLength);
     }
     
-    _rxBuffer->interruptMask = 0;
-    __sync_synchronize();
+    if (_shouldFlushPackets) {
+      _rxBuffer->interruptMask = 0;
+      __sync_synchronize();
     
-    getAvailableRxSpace(&readBytes, &writeBytes);
-  } while (readBytes != 0);
+      getAvailableRxSpace(&readBytes, &writeBytes);
+    }
+  } while (!_shouldFlushPackets && readBytes != 0);
 }
 
 IOReturn HyperVVMBusDevice::openVMBusChannelGated(UInt32 *txSize, UInt32 *rxSize) {

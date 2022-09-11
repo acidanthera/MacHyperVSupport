@@ -161,7 +161,7 @@ IOWorkLoop* HyperVVMBusDevice::getWorkLoop() const {
 }
 
 IOReturn HyperVVMBusDevice::installPacketActions(OSObject *target, PacketReadyAction packetReadyAction, WakePacketAction wakePacketAction,
-                                                 UInt32 initialResponseBufferLength, bool registerInterrupt) {
+                                                 UInt32 initialResponseBufferLength, bool registerInterrupt, bool flushPackets) {
   if (target == nullptr || packetReadyAction == nullptr) {
     return kIOReturnBadArgument;
   }
@@ -175,6 +175,7 @@ IOReturn HyperVVMBusDevice::installPacketActions(OSObject *target, PacketReadyAc
   _packetActionTarget = target;
   _packetReadyAction  = packetReadyAction;
   _wakePacketAction   = wakePacketAction;
+  _shouldFlushPackets = flushPackets;
   if (registerInterrupt) {
     _interruptSource = IOInterruptEventSource::interruptEventSource(this,
                                                                     OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVVMBusDevice::handleInterrupt),

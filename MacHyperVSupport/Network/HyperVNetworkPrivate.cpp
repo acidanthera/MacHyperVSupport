@@ -11,29 +11,24 @@ void HyperVNetwork::handleTimer() {
   HVSYSLOG("outst %X r %X w %X bytes %X %X %X stalls %llu", outstandingSends, hvDevice->rxBufferReadCount, hvDevice->txBufferWriteCount, preCycle, midCycle, postCycle, stalls);
 }
 
-bool HyperVNetwork::wakePacketHandler(UInt8 *packet, UInt32 packetLength) {
-  return ((VMBusPacketHeader*)packet)->type == kVMBusPacketTypeCompletion;
+bool HyperVNetwork::wakePacketHandler(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
+  return pktHeader->type == kVMBusPacketTypeCompletion;
 }
 
-void HyperVNetwork::handlePacket(UInt8 *packet, UInt32 packetLength) {
-  VMBusPacketHeader *pktHeader;
-  //UInt32            pktLength;
-  
+void HyperVNetwork::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
   //
   // Handle inbound packet.
   //
-  pktHeader = (VMBusPacketHeader *)packet;
-  //pktLength = HV_GET_VMBUS_PACKETSIZE(pktHeader->totalLength);
-  totalbytes += packetLength + 8;
+  totalbytes += pktHeaderLength + pktDataLength + 8;
   switch (pktHeader->type) {
     case kVMBusPacketTypeDataInband:
       break;
     case kVMBusPacketTypeDataUsingTransferPages:
-      handleRNDISRanges((VMBusPacketTransferPages*)packet, packetLength);
+      handleRNDISRanges((VMBusPacketTransferPages*)pktHeader, pktHeaderLength + pktDataLength);
       break;
       
     case kVMBusPacketTypeCompletion:
-      handleCompletion(packet, packetLength);
+      handleCompletion(pktHeader, pktHeaderLength + pktDataLength);
       break;
     default:
       HVSYSLOG("Invalid packet type %X", pktHeader->type);

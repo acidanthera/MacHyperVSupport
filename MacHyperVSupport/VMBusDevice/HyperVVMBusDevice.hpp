@@ -40,8 +40,8 @@ public:
   //
   // Packet action handlers.
   //
-  typedef void (*PacketReadyAction)(void *target, UInt8 *packet, UInt32 packetLength);
-  typedef bool (*WakePacketAction)(void *target, UInt8 *packet, UInt32 packetLength);
+  typedef void (*PacketReadyAction)(void *target, VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
+  typedef bool (*WakePacketAction)(void *target, VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
   
 #if DEBUG
   typedef void (*TimerDebugAction)(void *target);
@@ -67,6 +67,7 @@ private:
   OSObject               *_packetActionTarget = nullptr;
   PacketReadyAction     _packetReadyAction    = nullptr;
   WakePacketAction      _wakePacketAction     = nullptr;
+  bool                  _shouldFlushPackets   = true;
   
   //
   // Ring buffers for channel.
@@ -158,7 +159,7 @@ public:
   // Channel management.
   //
   IOReturn installPacketActions(OSObject *target, PacketReadyAction packetReadyAction, WakePacketAction wakePacketAction,
-                                UInt32 initialResponseBufferLength, bool registerInterrupt = true);
+                                UInt32 initialResponseBufferLength, bool registerInterrupt = true, bool flushPackets = true);
   IOReturn openVMBusChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId = UINT64_MAX);
   IOReturn closeVMBusChannel();
   IOReturn createGPADLBuffer(HyperVDMABuffer *dmaBuffer, UInt32 *gpadlHandle);

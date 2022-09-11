@@ -28,13 +28,12 @@ IOReturn HyperVStorage::executeCommand(HyperVStoragePacket *packet, bool checkCo
   return kIOReturnSuccess;
 }
 
-bool HyperVStorage::wakePacketHandler(UInt8 *packet, UInt32 packetLength) {
+bool HyperVStorage::wakePacketHandler(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
   return true;
 }
 
-void HyperVStorage::handlePacket(UInt8 *packet, UInt32 packetLength) {
-  VMBusPacketHeader *pktHeader = (VMBusPacketHeader*) packet;
-  HyperVStoragePacket *storPkt = (HyperVStoragePacket*) &packet[HV_GET_VMBUS_PACKETSIZE(pktHeader->headerLength)];
+void HyperVStorage::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
+  HyperVStoragePacket *storPkt = (HyperVStoragePacket*) pktData;
   
   
   switch (storPkt->operation) {
