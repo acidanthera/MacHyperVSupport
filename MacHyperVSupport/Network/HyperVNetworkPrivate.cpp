@@ -138,7 +138,7 @@ bool HyperVNetwork::initBuffers() {
     HVSYSLOG("Failed to configure receive buffer: 0x%X", netMsg.v1.sendReceiveBufferComplete.status);
     return false;
   }
-  HVDBGLOG("Receive buffer configured with %u sections", netMsg.v1.sendReceiveBufferComplete.numSections);
+  HVDBGLOG("Receive buffer configured at 0x%p with %u sections", receiveBuffer, netMsg.v1.sendReceiveBufferComplete.numSections);
   
   // Linux driver only allows 1 section.
   if (netMsg.v1.sendReceiveBufferComplete.numSections != 1 || netMsg.v1.sendReceiveBufferComplete.sections[0].offset != 0) {
@@ -163,12 +163,13 @@ bool HyperVNetwork::initBuffers() {
   }
   sendSectionSize = netMsg.v1.sendSendBufferComplete.sectionSize;
   sendSectionCount = sendBufferSize / sendSectionSize;
-  sendIndexMapSize = (sendSectionCount + sizeof (UInt64) - 1) / sizeof (UInt64);
-  sendIndexMap = (UInt64*)IOMalloc(sendIndexMapSize);
-  memset(sendIndexMap, 0, sendIndexMapSize);
-  HVDBGLOG("send index map size %u", sendIndexMapSize);
-  
-  HVDBGLOG("Send buffer configured with section size of %u bytes and %u sections", sendSectionSize, sendSectionCount);
+  sendIndexMapSize = ((sendSectionCount * sizeof (UInt32)) / 32) + sizeof (UInt32);
+  sendIndexMap = (UInt32*)IOMalloc(sendIndexMapSize);
+  bzero(sendIndexMap, sendIndexMapSize);
+
+  HVDBGLOG("Send buffer configured at 0x%p-0x%p with section size of %u bytes and %u sections",
+           sendBuffer, (sendBuffer + (sendSectionSize * (sendSectionCount - 1))), sendSectionSize, sendSectionCount);
+  HVDBGLOG("Send index map size: %u bytes", sendIndexMapSize);
   
   return true;
 }

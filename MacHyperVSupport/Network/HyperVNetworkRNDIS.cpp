@@ -85,9 +85,8 @@ void HyperVNetwork::processIncoming(UInt8 *data, UInt32 dataLength) {
 
 UInt32 HyperVNetwork::getNextSendIndex() {
   for (UInt32 i = 0; i < sendSectionCount; i++) {
-    HVDBGLOG("idx %u %X", i, sendIndexMap[i / 8]);
-    if ((sendIndexMap[i / 8] & (1 << (i % 8))) == 0) {
-      sendIndexMap[i / 8] |= (1 << (i % 8));
+    if (!sync_test_and_set_bit(i, sendIndexMap)) {
+      OSIncrementAtomic(&outstandingSends);
       return i;
     }
   }
@@ -95,8 +94,19 @@ UInt32 HyperVNetwork::getNextSendIndex() {
   return kHyperVNetworkRNDISSendSectionIndexInvalid;
 }
 
+UInt32 HyperVNetwork::getFreeSendIndexCount() {
+  UInt32 freeSendIndexCount = 0;
+  for (UInt32 i = 0; i < sendSectionCount; i++) {
+    if ((sendIndexMap[i / 32] & (i % 32)) == 0) {
+      freeSendIndexCount++;
+    }
+  }
+  return freeSendIndexCount;
+}
+
 void HyperVNetwork::releaseSendIndex(UInt32 sendIndex) {
-  sendIndexMap[sendIndex / 8] &= ~(1 << (sendIndex % 8));
+  sync_change_bit(sendIndex, sendIndexMap);
+  OSDecrementAtomic(&outstandingSends);
 }
 
 HyperVNetworkRNDISRequest* HyperVNetwork::allocateRNDISRequest() {

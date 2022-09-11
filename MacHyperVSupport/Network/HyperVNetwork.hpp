@@ -13,6 +13,7 @@
 #include <IOKit/network/IOEthernetInterface.h>
 #include <IOKit/network/IOMbufMemoryCursor.h>
 #include <IOKit/network/IONetworkMedium.h>
+#include <IOKit/network/IOOutputQueue.h>
 
 #include "HyperVVMBusDevice.hpp"
 #include "HyperVNetworkRegs.hpp"
@@ -42,22 +43,28 @@ private:
   // Parent VMBus device.
   //
   HyperVVMBusDevice       *hvDevice         = nullptr;
-  IOInterruptEventSource  *interruptSource  = nullptr;
-  
   bool                          isEnabled = false;
   
   HyperVNetworkProtocolVersion  netVersion;
+  
+  //
+  // Receive buffer.
+  //
   UInt32                        receiveBufferSize;
   UInt32                        receiveGpadlHandle;
-  UInt8                          *receiveBuffer;
+  UInt8                         *receiveBuffer = nullptr;
   
+  //
+  // Send buffer and tracking info.
+  //
   UInt32                        sendBufferSize;
   UInt32                        sendGpadlHandle;
-  UInt8                         *sendBuffer;
+  UInt8                         *sendBuffer = nullptr;
   UInt32                        sendSectionSize;
   UInt32                        sendSectionCount;
-  UInt64                        *sendIndexMap;
+  UInt32                        *sendIndexMap = nullptr;
   size_t                        sendIndexMapSize;
+  UInt32                        outstandingSends = 0;
   
   IOLock                        *rndisLock = NULL;
   UInt32                        rndisTransId = 0;
@@ -88,6 +95,7 @@ private:
   // RNDIS
   //
   UInt32 getNextSendIndex();
+  UInt32 getFreeSendIndexCount();
   void releaseSendIndex(UInt32 sendIndex);
   HyperVNetworkRNDISRequest *allocateRNDISRequest();
   void freeRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest);
@@ -123,4 +131,4 @@ public:
   virtual IOReturn disable(IONetworkInterface *interface) APPLE_KEXT_OVERRIDE;
 };
 
-#endif /* HyperVNetwork_hpp */
+#endif
