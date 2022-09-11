@@ -81,6 +81,7 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
   inline void HVCheckDebugArgs() { \
     debugEnabled = checkKernelArgument("-hv" a "dbg"); \
     hvDevice->setDebugMessagePrinting(checkKernelArgument("-hv" a "msgdbg")); \
+    if (checkKernelArgument("-hv" a "statsdbg")) { hvDevice->enableTimerDebugPrints(); } \
   } \
   inline void HVDBGLOG_PRINT(const char *func, const char *str, ...) const { \
     if (debugEnabled) { \
