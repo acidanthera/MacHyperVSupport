@@ -2,13 +2,13 @@
 //  HyperVNetworkRegs.cpp
 //  Hyper-V network driver
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperVNetworkRegs_h
 #define HyperVNetworkRegs_h
 
-#define kHyperVNetworkRingBufferSize (16 * PAGE_SIZE)
+#define kHyperVNetworkRingBufferSize (128 * PAGE_SIZE)
 
 #define kHyperVNetworkNDISVersion60001    0x00060001
 #define kHyperVNetworkNDISVersion6001E    0x0006001E
@@ -16,6 +16,13 @@
 #define kHyperVNetworkReceiveBufferSize         (1024 * 1024 * 16)
 #define kHyperVNetworkReceiveBufferSizeLegacy   (1024 * 1024 * 15)
 #define kHyperVNetworkSendBufferSize            (1024 * 1024 * 15)
+
+#define kHyperVNetworkReceivePacketSize         (16 * PAGE_SIZE)
+
+#define MBit 1000000
+
+#define kHyperVNetworkMaximumTransId  0xFFFFFFFF
+#define kHyperVNetworkSendTransIdBits 0xFA00000000000000
 
 //
 // Protocol versions.

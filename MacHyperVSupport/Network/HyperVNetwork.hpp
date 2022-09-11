@@ -2,7 +2,7 @@
 //  HyperVNetwork.cpp
 //  Hyper-V network driver
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperVNetwork_hpp
@@ -20,11 +20,6 @@
 extern "C" {
 #include <sys/kpi_mbuf.h>
 }
-
-#define MBit 1000000
-
-#define kHyperVNetworkMaximumTransId  0xFFFFFFFF
-#define kHyperVNetworkSendTransIdBits 0xFA00000000000000
 
 typedef struct HyperVNetworkRNDISRequest {
   HyperVNetworkRNDISMessage message;
