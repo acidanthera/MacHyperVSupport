@@ -60,7 +60,7 @@ void HyperVNetwork::handleRNDISRanges(VMBusPacketTransferPages *pktPages, UInt32
   // Process each range which contains a packet.
   //
   for (int i = 0; i < pktPages->rangeCount; i++) {
-    UInt8 *data = receiveBuffer + pktPages->ranges[i].offset;
+    UInt8 *data = ((UInt8*) receiveBuffer.buffer) + pktPages->ranges[i].offset;
     UInt32 dataLength = pktPages->ranges[i].count;
     
     HVDBGLOG("Got range of %u bytes at 0x%X", dataLength, pktPages->ranges[i].offset);
@@ -123,11 +123,13 @@ bool HyperVNetwork::negotiateProtocol(HyperVNetworkProtocolVersion protocolVersi
 bool HyperVNetwork::initBuffers() {
   
   // Allocate receive and send buffers.
-  if (!hvDevice->createGpadlBuffer(receiveBufferSize, &receiveGpadlHandle, (void**)&receiveBuffer)) {
+  hvDevice->allocateDmaBuffer(&receiveBuffer, receiveBufferSize);
+  if (hvDevice->createGPADLBuffer(&receiveBuffer, &receiveGpadlHandle) != kIOReturnSuccess) {
     HVSYSLOG("Failed to create GPADL for receive buffer");
     return false;
   }
-  if (!hvDevice->createGpadlBuffer(sendBufferSize, &sendGpadlHandle, (void**)&sendBuffer)) {
+  hvDevice->allocateDmaBuffer(&sendBuffer, sendBufferSize);
+  if (hvDevice->createGPADLBuffer(&sendBuffer, &sendGpadlHandle) != kIOReturnSuccess) {
     HVSYSLOG("Failed to create GPADL for send buffer");
     return false;
   }
@@ -179,7 +181,7 @@ bool HyperVNetwork::initBuffers() {
   bzero(sendIndexMap, sendIndexMapSize);
 
   HVDBGLOG("Send buffer configured at 0x%p-0x%p with section size of %u bytes and %u sections",
-           sendBuffer, (sendBuffer + (sendSectionSize * (sendSectionCount - 1))), sendSectionSize, sendSectionCount);
+           sendBuffer.buffer, (((UInt8*) sendBuffer.buffer) + (sendSectionSize * (sendSectionCount - 1))), sendSectionSize, sendSectionCount);
   HVDBGLOG("Send index map size: %u bytes", sendIndexMapSize);
   
   return true;

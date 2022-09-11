@@ -60,7 +60,7 @@ bool HyperVKeyboard::start(IOService *provider) {
     //
     // Configure the channel.
     //
-    if (!hvDevice->openChannel(kHyperVKeyboardRingBufferSize, kHyperVKeyboardRingBufferSize)) {
+    if (hvDevice->openVMBusChannel(kHyperVKeyboardRingBufferSize, kHyperVKeyboardRingBufferSize) != kIOReturnSuccess) {
       HVSYSLOG("Unable to configure VMBus channel");
       break;
     }
@@ -130,7 +130,7 @@ void HyperVKeyboard::freeStructures() {
   // Close channel and release parent VMBus device object.
   //
   if (hvDevice != nullptr) {
-    hvDevice->closeChannel();
+    hvDevice->closeVMBusChannel();
     hvDevice->release();
   }
 }

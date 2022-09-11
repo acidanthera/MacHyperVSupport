@@ -122,7 +122,7 @@ void HyperVVMBusDevice::detach(IOService *provider) {
   // Close and free channel.
   //
   if (_channelIsOpen) {
-    closeChannel();
+    closeVMBusChannel();
   }
   _vmbusProvider->freeVMBusChannel(_channelId);
   
@@ -223,46 +223,29 @@ IOReturn HyperVVMBusDevice::openVMBusChannel(UInt32 txSize, UInt32 rxSize, UInt6
   return kIOReturnSuccess;
 }
 
-bool HyperVVMBusDevice::openChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId) {
-  if (_channelIsOpen) {
-    return true;
+IOReturn HyperVVMBusDevice::closeVMBusChannel() {
+  IOReturn status;
+  
+  if (!_channelIsOpen) {
+    return kIOReturnSuccess;
   }
-  
-  HVDBGLOG("Opening channel for %u", _channelId);
-  _txBufferSize = txSize;
-  _rxBufferSize = rxSize;
-  
-  //
-  // Open channel.
-  //
-  _maxAutoTransId = maxAutoTransId;
-  if (_vmbusProvider->openVMBusChannel(_channelId, _txBufferSize, &_txBuffer, _rxBufferSize, &_rxBuffer) != kIOReturnSuccess) {
-    return false;
-  }
-  
-  _channelIsOpen = true;
-  HVDBGLOG("Opened channel for %u", _channelId);
-  return true;
-}
-
-void HyperVVMBusDevice::closeChannel() {
-  //
-  // Close channel and stop interrupts.
-  //
-  _vmbusProvider->closeVMBusChannel(_channelId);
   _channelIsOpen = false;
+  
+  //
+  // Close channel.
+  //
+  status = _vmbusProvider->closeVMBusChannel(_channelId);
+  HVDBGLOG("Channel %u is now closed, status 0x%X", _channelId, status);
+  _txBuffer     = nullptr;
+  _txBufferSize = 0;
+  _rxBuffer     = nullptr;
+  _rxBufferSize = 0;
+  
+  return status;
 }
 
-bool HyperVVMBusDevice::createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer) {
-  HyperVDMABuffer buf;
-  allocateDmaBuffer(&buf, bufferSize);
-  
-  if (_vmbusProvider->initVMBusChannelGPADL(_channelId, &buf, gpadlHandle) != kIOReturnSuccess) {
-    return false;
-  }
-  
-  *buffer = buf.buffer;
-  return true;
+IOReturn HyperVVMBusDevice::createGPADLBuffer(HyperVDMABuffer *dmaBuffer, UInt32 *gpadlHandle) {
+  return _vmbusProvider->initVMBusChannelGPADL(_channelId, dmaBuffer, gpadlHandle);
 }
 
 bool HyperVVMBusDevice::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size) {

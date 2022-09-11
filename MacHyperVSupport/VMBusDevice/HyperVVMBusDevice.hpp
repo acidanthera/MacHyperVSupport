@@ -160,6 +160,10 @@ public:
   IOReturn installPacketActions(OSObject *target, PacketReadyAction packetReadyAction, WakePacketAction wakePacketAction,
                                 UInt32 initialResponseBufferLength, bool registerInterrupt = true);
   IOReturn openVMBusChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId = UINT64_MAX);
+  IOReturn closeVMBusChannel();
+  IOReturn createGPADLBuffer(HyperVDMABuffer *dmaBuffer, UInt32 *gpadlHandle);
+  UInt32 getChannelId() { return _channelId; }
+  uuid_t* getInstanceId() { return &_instanceId; }
   
   //
   // Ring buffer.
@@ -187,14 +191,9 @@ public:
   // Misc.
   //
   void setDebugMessagePrinting(bool enabled) { debugPackets = enabled; }
-  
-  bool openChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId = UINT64_MAX);
-  void closeChannel();
-  bool createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer);
   bool allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size);
   void freeDmaBuffer(HyperVDMABuffer *dmaBuf);
-  UInt32 getChannelId() { return _channelId; }
-  uuid_t* getInstanceId() { return &_instanceId; }
+
   
   //
   // Messages.

@@ -359,12 +359,14 @@ void HyperVVMBusDevice::prepareSleepThread() {
 
 #if DEBUG
 void HyperVVMBusDevice::handleDebugPrintTimer(IOTimerEventSource *sender) {
-  HVSYSLOG("TXR 0x%X TXW 0x%X RXR 0x%X RXW 0x%X interrupts %llu packets %llu",
-           getTxReadIndex(), getTxWriteIndex(), getRxReadIndex(), getRxWriteIndex(),
-           _numInterrupts, _numPackets);
-  
-  if (_timerDebugAction != nullptr) {
-    (*_timerDebugAction)(_timerDebugTarget);
+  if (_channelIsOpen) {
+    HVSYSLOG("TXR 0x%X TXW 0x%X RXR 0x%X RXW 0x%X interrupts %llu packets %llu",
+             getTxReadIndex(), getTxWriteIndex(), getRxReadIndex(), getRxWriteIndex(),
+             _numInterrupts, _numPackets);
+    
+    if (_timerDebugAction != nullptr) {
+      (*_timerDebugAction)(_timerDebugTarget);
+    }
   }
   
   _debugTimerSource->setTimeoutMS(1000);

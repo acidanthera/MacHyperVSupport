@@ -50,16 +50,16 @@ private:
   //
   // Receive buffer.
   //
+  HyperVDMABuffer               receiveBuffer;
   UInt32                        receiveBufferSize;
   UInt32                        receiveGpadlHandle;
-  UInt8                         *receiveBuffer = nullptr;
   
   //
   // Send buffer and tracking info.
   //
+  HyperVDMABuffer               sendBuffer;
   UInt32                        sendBufferSize;
   UInt32                        sendGpadlHandle;
-  UInt8                         *sendBuffer = nullptr;
   UInt32                        sendSectionSize;
   UInt32                        sendSectionCount;
   UInt32                        *sendIndexMap = nullptr;

@@ -51,7 +51,7 @@ bool HyperVICService::start(IOService *provider) {
     //
     // Configure and open the VMBus channel.
     //
-    if (!hvDevice->openChannel(kHyperVICBufferSize, kHyperVICBufferSize)) {
+    if (hvDevice->openVMBusChannel(kHyperVICBufferSize, kHyperVICBufferSize) != kIOReturnSuccess) {
       HVSYSLOG("Unable to configure VMBus channel");
       break;
     }
@@ -136,7 +136,7 @@ void HyperVICService::freeStructures() {
   // Close channel and release parent VMBus device object.
   //
   if (hvDevice != nullptr) {
-    hvDevice->closeChannel();
+    hvDevice->closeVMBusChannel();
     hvDevice->release();
   }
 }

@@ -28,42 +28,28 @@ IOReturn HyperVStorage::executeCommand(HyperVStoragePacket *packet, bool checkCo
   return kIOReturnSuccess;
 }
 
-void HyperVStorage::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
-  HyperVStoragePacket packet;
+bool HyperVStorage::wakePacketHandler(UInt8 *packet, UInt32 packetLength) {
+  return true;
+}
 
-  VMBusPacketType type;
-  UInt32 headersize;
-  UInt32 totalsize;
+void HyperVStorage::handlePacket(UInt8 *packet, UInt32 packetLength) {
+  VMBusPacketHeader *pktHeader = (VMBusPacketHeader*) packet;
+  HyperVStoragePacket *storPkt = (HyperVStoragePacket*) &packet[HV_GET_VMBUS_PACKETSIZE(pktHeader->headerLength)];
   
-  void *responseBuffer;
-  UInt32 responseLength;
   
-  while (true) {
-    if (!hvDevice->nextPacketAvailable(&type, &headersize, &totalsize)) {
+  switch (storPkt->operation) {
+    case kHyperVStoragePacketOperationCompleteIO:
+      completeIO(storPkt);
       break;
-    }
-    
-    UInt64 transactionId;
-    hvDevice->readInbandCompletionPacket(&packet, sizeof (packet), &transactionId);
-    
-    switch (packet.operation) {
-      case kHyperVStoragePacketOperationCompleteIO:
-        if (hvDevice->getPendingTransaction(transactionId, &responseBuffer, &responseLength)) {
-          memcpy(responseBuffer, &packet, sizeof (packet));
-          hvDevice->wakeTransaction(transactionId);
-        } else {
-          completeIO(&packet);
-        }
-        break;
-        
-      case kHyperVStoragePacketOperationEnumerateBus:
-      case kHyperVStoragePacketOperationRemoveDevice:
-        panic("SCSI device hotplug is not supported\n");
-        break;
-        
-      default:
-        break;
-    }
+      
+    case kHyperVStoragePacketOperationEnumerateBus:
+    case kHyperVStoragePacketOperationRemoveDevice:
+      panic("SCSI device hotplug is not supported\n");
+      break;
+      
+    default:
+      HVSYSLOG("unknown type of a packet %X", storPkt->operation);
+      break;
   }
 }
 

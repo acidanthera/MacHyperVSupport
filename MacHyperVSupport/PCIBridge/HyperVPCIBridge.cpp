@@ -36,7 +36,7 @@ bool HyperVPCIBridge::start(IOService *provider) {
   //
   // Configure the channel.
   //
-  if (!hvDevice->openChannel(kHyperVPCIBridgeRingBufferSize, kHyperVPCIBridgeRingBufferSize, 0xFFFFFFFF)) {
+  if (hvDevice->openVMBusChannel(kHyperVPCIBridgeRingBufferSize, kHyperVPCIBridgeRingBufferSize, 0xFFFFFFFF) != kIOReturnSuccess) {
     return false;
   }
   
@@ -53,7 +53,7 @@ bool HyperVPCIBridge::start(IOService *provider) {
   
   // Negoiate protocol version and send request for functions.
   if (!negotiateProtocolVersion() || !allocatePCIConfigWindow() || !queryBusRelations() || !enterPCID0() || !queryResourceRequirements() || !sendResourcesAllocated(0)) {
-    hvDevice->closeChannel();
+    hvDevice->closeVMBusChannel();
     return false;
   }
   

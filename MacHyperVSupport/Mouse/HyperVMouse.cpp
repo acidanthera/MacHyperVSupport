@@ -63,7 +63,7 @@ bool HyperVMouse::handleStart(IOService *provider) {
     //
     // Configure the channel.
     //
-    if (!hvDevice->openChannel(kHyperVMouseRingBufferSize, kHyperVMouseRingBufferSize)) {
+    if (hvDevice->openVMBusChannel(kHyperVMouseRingBufferSize, kHyperVMouseRingBufferSize) != kIOReturnSuccess) {
       HVSYSLOG("Unable to configure VMBus channel");
       break;
     }

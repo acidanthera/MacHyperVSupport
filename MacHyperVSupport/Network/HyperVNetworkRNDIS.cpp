@@ -222,7 +222,7 @@ bool HyperVNetwork::sendRNDISDataPacket(mbuf_t packet) {
   if (sendIndex == kHyperVNetworkRNDISSendSectionIndexInvalid) {
     return false;
   }
-  UInt8 *rndisBuffer = sendBuffer + (sendSectionSize * sendIndex);
+  UInt8 *rndisBuffer = ((UInt8*)sendBuffer.buffer) + (sendSectionSize * sendIndex);
   HyperVNetworkRNDISMessage *rndisMsg = (HyperVNetworkRNDISMessage*)rndisBuffer;
   memset(rndisMsg, 0, sizeof (HyperVNetworkRNDISMessage));
   
