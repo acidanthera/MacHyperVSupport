@@ -83,13 +83,14 @@ private:
   //
   // Timer event source for debug prints.
   //
-  IOTimerEventSource  *_debugTimerSource = nullptr;
-  OSObject            *_timerDebugTarget = nullptr;
-  TimerDebugAction    _timerDebugAction  = nullptr;
-  UInt64              _numInterrupts     = 0;
-  UInt64              _numPackets        = 0;
+  IOWorkLoop          *_debugTimerWorkLoop = nullptr;
+  IOTimerEventSource  *_debugTimerSource   = nullptr;
+  OSObject            *_timerDebugTarget   = nullptr;
+  TimerDebugAction    _timerDebugAction    = nullptr;
+  UInt64              _numInterrupts       = 0;
+  UInt64              _numPackets          = 0;
   
-  void handleDebugPrintTimer(OSObject *owner, IOTimerEventSource *sender);
+  void handleDebugPrintTimer(IOTimerEventSource *sender);
 #endif
   
 public:
@@ -141,7 +142,7 @@ public:
   }
   
 private:
-  void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
+  void handleInterrupt(IOInterruptEventSource *sender, int count);
   IOReturn openVMBusChannelGated(UInt32 *txBufferSize, UInt32 *rxBufferSize);
 
 public:

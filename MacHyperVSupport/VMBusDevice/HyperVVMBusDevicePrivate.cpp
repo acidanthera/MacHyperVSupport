@@ -7,7 +7,7 @@
 
 #include "HyperVVMBusDevice.hpp"
 
-void HyperVVMBusDevice::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
+void HyperVVMBusDevice::handleInterrupt(IOInterruptEventSource *sender, int count) {
   IOReturn status;
   UInt32 readBytes;
   UInt32 writeBytes;
@@ -358,15 +358,7 @@ void HyperVVMBusDevice::prepareSleepThread() {
 }
 
 #if DEBUG
-void HyperVVMBusDevice::enableTimerDebugPrints() {
-  _debugTimerSource = IOTimerEventSource::timerEventSource(this,
-                                                           OSMemberFunctionCast(IOTimerEventSource::Action, this, &HyperVVMBusDevice::handleDebugPrintTimer));
-  _workLoop->addEventSource(_debugTimerSource);
-  _debugTimerSource->enable();
-  _debugTimerSource->setTimeoutMS(5000);
-}
-
-void HyperVVMBusDevice::handleDebugPrintTimer(OSObject *owner, IOTimerEventSource *sender) {
+void HyperVVMBusDevice::handleDebugPrintTimer(IOTimerEventSource *sender) {
   HVSYSLOG("TXR 0x%X TXW 0x%X RXR 0x%X RXW 0x%X interrupts %llu packets %llu",
            getTxReadIndex(), getTxWriteIndex(), getRxReadIndex(), getRxWriteIndex(),
            _numInterrupts, _numPackets);
@@ -375,6 +367,6 @@ void HyperVVMBusDevice::handleDebugPrintTimer(OSObject *owner, IOTimerEventSourc
     (*_timerDebugAction)(_timerDebugTarget);
   }
   
-  _debugTimerSource->setTimeoutMS(5000);
+  _debugTimerSource->setTimeoutMS(1000);
 }
 #endif

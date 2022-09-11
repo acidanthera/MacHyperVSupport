@@ -518,6 +518,15 @@ void HyperVVMBusDevice::doSleepThread() {
 }
 
 #if DEBUG
+void HyperVVMBusDevice::enableTimerDebugPrints() {
+  _debugTimerWorkLoop = IOWorkLoop::workLoop();
+  _debugTimerSource = IOTimerEventSource::timerEventSource(this,
+                                                           OSMemberFunctionCast(IOTimerEventSource::Action, this, &HyperVVMBusDevice::handleDebugPrintTimer));
+  _debugTimerWorkLoop->addEventSource(_debugTimerSource);
+  _debugTimerSource->enable();
+  _debugTimerSource->setTimeoutMS(1000);
+}
+
 void HyperVVMBusDevice::installTimerDebugPrintAction(OSObject *target, TimerDebugAction action) {
   _timerDebugTarget = target;
   _timerDebugAction = action;
