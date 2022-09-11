@@ -7,56 +7,44 @@
 
 #include "HyperVNetwork.hpp"
 
-void HyperVNetwork::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
-  VMBusPacketType type;
-  UInt32 headersize;
-  UInt32 totalsize;
+void HyperVNetwork::handleTimer() {
+  HVSYSLOG("outst %X r %X w %X bytes %X %X %X stalls %llu", outstandingSends, hvDevice->rxBufferReadCount, hvDevice->txBufferWriteCount, preCycle, midCycle, postCycle, stalls);
+}
+
+bool HyperVNetwork::wakePacketHandler(UInt8 *packet, UInt32 packetLength) {
+  return ((VMBusPacketHeader*)packet)->type == kVMBusPacketTypeCompletion;
+}
+
+void HyperVNetwork::handlePacket(UInt8 *packet, UInt32 packetLength) {
+  VMBusPacketHeader *pktHeader;
+  //UInt32            pktLength;
   
-  void *responseBuffer;
-  UInt32 responseLength;
-  
-  HyperVNetworkMessage *pktComp;
-  
-  while (true) {
-    if (!hvDevice->nextPacketAvailable(&type, &headersize, &totalsize)) {
-     // HVDBGLOG("last one");
+  //
+  // Handle inbound packet.
+  //
+  pktHeader = (VMBusPacketHeader *)packet;
+  //pktLength = HV_GET_VMBUS_PACKETSIZE(pktHeader->totalLength);
+  totalbytes += packetLength + 8;
+  switch (pktHeader->type) {
+    case kVMBusPacketTypeDataInband:
       break;
-    }
-    
-    UInt8 *buf = (UInt8*)IOMalloc(totalsize);
-    hvDevice->readRawPacket((void*)buf, totalsize);
-    
-    switch (type) {
-      case kVMBusPacketTypeDataInband:
-        break;
-      case kVMBusPacketTypeDataUsingTransferPages:
-        handleRNDISRanges((VMBusPacketTransferPages*) buf, headersize, totalsize);
-        break;
-        
-      case kVMBusPacketTypeCompletion:
-        
-        if (hvDevice->getPendingTransaction(((VMBusPacketHeader*)buf)->transactionId, &responseBuffer, &responseLength)) {
-          memcpy(responseBuffer, (UInt8*)buf + headersize, responseLength);
-          hvDevice->wakeTransaction(((VMBusPacketHeader*)buf)->transactionId);
-        } else {
-          pktComp = (HyperVNetworkMessage*) (buf + headersize);
-          HVDBGLOG("pkt completion status %X %X", pktComp->messageType, pktComp->v1.sendRNDISPacketComplete.status);
-          
-          if (pktComp->messageType == kHyperVNetworkMessageTypeV1SendRNDISPacketComplete) {
-            releaseSendIndex((UInt32)(((VMBusPacketHeader*)buf)->transactionId & ~kHyperVNetworkSendTransIdBits));
-          }
-        }
-        break;
-      default:
-        break;
-    }
-    
-    IOFree(buf, totalsize);
+    case kVMBusPacketTypeDataUsingTransferPages:
+      handleRNDISRanges((VMBusPacketTransferPages*)packet, packetLength);
+      break;
+      
+    case kVMBusPacketTypeCompletion:
+      handleCompletion(packet, packetLength);
+      break;
+    default:
+      HVSYSLOG("Invalid packet type %X", pktHeader->type);
+      break;
   }
 }
 
-void HyperVNetwork::handleRNDISRanges(VMBusPacketTransferPages *pktPages, UInt32 headerSize, UInt32 pktSize) {
-  HyperVNetworkMessage *netMsg = (HyperVNetworkMessage*) ((UInt8*)pktPages + headerSize);
+void HyperVNetwork::handleRNDISRanges(VMBusPacketTransferPages *pktPages, UInt32 pktSize) {
+  UInt32 pktHeaderSize = HV_GET_VMBUS_PACKETSIZE(pktPages->header.headerLength);
+  
+  HyperVNetworkMessage *netMsg = (HyperVNetworkMessage*) (((UInt8*)pktPages) + pktHeaderSize);
   
   //
   // Ensure packet is valid.
@@ -85,6 +73,29 @@ void HyperVNetwork::handleRNDISRanges(VMBusPacketTransferPages *pktPages, UInt32
   netMsg2.v1.sendRNDISPacketComplete.status = kHyperVNetworkMessageStatusSuccess;
   
   hvDevice->writeCompletionPacketWithTransactionId(&netMsg2, sizeof (netMsg2), pktPages->header.transactionId, false);
+ // postCycle++;
+}
+
+void HyperVNetwork::handleCompletion(void *pktData, UInt32 pktLength) {
+  VMBusPacketHeader *pktHeader = (VMBusPacketHeader*)pktData;
+  UInt32 pktHeaderSize = HV_GET_VMBUS_PACKETSIZE(pktHeader->headerLength);
+  
+  HyperVNetworkMessage *netMsg;
+    netMsg = (HyperVNetworkMessage*)(((UInt8*)pktData) + pktHeaderSize);
+    if (netMsg->messageType == kHyperVNetworkMessageTypeV1SendRNDISPacketComplete) {
+    //  completions++;
+      //HVSYSLOG("Got index %X", pktHeader->transactionId & ~kHyperVNetworkSendTransIdBits);
+     // if (completions % 100000 == 0)
+     // HVSYSLOG("pkt completion status %X %X %u comple trans %u (free indexes %u)", netMsg->messageType, netMsg->v1.sendRNDISPacketComplete.status, completions, pktHeader->transactionId, getFreeSendIndexCount());
+      
+      if (netMsg->v1.sendRNDISPacketComplete.status != 1) {
+        HVSYSLOG("Got a nonsuccess %u", netMsg->v1.sendRNDISPacketComplete.status);
+      }
+      //HyperVSendPacketThing *pktThing = (HyperVSendPacketThing*)pktHeader->transactionId;
+      releaseSendIndex((UInt32)(pktHeader->transactionId & ~kHyperVNetworkSendTransIdBits));
+    } else {
+      HVSYSLOG("Unknown completion type 0x%X received", netMsg->messageType);
+    }
 }
 
 bool HyperVNetwork::negotiateProtocol(HyperVNetworkProtocolVersion protocolVersion) {
@@ -205,6 +216,9 @@ bool HyperVNetwork::connectNetwork() {
   
   readMACAddress();
   updateLinkState(NULL);
+  
+  //UInt32 filter = 0x9;
+  //setRNDISOID(kHyperVNetworkRNDISOIDGeneralCurrentPacketFilter, &filter, sizeof (filter));
   
   return true;
 }

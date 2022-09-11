@@ -65,6 +65,13 @@ private:
   UInt32                        *sendIndexMap = nullptr;
   size_t                        sendIndexMapSize;
   UInt32                        outstandingSends = 0;
+  UInt32                        oldSends = 0;
+  UInt64    totalbytes = 0;
+  UInt64    totalRX = 0;
+  UInt64 preCycle = 0;
+  UInt64 midCycle = 0;
+  UInt64 postCycle = 0;
+  UInt64 stalls = 0;
   
   IOLock                        *rndisLock = NULL;
   UInt32                        rndisTransId = 0;
@@ -78,15 +85,17 @@ private:
   OSDictionary                  *mediumDict;
   UInt32                        currentMediumIndex;
   
-  void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
+  void handleTimer();
+  bool wakePacketHandler(UInt8 *packet, UInt32 packetLength);
+  void handlePacket(UInt8 *packet, UInt32 packetLength);
   
   
   bool negotiateProtocol(HyperVNetworkProtocolVersion protocolVersion);
   bool initBuffers();
   bool connectNetwork();
   
-  void handleRNDISRanges(VMBusPacketTransferPages *pktPages, UInt32 headerSize, UInt32 pktSize);
-  void handleCompletion();
+  void handleRNDISRanges(VMBusPacketTransferPages *pktPages, UInt32 pktLength);
+  void handleCompletion(void *pktData, UInt32 pktLength);
 
   bool processRNDISPacket(UInt8 *data, UInt32 dataLength);
   void processIncoming(UInt8 *data, UInt32 dataLength);
@@ -97,7 +106,7 @@ private:
   UInt32 getNextSendIndex();
   UInt32 getFreeSendIndexCount();
   void releaseSendIndex(UInt32 sendIndex);
-  HyperVNetworkRNDISRequest *allocateRNDISRequest();
+  HyperVNetworkRNDISRequest *allocateRNDISRequest(size_t additionalLength = 0);
   void freeRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest);
   UInt32 getNextRNDISTransId();
   bool sendRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest, bool waitResponse = false);
@@ -105,6 +114,7 @@ private:
   
   bool initializeRNDIS();
   bool queryRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 *valueSize);
+  bool setRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 valueSize);
   
   //
   // Private
