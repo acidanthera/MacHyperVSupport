@@ -29,7 +29,7 @@ void HyperVMouse::freeStructures() {
   // Close channel and release parent VMBus device object.
   //
   if (hvDevice != nullptr) {
-    hvDevice->closeChannel();
+    hvDevice->closeVMBusChannel();
     hvDevice->release();
   }
 }

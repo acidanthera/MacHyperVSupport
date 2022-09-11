@@ -26,7 +26,7 @@ private:
   bool handleShutdown(VMBusICMessageShutdownData *shutdownData);
 
 protected:
-  bool processMessage() APPLE_KEXT_OVERRIDE;
+  void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) APPLE_KEXT_OVERRIDE;
 
 public:
   //

@@ -72,10 +72,7 @@ bool HyperVStorage::InitializeController() {
 #if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_5
   if (getKernelVersion() >= KernelVersion::Leopard) {
 #endif
-    interruptSource =
-      IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVStorage::handleInterrupt), getProvider(), 0);
-    getProvider()->getWorkLoop()->addEventSource(interruptSource);
-    interruptSource->enable();
+    hvDevice->installPacketActions(this, OSMemberFunctionCast(HyperVVMBusDevice::PacketReadyAction, this, &HyperVStorage::handlePacket), OSMemberFunctionCast(HyperVVMBusDevice::WakePacketAction, this, &HyperVStorage::wakePacketHandler), PAGE_SIZE);
 #if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_5
   } else {
     EnableInterrupt();
@@ -85,7 +82,7 @@ bool HyperVStorage::InitializeController() {
   //
   // Configure the channel.
   //
-  if (!hvDevice->openChannel(kHyperVStorageRingBufferSize, kHyperVStorageRingBufferSize)) {
+  if (hvDevice->openVMBusChannel(kHyperVStorageRingBufferSize, kHyperVStorageRingBufferSize) != kIOReturnSuccess) {
     return false;
   }
   
@@ -201,7 +198,7 @@ void HyperVStorage::HandleInterruptRequest() {
   // macOS 10.4 configures the interrupt in the superclass, invoke
   // our interrupt handler here.
   //
-  handleInterrupt(this, NULL, 0);
+ // handleInterrupt(this, NULL, 0);
 #endif
 }
 

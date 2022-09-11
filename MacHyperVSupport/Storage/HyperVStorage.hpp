@@ -27,7 +27,6 @@ class HyperVStorage : public IOSCSIParallelInterfaceController {
 
 private:
   HyperVVMBusDevice       *hvDevice         = nullptr;
-  IOInterruptEventSource  *interruptSource  = nullptr;
   
   UInt32                  protocolVersion;
   UInt32                  senseBufferSize;
@@ -47,7 +46,8 @@ private:
   
   bool fullBufferUsed;
   
-  void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
+  bool wakePacketHandler(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
+  void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
   
   IOReturn executeCommand(HyperVStoragePacket *packet, bool checkCompletion);
   inline void clearPacket(HyperVStoragePacket *packet) {

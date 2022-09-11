@@ -2,13 +2,16 @@
 //  HyperV.hpp
 //  Hyper-V register and structures header
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperV_hpp
 #define HyperV_hpp
 
+#include <IOKit/IOBufferMemoryDescriptor.h>
+#include <IOKit/IODMACommand.h>
 #include <IOKit/IOLib.h>
+
 #include <Headers/kern_api.hpp>
 
 #define kHyperVStatusSuccess    0
@@ -78,6 +81,7 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
   inline void HVCheckDebugArgs() { \
     debugEnabled = checkKernelArgument("-hv" a "dbg"); \
     hvDevice->setDebugMessagePrinting(checkKernelArgument("-hv" a "msgdbg")); \
+    if (checkKernelArgument("-hv" a "statsdbg")) { hvDevice->enableTimerDebugPrints(); } \
   } \
   inline void HVDBGLOG_PRINT(const char *func, const char *str, ...) const { \
     if (debugEnabled) { \
@@ -110,7 +114,7 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
     if (this->debugEnabled) { \
       va_list args; \
       va_start(args, str); \
-      logPrint(this->getMetaClass()->getClassName(), func, true, this->channelId, str, args); \
+      logPrint(this->getMetaClass()->getClassName(), func, true, this->_channelId, str, args); \
       va_end(args); \
     } \
   } \
@@ -118,7 +122,7 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
   inline void HVSYSLOG_PRINT(const char *func, const char *str, ...) const { \
     va_list args; \
     va_start(args, str); \
-    logPrint(this->getMetaClass()->getClassName(), func, true, this->channelId, str, args); \
+    logPrint(this->getMetaClass()->getClassName(), func, true, this->_channelId, str, args); \
     va_end(args); \
   } \
     \
@@ -126,7 +130,7 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
     if (this->debugPackets) { \
       va_list args; \
       va_start(args, str); \
-      logPrint(this->getMetaClass()->getClassName(), func, true, this->channelId, str, args); \
+      logPrint(this->getMetaClass()->getClassName(), func, true, this->_channelId, str, args); \
       va_end(args); \
     } \
   } \
@@ -144,13 +148,10 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
 //
 // Release print function.
 //
-inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId, const char *format, ...) {
+inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId, const char *format, va_list va) {
   char tmp[256];
   tmp[0] = '\0';
-  va_list va;
-  va_start(va, format);
   vsnprintf(tmp, sizeof (tmp), format, va);
-  va_end(va);
   
   if (hasChannelId) {
     IOLog("%s(%u): %s\n", className, (unsigned int) channelId, tmp);
@@ -209,7 +210,7 @@ inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId,
   inline void HVSYSLOG(const char *str, ...) const { \
     va_list args; \
     va_start(args, str); \
-    logPrint(this->getMetaClass()->getClassName(), true, this->channelId, str, args); \
+    logPrint(this->getMetaClass()->getClassName(), true, this->_channelId, str, args); \
     va_end(args); \
   } \
     \
@@ -222,6 +223,89 @@ inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId,
 #else
 #define HV_PCIBRIDGE_CLASS IOPCIBridge
 #endif
+
+//
+// Bit functions.
+//
+#define ADDR (*(volatile long *)addr)
+
+static inline void sync_set_bit(long nr, volatile void *addr) {
+  asm volatile("lock; bts %1,%0"
+         : "+m" (ADDR)
+         : "Ir" (nr)
+         : "memory");
+}
+
+/**
+ * sync_clear_bit - Clears a bit in memory
+ * @nr: Bit to clear
+ * @addr: Address to start counting from
+ *
+ * sync_clear_bit() is atomic and may not be reordered.  However, it does
+ * not contain a memory barrier, so if it is used for locking purposes,
+ * you should call smp_mb__before_atomic() and/or smp_mb__after_atomic()
+ * in order to ensure changes are visible on other processors.
+ */
+static inline void sync_clear_bit(long nr, volatile void *addr)
+{
+  asm volatile("lock; btr %1,%0"
+         : "+m" (ADDR)
+         : "Ir" (nr)
+         : "memory");
+}
+
+/**
+ * sync_change_bit - Toggle a bit in memory
+ * @nr: Bit to change
+ * @addr: Address to start counting from
+ *
+ * sync_change_bit() is atomic and may not be reordered.
+ * Note that @nr may be almost arbitrarily large; this function is not
+ * restricted to acting on a single-word quantity.
+ */
+static inline void sync_change_bit(long nr, volatile void *addr)
+{
+  asm volatile("lock; btc %1,%0"
+         : "+m" (ADDR)
+         : "Ir" (nr)
+         : "memory");
+}
+
+/**
+ * sync_test_and_set_bit - Set a bit and return its old value
+ * @nr: Bit to set
+ * @addr: Address to count from
+ *
+ * This operation is atomic and cannot be reordered.
+ * It also implies a memory barrier.
+ */
+static inline int sync_test_and_set_bit(long nr, volatile void *addr)
+{
+  int oldbit;
+
+  asm volatile("lock; bts %2,%1\n\tsbbl %0,%0"
+         : "=r" (oldbit), "+m" (ADDR)
+         : "Ir" (nr) : "memory");
+  return oldbit;
+}
+
+/**
+ * sync_test_and_clear_bit - Clear a bit and return its old value
+ * @nr: Bit to clear
+ * @addr: Address to count from
+ *
+ * This operation is atomic and cannot be reordered.
+ * It also implies a memory barrier.
+ */
+static inline int sync_test_and_clear_bit(long nr, volatile void *addr)
+{
+  int oldbit;
+
+  asm volatile("lock; btr %2,%1\n\tsbbl %0,%0"
+         : "=r" (oldbit), "+m" (ADDR)
+         : "Ir" (nr) : "memory");
+  return oldbit;
+}
 
 template <class T, size_t N>
 constexpr size_t ARRAY_SIZE(const T (&array)[N]) {
@@ -422,13 +506,17 @@ typedef struct {
   UInt64  pfnArray[];
 } HyperVGPARange;
 
-#define HyperVEventFlagsByteCount 256
+#define kHyperVEventFlagsByteCount  256
+#define kHyperVEventFlagsDwordCount (kHyperVEventFlagsByteCount / sizeof (UInt32))
 
 //
 // Event flags.
 //
 typedef struct __attribute__((packed)) {
-  UInt8 flags[HyperVEventFlagsByteCount];
+  union {
+    UInt8   flags8[kHyperVEventFlagsByteCount];
+    UInt32  flags32[kHyperVEventFlagsDwordCount];
+  };
 } HyperVEventFlags;
 
 typedef struct __attribute__((packed)) {
@@ -436,5 +524,24 @@ typedef struct __attribute__((packed)) {
   UInt16 eventFlagsOffset;
   UInt16 reserved;
 } HyperVMonitorNotificationParameter;
+
+//
+// DMA buffer structure.
+//
+typedef struct {
+  IOBufferMemoryDescriptor  *bufDesc;
+  IODMACommand              *dmaCmd;
+  mach_vm_address_t         physAddr;
+  void                      *buffer;
+  size_t                    size;
+} HyperVDMABuffer;
+
+//
+// XNU CPU external functions/variables from mp.c.
+//
+extern unsigned int real_ncpus;    /* real number of cpus */
+extern "C" {
+  int cpu_number(void);
+}
 
 #endif

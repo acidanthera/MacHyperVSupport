@@ -23,6 +23,11 @@
 #define kVMBusConnIdEvent       2
 #define kVMBusConnIdMessage4    4
 
+//
+// Max number of channels supported by driver.
+//
+#define kVMBusMaxChannels       256
+
 #define VMBUS_CHANNEL_EVENT_INDEX(chan) (chan / 8)
 #define VMBUS_CHANNEL_EVENT_MASK(chan)  (1 << (chan % 8))
 
@@ -332,7 +337,7 @@ typedef struct __attribute__((packed)) {
   // For receive rings, this counts the guest signaling the host
   // when this ring changes from full to not full.
   //
-  UInt64            guestToHostInterruptCount;
+  volatile UInt64            guestToHostInterruptCount;
   //
   // Actual ring buffer data.
   //
@@ -344,6 +349,9 @@ typedef struct __attribute__((packed)) {
 //
 #define kVMBusPacketSizeShift         3
 #define kVMBusPacketResponseRequired  1
+
+#define HV_GET_VMBUS_PACKETSIZE(p)    ((p) << kVMBusPacketSizeShift)
+#define HV_SET_VMBUS_PACKETSIZE(p)    ((p) >> kVMBusPacketSizeShift)
 
 #define HV_PACKETALIGN(a)         (((a) + (sizeof(UInt64) - 1)) &~ (sizeof(UInt64) - 1))
 

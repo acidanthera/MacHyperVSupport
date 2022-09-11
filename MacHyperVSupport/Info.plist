@@ -165,17 +165,6 @@
 			<key>HVType</key>
 			<string>ba6163d9-04a1-4d29-b605-72e2ffb1dc7f</string>
 		</dict>
-		<key>HyperVVMBusController</key>
-		<dict>
-			<key>CFBundleIdentifier</key>
-			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-			<key>IOClass</key>
-			<string>HyperVVMBusController</string>
-			<key>IONameMatch</key>
-			<string>VMBS</string>
-			<key>IOProviderClass</key>
-			<string>IOACPIPlatformDevice</string>
-		</dict>
 		<key>HyperVModuleDevice</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
@@ -197,6 +186,17 @@
 			<string>processor</string>
 			<key>IOProbeScore</key>
 			<integer>5000</integer>
+			<key>IOProviderClass</key>
+			<string>IOACPIPlatformDevice</string>
+		</dict>
+		<key>HyperVController</key>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>IOClass</key>
+			<string>HyperVController</string>
+			<key>IONameMatch</key>
+			<string>VMBS</string>
 			<key>IOProviderClass</key>
 			<string>IOACPIPlatformDevice</string>
 		</dict>
@@ -231,7 +231,7 @@
 		<string>7.9.9</string>
 	</dict>
 	<key>OSBundleLibraries_x86_64</key>
-		<dict>
+	<dict>
 		<key>as.vit9696.Lilu</key>
 		<string>1.4.7</string>
 		<key>com.apple.iokit.IOACPIFamily</key>

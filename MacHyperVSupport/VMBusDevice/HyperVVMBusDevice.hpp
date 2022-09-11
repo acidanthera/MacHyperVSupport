@@ -2,17 +2,18 @@
 //  HyperVVMBusDevice.hpp
 //  Hyper-V VMBus device nub
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperVVMBusDevice_hpp
 #define HyperVVMBusDevice_hpp
 
+#include <IOKit/IOInterruptEventSource.h>
+#include <IOKit/IOTimerEventSource.h>
 #include <IOKit/IOLib.h>
 #include <IOKit/IOService.h>
-#include <IOKit/IOInterruptEventSource.h>
 
-#include "HyperVVMBusController.hpp"
+#include "HyperVVMBus.hpp"
 #include "HyperV.hpp"
 #include "VMBus.hpp"
 
@@ -35,32 +36,75 @@ class HyperVVMBusDevice : public IOService {
   HVDeclareLogFunctionsVMBusDeviceNub("vmbusdev");
   typedef IOService super;
   
+public:
+  //
+  // Packet action handlers.
+  //
+  typedef void (*PacketReadyAction)(void *target, VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
+  typedef bool (*WakePacketAction)(void *target, VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
+  
+#if DEBUG
+  typedef void (*TimerDebugAction)(void *target);
+#endif
+  
 private:
-  HyperVVMBusController   *vmbusProvider;
-  uuid_string_t           typeId;
-  UInt32                  channelId;
-  uuid_t                  instanceId;
-  bool                    channelIsOpen = false;
+  //
+  // VMBus channel information.
+  //
+  HyperVVMBus   *_vmbusProvider = nullptr;
+  uuid_string_t _typeId;
+  UInt32        _channelId      = 0;
+  uuid_t        _instanceId;
+  bool          _channelIsOpen = false;
   
-  IOWorkLoop              *workLoop;
-  IOCommandGate           *commandGate;
-  bool                    commandLock;
+  //
+  // Work loop and related.
+  //
+  IOWorkLoop             *_workLoop           = nullptr;
+  IOCommandGate          *_commandGate        = nullptr;
+  bool                   _commandLock         = false;
+  IOInterruptEventSource *_interruptSource    = nullptr;
+  OSObject               *_packetActionTarget = nullptr;
+  PacketReadyAction     _packetReadyAction    = nullptr;
+  WakePacketAction      _wakePacketAction     = nullptr;
+  bool                  _shouldFlushPackets   = true;
   
-  VMBusRingBuffer         *txBuffer;
-  UInt32                  txBufferSize;
-  VMBusRingBuffer         *rxBuffer;
-  UInt32                  rxBufferSize;
+  //
+  // Ring buffers for channel.
+  //
+  VMBusRingBuffer *_txBuffer    = nullptr;
+  UInt32          _txBufferSize = 0;
+  VMBusRingBuffer *_rxBuffer    = nullptr;
+  UInt32          _rxBufferSize = 0;
+  
+  UInt8           *_receivePacketBuffer      = nullptr;
+  UInt32          _receivePacketBufferLength = 0;
+  
+#if DEBUG
+  //
+  // Timer event source for debug prints.
+  //
+  IOWorkLoop          *_debugTimerWorkLoop = nullptr;
+  IOTimerEventSource  *_debugTimerSource   = nullptr;
+  OSObject            *_timerDebugTarget   = nullptr;
+  TimerDebugAction    _timerDebugAction    = nullptr;
+  UInt64              _numInterrupts       = 0;
+  UInt64              _numPackets          = 0;
+  
+  void handleDebugPrintTimer(IOTimerEventSource *sender);
+#endif
+  
+public:
+  UInt64                  txBufferWriteCount;
+  UInt64                  rxBufferReadCount;
   
   HyperVVMBusDeviceRequest      *vmbusRequests = NULL;
   IOLock                        *vmbusRequestsLock;
   UInt64                        vmbusTransId = 1; // Some devices have issues with 0 as a transaction ID.
-  UInt64                        vmbusMaxAutoTransId = UINT64_MAX;
+  UInt64                        _maxAutoTransId = UINT64_MAX;
   IOLock                        *vmbusTransLock;
   
   HyperVVMBusDeviceRequest      threadZeroRequest;
-
-  bool setupCommandGate();
-  void teardownCommandGate();
 
   
   IOReturn writePacketInternal(void *buffer, UInt32 bufferLength, VMBusPacketType packetType, UInt64 transactionId,
@@ -80,11 +124,27 @@ private:
   void sleepPacketRequest(HyperVVMBusDeviceRequest *vmbusRequest);
   void prepareSleepThread();
   
-  inline UInt32 getAvailableTxSpace() {
-    return (txBuffer->writeIndex >= txBuffer->readIndex) ?
-      (txBufferSize - (txBuffer->writeIndex - txBuffer->readIndex)) :
-      (txBuffer->readIndex - txBuffer->writeIndex);
+  //
+  // Ring buffer.
+  //
+  inline UInt32 getRingReadIndex(VMBusRingBuffer *ringBuffer) {
+    return ringBuffer->readIndex;
   }
+  inline UInt32 getRingWriteIndex(VMBusRingBuffer *ringBuffer) {
+    return ringBuffer->writeIndex;
+  }
+  inline void getAvailableRingSpace(VMBusRingBuffer *ringBuffer, UInt32 ringBufferSize, UInt32 *readBytes, UInt32 *writeBytes) {
+    __sync_synchronize();
+    UInt32 writeIndex = getRingWriteIndex(ringBuffer);
+    UInt32 readIndex  = getRingReadIndex(ringBuffer);
+    
+    *writeBytes = (writeIndex >= readIndex) ? (ringBufferSize - (writeIndex - readIndex)) : (readIndex - writeIndex);
+    *readBytes = ringBufferSize - *writeBytes;
+  }
+  
+private:
+  void handleInterrupt(IOInterruptEventSource *sender, int count);
+  IOReturn openVMBusChannelGated(UInt32 *txBufferSize, UInt32 *rxBufferSize);
 
 public:
   //
@@ -93,18 +153,48 @@ public:
   bool attach(IOService *provider) APPLE_KEXT_OVERRIDE;
   void detach(IOService *provider) APPLE_KEXT_OVERRIDE;
   bool matchPropertyTable(OSDictionary *table, SInt32 *score) APPLE_KEXT_OVERRIDE;
+  IOWorkLoop* getWorkLoop() const APPLE_KEXT_OVERRIDE;
   
   //
-  // General functions.
+  // Channel management.
+  //
+  IOReturn installPacketActions(OSObject *target, PacketReadyAction packetReadyAction, WakePacketAction wakePacketAction,
+                                UInt32 initialResponseBufferLength, bool registerInterrupt = true, bool flushPackets = true);
+  IOReturn openVMBusChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId = UINT64_MAX);
+  IOReturn closeVMBusChannel();
+  IOReturn createGPADLBuffer(HyperVDMABuffer *dmaBuffer, UInt32 *gpadlHandle);
+  UInt32 getChannelId() { return _channelId; }
+  uuid_t* getInstanceId() { return &_instanceId; }
+  
+  //
+  // Ring buffer.
+  //
+  inline UInt32 getTxReadIndex() {
+    return getRingReadIndex(_txBuffer);
+  }
+  inline UInt32 getTxWriteIndex() {
+    return getRingWriteIndex(_txBuffer);
+  }
+  inline void getAvailableTxSpace(UInt32 *readBytes, UInt32 *writeBytes) {
+    getAvailableRingSpace(_txBuffer, _txBufferSize, readBytes, writeBytes);
+  }
+  inline UInt32 getRxReadIndex() {
+    return getRingReadIndex(_rxBuffer);
+  }
+  inline UInt32 getRxWriteIndex() {
+    return getRingWriteIndex(_rxBuffer);
+  }
+  inline void getAvailableRxSpace(UInt32 *readBytes, UInt32 *writeBytes) {
+    getAvailableRingSpace(_rxBuffer, _rxBufferSize, readBytes, writeBytes);
+  }
+  
+  //
+  // Misc.
   //
   void setDebugMessagePrinting(bool enabled) { debugPackets = enabled; }
-  bool openChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId = UINT64_MAX);
-  void closeChannel();
-  bool createGpadlBuffer(UInt32 bufferSize, UInt32 *gpadlHandle, void **buffer);
   bool allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size);
   void freeDmaBuffer(HyperVDMABuffer *dmaBuf);
-  UInt32 getChannelId() { return channelId; }
-  uuid_t* getInstanceId() { return &instanceId; }
+
   
   //
   // Messages.
@@ -134,7 +224,13 @@ public:
   void wakeTransaction(UInt64 transactionId);
   void doSleepThread();
   
-  
+  //
+  // Timer debug printing.
+  //
+#if DEBUG
+  void enableTimerDebugPrints();
+  void installTimerDebugPrintAction(OSObject *target, TimerDebugAction action);
+#endif
 };
 
 #endif

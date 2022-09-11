@@ -23,14 +23,12 @@ class HyperVICService : public IOService {
 
 private:
   void freeStructures();
-  void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
-  IOInterruptEventSource *interruptSource = nullptr;
   
 protected:
   HyperVVMBusDevice *hvDevice = nullptr;
   void setICDebug(bool debug) { debugEnabled = debug; }
   
-  virtual bool processMessage() = 0;
+  virtual void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) = 0;
   
   bool createNegotiationResponse(VMBusICMessageNegotiate *negMsg, UInt32 fwVersion, UInt32 msgVersion);
   

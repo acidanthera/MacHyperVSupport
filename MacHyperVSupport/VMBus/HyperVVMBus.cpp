@@ -1,24 +1,47 @@
 //
-//  VMBus.cpp
-//  Hyper-V VMBus core logic
+//  HyperVVMBus.cpp
+//  Hyper-V VMBus controller
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
-#include "HyperVVMBusController.hpp"
-#include "HyperVVMBusInternal.hpp"
+#include "HyperVVMBus.hpp"
 
 #include "HyperVVMBusDevice.hpp"
 
+OSDefineMetaClassAndStructors(HyperVVMBus, super);
+
+inline void
+guid_unparse(const uuid_t uu, uuid_string_t out) {
+  snprintf(out,
+    sizeof(uuid_string_t),
+    "%02x%02x%02x%02x-"
+    "%02x%02x-"
+    "%02x%02x-"
+    "%02x%02x-"
+    "%02x%02x%02x%02x%02x%02x",
+    uu[3], uu[2], uu[1], uu[0],
+    uu[5], uu[4],
+    uu[7], uu[6],
+    uu[8], uu[9],
+    uu[10], uu[11], uu[12], uu[13], uu[14], uu[15]);
+}
+
+//
+// Supported VMBus versions.
+//
 const UInt32 VMBusVersions[] = {
-  kVMBusVersionWIN10_V4_1,
-  kVMBusVersionWIN10,
-  kVMBusVersionWIN8_1,
-  kVMBusVersionWIN8,
+ // kVMBusVersionWIN10_V4_1,
+//  kVMBusVersionWIN10,
+//  kVMBusVersionWIN8_1,
+ // kVMBusVersionWIN8,
   kVMBusVersionWIN7,
   kVMBusVersionWS2008
 };
 
+//
+// VMBus message type to struct mappings.
+//
 const VMBusMessageTypeTableEntry
 VMBusMessageTypeTable[kVMBusChannelMessageTypeMax] = {
   { kVMBusChannelMessageTypeInvalid, 0 },
@@ -40,38 +63,64 @@ VMBusMessageTypeTable[kVMBusChannelMessageTypeMax] = {
   { kVMBusChannelMessageTypeDisconnect, sizeof (VMBusChannelMessage) }
 };
 
-bool HyperVVMBusController::allocateVMBusBuffers() {
-  //
-  // Allocate common VMBus structures.
-  //
-  allocateDmaBuffer(&vmbusEventFlags, PAGE_SIZE);
-  allocateDmaBuffer(&vmbusMnf1, PAGE_SIZE);
-  allocateDmaBuffer(&vmbusMnf2, PAGE_SIZE);
+bool HyperVVMBus::attach(IOService *provider) {
+  HVCheckDebugArgs();
   
-  //
-  // Event flag bits primarily used on Windows Server 2008 R2 and older.
-  //
-  vmbusRxEventFlags = (HyperVEventFlags*)vmbusEventFlags.buffer;
-  vmbusTxEventFlags = (HyperVEventFlags*)((UInt8*)vmbusEventFlags.buffer + PAGE_SIZE / 2);
+  if (!super::attach(provider)) {
+    HVSYSLOG("Superclass failed to attach");
+    return false;
+  }
   
-  return true;
+  bool result = false;
+  do {
+    hvController = OSDynamicCast(HyperVController, provider);
+    if (hvController == nullptr) {
+      HVSYSLOG("Provider is not HyperVController");
+      break;
+    }
+    
+    cmdGate = IOCommandGate::commandGate(this);
+    getWorkLoop()->addEventSource(cmdGate);
+    if (!allocateInterruptEventSources()) {
+      HVSYSLOG("Failed to configure VMBus management interrupts");
+      break;
+    }
+    
+    if (!allocateVMBusBuffers()) {
+      break;
+    }
+
+    if (!connectVMBus()) {
+      HVSYSLOG("Failed to connect to the VMBus");
+      break;
+    }
+    
+    if (!scanVMBus()) {
+      HVSYSLOG("Failed to scan the VMBus");
+      break;
+    }
+    
+    result = true;
+  } while (false);
+  
+  return result;
 }
 
-bool HyperVVMBusController::sendVMBusMessage(VMBusChannelMessage *message, VMBusChannelMessageType responseType, VMBusChannelMessage *response) {
+bool HyperVVMBus::sendVMBusMessage(VMBusChannelMessage *message, VMBusChannelMessageType responseType, VMBusChannelMessage *response) {
   if (responseType != kVMBusChannelMessageTypeInvalid && response == NULL) {
     return false;
   }
-  return cmdGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusController::sendVMBusMessageGated), message, NULL, &responseType, response) == kIOReturnSuccess;
+  return cmdGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBus::sendVMBusMessageGated), message, NULL, &responseType, response) == kIOReturnSuccess;
 }
 
-bool HyperVVMBusController::sendVMBusMessageWithSize(VMBusChannelMessage *message, UInt32 messageSize, VMBusChannelMessageType responseType, VMBusChannelMessage *response) {
+bool HyperVVMBus::sendVMBusMessageWithSize(VMBusChannelMessage *message, UInt32 messageSize, VMBusChannelMessageType responseType, VMBusChannelMessage *response) {
   if (responseType != kVMBusChannelMessageTypeInvalid && response == NULL) {
     return false;
   }
-  return cmdGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusController::sendVMBusMessageGated), message, &messageSize, &responseType, response) == kIOReturnSuccess;
+  return cmdGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBus::sendVMBusMessageGated), message, &messageSize, &responseType, response) == kIOReturnSuccess;
 }
 
-IOReturn HyperVVMBusController::sendVMBusMessageGated(VMBusChannelMessage *message, UInt32 *messageSize, VMBusChannelMessageType *responseType, VMBusChannelMessage *responseMessage) {
+IOReturn HyperVVMBus::sendVMBusMessageGated(VMBusChannelMessage *message, UInt32 *messageSize, VMBusChannelMessageType *responseType, VMBusChannelMessage *responseMessage) {
   
   UInt32 hvStatus = kHypercallStatusSuccess;
   IOReturn returnStatus = kIOReturnSuccess;
@@ -86,7 +135,7 @@ IOReturn HyperVVMBusController::sendVMBusMessageGated(VMBusChannelMessage *messa
   //
   for (int i = 0; i < kHyperVHypercallRetryCount; i++) {
     HVDBGLOG("Sending message on connection ID %u, type %u, %u bytes", vmbusMsgConnectionId, msgEntry->type, size);
-    hvStatus = hypercallPostMessage(vmbusMsgConnectionId, kHyperVMessageTypeChannel, message, (UInt32) size);
+    hvStatus = hvController->hypercallPostMessage(vmbusMsgConnectionId, kHyperVMessageTypeChannel, message, (UInt32) size);
     
     switch (hvStatus) {
       case kHypercallStatusSuccess:
@@ -129,22 +178,23 @@ IOReturn HyperVVMBusController::sendVMBusMessageGated(VMBusChannelMessage *messa
   return kIOReturnSuccess;
 }
 
-void HyperVVMBusController::processIncomingVMBusMessage(UInt32 cpu) {
+void HyperVVMBus::processIncomingVMBusMessage(UInt32 cpu) {
   //
   // Sometimes the interrupt will fire for the same message, and by the time this
   // handler is invoked for that second interrupt, the message will be cleared.
   //
-  if (cpuData.perCPUData[cpu].messages[kVMBusInterruptMessage].type == kHyperVMessageTypeNone) {
+  HyperVMessage *vmbusMessage = hvController->getPendingMessage(cpu, kVMBusInterruptMessage);
+  if (vmbusMessage->type == kHyperVMessageTypeNone) {
     return;
   }
   
-  HVDBGLOG("CPU %u has a message (type %u)", cpu, cpuData.perCPUData[cpu].messages[kVMBusInterruptMessage].type);
+  HVDBGLOG("CPU %u has a message (type %u)", cpu, vmbusMessage->type);
   
   //
   // Check if we are waiting for an incoming VMBus message.
   //
-  if (cpuData.perCPUData[cpu].messages[kVMBusInterruptMessage].type == kHyperVMessageTypeChannel) {
-    VMBusChannelMessage *msg = (VMBusChannelMessage*) &cpuData.perCPUData[cpu].messages[kVMBusInterruptMessage].data[0];
+  if (vmbusMessage->type == kHyperVMessageTypeChannel) {
+    VMBusChannelMessage *msg = (VMBusChannelMessage*) &vmbusMessage->data[0];
     HVDBGLOG("Incoming VMBus message type %u on CPU %u", msg->header.type, cpu);
     
     if (vmbusWaitForMessageType != kVMBusChannelMessageTypeInvalid && vmbusWaitForMessageType == msg->header.type) {
@@ -154,8 +204,8 @@ void HyperVVMBusController::processIncomingVMBusMessage(UInt32 cpu) {
       //
       // Store message response.
       //
-      memcpy(&vmbusWaitMessage, &cpuData.perCPUData[cpu].messages[kVMBusInterruptMessage], sizeof (vmbusWaitMessage));
-      sendSynICEOM(cpu);
+      memcpy(&vmbusWaitMessage, vmbusMessage, sizeof (vmbusWaitMessage));
+      hvController->sendSynICEOM(cpu);
       
       cmdGate->commandWakeup(&cmdGateEvent);
       return;
@@ -171,14 +221,14 @@ void HyperVVMBusController::processIncomingVMBusMessage(UInt32 cpu) {
     } else {
       HVDBGLOG("Unknown message type %u", msg->header.type);
     }
-    sendSynICEOM(cpu);
+    hvController->sendSynICEOM(cpu);
     
-  } else if (cpuData.perCPUData[cpu].messages[kVMBusInterruptMessage].type == kVMBusConnIdEvent) {
+  } else if (vmbusMessage->type == kVMBusConnIdEvent) {
     HVDBGLOG("Incoming VMBus event on CPU %u", cpu);
   }
 }
 
-bool HyperVVMBusController::connectVMBus() {
+bool HyperVVMBus::connectVMBus() {
   for (int i = 0; i < arrsize(VMBusVersions); i++) {
     vmbusVersion = VMBusVersions[i];
     if (negotiateVMBus(vmbusVersion)) {
@@ -192,7 +242,7 @@ bool HyperVVMBusController::connectVMBus() {
   return false;
 }
 
-bool HyperVVMBusController::negotiateVMBus(UInt32 version) {
+bool HyperVVMBus::negotiateVMBus(UInt32 version) {
   VMBusChannelMessageConnect connectMsg;
   connectMsg.header.type      = kVMBusChannelMessageTypeConnect;
   connectMsg.targetProcessor  = 0;
@@ -216,10 +266,13 @@ bool HyperVVMBusController::negotiateVMBus(UInt32 version) {
     HVDBGLOG("Legacy event flags will be used for messages");
   }
   
+  hvController->enableInterrupts(useLegacyEventFlags ? vmbusRxEventFlags : nullptr);
+  
   HVDBGLOG("Trying version 0x%X and connection ID %u", connectMsg.protocolVersion, vmbusMsgConnectionId);
   
   VMBusChannelMessageConnectResponse resp;
   if (!sendVMBusMessage((VMBusChannelMessage*) &connectMsg, kVMBusChannelMessageTypeConnectResponse, (VMBusChannelMessage*) &resp)) {
+    hvController->disableInterrupts();
     return false;
   }
   
@@ -233,7 +286,7 @@ bool HyperVVMBusController::negotiateVMBus(UInt32 version) {
   return resp.supported != 0;
 }
 
-bool HyperVVMBusController::scanVMBus() {
+bool HyperVVMBus::scanVMBus() {
   //
   // Initialize children array.
   //
@@ -262,12 +315,12 @@ bool HyperVVMBusController::scanVMBus() {
   return result;
 }
 
-bool HyperVVMBusController::addVMBusDevice(VMBusChannelMessageChannelOffer *offerMessage) {
+bool HyperVVMBus::addVMBusDevice(VMBusChannelMessageChannelOffer *offerMessage) {
   //
   // Add offer message to channel array.
   //
   UInt32 channelId = offerMessage->channelId;
-  if (channelId >= kHyperVMaxChannels || vmbusChannels[channelId].status != kVMBusChannelStatusNotPresent) {
+  if (channelId >= kVMBusMaxChannels || vmbusChannels[channelId].status != kVMBusChannelStatusNotPresent) {
     HVDBGLOG("Channel %u is invalid or already present", channelId);
     return false;
   }
@@ -301,9 +354,9 @@ bool HyperVVMBusController::addVMBusDevice(VMBusChannelMessageChannelOffer *offe
   return true;
 }
 
-void HyperVVMBusController::removeVMBusDevice(VMBusChannelMessageChannelRescindOffer *rescindOfferMessage) {
+void HyperVVMBus::removeVMBusDevice(VMBusChannelMessageChannelRescindOffer *rescindOfferMessage) {
   UInt32 channelId = rescindOfferMessage->channelId;
-  if (channelId >= kHyperVMaxChannels || vmbusChannels[channelId].status == kVMBusChannelStatusNotPresent) {
+  if (channelId >= kVMBusMaxChannels || vmbusChannels[channelId].status == kVMBusChannelStatusNotPresent) {
     HVDBGLOG("Channel %u is invalid or is not active", channelId);
     return;
   }
@@ -321,7 +374,7 @@ void HyperVVMBusController::removeVMBusDevice(VMBusChannelMessageChannelRescindO
   HVDBGLOG("Channel %u has been asked to terminate", channelId);
 }
 
-bool HyperVVMBusController::registerVMBusDevice(VMBusChannel *channel) {
+bool HyperVVMBus::registerVMBusDevice(VMBusChannel *channel) {
   //
   // Allocate and initialize child VMBus device object.
   //
@@ -345,27 +398,6 @@ bool HyperVVMBusController::registerVMBusDevice(VMBusChannel *channel) {
   }
   
   //
-  // Create interrupt specifier dictionaries.
-  // These are used to reference us for various interrupt methods on IOService.
-  //
-  OSArray *interruptControllers = OSArray::withCapacity(1);
-  OSArray *interruptSpecifiers = OSArray::withCapacity(1);
-  if (interruptControllers == NULL || interruptSpecifiers == NULL) {
-    OSSafeReleaseNULL(interruptControllers);
-    OSSafeReleaseNULL(interruptSpecifiers);
-    devType->release();
-    devInstance->release();
-    channelNumber->release();
-    childDevice->release();
-    return false;
-  }
-  interruptControllers->setObject(interruptControllerName);
-  
-  OSData *interruptSpecifierData = OSData::withBytes(&channel->offerMessage.channelId, sizeof (channel->offerMessage.channelId));
-  interruptSpecifiers->setObject(interruptSpecifierData);
-  interruptSpecifierData->release();
-  
-  //
   // Create dictionary and set properties, releasing them after completion.
   //
   OSDictionary *dict = OSDictionary::withCapacity(5);
@@ -373,25 +405,25 @@ bool HyperVVMBusController::registerVMBusDevice(VMBusChannel *channel) {
     devType->release();
     devInstance->release();
     channelNumber->release();
-    interruptControllers->release();
-    interruptSpecifiers->release();
     childDevice->release();
     return false;
   }
   
   bool result = dict->setObject(kHyperVVMBusDeviceChannelTypeKey, devType) &&
                 dict->setObject(kHyperVVMBusDeviceChannelInstanceKey, devInstance) &&
-                dict->setObject(kHyperVVMBusDeviceChannelIDKey, channelNumber) &&
-                dict->setObject(gIOInterruptControllersKey, interruptControllers) &&
-                dict->setObject(gIOInterruptSpecifiersKey, interruptSpecifiers);
+                dict->setObject(kHyperVVMBusDeviceChannelIDKey, channelNumber);
   
   devType->release();
   devInstance->release();
   channelNumber->release();
-  interruptControllers->release();
-  interruptSpecifiers->release();
   
   if (!result) {
+    dict->release();
+    childDevice->release();
+    return false;
+  }
+  
+  if (!hvController->addInterruptProperties(dict, channel->offerMessage.channelId)) {
     dict->release();
     childDevice->release();
     return false;
@@ -414,6 +446,33 @@ bool HyperVVMBusController::registerVMBusDevice(VMBusChannel *channel) {
   return true;
 }
 
-void HyperVVMBusController::cleanupVMBusDevice(VMBusChannel *channel) {
+void HyperVVMBus::cleanupVMBusDevice(VMBusChannel *channel) {
   channel->status = kVMBusChannelStatusNotPresent;
+}
+
+void HyperVVMBus::freeVMBusChannel(UInt32 channelId) {
+  VMBusChannel *channel = &vmbusChannels[channelId];
+  
+  //
+  // Free channel ID to be reused later on by Hyper-V.
+  //
+  VMBusChannelMessageChannelFree freeMsg;
+  freeMsg.header.type      = kVMBusChannelMessageTypeChannelFree;
+  freeMsg.header.reserved  = 0;
+  freeMsg.channelId        = channelId;
+  
+  bool result = sendVMBusMessage((VMBusChannelMessage*) &freeMsg);
+  if (!result) {
+    HVSYSLOG("Failed to send channel free message for channel %u", channelId);
+  }
+  HVDBGLOG("Channel %u is now freed", channelId);
+  channel->status = kVMBusChannelStatusNotPresent;
+}
+
+bool HyperVVMBus::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size) {
+  return hvController->allocateDmaBuffer(dmaBuf, size);
+}
+
+void HyperVVMBus::freeDmaBuffer(HyperVDMABuffer *dmaBuf) {
+  hvController->freeDmaBuffer(dmaBuf);
 }

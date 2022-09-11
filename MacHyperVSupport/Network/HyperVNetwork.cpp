@@ -10,54 +10,83 @@
 OSDefineMetaClassAndStructors(HyperVNetwork, super);
 
 bool HyperVNetwork::start(IOService *provider) {
-  if (HVCheckOffArg() || !super::start(provider)) {
-    return false;
-  }
+  bool     result  = false;
+  bool     started = false;
+  IOReturn status;
   
   //
   // Get parent VMBus device object.
   //
   hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
-  if (hvDevice == NULL) {
-    super::stop(provider);
+  if (hvDevice == nullptr) {
+    HVSYSLOG("Provider is not HyperVVMBusDevice");
     return false;
   }
   hvDevice->retain();
-  HVCheckDebugArgs();
   
+  HVCheckDebugArgs();
   HVDBGLOG("Initializing Hyper-V Synthetic Networking");
   
-  //
-  // Configure interrupt.
-  //
-  interruptSource =
-    IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVNetwork::handleInterrupt), provider, 0);
-  getWorkLoop()->addEventSource(interruptSource);
-  interruptSource->enable();
+  do {
+    if (HVCheckOffArg()) {
+      HVSYSLOG("Disabling Hyper-V Synthetic Networking due to boot arg");
+      break;
+    }
+    
+    started = super::start(provider);
+    if (!started) {
+      HVSYSLOG("super::start() returned false");
+      break;
+    }
+    
+    //
+    // Install packet handlers.
+    //
+    status = hvDevice->installPacketActions(this, OSMemberFunctionCast(HyperVVMBusDevice::PacketReadyAction, this, &HyperVNetwork::handlePacket), OSMemberFunctionCast(HyperVVMBusDevice::WakePacketAction, this, &HyperVNetwork::wakePacketHandler), kHyperVNetworkReceivePacketSize);
+    if (status != kIOReturnSuccess) {
+      HVSYSLOG("Failed to install packet handlers with status 0x%X", status);
+      break;
+    }
+    
+#if DEBUG
+  hvDevice->installTimerDebugPrintAction(this, OSMemberFunctionCast(HyperVVMBusDevice::TimerDebugAction, this, &HyperVNetwork::handleTimer));
+#endif
+    
+    //
+    // Open VMBus channel.
+    //
+    status = hvDevice->openVMBusChannel(kHyperVNetworkRingBufferSize, kHyperVNetworkRingBufferSize, kHyperVNetworkMaximumTransId);
+    if (status != kIOReturnSuccess) {
+      HVSYSLOG("Failed to open VMBus channel with status 0x%X", status);
+      break;
+    }
+    
+    // TODO
+    rndisLock = IOLockAlloc();
+    connectNetwork();
+    createMediumDictionary();
+    
+    //
+    // Attach network interface.
+    //
+    if (!attachInterface((IONetworkInterface **)&ethInterface, false)) {
+      HVSYSLOG("Failed to attach network interface");
+      break;
+    }
+    
+    result = true;
+  } while (false);
   
-  //
-  // Configure the channel.
-  //
-  if (!hvDevice->openChannel(kHyperVNetworkRingBufferSize, kHyperVNetworkRingBufferSize, kHyperVNetworkMaximumTransId)) {
-    super::stop(provider);
-    return false;
+  if (!result) {
+    if (started) {
+      super::stop(provider);
+    }
   }
-  
-  rndisLock = IOLockAlloc();
-  
-  connectNetwork();
-  createMediumDictionary();
-  
-  //
-  // Attach network interface.
-  //
-  if (!attachInterface((IONetworkInterface **)&ethInterface, false)) {
-    return false;
-  }
+
   ethInterface->registerService();
   
   HVSYSLOG("Initialized Hyper-V Synthetic Networking");
-  return true;
+  return result;
 }
 
 IOReturn HyperVNetwork::getHardwareAddress(IOEthernetAddress *addrP) {
@@ -66,7 +95,7 @@ IOReturn HyperVNetwork::getHardwareAddress(IOEthernetAddress *addrP) {
 }
 
 UInt32 HyperVNetwork::outputPacket(mbuf_t m, void *param) {
-  return sendRNDISDataPacket(m) ? kIOReturnSuccess : kIOReturnIOError;
+  return sendRNDISDataPacket(m) ? kIOReturnOutputSuccess : kIOReturnOutputStall;
 }
 
 IOReturn HyperVNetwork::enable(IONetworkInterface *interface) {

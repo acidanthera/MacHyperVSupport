@@ -1,15 +1,15 @@
 //
-//  HyperVVMBus.cpp
-//  Hyper-V VMBus controller
+//  HyperVController.cpp
+//  Hyper-V core controller driver
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2022 Goldfish64. All rights reserved.
 //
 
-#include "HyperVVMBusController.hpp"
-#include "HyperVVMBusInternal.hpp"
-
-#include <IOKit/IOPlatformExpert.h>
+#include "HyperVController.hpp"
 #include <IOKit/IOMapper.h>
+
+#include "HyperVVMBus.hpp"
+#include "HyperVInterruptController.hpp"
 
 //
 // Hyper-V reported signature.
@@ -18,7 +18,7 @@
 #define kHyperVGuestMajor         (((UInt64) getKernelVersion()) << kHyperVMsrGuestIDMajorVersionShift)
 #define kHyperVGuestSignature     (kHyperVGuestMinor | kHyperVGuestMajor)
 
-OSDefineMetaClassAndStructors(HyperVVMBusController, super);
+OSDefineMetaClassAndStructors(HyperVController, super);
 
 //
 // Hack to get access to protected setMapperRequired().
@@ -29,10 +29,11 @@ struct IOMapperDisabler : public IOMapper {
   }
 };
 
-bool HyperVVMBusController::start(IOService *provider) {
+bool HyperVController::start(IOService *provider) {
   HVCheckDebugArgs();
   
   if (!super::start(provider)) {
+    HVSYSLOG("Superclass failed to start");
     return false;
   }
   
@@ -62,7 +63,7 @@ bool HyperVVMBusController::start(IOService *provider) {
     //
     OSDictionary *rootPciMatching = IOService::serviceMatching("HyperVPCIRoot");
     if (rootPciMatching == nullptr) {
-      HVSYSLOG("Failure while creating HyperVPCIRoot matching dictionary");
+      HVSYSLOG("Failed to create HyperVPCIRoot matching dictionary");
       break;
     }
     
@@ -85,33 +86,22 @@ bool HyperVVMBusController::start(IOService *provider) {
     HVDBGLOG("HyperVPCIRoot is now loaded");
     
     //
-    // Setup hypercalls.
+    // Setup hypercalls and interrupts.
     //
     if (!initHypercalls()) {
-      HVSYSLOG("Failure while initializing hypercalls");
+      HVSYSLOG("Failed to initialize hypercalls");
+      break;
+    }
+    if (!initInterrupts()) {
+      HVSYSLOG("Failed to initialize interrupts");
       break;
     }
     
-    if (!initSynIC()) {
-      HVSYSLOG("Failure while initializing SynIC");
-      break;
-    }
-    
-    if (!allocateVMBusBuffers()) {
-      HVSYSLOG("Failure while allocating VMBus buffers");
-      break;
-    }
-    
-    cmdGate = IOCommandGate::commandGate(this);
-    workloop->addEventSource(cmdGate);
-    
-    if (!connectVMBus()) {
-      HVSYSLOG("Failure while connecting to the VMBus");
-      break;
-    }
-    
-    if (!scanVMBus()) {
-      HVSYSLOG("Failure while scanning VMBus");
+    //
+    // Initialize VMBus root.
+    //
+    if (!initVMBus()) {
+      HVSYSLOG("Failed to initialize VMBus");
       break;
     }
     
@@ -124,7 +114,7 @@ bool HyperVVMBusController::start(IOService *provider) {
   return result;
 }
 
-bool HyperVVMBusController::identifyHyperV() {
+bool HyperVController::identifyHyperV() {
   bool isHyperV = false;
   uint32_t regs[4];
   
@@ -133,8 +123,8 @@ bool HyperVVMBusController::identifyHyperV() {
   //
   do {
     do_cpuid(kHyperVCpuidMaxLeaf, regs);
-    hvMaxLeaf = regs[eax];
-    if (hvMaxLeaf < kHyperVCpuidLeafLimits) {
+    _hvMaxLeaf = regs[eax];
+    if (_hvMaxLeaf < kHyperVCpuidLeafLimits) {
       break;
     }
     
@@ -155,9 +145,9 @@ bool HyperVVMBusController::identifyHyperV() {
     return false;
   }
   
-  hvFeatures   = regs[eax];
-  hvPmFeatures = regs[ecx];
-  hvFeatures3  = regs[edx];
+  _hvFeatures   = regs[eax];
+  _hvPmFeatures = regs[ecx];
+  _hvFeatures3  = regs[edx];
   
   //
   // Spec indicates we are supposed to indicate to Hyper-V what OS we are
@@ -170,11 +160,11 @@ bool HyperVVMBusController::identifyHyperV() {
   // Get Hyper-V version.
   //
   do_cpuid(kHyperVCpuidLeafIdentity, regs);
-  hvMajorVersion = regs[ebx] >> 16;
+  _hvMajorVersion = regs[ebx] >> 16;
   HVSYSLOG("Starting on Hyper-V %d.%d.%d SP%d",
-           hvMajorVersion, regs[ebx] & 0xFFFF, regs[eax], regs[ecx]);
+           _hvMajorVersion, regs[ebx] & 0xFFFF, regs[eax], regs[ecx]);
   
-  HVSYSLOG("Hyper-V features: 0x%b", hvFeatures,
+  HVSYSLOG("Hyper-V features: 0x%b", _hvFeatures,
            "\020"
            "\001VPRUNTIME"    /* MSR_HV_VP_RUNTIME */
            "\002TMREFCNT"     /* MSR_HV_TIME_REF_COUNT */
@@ -190,11 +180,11 @@ bool HyperVVMBusController::identifyHyperV() {
            "\014TMFREQ"       /* MSR_HV_{TSC,APIC}_FREQUENCY */
            "\015DEBUG");      /* MSR_HV_SYNTH_DEBUG_ */
   HVSYSLOG("Hyper-V power features: 0x%b (C%u)",
-           (hvPmFeatures & ~CPUPM_HV_CSTATE_MASK),
+           (_hvPmFeatures & ~CPUPM_HV_CSTATE_MASK),
            "\020"
            "\005C3HPET",      /* HPET is required for C3 state */
-           CPUPM_HV_CSTATE(hvPmFeatures));
-  HVSYSLOG("Hyper-V additional features: 0x%b", hvFeatures3,
+           CPUPM_HV_CSTATE(_hvPmFeatures));
+  HVSYSLOG("Hyper-V additional features: 0x%b", _hvFeatures3,
            "\020"
            "\001MWAIT"        /* MWAIT */
            "\002DEBUG"        /* guest debug support */
@@ -212,15 +202,15 @@ bool HyperVVMBusController::identifyHyperV() {
            "\016HVDIS");      /* disabling hypervisor */
   
   do_cpuid(kHyperVCpuidLeafRecommends, regs);
-  hvRecommends = regs[eax];
+  _hvRecommends = regs[eax];
   HVDBGLOG("Hyper-V recommendations: 0x%X, max spinlock attempts: 0x%X",
-         hvRecommends, regs[ebx]);
+           _hvRecommends, regs[ebx]);
   
   do_cpuid(kHyperVCpuidLeafLimits, regs);
   HVDBGLOG("Hyper-V max virtual CPUs: %u, max logical CPUs: %u, max interrupt vectors: %u",
-         regs[eax], regs[ebx], regs[ecx]);
+           regs[eax], regs[ebx], regs[ecx]);
   
-  if (hvMaxLeaf >= kHyperVCpuidLeafHwFeatures) {
+  if (_hvMaxLeaf >= kHyperVCpuidLeafHwFeatures) {
     do_cpuid(kHyperVCpuidLeafHwFeatures, regs);
     HVDBGLOG("Hyper-V hardware features: 0x%X", regs[eax]);
   }
@@ -228,7 +218,47 @@ bool HyperVVMBusController::identifyHyperV() {
   return true;
 }
 
-bool HyperVVMBusController::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size) {
+bool HyperVController::initVMBus() {
+  //
+  // Allocate VMBus class.
+  //
+  _hvVMBus = OSTypeAlloc(HyperVVMBus);
+  if (_hvVMBus == nullptr) {
+    HVSYSLOG("Failed to allocate HyperVVMBus");
+    return false;
+  }
+  
+  //
+  // Create dictionary and add interrupt information.
+  //
+  OSDictionary *dict = OSDictionary::withCapacity(2);
+  if (dict == nullptr) {
+    _hvVMBus->release();
+    return false;
+  }
+  
+  bool result = addInterruptProperties(dict, 0);
+  if (!result) {
+    dict->release();
+    _hvVMBus->release();
+    return false;
+  }
+
+  //
+  // Initialize and attach VMBus class.
+  //
+  result = _hvVMBus->init(dict) && _hvVMBus->attach(this);
+  dict->release();
+  
+  if (!result) {
+    _hvVMBus->release();
+    return false;
+  }
+  
+  return true;
+}
+
+bool HyperVController::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size) {
   IOBufferMemoryDescriptor *bufDesc;
   
   //
@@ -237,7 +267,7 @@ bool HyperVVMBusController::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t si
   bufDesc = IOBufferMemoryDescriptor::inTaskWithPhysicalMask(kernel_task,
                                                              kIODirectionInOut | kIOMemoryPhysicallyContiguous,
                                                              size, 0xFFFFFFFFFFFFF000ULL);
-  if (bufDesc == NULL) {
+  if (bufDesc == nullptr) {
     HVSYSLOG("Failed to allocate DMA buffer memory of %u bytes", size);
     return false;
   }
@@ -253,11 +283,43 @@ bool HyperVVMBusController::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t si
   return true;
 }
 
-void HyperVVMBusController::freeDmaBuffer(HyperVDMABuffer *dmaBuf) {
+void HyperVController::freeDmaBuffer(HyperVDMABuffer *dmaBuf) {
   IOBufferMemoryDescriptor *bufDesc = dmaBuf->bufDesc;
   
   memset(dmaBuf, 0, sizeof (*dmaBuf));
   
   bufDesc->complete();
   bufDesc->release();
+}
+
+bool HyperVController::addInterruptProperties(OSDictionary *dict, UInt32 interruptVector) {
+  //
+  // Create interrupt specifier dictionary.
+  // This will be used to reference the Hyper-V interrupt controller service.
+  //
+  const OSSymbol *interruptControllerName = _hvInterruptController->copyName();
+  OSArray *interruptControllers = OSArray::withCapacity(1);
+  OSArray *interruptSpecifiers = OSArray::withCapacity(1);
+  if (interruptControllerName == nullptr || interruptControllers == nullptr || interruptSpecifiers == nullptr) {
+    OSSafeReleaseNULL(interruptControllerName);
+    OSSafeReleaseNULL(interruptControllers);
+    OSSafeReleaseNULL(interruptSpecifiers);
+    return false;
+  }
+  interruptControllers->setObject(interruptControllerName);
+  interruptControllerName->release();
+  
+  OSData *interruptSpecifierData = OSData::withBytes(&interruptVector, sizeof (interruptVector));
+  interruptSpecifiers->setObject(interruptSpecifierData);
+  interruptSpecifierData->release();
+  
+  //
+  // Add interrupt information to dictionary.
+  //
+  bool result = dict->setObject(gIOInterruptControllersKey, interruptControllers) &&
+                dict->setObject(gIOInterruptSpecifiersKey, interruptSpecifiers);
+  interruptControllers->release();
+  interruptSpecifiers->release();
+  
+  return result;
 }

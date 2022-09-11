@@ -14,45 +14,42 @@ bool HyperVICService::start(IOService *provider) {
   bool      started = false;
   IOReturn  status;
   
+  //
+  // Get parent VMBus device object.
+  //
+  hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
+  if (hvDevice == nullptr) {
+    HVSYSLOG("Provider is not HyperVVMBusDevice");
+    return false;
+  }
+  hvDevice->retain();
+  
+  HVCheckDebugArgs();
+  HVDBGLOG("Initializing Hyper-V Integration Component");
+  
   do {
-    //
-    // Get parent VMBus device object.
-    //
-    hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
-    if (hvDevice == nullptr) {
-      HVSYSLOG("Unable to get parent VMBus device nub");
-      break;
-    }
-    hvDevice->retain();
-    HVCheckDebugArgs();
-    
     started = super::start(provider);
     if (!started) {
-      HVSYSLOG("Superclass start function failed");
+      HVSYSLOG("super::start() returned false");
       break;
     }
     
     //
-    // Configure interrupt.
+    // Install packet handler.
     //
-    interruptSource = IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVICService::handleInterrupt), provider, 0);
-    if (interruptSource == nullptr) {
-      HVSYSLOG("Unable to initialize interrupt");
-      break;
-    }
-    
-    status = getWorkLoop()->addEventSource(interruptSource);
+    status = hvDevice->installPacketActions(this, OSMemberFunctionCast(HyperVVMBusDevice::PacketReadyAction, this, &HyperVICService::handlePacket),
+                                            nullptr, kHyperVICBufferSize, true, false);
     if (status != kIOReturnSuccess) {
-      HVSYSLOG("Unable to add interrupt event source: 0x%X", status);
+      HVSYSLOG("Failed to install packet handlers with status 0x%X", status);
       break;
     }
-    interruptSource->enable();
     
     //
-    // Configure and open the VMBus channel.
+    // Open VMBus channel
     //
-    if (!hvDevice->openChannel(kHyperVICBufferSize, kHyperVICBufferSize)) {
-      HVSYSLOG("Unable to configure VMBus channel");
+    status = hvDevice->openVMBusChannel(kHyperVICBufferSize, kHyperVICBufferSize);
+    if (status != kIOReturnSuccess) {
+      HVSYSLOG("Failed to open VMBus channel with status 0x%X", status);
       break;
     }
     
@@ -124,23 +121,10 @@ bool HyperVICService::createNegotiationResponse(VMBusICMessageNegotiate *negMsg,
 
 void HyperVICService::freeStructures() {
   //
-  // Release interrupt.
-  //
-  if (interruptSource != nullptr) {
-    interruptSource->disable();
-    getWorkLoop()->removeEventSource(interruptSource);
-    interruptSource->release();
-  }
-  
-  //
   // Close channel and release parent VMBus device object.
   //
   if (hvDevice != nullptr) {
-    hvDevice->closeChannel();
+    hvDevice->closeVMBusChannel();
     hvDevice->release();
   }
-}
-
-void HyperVICService::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
-  while (processMessage());
 }

@@ -2,7 +2,7 @@
 //  HyperVNetwork.cpp
 //  Hyper-V network driver
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperVNetwork_hpp
@@ -13,6 +13,7 @@
 #include <IOKit/network/IOEthernetInterface.h>
 #include <IOKit/network/IOMbufMemoryCursor.h>
 #include <IOKit/network/IONetworkMedium.h>
+#include <IOKit/network/IOOutputQueue.h>
 
 #include "HyperVVMBusDevice.hpp"
 #include "HyperVNetworkRegs.hpp"
@@ -20,11 +21,6 @@
 extern "C" {
 #include <sys/kpi_mbuf.h>
 }
-
-#define MBit 1000000
-
-#define kHyperVNetworkMaximumTransId  0xFFFFFFFF
-#define kHyperVNetworkSendTransIdBits 0xFA00000000000000
 
 typedef struct HyperVNetworkRNDISRequest {
   HyperVNetworkRNDISMessage message;
@@ -47,22 +43,35 @@ private:
   // Parent VMBus device.
   //
   HyperVVMBusDevice       *hvDevice         = nullptr;
-  IOInterruptEventSource  *interruptSource  = nullptr;
-  
   bool                          isEnabled = false;
   
   HyperVNetworkProtocolVersion  netVersion;
+  
+  //
+  // Receive buffer.
+  //
+  HyperVDMABuffer               receiveBuffer;
   UInt32                        receiveBufferSize;
   UInt32                        receiveGpadlHandle;
-  UInt8                          *receiveBuffer;
   
+  //
+  // Send buffer and tracking info.
+  //
+  HyperVDMABuffer               sendBuffer;
   UInt32                        sendBufferSize;
   UInt32                        sendGpadlHandle;
-  UInt8                         *sendBuffer;
   UInt32                        sendSectionSize;
   UInt32                        sendSectionCount;
-  UInt64                        *sendIndexMap;
+  UInt32                        *sendIndexMap = nullptr;
   size_t                        sendIndexMapSize;
+  UInt32                        outstandingSends = 0;
+  UInt32                        oldSends = 0;
+  UInt64    totalbytes = 0;
+  UInt64    totalRX = 0;
+  UInt64 preCycle = 0;
+  UInt64 midCycle = 0;
+  UInt64 postCycle = 0;
+  UInt64 stalls = 0;
   
   IOLock                        *rndisLock = NULL;
   UInt32                        rndisTransId = 0;
@@ -76,15 +85,17 @@ private:
   OSDictionary                  *mediumDict;
   UInt32                        currentMediumIndex;
   
-  void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
+  void handleTimer();
+  bool wakePacketHandler(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
+  void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
   
   
   bool negotiateProtocol(HyperVNetworkProtocolVersion protocolVersion);
   bool initBuffers();
   bool connectNetwork();
   
-  void handleRNDISRanges(VMBusPacketTransferPages *pktPages, UInt32 headerSize, UInt32 pktSize);
-  void handleCompletion();
+  void handleRNDISRanges(VMBusPacketTransferPages *pktPages, UInt32 pktLength);
+  void handleCompletion(void *pktData, UInt32 pktLength);
 
   bool processRNDISPacket(UInt8 *data, UInt32 dataLength);
   void processIncoming(UInt8 *data, UInt32 dataLength);
@@ -93,8 +104,9 @@ private:
   // RNDIS
   //
   UInt32 getNextSendIndex();
+  UInt32 getFreeSendIndexCount();
   void releaseSendIndex(UInt32 sendIndex);
-  HyperVNetworkRNDISRequest *allocateRNDISRequest();
+  HyperVNetworkRNDISRequest *allocateRNDISRequest(size_t additionalLength = 0);
   void freeRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest);
   UInt32 getNextRNDISTransId();
   bool sendRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest, bool waitResponse = false);
@@ -102,6 +114,7 @@ private:
   
   bool initializeRNDIS();
   bool queryRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 *valueSize);
+  bool setRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 valueSize);
   
   //
   // Private
@@ -128,4 +141,4 @@ public:
   virtual IOReturn disable(IONetworkInterface *interface) APPLE_KEXT_OVERRIDE;
 };
 
-#endif /* HyperVNetwork_hpp */
+#endif
