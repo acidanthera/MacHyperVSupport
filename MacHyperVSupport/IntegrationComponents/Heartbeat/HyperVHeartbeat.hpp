@@ -9,6 +9,7 @@
 #define HyperVHeartbeat_hpp
 
 #include "HyperVICService.hpp"
+#include "HyperVHeartbeatRegs.hpp"
 
 class HyperVHeartbeat : public HyperVICService {
   OSDeclareDefaultStructors(HyperVHeartbeat);

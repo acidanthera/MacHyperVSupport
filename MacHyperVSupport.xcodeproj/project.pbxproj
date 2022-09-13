@@ -235,6 +235,8 @@
 		418219642648607600619C15 /* HyperVKeyboard.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVKeyboard.cpp; sourceTree = "<group>"; };
 		418219652648607600619C15 /* HyperVKeyboard.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVKeyboard.hpp; sourceTree = "<group>"; };
 		418219692648659B00619C15 /* HyperVKeyboardRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVKeyboardRegs.hpp; sourceTree = "<group>"; };
+		41863F6028CEC33300F9B817 /* HyperVHeartbeatRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVHeartbeatRegs.hpp; sourceTree = "<group>"; };
+		41863F6128CEDB0200F9B817 /* HyperVShutdownRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVShutdownRegs.hpp; sourceTree = "<group>"; };
 		418F052026483C8300E1D14C /* HyperVICService.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVICService.cpp; sourceTree = "<group>"; };
 		418F052126483C8300E1D14C /* HyperVICService.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVICService.hpp; sourceTree = "<group>"; };
 		418F052726483CAE00E1D14C /* HyperVIC.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVIC.hpp; sourceTree = "<group>"; };
@@ -355,6 +357,7 @@
 			children = (
 				41225F552644D98500574E86 /* HyperVHeartbeat.cpp */,
 				41225F562644D98500574E86 /* HyperVHeartbeat.hpp */,
+				41863F6028CEC33300F9B817 /* HyperVHeartbeatRegs.hpp */,
 			);
 			path = Heartbeat;
 			sourceTree = "<group>";
@@ -468,6 +471,7 @@
 			children = (
 				418F052A2648451200E1D14C /* HyperVShutdown.cpp */,
 				418F052B2648451200E1D14C /* HyperVShutdown.hpp */,
+				41863F6128CEDB0200F9B817 /* HyperVShutdownRegs.hpp */,
 				41BF462D289209EA00813670 /* HyperVShutdownUserClient.cpp */,
 				417C978B28920FB400CFE0B2 /* HyperVShutdownUserClient.h */,
 				41BF462E289209EA00813670 /* HyperVShutdownUserClientInternal.hpp */,

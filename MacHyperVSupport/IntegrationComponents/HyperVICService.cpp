@@ -9,6 +9,11 @@
 
 OSDefineMetaClassAndAbstractStructors(HyperVICService, super);
 
+static const VMBusICVersion frameworkVersions[] = {
+  kHyperVICVersionV3,
+  kHyperVICVersion2008
+};
+
 bool HyperVICService::start(IOService *provider) {
   bool      result  = false;
   bool      started = false;
@@ -71,51 +76,87 @@ void HyperVICService::stop(IOService *provider) {
   super::stop(provider);
 }
 
-bool HyperVICService::createNegotiationResponse(VMBusICMessageNegotiate *negMsg, UInt32 fwVersion, UInt32 msgVersion) {
+bool HyperVICService::processNegotiationResponse(VMBusICMessageNegotiate *negMsg, const VMBusICVersion *msgVersions,
+                                                 UInt32 msgVersionsCount, VMBusICVersion *msgVersionUsed) {
+  UInt32 versionCount;
+  UInt32 packetSize;
+
+  bool foundFwMatch  = false;
+  bool foundMsgMatch = false;
+
+  VMBusICVersion frameworkVersion = { };
+  VMBusICVersion msgVersion       = { };
+
   if (negMsg->frameworkVersionCount == 0 || negMsg->messageVersionCount == 0) {
     HVDBGLOG("Invalid framework or message version count");
     return false;
   }
-  UInt32 versionCount = negMsg->frameworkVersionCount + negMsg->messageVersionCount;
-  
-  UInt32 packetSize = negMsg->header.dataSize + sizeof(negMsg->header);
-  if (packetSize < __offsetof(VMBusICMessageNegotiate, versions[versionCount])) {
+
+  versionCount = negMsg->frameworkVersionCount + negMsg->messageVersionCount;
+  packetSize   = negMsg->header.dataSize + sizeof(negMsg->header);
+  if (packetSize < __offsetof (VMBusICMessageNegotiate, versions[versionCount])) {
     HVDBGLOG("Packet has invalid size and does not contain all versions");
     return false;
   }
-  
-  bool foundFwMatch = false;
-  bool foundMsgMatch = false;
-  
+
   //
-  // Find supported framework version, and then message version.
+  // Determine highest supported framework version.
   //
-  for (int i = 0; i < negMsg->frameworkVersionCount; i++) {
-    if (negMsg->versions[i] == fwVersion) {
-      negMsg->versions[i] = fwVersion;
-      foundFwMatch = true;
+  for (UInt32 i = 0; i < arrsize(frameworkVersions); i++) {
+    for (UInt32 j = 0; j < negMsg->frameworkVersionCount; j++) {
+      HVDBGLOG("Checking framework version %u.%u against version %u.%u",
+               frameworkVersions[i].major, frameworkVersions[i].minor, negMsg->versions[j].major, negMsg->versions[j].minor);
+      if ((frameworkVersions[i].major == negMsg->versions[j].major)
+          && (frameworkVersions[i].minor == negMsg->versions[j].minor)) {
+        frameworkVersion = negMsg->versions[j];
+        foundFwMatch = true;
+        break;
+      }
+    }
+
+    if (foundFwMatch) {
       break;
     }
   }
-  
-  for (int i = negMsg->frameworkVersionCount; i < versionCount; i++) {
-    if (negMsg->versions[i] == msgVersion) {
-      negMsg->versions[i] = msgVersion;
-      foundMsgMatch = true;
+
+  //
+  // Determine highest supported message version.
+  //
+  for (UInt32 i = 0; i < msgVersionsCount; i++) {
+    for (UInt32 j = negMsg->frameworkVersionCount; j < versionCount; j++) {
+      HVDBGLOG("Checking message version %u.%u against version %u.%u",
+               msgVersions[i].major, msgVersions[i].minor, negMsg->versions[j].major, negMsg->versions[j].minor);
+      if ((msgVersions[i].major == negMsg->versions[j].major)
+          && (msgVersions[i].minor == negMsg->versions[j].minor)) {
+        msgVersion = negMsg->versions[j];
+        foundMsgMatch = true;
+        break;
+      }
+    }
+
+    if (foundMsgMatch) {
       break;
     }
   }
-  
+
   if (foundFwMatch && foundMsgMatch) {
-    HVDBGLOG("Found supported fw version %u and msg version %u", fwVersion, msgVersion);
+    HVDBGLOG("Found supported fw version %u.%u and msg version %u.%u",
+             frameworkVersion.major, frameworkVersion.minor, msgVersion.major, msgVersion.minor);
     negMsg->frameworkVersionCount = 1;
     negMsg->messageVersionCount   = 1;
+
+    negMsg->versions[0] = frameworkVersion;
+    negMsg->versions[1] = msgVersion;
+
+    if (msgVersionUsed != nullptr) {
+      *msgVersionUsed = msgVersion;
+    }
   } else {
-    HVDBGLOG("Unsupported fw version %u and msg version %u", fwVersion, msgVersion);
+    HVDBGLOG("Unsupported fw/msg version");
     negMsg->frameworkVersionCount = 0;
     negMsg->messageVersionCount   = 0;
   }
-  
+
   return foundFwMatch && foundMsgMatch;
 }
 

@@ -5,8 +5,16 @@
 //  Copyright © 2021 Goldfish64. All rights reserved.
 //
 
-#ifndef HyperVIC_h
-#define HyperVIC_h
+#ifndef HyperVIC_hpp
+#define HyperVIC_hpp
+
+#include "HyperV.hpp"
+
+//
+// Framework versions.
+//
+#define kHyperVICVersion2008  { 1, 0 }
+#define kHyperVICVersionV3    { 3, 0 }
 
 //
 // Message types.
@@ -29,12 +37,17 @@ typedef enum : UInt16 {
 // Header and common negotiation message.
 //
 typedef struct __attribute__((packed)) {
+  UInt16 major;
+  UInt16 minor;
+} VMBusICVersion;
+
+typedef struct __attribute__((packed)) {
   UInt32              pipeFlags;
   UInt32              pipeMsgs;
-  
-  UInt32              frameworkVersion;
+
+  VMBusICVersion      frameworkVersion;
   VMBusICMessageType  type;
-  UInt32              msgVersion;
+  VMBusICVersion      msgVersion;
   UInt16              dataSize;
   UInt32              status;
   UInt8               transactionId;
@@ -44,49 +57,11 @@ typedef struct __attribute__((packed)) {
 
 typedef struct __attribute__((packed)) {
   VMBusICMessageHeader  header;
-  
+
   UInt16                frameworkVersionCount;
   UInt16                messageVersionCount;
   UInt32                reserved;
-  UInt32                versions[];
+  VMBusICVersion        versions[];
 } VMBusICMessageNegotiate;
-
-//
-// Heartbeat messages.
-//
-typedef struct __attribute__((packed)) {
-  VMBusICMessageHeader  header;
-  
-  UInt64                sequence;
-  UInt32                reserved[8];
-} VMBusICMessageHeartbeatSequence;
-
-typedef struct __attribute__((packed)) {
-  union {
-    VMBusICMessageHeader            header;
-    VMBusICMessageNegotiate         negotiate;
-    VMBusICMessageHeartbeatSequence heartbeat;
-  };
-} VMBusICMessageHeartbeat;
-
-//
-// Shutdown messages.
-//
-typedef struct __attribute__((packed)) {
-  VMBusICMessageHeader  header;
-  
-  UInt32                reason;
-  UInt32                timeoutSeconds;
-  UInt32                flags;
-  char                  displayMessage[2048];
-} VMBusICMessageShutdownData;
-
-typedef struct __attribute__((packed)) {
-  union {
-    VMBusICMessageHeader            header;
-    VMBusICMessageNegotiate         negotiate;
-    VMBusICMessageShutdownData      shutdown;
-  };
-} VMBusICMessageShutdown;
 
 #endif

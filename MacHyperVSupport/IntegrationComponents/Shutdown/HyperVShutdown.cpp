@@ -9,6 +9,13 @@
 
 OSDefineMetaClassAndStructors(HyperVShutdown, super);
 
+static const VMBusICVersion shutdownVersions[] = {
+  kHyperVShutdownVersionV3_2,
+  kHyperVShutdownVersionV3_1,
+  kHyperVShutdownVersionV3_0,
+  kHyperVShutdownVersionV1_0
+};
+
 bool HyperVShutdown::start(IOService *provider) {
   if (!super::start(provider)) {
     HVSYSLOG("Superclass start function failed");
@@ -59,8 +66,10 @@ void HyperVShutdown::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
   bool doShutdown = false;
   switch (shutdownMsg->header.type) {
     case kVMBusICMessageTypeNegotiate:
-      createNegotiationResponse(&shutdownMsg->negotiate, 3, 3);
-      break;
+      if (!processNegotiationResponse(&shutdownMsg->negotiate, shutdownVersions, arrsize(shutdownVersions))) {
+        HVSYSLOG("Failed to determine a supported Hyper-V Shutdown version");
+        return;
+      }
 
     case kVMBusICMessageTypeShutdown:
       doShutdown = handleShutdown(&shutdownMsg->shutdown);
@@ -88,7 +97,7 @@ void HyperVShutdown::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
 }
 
 bool HyperVShutdown::handleShutdown(VMBusICMessageShutdownData *shutdownData) {
-  HVDBGLOG("Shutdown request received: flags 0x%X, reason 0x%X", shutdownData->flags, shutdownData->reason);
+  HVDBGLOG("Shutdown request received: flags 0x%X, reason 0x%X", shutdownData->flags, shutdownData->reason); // TODO: Flags may indicate restart or shutdown, need to handle.
 
   //
   // Send message to userclients to see if we can shutdown.

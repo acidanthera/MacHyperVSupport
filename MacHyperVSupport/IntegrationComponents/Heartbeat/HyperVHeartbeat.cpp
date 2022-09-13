@@ -2,28 +2,33 @@
 //  HyperVHeartbeat.cpp
 //  Hyper-V heartbeat driver
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
 #include "HyperVHeartbeat.hpp"
 
 OSDefineMetaClassAndStructors(HyperVHeartbeat, super);
 
+static const VMBusICVersion heartbeatVersions[] = {
+  kHyperVHeartbeatVersionV3,
+  kHyperVHeartbeatVersionV1
+};
+
 bool HyperVHeartbeat::start(IOService *provider) {
   if (!super::start(provider)) {
-    HVSYSLOG("Superclass start function failed");
+    HVSYSLOG("super::start() returned false");
     return false;
   }
-  
+
   HVCheckDebugArgs();
   setICDebug(debugEnabled);
-  
+
   if (HVCheckOffArg()) {
     HVSYSLOG("Disabling Hyper-V Heartbeat due to boot arg");
     super::stop(provider);
     return false;
   }
-  
+
   HVDBGLOG("Initializing Hyper-V Heartbeat");
   return true;
 }
@@ -36,16 +41,14 @@ void HyperVHeartbeat::stop(IOService *provider) {
 void HyperVHeartbeat::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
   VMBusICMessageHeartbeat *heartbeatMsg = (VMBusICMessageHeartbeat*) pktData;
 
-  //
-  // Process incoming heartbeat message.
-  //
   switch (heartbeatMsg->header.type) {
     case kVMBusICMessageTypeNegotiate:
       //
       // Determine supported protocol version and communicate back to Hyper-V.
       //
       firstHeartbeatReceived = false;
-      if (!createNegotiationResponse(&heartbeatMsg->negotiate, 3, 3)) {
+      if (!processNegotiationResponse(&heartbeatMsg->negotiate, heartbeatVersions, arrsize(heartbeatVersions))) {
+        HVSYSLOG("Failed to determine a supported Hyper-V Heartbeat version");
         return;
       }
       break;

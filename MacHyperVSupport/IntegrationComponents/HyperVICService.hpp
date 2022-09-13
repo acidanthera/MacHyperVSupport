@@ -14,7 +14,7 @@
 #include "HyperVVMBusDevice.hpp"
 #include "HyperVIC.hpp"
 
-#define kHyperVICBufferSize     4096
+#define kHyperVICBufferSize     PAGE_SIZE
 
 class HyperVICService : public IOService {
   OSDeclareDefaultStructors(HyperVICService);
@@ -23,15 +23,15 @@ class HyperVICService : public IOService {
 
 private:
   void freeStructures();
-  
+
 protected:
   HyperVVMBusDevice *hvDevice = nullptr;
   void setICDebug(bool debug) { debugEnabled = debug; }
-  
+
   virtual void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) = 0;
-  
-  bool createNegotiationResponse(VMBusICMessageNegotiate *negMsg, UInt32 fwVersion, UInt32 msgVersion);
-  
+  bool processNegotiationResponse(VMBusICMessageNegotiate *negMsg, const VMBusICVersion *msgVersions,
+                                  UInt32 msgVersionsCount, VMBusICVersion *msgVersionUsed = nullptr);
+
 public:
   //
   // IOService overrides.

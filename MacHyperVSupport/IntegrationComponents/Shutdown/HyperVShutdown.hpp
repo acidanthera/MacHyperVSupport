@@ -9,6 +9,7 @@
 #define HyperVShutdown_hpp
 
 #include "HyperVICService.hpp"
+#include "HyperVShutdownRegs.hpp"
 
 typedef enum : UInt32 {
   kHyperVShutdownMessageTypeShutdownRequested = 0x66697368,
