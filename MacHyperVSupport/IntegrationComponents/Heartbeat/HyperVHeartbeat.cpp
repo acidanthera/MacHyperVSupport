@@ -15,6 +15,11 @@ static const VMBusICVersion heartbeatVersions[] = {
 };
 
 bool HyperVHeartbeat::start(IOService *provider) {
+  if (HVCheckOffArg()) {
+    HVSYSLOG("Disabling Hyper-V Heartbeat due to boot arg");
+    return false;
+  }
+
   if (!super::start(provider)) {
     HVSYSLOG("super::start() returned false");
     return false;
@@ -22,12 +27,6 @@ bool HyperVHeartbeat::start(IOService *provider) {
 
   HVCheckDebugArgs();
   setICDebug(debugEnabled);
-
-  if (HVCheckOffArg()) {
-    HVSYSLOG("Disabling Hyper-V Heartbeat due to boot arg");
-    super::stop(provider);
-    return false;
-  }
 
   HVDBGLOG("Initializing Hyper-V Heartbeat");
   return true;
@@ -49,7 +48,7 @@ void HyperVHeartbeat::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeade
       firstHeartbeatReceived = false;
       if (!processNegotiationResponse(&heartbeatMsg->negotiate, heartbeatVersions, arrsize(heartbeatVersions))) {
         HVSYSLOG("Failed to determine a supported Hyper-V Heartbeat version");
-        return;
+        heartbeatMsg->header.status = kHyperVStatusFail;
       }
       break;
 

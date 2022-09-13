@@ -17,19 +17,18 @@ static const VMBusICVersion shutdownVersions[] = {
 };
 
 bool HyperVShutdown::start(IOService *provider) {
-  if (!super::start(provider)) {
-    HVSYSLOG("Superclass start function failed");
-    return false;
-  }
-  
-  HVCheckDebugArgs();
-  setICDebug(debugEnabled);
-  
   if (HVCheckOffArg()) {
     HVSYSLOG("Disabling Hyper-V Guest Shutdown due to boot arg");
-    super::stop(provider);
     return false;
   }
+
+  if (!super::start(provider)) {
+    HVSYSLOG("super::start() returned false");
+    return false;
+  }
+
+  HVCheckDebugArgs();
+  setICDebug(debugEnabled);
   
   HVDBGLOG("Initialized Hyper-V Guest Shutdown");
   registerService();
@@ -66,12 +65,19 @@ void HyperVShutdown::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
   bool doShutdown = false;
   switch (shutdownMsg->header.type) {
     case kVMBusICMessageTypeNegotiate:
+      //
+      // Determine supported protocol version and communicate back to Hyper-V.
+      //
       if (!processNegotiationResponse(&shutdownMsg->negotiate, shutdownVersions, arrsize(shutdownVersions))) {
         HVSYSLOG("Failed to determine a supported Hyper-V Shutdown version");
-        return;
+        shutdownMsg->header.status = kHyperVStatusFail;
       }
+      break;
 
     case kVMBusICMessageTypeShutdown:
+      //
+      // Shutdown/restart request.
+      //
       doShutdown = handleShutdown(&shutdownMsg->shutdown);
       break;
 
@@ -85,7 +91,7 @@ void HyperVShutdown::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
   // Send response back to Hyper-V. The packet size will always be the same as the original inbound one.
   //
   shutdownMsg->header.flags = kVMBusICFlagTransaction | kVMBusICFlagResponse;
-  hvDevice->writeInbandPacket(&shutdownMsg, pktDataLength, false);
+  hvDevice->writeInbandPacket(shutdownMsg, pktDataLength, false);
 
   //
   // Shutdown machine if requested. This should not return.

@@ -62,17 +62,31 @@ bool HyperVICService::start(IOService *provider) {
   } while (false);
   
   if (!result) {
-    freeStructures();
+    //
+    // Close channel and remove handler.
+    //
+    hvDevice->closeVMBusChannel();
+    hvDevice->uninstallPacketActions();
+
     if (started) {
       super::stop(provider);
     }
+    OSSafeReleaseNULL(hvDevice);
   }
   
   return result;
 }
 
 void HyperVICService::stop(IOService *provider) {
-  freeStructures();
+  //
+  // Close channel and remove handler.
+  //
+  if (hvDevice != nullptr) {
+    hvDevice->closeVMBusChannel();
+    hvDevice->uninstallPacketActions();
+    OSSafeReleaseNULL(hvDevice);
+  }
+
   super::stop(provider);
 }
 
@@ -158,14 +172,4 @@ bool HyperVICService::processNegotiationResponse(VMBusICMessageNegotiate *negMsg
   }
 
   return foundFwMatch && foundMsgMatch;
-}
-
-void HyperVICService::freeStructures() {
-  //
-  // Close channel and release parent VMBus device object.
-  //
-  if (hvDevice != nullptr) {
-    hvDevice->closeVMBusChannel();
-    hvDevice->release();
-  }
 }

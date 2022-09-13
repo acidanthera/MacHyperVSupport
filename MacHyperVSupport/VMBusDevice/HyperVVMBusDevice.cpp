@@ -130,6 +130,8 @@ void HyperVVMBusDevice::detach(IOService *provider) {
   IOLockFree(vmbusTransLock);
   IOLockFree(threadZeroRequest.lock);
   
+  uninstallPacketActions();
+  
   super::detach(provider);
 }
 
@@ -191,6 +193,23 @@ IOReturn HyperVVMBusDevice::installPacketActions(OSObject *target, PacketReadyAc
 
   HVDBGLOG("Data ready action handler installed (register interrupt: %u)", registerInterrupt);
   return kIOReturnSuccess;
+}
+
+void HyperVVMBusDevice::uninstallPacketActions() {
+  if (_interruptSource != nullptr) {
+    _interruptSource->disable();
+    _workLoop->removeEventSource(_interruptSource);
+    OSSafeReleaseNULL(_interruptSource);
+  }
+  
+  _wakePacketAction   = nullptr;
+  _packetReadyAction  = nullptr;
+  _packetActionTarget = nullptr;
+  
+  if (_receivePacketBuffer != nullptr) {
+    IOFree(_receivePacketBuffer, _receivePacketBufferLength);
+    _receivePacketBuffer = nullptr;
+  }
 }
 
 IOReturn HyperVVMBusDevice::openVMBusChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId) {

@@ -21,9 +21,6 @@ class HyperVICService : public IOService {
   HVDeclareLogFunctionsVMBusChild("ic");
   typedef IOService super;
 
-private:
-  void freeStructures();
-
 protected:
   HyperVVMBusDevice *hvDevice = nullptr;
   void setICDebug(bool debug) { debugEnabled = debug; }

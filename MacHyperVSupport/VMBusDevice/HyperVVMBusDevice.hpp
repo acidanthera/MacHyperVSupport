@@ -160,6 +160,7 @@ public:
   //
   IOReturn installPacketActions(OSObject *target, PacketReadyAction packetReadyAction, WakePacketAction wakePacketAction,
                                 UInt32 initialResponseBufferLength, bool registerInterrupt = true, bool flushPackets = true);
+  void uninstallPacketActions();
   IOReturn openVMBusChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId = UINT64_MAX);
   IOReturn closeVMBusChannel();
   IOReturn createGPADLBuffer(HyperVDMABuffer *dmaBuffer, UInt32 *gpadlHandle);
