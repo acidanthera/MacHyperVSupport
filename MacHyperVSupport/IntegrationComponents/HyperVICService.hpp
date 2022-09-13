@@ -8,7 +8,6 @@
 #ifndef HyperVICService_hpp
 #define HyperVICService_hpp
 
-#include <IOKit/IOInterruptEventSource.h>
 #include <IOKit/IOService.h>
 
 #include "HyperVVMBusDevice.hpp"
