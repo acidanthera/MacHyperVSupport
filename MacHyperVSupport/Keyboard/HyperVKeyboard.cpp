@@ -29,11 +29,13 @@ bool HyperVKeyboard::start(IOService *provider) {
 
   if (HVCheckOffArg()) {
     HVSYSLOG("Disabling Hyper-V Synthetic Keyboard due to boot arg");
+    OSSafeReleaseNULL(_hvDevice);
     return false;
   }
 
   if (!super::start(provider)) {
     HVSYSLOG("super::start() returned false");
+    OSSafeReleaseNULL(_hvDevice);
     return false;
   }
 
@@ -62,8 +64,8 @@ bool HyperVKeyboard::start(IOService *provider) {
       HVSYSLOG("Failed to connect to keyboard device with status 0x%X", status);
       break;
     }
-    HVDBGLOG("Initialized Hyper-V Synthetic Keyboard");
 
+    HVDBGLOG("Initialized Hyper-V Synthetic Keyboard");
     result = true;
   } while (false);
 

@@ -17,7 +17,7 @@ static const VMBusICVersion frameworkVersions[] = {
 bool HyperVICService::start(IOService *provider) {
   bool     result = false;
   IOReturn status;
-  
+
   //
   // Get parent VMBus device object.
   //
@@ -27,26 +27,27 @@ bool HyperVICService::start(IOService *provider) {
     return false;
   }
   _hvDevice->retain();
-  
+
   HVCheckDebugArgs();
   HVDBGLOG("Initializing Hyper-V Integration Component");
-  
+
+  if (!super::start(provider)) {
+    HVSYSLOG("super::start() returned false");
+    OSSafeReleaseNULL(_hvDevice);
+    return false;
+  }
+
   do {
-    if (!super::start(provider)) {
-      HVSYSLOG("super::start() returned false");
-      break;
-    }
-    
     //
     // Install packet handler.
     //
     status = _hvDevice->installPacketActions(this, OSMemberFunctionCast(HyperVVMBusDevice::PacketReadyAction, this, &HyperVICService::handlePacket),
-                                            nullptr, kHyperVICBufferSize, true, false);
+                                             nullptr, kHyperVICBufferSize, true, false);
     if (status != kIOReturnSuccess) {
       HVSYSLOG("Failed to install packet handler with status 0x%X", status);
       break;
     }
-    
+
     //
     // Open VMBus channel
     //
@@ -55,7 +56,7 @@ bool HyperVICService::start(IOService *provider) {
       HVSYSLOG("Failed to open VMBus channel with status 0x%X", status);
       break;
     }
-    
+
     result = true;
   } while (false);
   

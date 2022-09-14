@@ -28,11 +28,13 @@ bool HyperVMouse::handleStart(IOService *provider) {
 
   if (HVCheckOffArg()) {
     HVSYSLOG("Disabling Hyper-V Synthetic Mouse due to boot arg");
+    OSSafeReleaseNULL(_hvDevice);
     return false;
   }
 
   if (!super::handleStart(provider)) {
     HVSYSLOG("super::handleStart() returned false");
+    OSSafeReleaseNULL(_hvDevice);
     return false;
   }
 
@@ -69,8 +71,8 @@ bool HyperVMouse::handleStart(IOService *provider) {
       HVSYSLOG("Unable to setup mouse device");
       break;
     }
-    HVDBGLOG("Initialized Hyper-V Synthetic Mouse");
 
+    HVDBGLOG("Initialized Hyper-V Synthetic Mouse");
     result = true;
   } while (false);
 
