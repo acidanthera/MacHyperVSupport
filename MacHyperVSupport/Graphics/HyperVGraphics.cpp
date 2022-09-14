@@ -43,11 +43,11 @@ bool HyperVGraphics::start(IOService *provider) {
   //
   // Get parent VMBus device object.
   //
-  hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
-  if (hvDevice == NULL) {
+  _hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
+  if (_hvDevice == NULL) {
     return false;
   }
-  hvDevice->retain();
+  _hvDevice->retain();
   HVCheckDebugArgs();
   
   //
@@ -58,7 +58,7 @@ bool HyperVGraphics::start(IOService *provider) {
     HVDBGLOG("Existing PCI bus found (Gen1 VM), will not start");
     
     pciEntry->release();
-    hvDevice->release();
+    _hvDevice->release();
     return false;
   }
   
@@ -67,7 +67,7 @@ bool HyperVGraphics::start(IOService *provider) {
   //
   if (!HyperVPCIRoot::registerChildPCIBridge(this)) {
     HVSYSLOG("Failed to register with root PCI bus instance");
-    hvDevice->release();
+    _hvDevice->release();
     return false;
   }
   
@@ -77,7 +77,7 @@ bool HyperVGraphics::start(IOService *provider) {
   //
   if (getPlatform()->getConsoleInfo(&consoleInfo) != kIOReturnSuccess) {
     HVSYSLOG("Failed to get console info");
-    hvDevice->release();
+    _hvDevice->release();
     return false;
   }
   HVDBGLOG("Console is at 0x%X (%ux%u, bpp: %u, bytes/row: %u)",

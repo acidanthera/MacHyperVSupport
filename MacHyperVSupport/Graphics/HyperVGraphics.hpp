@@ -19,7 +19,7 @@ class HyperVGraphics : public HV_PCIBRIDGE_CLASS {
   typedef HV_PCIBRIDGE_CLASS super;
   
 private:
-  HyperVVMBusDevice *hvDevice;
+  HyperVVMBusDevice *_hvDevice;
   IOSimpleLock      *pciLock;
   UInt8             fakePCIDeviceSpace[256];
   PE_Video          consoleInfo;

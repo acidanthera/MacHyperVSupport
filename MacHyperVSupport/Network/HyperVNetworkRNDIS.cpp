@@ -137,7 +137,7 @@ HyperVNetworkRNDISRequest* HyperVNetwork::allocateRNDISRequest(size_t additional
   //
   // Create DMA buffer with required specifications and get physical address.
   //
-  if (!hvDevice->allocateDmaBuffer(&dmaBuffer, sizeof (HyperVNetworkRNDISRequest) + additionalLength)) {
+  if (!_hvDevice->allocateDmaBuffer(&dmaBuffer, sizeof (HyperVNetworkRNDISRequest) + additionalLength)) {
     HVSYSLOG("Failed to allocate buffer memory for RNDIS request");
     IOLockFree(lock);
   }
@@ -155,7 +155,7 @@ HyperVNetworkRNDISRequest* HyperVNetwork::allocateRNDISRequest(size_t additional
 
 void HyperVNetwork::freeRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest) {
   IOLockFree(rndisRequest->lock);
-  hvDevice->freeDmaBuffer(&rndisRequest->dmaBuffer);
+  _hvDevice->freeDmaBuffer(&rndisRequest->dmaBuffer);
 }
 
 UInt32 HyperVNetwork::getNextRNDISTransId() {
@@ -198,7 +198,7 @@ bool HyperVNetwork::sendRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest, bo
     rndisRequests->next = rndisRequest;
   IOLockUnlock(rndisLock);
   
-  hvDevice->writeGPADirectSinglePagePacket(&netMsg, sizeof (netMsg), true, &pageBuffer, 1, &netMsg, sizeof (netMsg));
+  _hvDevice->writeGPADirectSinglePagePacket(&netMsg, sizeof (netMsg), true, &pageBuffer, 1, &netMsg, sizeof (netMsg));
   
   IOLockLock(rndisRequest->lock);
   while (rndisRequest->isSleeping) {
@@ -249,7 +249,7 @@ bool HyperVNetwork::sendRNDISDataPacket(mbuf_t packet) {
   netMsg.v1.sendRNDISPacket.sendBufferSectionSize = rndisMsg->msgLength;
   
   HVDBGLOG("Packet at index %u, size %u bytes", sendIndex, rndisMsg->msgLength);
-  if (hvDevice->writeInbandPacketWithTransactionId(&netMsg, sizeof (netMsg), sendIndex | kHyperVNetworkSendTransIdBits, true) != kIOReturnSuccess) {
+  if (_hvDevice->writeInbandPacketWithTransactionId(&netMsg, sizeof (netMsg), sendIndex | kHyperVNetworkSendTransIdBits, true) != kIOReturnSuccess) {
     HVSYSLOG("failure %p %p", packet, sendBuffer);
     return false;
   }

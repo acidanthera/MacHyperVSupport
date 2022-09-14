@@ -50,11 +50,11 @@ bool HyperVStorage::InitializeController() {
   //
   // Get parent VMBus device object.
   //
-  hvDevice = OSDynamicCast(HyperVVMBusDevice, getProvider());
-  if (hvDevice == NULL) {
+  _hvDevice = OSDynamicCast(HyperVVMBusDevice, getProvider());
+  if (_hvDevice == NULL) {
     return false;
   }
-  hvDevice->retain();
+  _hvDevice->retain();
   HVCheckDebugArgs();
   
   HVDBGLOG("Initializing Hyper-V Synthetic Storage controller");
@@ -72,7 +72,7 @@ bool HyperVStorage::InitializeController() {
 #if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_5
   if (getKernelVersion() >= KernelVersion::Leopard) {
 #endif
-    hvDevice->installPacketActions(this, OSMemberFunctionCast(HyperVVMBusDevice::PacketReadyAction, this, &HyperVStorage::handlePacket), OSMemberFunctionCast(HyperVVMBusDevice::WakePacketAction, this, &HyperVStorage::wakePacketHandler), PAGE_SIZE);
+    _hvDevice->installPacketActions(this, OSMemberFunctionCast(HyperVVMBusDevice::PacketReadyAction, this, &HyperVStorage::handlePacket), OSMemberFunctionCast(HyperVVMBusDevice::WakePacketAction, this, &HyperVStorage::wakePacketHandler), PAGE_SIZE);
 #if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_5
   } else {
     EnableInterrupt();
@@ -82,7 +82,7 @@ bool HyperVStorage::InitializeController() {
   //
   // Configure the channel.
   //
-  if (hvDevice->openVMBusChannel(kHyperVStorageRingBufferSize, kHyperVStorageRingBufferSize) != kIOReturnSuccess) {
+  if (_hvDevice->openVMBusChannel(kHyperVStorageRingBufferSize, kHyperVStorageRingBufferSize) != kIOReturnSuccess) {
     return false;
   }
   
@@ -150,7 +150,7 @@ bool HyperVStorage::InitializeController() {
   }
   
   
-  hvDevice->allocateDmaBuffer(&dmaBufTest, 32000000);
+  _hvDevice->allocateDmaBuffer(&dmaBufTest, 32000000);
   
   segs64 = (IODMACommand::Segment64*) IOMalloc(sizeof (IODMACommand::Segment64) * maxPageSegments);
 
@@ -343,9 +343,9 @@ SCSIServiceResponse HyperVStorage::ProcessParallelTask(SCSIParallelTaskIdentifie
     UInt64 lengthPhys = GetRequestedDataTransferCount(parallelRequest);
     packet.scsiRequest.dataTransferLength = (UInt32) lengthPhys;
     
-    hvDevice->writeGPADirectMultiPagePacket(&packet, sizeof (packet) - packetSizeDelta, true, pagePacket, pagePacketLength);
+    _hvDevice->writeGPADirectMultiPagePacket(&packet, sizeof (packet) - packetSizeDelta, true, pagePacket, pagePacketLength);
   } else {
-    hvDevice->writeInbandPacket(&packet, sizeof (packet) - packetSizeDelta, true);
+    _hvDevice->writeInbandPacket(&packet, sizeof (packet) - packetSizeDelta, true);
   }
   currentTask = parallelRequest;
   

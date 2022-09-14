@@ -24,7 +24,7 @@ private:
   //
   // Parent VMBus device.
   //
-  HyperVVMBusDevice       *hvDevice         = nullptr;
+  HyperVVMBusDevice       *_hvDevice         = nullptr;
   IOInterruptEventSource  *interruptSource  = nullptr;
   IOSimpleLock      *pciLock;
   

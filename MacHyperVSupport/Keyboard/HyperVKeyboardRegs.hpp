@@ -1,17 +1,19 @@
 //
-//  HyperVKeyboardRegs.h
+//  HyperVKeyboardRegs.hpp
 //  Hyper-V keyboard driver
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperVKeyboardRegs_hpp
 #define HyperVKeyboardRegs_hpp
 
-#define kHyperVKeyboardRingBufferSize (0x8000)
+#define kHyperVKeyboardRingBufferSize     0x8000
+#define kHyperVKeyboardResponsePacketSize 128
 
 //
 // Current keyboard protocol is 1.0.
+// First used in Windows Server 2008.
 //
 #define kHyperVKeyboardVersionMajor   1
 #define kHyperVKeyboardVersionMinor   0

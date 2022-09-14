@@ -42,7 +42,7 @@ private:
   //
   // Parent VMBus device.
   //
-  HyperVVMBusDevice       *hvDevice         = nullptr;
+  HyperVVMBusDevice       *_hvDevice         = nullptr;
   bool                          isEnabled = false;
   
   HyperVNetworkProtocolVersion  netVersion;

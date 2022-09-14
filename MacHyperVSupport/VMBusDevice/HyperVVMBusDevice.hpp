@@ -223,7 +223,8 @@ public:
   
   bool getPendingTransaction(UInt64 transactionId, void **buffer, UInt32 *bufferLength);
   void wakeTransaction(UInt64 transactionId);
-  void doSleepThread();
+  void sleepThreadZero();
+  void wakeThreadZero();
   
   //
   // Timer debug printing.

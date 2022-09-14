@@ -2,7 +2,7 @@
 //  HyperVMouse.hpp
 //  Hyper-V mouse driver
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperVMouse_hpp
@@ -15,26 +15,20 @@
 
 class HyperVMouse : public IOHIDDevice {
   OSDeclareDefaultStructors(HyperVMouse);
-  HVDeclareLogFunctionsVMBusChild("mous");
+  HVDeclareLogFunctionsVMBusChild("mouse");
   typedef IOHIDDevice super;
 
 private:
-  //
-  // Parent VMBus device.
-  //
-  HyperVVMBusDevice       *hvDevice         = nullptr;
-  IOInterruptEventSource  *interruptSource  = nullptr;
+  HyperVVMBusDevice *_hvDevice = nullptr;
 
   //
   // HID structures.
   //
-  HyperVMouseDeviceInfo   mouseInfo           = { };
-  void                    *hidDescriptor      = nullptr;
-  size_t                  hidDescriptorLength = 0;
+  HyperVMouseDeviceInfo _mouseInfo           = { };
+  void                  *_hidDescriptor      = nullptr;
+  size_t                _hidDescriptorLength = 0;
 
-  void freeStructures();
-  void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
-
+  void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
   bool setupMouse();
   void handleProtocolResponse(HyperVMouseMessageProtocolResponse *response);
   void handleDeviceInfo(HyperVMouseMessageInitialDeviceInfo *deviceInfo);
@@ -61,4 +55,4 @@ public:
   IOReturn newReportDescriptor(IOMemoryDescriptor **descriptor) const APPLE_KEXT_OVERRIDE;
 };
 
-#endif /* HyperVMouse_hpp */
+#endif

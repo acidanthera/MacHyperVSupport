@@ -21,7 +21,7 @@ class HyperVICService : public IOService {
   typedef IOService super;
 
 protected:
-  HyperVVMBusDevice *hvDevice = nullptr;
+  HyperVVMBusDevice *_hvDevice = nullptr;
   void setICDebug(bool debug) { debugEnabled = debug; }
 
   virtual void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) = 0;

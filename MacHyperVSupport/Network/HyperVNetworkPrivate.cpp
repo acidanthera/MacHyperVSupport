@@ -8,7 +8,7 @@
 #include "HyperVNetwork.hpp"
 
 void HyperVNetwork::handleTimer() {
-  HVSYSLOG("outst %X r %X w %X bytes %X %X %X stalls %llu", outstandingSends, hvDevice->rxBufferReadCount, hvDevice->txBufferWriteCount, preCycle, midCycle, postCycle, stalls);
+  HVSYSLOG("outst %X r %X w %X bytes %X %X %X stalls %llu", outstandingSends, _hvDevice->rxBufferReadCount, _hvDevice->txBufferWriteCount, preCycle, midCycle, postCycle, stalls);
 }
 
 bool HyperVNetwork::wakePacketHandler(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
@@ -67,7 +67,7 @@ void HyperVNetwork::handleRNDISRanges(VMBusPacketTransferPages *pktPages, UInt32
   netMsg2.messageType = kHyperVNetworkMessageTypeV1SendRNDISPacketComplete;
   netMsg2.v1.sendRNDISPacketComplete.status = kHyperVNetworkMessageStatusSuccess;
   
-  hvDevice->writeCompletionPacketWithTransactionId(&netMsg2, sizeof (netMsg2), pktPages->header.transactionId, false);
+  _hvDevice->writeCompletionPacketWithTransactionId(&netMsg2, sizeof (netMsg2), pktPages->header.transactionId, false);
  // postCycle++;
 }
 
@@ -101,7 +101,7 @@ bool HyperVNetwork::negotiateProtocol(HyperVNetworkProtocolVersion protocolVersi
   netMsg.init.initVersion.maxProtocolVersion = protocolVersion;
   netMsg.init.initVersion.minProtocolVersion = protocolVersion;
 
-  if (hvDevice->writeInbandPacket(&netMsg, sizeof (netMsg), true, &netMsg, sizeof (netMsg)) != kIOReturnSuccess) {
+  if (_hvDevice->writeInbandPacket(&netMsg, sizeof (netMsg), true, &netMsg, sizeof (netMsg)) != kIOReturnSuccess) {
     HVSYSLOG("failed to send protocol negotiation message");
     return false;
   }
@@ -118,13 +118,13 @@ bool HyperVNetwork::negotiateProtocol(HyperVNetworkProtocolVersion protocolVersi
 bool HyperVNetwork::initBuffers() {
   
   // Allocate receive and send buffers.
-  hvDevice->allocateDmaBuffer(&receiveBuffer, receiveBufferSize);
-  if (hvDevice->createGPADLBuffer(&receiveBuffer, &receiveGpadlHandle) != kIOReturnSuccess) {
+  _hvDevice->allocateDmaBuffer(&receiveBuffer, receiveBufferSize);
+  if (_hvDevice->createGPADLBuffer(&receiveBuffer, &receiveGpadlHandle) != kIOReturnSuccess) {
     HVSYSLOG("Failed to create GPADL for receive buffer");
     return false;
   }
-  hvDevice->allocateDmaBuffer(&sendBuffer, sendBufferSize);
-  if (hvDevice->createGPADLBuffer(&sendBuffer, &sendGpadlHandle) != kIOReturnSuccess) {
+  _hvDevice->allocateDmaBuffer(&sendBuffer, sendBufferSize);
+  if (_hvDevice->createGPADLBuffer(&sendBuffer, &sendGpadlHandle) != kIOReturnSuccess) {
     HVSYSLOG("Failed to create GPADL for send buffer");
     return false;
   }
@@ -137,7 +137,7 @@ bool HyperVNetwork::initBuffers() {
   netMsg.v1.sendReceiveBuffer.gpadlHandle = receiveGpadlHandle;
   netMsg.v1.sendReceiveBuffer.id = kHyperVNetworkReceiveBufferID;
   
-  if (hvDevice->writeInbandPacket(&netMsg, sizeof (netMsg), true, &netMsg, sizeof (netMsg)) != kIOReturnSuccess) {
+  if (_hvDevice->writeInbandPacket(&netMsg, sizeof (netMsg), true, &netMsg, sizeof (netMsg)) != kIOReturnSuccess) {
     HVSYSLOG("Failed to send receive buffer configuration message");
     return false;
   }
@@ -160,7 +160,7 @@ bool HyperVNetwork::initBuffers() {
   netMsg.v1.sendSendBuffer.gpadlHandle = sendGpadlHandle;
   netMsg.v1.sendSendBuffer.id = kHyperVNetworkSendBufferID;
 
-  if (hvDevice->writeInbandPacket(&netMsg, sizeof (netMsg), true, &netMsg, sizeof (netMsg)) != kIOReturnSuccess) {
+  if (_hvDevice->writeInbandPacket(&netMsg, sizeof (netMsg), true, &netMsg, sizeof (netMsg)) != kIOReturnSuccess) {
     HVSYSLOG("Failed to send send buffer configuration message");
     return false;
   }
@@ -199,7 +199,7 @@ bool HyperVNetwork::connectNetwork() {
   netMsg.v1.sendNDISVersion.major = (ndisVersion & 0xFFFF0000) >> 16;
   netMsg.v1.sendNDISVersion.minor = ndisVersion & 0x0000FFFF;
   
-  if (hvDevice->writeInbandPacket(&netMsg, sizeof (netMsg), false) != kIOReturnSuccess) {
+  if (_hvDevice->writeInbandPacket(&netMsg, sizeof (netMsg), false) != kIOReturnSuccess) {
     HVSYSLOG("failed to send NDIS version");
     return false;
   }

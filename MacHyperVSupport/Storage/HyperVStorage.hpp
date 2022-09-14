@@ -26,7 +26,7 @@ class HyperVStorage : public IOSCSIParallelInterfaceController {
   typedef IOSCSIParallelInterfaceController super;
 
 private:
-  HyperVVMBusDevice       *hvDevice         = nullptr;
+  HyperVVMBusDevice       *_hvDevice         = nullptr;
   
   UInt32                  protocolVersion;
   UInt32                  senseBufferSize;

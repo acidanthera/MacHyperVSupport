@@ -91,7 +91,7 @@ void HyperVShutdown::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
   // Send response back to Hyper-V. The packet size will always be the same as the original inbound one.
   //
   shutdownMsg->header.flags = kVMBusICFlagTransaction | kVMBusICFlagResponse;
-  hvDevice->writeInbandPacket(shutdownMsg, pktDataLength, false);
+  _hvDevice->writeInbandPacket(shutdownMsg, pktDataLength, false);
 
   //
   // Shutdown machine if requested. This should not return.

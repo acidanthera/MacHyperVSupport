@@ -76,5 +76,5 @@ void HyperVHeartbeat::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeade
   // Send response back to Hyper-V. The packet size will always be the same as the original inbound one.
   //
   heartbeatMsg->header.flags = kVMBusICFlagTransaction | kVMBusICFlagResponse;
-  hvDevice->writeInbandPacket(heartbeatMsg, pktDataLength, false);
+  _hvDevice->writeInbandPacket(heartbeatMsg, pktDataLength, false);
 }

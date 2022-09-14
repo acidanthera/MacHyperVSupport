@@ -80,14 +80,14 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
   } \
   inline void HVCheckDebugArgs() { \
     debugEnabled = checkKernelArgument("-hv" a "dbg"); \
-    hvDevice->setDebugMessagePrinting(checkKernelArgument("-hv" a "msgdbg")); \
-    if (checkKernelArgument("-hv" a "statsdbg")) { hvDevice->enableTimerDebugPrints(); } \
+    _hvDevice->setDebugMessagePrinting(checkKernelArgument("-hv" a "msgdbg")); \
+    if (checkKernelArgument("-hv" a "statsdbg")) { _hvDevice->enableTimerDebugPrints(); } \
   } \
   inline void HVDBGLOG_PRINT(const char *func, const char *str, ...) const { \
     if (debugEnabled) { \
       va_list args; \
       va_start(args, str); \
-      logPrint(getMetaClass()->getClassName(), func, true, hvDevice != nullptr ? hvDevice->getChannelId() : -1, str, args); \
+      logPrint(getMetaClass()->getClassName(), func, true, _hvDevice != nullptr ? _hvDevice->getChannelId() : -1, str, args); \
       va_end(args); \
     } \
   } \
@@ -95,7 +95,7 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
   inline void HVSYSLOG_PRINT(const char *func, const char *str, ...) const { \
     va_list args; \
     va_start(args, str); \
-    logPrint(getMetaClass()->getClassName(), func, true, hvDevice != nullptr ? hvDevice->getChannelId() : -1, str, args); \
+    logPrint(getMetaClass()->getClassName(), func, true, _hvDevice != nullptr ? _hvDevice->getChannelId() : -1, str, args); \
     va_end(args); \
   } \
   protected:
@@ -192,7 +192,7 @@ inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId,
   inline void HVSYSLOG(const char *str, ...) const { \
     va_list args; \
     va_start(args, str); \
-    logPrint(this->getMetaClass()->getClassName(), true, hvDevice != nullptr ? hvDevice->getChannelId() : -1, str, args); \
+    logPrint(this->getMetaClass()->getClassName(), true, _hvDevice != nullptr ? _hvDevice->getChannelId() : -1, str, args); \
     va_end(args); \
   } \
   protected:

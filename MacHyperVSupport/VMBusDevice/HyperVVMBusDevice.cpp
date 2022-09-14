@@ -515,9 +515,13 @@ void HyperVVMBusDevice::wakeTransaction(UInt64 transactionId) {
   IOLockUnlock(vmbusRequestsLock);
 }
 
-void HyperVVMBusDevice::doSleepThread() {
+void HyperVVMBusDevice::sleepThreadZero() {
   sleepPacketRequest(&threadZeroRequest);
   prepareSleepThread();
+}
+
+void HyperVVMBusDevice::wakeThreadZero() {
+  wakeTransaction(0);
 }
 
 #if DEBUG

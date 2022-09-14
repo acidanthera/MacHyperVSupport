@@ -11,7 +11,7 @@ IOReturn HyperVStorage::executeCommand(HyperVStoragePacket *packet, bool checkCo
   //
   // Send packet and get response.
   //
-  IOReturn status = hvDevice->writeInbandPacket(packet, sizeof (HyperVStoragePacket) - packetSizeDelta, true, packet, sizeof (HyperVStoragePacket));
+  IOReturn status = _hvDevice->writeInbandPacket(packet, sizeof (HyperVStoragePacket) - packetSizeDelta, true, packet, sizeof (HyperVStoragePacket));
   if (status != kIOReturnSuccess) {
     return status;
   }

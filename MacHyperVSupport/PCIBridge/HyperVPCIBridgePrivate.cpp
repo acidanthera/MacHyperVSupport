@@ -23,20 +23,20 @@ void HyperVPCIBridge::handleInterrupt(OSObject *owner, IOInterruptEventSource *s
   //HyperVNetworkMessage *pktComp;
   
   while (true) {
-    if (!hvDevice->nextPacketAvailable(&type, &headersize, &totalsize)) {
+    if (!_hvDevice->nextPacketAvailable(&type, &headersize, &totalsize)) {
       HVDBGLOG("last one");
       break;
     }
     
     UInt8 *buf = (UInt8*)IOMalloc(totalsize);
-    hvDevice->readRawPacket((void*)buf, totalsize);
+    _hvDevice->readRawPacket((void*)buf, totalsize);
     HVDBGLOG("got pkt %u %u", type, totalsize);
     
     switch (type) {
       case kVMBusPacketTypeDataInband:
         handleIncomingPCIMessage((HyperVPCIBridgeIncomingMessageHeader*)buf, totalsize);
         
-        hvDevice->wakeTransaction(0);
+        _hvDevice->wakeTransaction(0);
         break;
      // case kVMBusPacketTypeDataUsingTransferPages:
        // handleRNDISRanges((VMBusPacketTransferPages*) buf, headersize, totalsize);
@@ -44,9 +44,9 @@ void HyperVPCIBridge::handleInterrupt(OSObject *owner, IOInterruptEventSource *s
         
       case kVMBusPacketTypeCompletion:
         
-        if (hvDevice->getPendingTransaction(((VMBusPacketHeader*)buf)->transactionId, &responseBuffer, &responseLength)) {
+        if (_hvDevice->getPendingTransaction(((VMBusPacketHeader*)buf)->transactionId, &responseBuffer, &responseLength)) {
           memcpy(responseBuffer, (UInt8*)buf + headersize, responseLength);
-          hvDevice->wakeTransaction(((VMBusPacketHeader*)buf)->transactionId);
+          _hvDevice->wakeTransaction(((VMBusPacketHeader*)buf)->transactionId);
         } else {
           //pktComp = (HyperVNetworkMessage*) (buf + headersize);
         //  HVDBGLOG("pkt completion status %X %X", pktComp->messageType, pktComp->v1.sendRNDISPacketComplete.status);
@@ -125,7 +125,7 @@ bool HyperVPCIBridge::negotiateProtocolVersion() {
     HVDBGLOG("Attempting to use version 0x%X", pktVersion.version);
     
     UInt32 pciStatus;
-    if (hvDevice->writeInbandPacket(&pktVersion, sizeof (pktVersion), true, &pciStatus, sizeof (pciStatus)) != kIOReturnSuccess) {
+    if (_hvDevice->writeInbandPacket(&pktVersion, sizeof (pktVersion), true, &pciStatus, sizeof (pciStatus)) != kIOReturnSuccess) {
       return false;
     }
     HVDBGLOG("PCI return status is 0x%X", pciStatus);
@@ -144,13 +144,13 @@ bool HyperVPCIBridge::queryBusRelations() {
   // Ask host to send list of PCI functions.
   HyperVPCIBridgeMessageHeader pktQueryRelations;
   pktQueryRelations.type = kHyperVPCIBridgeMessageTypeQueryBusRelations;
-  if (hvDevice->writeInbandPacket(&pktQueryRelations, sizeof (pktQueryRelations), false) != kIOReturnSuccess) {
+  if (_hvDevice->writeInbandPacket(&pktQueryRelations, sizeof (pktQueryRelations), false) != kIOReturnSuccess) {
     return false;
   }
   
   // Response is not in the form of a normal completion, we'll
   // need to wait for an inband bus relations packet instead.
-  hvDevice->doSleepThread();
+  _hvDevice->sleepThreadZero();
   return pciFunctionCount != 0;
 }
 
@@ -198,7 +198,7 @@ bool HyperVPCIBridge::enterPCID0() {
   pktD0.mmioBase    = pciConfigSpace;
   
   UInt32 pciStatus;
-  if (hvDevice->writeInbandPacket(&pktD0, sizeof (pktD0), true, &pciStatus, sizeof (pciStatus)) != kIOReturnSuccess) {
+  if (_hvDevice->writeInbandPacket(&pktD0, sizeof (pktD0), true, &pciStatus, sizeof (pciStatus)) != kIOReturnSuccess) {
     return false;
   }
   
@@ -218,7 +218,7 @@ bool HyperVPCIBridge::queryResourceRequirements() {
   
   HyperVPCIBridgeQueryResourceRequirementsResponse pktReqResponse;
   
-  if (hvDevice->writeInbandPacket(&pktChild, sizeof (pktChild), true, &pktReqResponse, sizeof (pktReqResponse)) != kIOReturnSuccess) {
+  if (_hvDevice->writeInbandPacket(&pktChild, sizeof (pktChild), true, &pktReqResponse, sizeof (pktReqResponse)) != kIOReturnSuccess) {
     return false;
   }
   
@@ -280,7 +280,7 @@ bool HyperVPCIBridge::sendResourcesAllocated(UInt32 slot) {
   
   SInt32  pciStatus;
   
-  if (hvDevice->writeInbandPacket(&pktRes, sizeof (pktRes), true, &pciStatus, sizeof (pciStatus)) != kIOReturnSuccess) {
+  if (_hvDevice->writeInbandPacket(&pktRes, sizeof (pktRes), true, &pciStatus, sizeof (pciStatus)) != kIOReturnSuccess) {
     return false;
   }
   

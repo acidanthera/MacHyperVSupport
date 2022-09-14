@@ -2,13 +2,12 @@
 //  HyperVKeyboard.hpp
 //  Hyper-V keyboard driver
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperVKeyboard_hpp
 #define HyperVKeyboard_hpp
 
-#include <IOKit/IOInterruptEventSource.h>
 #include <IOKit/hidsystem/IOHIKeyboard.h>
 
 #include "HyperVVMBusDevice.hpp"
@@ -20,24 +19,25 @@ class HyperVKeyboard : public IOHIKeyboard {
   typedef IOHIKeyboard super;
 
 private:
-  HyperVVMBusDevice       *hvDevice         = nullptr;
-  IOInterruptEventSource  *interruptSource  = nullptr;
-  
-  void freeStructures();
-  void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
+  HyperVVMBusDevice *_hvDevice = nullptr;
+
+  void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
   OSReturn connectKeyboard();
-  
+
 protected:
+  //
+  // IOHIKeyboard overrides.
+  //
   const unsigned char * defaultKeymapOfLength(UInt32 * length) APPLE_KEXT_OVERRIDE;
   UInt32 maxKeyCodes() APPLE_KEXT_OVERRIDE;
-  
+
 public:
   //
   // IOService overrides.
   //
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
   void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
-  
+
   //
   // IOHIKeyboard overrides.
   //

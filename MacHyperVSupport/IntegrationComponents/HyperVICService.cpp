@@ -15,26 +15,24 @@ static const VMBusICVersion frameworkVersions[] = {
 };
 
 bool HyperVICService::start(IOService *provider) {
-  bool      result  = false;
-  bool      started = false;
-  IOReturn  status;
+  bool     result = false;
+  IOReturn status;
   
   //
   // Get parent VMBus device object.
   //
-  hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
-  if (hvDevice == nullptr) {
+  _hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
+  if (_hvDevice == nullptr) {
     HVSYSLOG("Provider is not HyperVVMBusDevice");
     return false;
   }
-  hvDevice->retain();
+  _hvDevice->retain();
   
   HVCheckDebugArgs();
   HVDBGLOG("Initializing Hyper-V Integration Component");
   
   do {
-    started = super::start(provider);
-    if (!started) {
+    if (!super::start(provider)) {
       HVSYSLOG("super::start() returned false");
       break;
     }
@@ -42,17 +40,17 @@ bool HyperVICService::start(IOService *provider) {
     //
     // Install packet handler.
     //
-    status = hvDevice->installPacketActions(this, OSMemberFunctionCast(HyperVVMBusDevice::PacketReadyAction, this, &HyperVICService::handlePacket),
+    status = _hvDevice->installPacketActions(this, OSMemberFunctionCast(HyperVVMBusDevice::PacketReadyAction, this, &HyperVICService::handlePacket),
                                             nullptr, kHyperVICBufferSize, true, false);
     if (status != kIOReturnSuccess) {
-      HVSYSLOG("Failed to install packet handlers with status 0x%X", status);
+      HVSYSLOG("Failed to install packet handler with status 0x%X", status);
       break;
     }
     
     //
     // Open VMBus channel
     //
-    status = hvDevice->openVMBusChannel(kHyperVICBufferSize, kHyperVICBufferSize);
+    status = _hvDevice->openVMBusChannel(kHyperVICBufferSize, kHyperVICBufferSize);
     if (status != kIOReturnSuccess) {
       HVSYSLOG("Failed to open VMBus channel with status 0x%X", status);
       break;
@@ -62,18 +60,8 @@ bool HyperVICService::start(IOService *provider) {
   } while (false);
   
   if (!result) {
-    //
-    // Close channel and remove handler.
-    //
-    hvDevice->closeVMBusChannel();
-    hvDevice->uninstallPacketActions();
-
-    if (started) {
-      super::stop(provider);
-    }
-    OSSafeReleaseNULL(hvDevice);
+    stop(provider);
   }
-  
   return result;
 }
 
@@ -81,10 +69,10 @@ void HyperVICService::stop(IOService *provider) {
   //
   // Close channel and remove handler.
   //
-  if (hvDevice != nullptr) {
-    hvDevice->closeVMBusChannel();
-    hvDevice->uninstallPacketActions();
-    OSSafeReleaseNULL(hvDevice);
+  if (_hvDevice != nullptr) {
+    _hvDevice->closeVMBusChannel();
+    _hvDevice->uninstallPacketActions();
+    OSSafeReleaseNULL(_hvDevice);
   }
 
   super::stop(provider);

@@ -17,12 +17,12 @@ bool HyperVNetwork::start(IOService *provider) {
   //
   // Get parent VMBus device object.
   //
-  hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
-  if (hvDevice == nullptr) {
+  _hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
+  if (_hvDevice == nullptr) {
     HVSYSLOG("Provider is not HyperVVMBusDevice");
     return false;
   }
-  hvDevice->retain();
+  _hvDevice->retain();
   
   HVCheckDebugArgs();
   HVDBGLOG("Initializing Hyper-V Synthetic Networking");
@@ -42,20 +42,20 @@ bool HyperVNetwork::start(IOService *provider) {
     //
     // Install packet handlers.
     //
-    status = hvDevice->installPacketActions(this, OSMemberFunctionCast(HyperVVMBusDevice::PacketReadyAction, this, &HyperVNetwork::handlePacket), OSMemberFunctionCast(HyperVVMBusDevice::WakePacketAction, this, &HyperVNetwork::wakePacketHandler), kHyperVNetworkReceivePacketSize);
+    status = _hvDevice->installPacketActions(this, OSMemberFunctionCast(HyperVVMBusDevice::PacketReadyAction, this, &HyperVNetwork::handlePacket), OSMemberFunctionCast(HyperVVMBusDevice::WakePacketAction, this, &HyperVNetwork::wakePacketHandler), kHyperVNetworkReceivePacketSize);
     if (status != kIOReturnSuccess) {
       HVSYSLOG("Failed to install packet handlers with status 0x%X", status);
       break;
     }
     
 #if DEBUG
-  hvDevice->installTimerDebugPrintAction(this, OSMemberFunctionCast(HyperVVMBusDevice::TimerDebugAction, this, &HyperVNetwork::handleTimer));
+    _hvDevice->installTimerDebugPrintAction(this, OSMemberFunctionCast(HyperVVMBusDevice::TimerDebugAction, this, &HyperVNetwork::handleTimer));
 #endif
     
     //
     // Open VMBus channel.
     //
-    status = hvDevice->openVMBusChannel(kHyperVNetworkRingBufferSize, kHyperVNetworkRingBufferSize, kHyperVNetworkMaximumTransId);
+    status = _hvDevice->openVMBusChannel(kHyperVNetworkRingBufferSize, kHyperVNetworkRingBufferSize, kHyperVNetworkMaximumTransId);
     if (status != kIOReturnSuccess) {
       HVSYSLOG("Failed to open VMBus channel with status 0x%X", status);
       break;

@@ -2,7 +2,7 @@
 //  HyperVKeyboard.cpp
 //  Hyper-V keyboard driver
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
 #include "HyperVKeyboard.hpp"
@@ -11,98 +11,94 @@
 OSDefineMetaClassAndStructors(HyperVKeyboard, super);
 
 bool HyperVKeyboard::start(IOService *provider) {
-  bool      result  = false;
-  bool      started = false;
-  IOReturn  status;
-  
+  bool     result = false;
+  IOReturn status;
+
   //
   // Get parent VMBus device object.
   //
-  hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
-  if (hvDevice == nullptr) {
-    HVSYSLOG("Unable to get parent VMBus device nub");
+  _hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
+  if (_hvDevice == nullptr) {
+    HVSYSLOG("Provider is not HyperVVMBusDevice");
     return false;
   }
-  hvDevice->retain();
+  _hvDevice->retain();
+
   HVCheckDebugArgs();
-  
+  HVDBGLOG("Initializing Hyper-V Synthetic Keyboard");
+
+  if (HVCheckOffArg()) {
+    HVSYSLOG("Disabling Hyper-V Synthetic Keyboard due to boot arg");
+    return false;
+  }
+
+  if (!super::start(provider)) {
+    HVSYSLOG("super::start() returned false");
+    return false;
+  }
+
   do {
-    HVDBGLOG("Initializing Hyper-V Synthetic Keyboard");
-    
-    if (HVCheckOffArg()) {
-      HVSYSLOG("Disabling Hyper-V Synthetic Keyboard due to boot arg");
-      break;
-    }
-    
-    started = super::start(provider);
-    if (!started) {
-      HVSYSLOG("Superclass start function failed");
-      break;
-    }
-    
     //
-    // Configure interrupt.
+    // Install packet handler.
     //
-    interruptSource =
-      IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &HyperVKeyboard::handleInterrupt), provider, 0);
-    if (interruptSource == nullptr) {
-      HVSYSLOG("Unable to initialize interrupt");
-      break;
-    }
-    
-    status = getWorkLoop()->addEventSource(interruptSource);
+    status = _hvDevice->installPacketActions(this, OSMemberFunctionCast(HyperVVMBusDevice::PacketReadyAction, this, &HyperVKeyboard::handlePacket),
+                                             nullptr, kHyperVKeyboardResponsePacketSize);
     if (status != kIOReturnSuccess) {
-      HVSYSLOG("Unable to add interrupt event source: 0x%X", status);
+      HVSYSLOG("Failed to install packet handler with status 0x%X", status);
       break;
     }
-    interruptSource->enable();
-    
+
     //
-    // Configure the channel.
+    // Open VMBus channel.
     //
-    if (hvDevice->openVMBusChannel(kHyperVKeyboardRingBufferSize, kHyperVKeyboardRingBufferSize) != kIOReturnSuccess) {
-      HVSYSLOG("Unable to configure VMBus channel");
+    status = _hvDevice->openVMBusChannel(kHyperVKeyboardRingBufferSize, kHyperVKeyboardRingBufferSize);
+    if (status != kIOReturnSuccess) {
+      HVSYSLOG("Failed to open VMBus channel with status 0x%X", status);
       break;
     }
-    
+
     status = connectKeyboard();
     if (status != kIOReturnSuccess) {
-      HVSYSLOG("Unable to connect to keyboard device: 0x%X", status);
+      HVSYSLOG("Failed to connect to keyboard device with status 0x%X", status);
       break;
     }
-    
-    result = true;
     HVDBGLOG("Initialized Hyper-V Synthetic Keyboard");
+
+    result = true;
   } while (false);
-  
+
   if (!result) {
-    freeStructures();
-    if (started) {
-      super::stop(provider);
-    }
+    stop(provider);
   }
-  
   return result;
 }
 
 void HyperVKeyboard::stop(IOService *provider) {
   HVDBGLOG("Stopping Hyper-V Synthetic Keyboard");
-  
-  freeStructures();
+
+  if (_hvDevice != nullptr) {
+    _hvDevice->closeVMBusChannel();
+    _hvDevice->uninstallPacketActions();
+    OSSafeReleaseNULL(_hvDevice);
+  }
+
   super::stop(provider);
 }
 
-OSReturn HyperVKeyboard::connectKeyboard() {
+IOReturn HyperVKeyboard::connectKeyboard() {
   HVDBGLOG("Connecting to keyboard interface");
-  
+
   HyperVKeyboardMessageProtocolRequest requestMsg;
-  requestMsg.header.type = kHyperVKeyboardMessageTypeProtocolRequest;
+  requestMsg.header.type      = kHyperVKeyboardMessageTypeProtocolRequest;
   requestMsg.versionRequested = kHyperVKeyboardVersion;
-  
-  return hvDevice->writeInbandPacket(&requestMsg, sizeof (requestMsg), true);
+
+  return _hvDevice->writeInbandPacket(&requestMsg, sizeof (requestMsg), true);
 }
 
 UInt32 HyperVKeyboard::deviceType() {
+  //
+  // Apple keyboard.
+  //
   return 3;
 }
 
@@ -111,85 +107,32 @@ UInt32 HyperVKeyboard::interfaceID() {
 }
 
 inline UInt32 getKeyCode(HyperVKeyboardMessageKeystroke *keyEvent) {
-  UInt8 keyCode = PS2ToADBMapStock[keyEvent->makeCode + (keyEvent->isE0 ? kADBConverterExStart : 0)];
-  
-  return keyCode;
+  return PS2ToADBMapStock[keyEvent->makeCode + (keyEvent->isE0 ? kADBConverterExStart : 0)];
 }
 
-void HyperVKeyboard::freeStructures() {
-  //
-  // Release interrupt.
-  //
-  if (interruptSource != nullptr) {
-    interruptSource->disable();
-    getWorkLoop()->removeEventSource(interruptSource);
-    interruptSource->release();
-  }
-  
-  //
-  // Close channel and release parent VMBus device object.
-  //
-  if (hvDevice != nullptr) {
-    hvDevice->closeVMBusChannel();
-    hvDevice->release();
-  }
-}
+void HyperVKeyboard::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
+  HyperVKeyboardMessage *keyboardMsg = (HyperVKeyboardMessage*) pktData;
 
-void HyperVKeyboard::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
-  UInt8 data128[128];
-
-  do {
-    //
-    // Check for available inband packets.
-    // Large packets will be allocated as needed.
-    //
-    HyperVKeyboardMessage *message;
-    UInt32 pktDataLength;
-    if (!hvDevice->nextInbandPacketAvailable(&pktDataLength)) {
+  switch (keyboardMsg->header.type) {
+    case kHyperVKeyboardMessageTypeProtocolResponse:
+      HVDBGLOG("Keyboard protocol status %u %u", keyboardMsg->protocolResponse.header.type, keyboardMsg->protocolResponse.status);
       break;
-    }
 
-    if (pktDataLength <= sizeof (data128)) {
-      message = (HyperVKeyboardMessage*)data128;
-    } else {
-      HVDBGLOG("Allocating large packet of %u bytes", pktDataLength);
-      message = (HyperVKeyboardMessage*)IOMalloc(pktDataLength);
-    }
+    case kHyperVKeyboardMessageTypeEvent:
+      UInt64 time;
+      clock_get_uptime(&time);
 
-    //
-    // Read next packet.
-    //
-    if (hvDevice->readInbandCompletionPacket((void *)message, pktDataLength, nullptr) == kIOReturnSuccess) {
-      switch (message->header.type) {
-        case kHyperVKeyboardMessageTypeProtocolResponse:
-          HVDBGLOG("Keyboard protocol status %u %u", message->protocolResponse.header.type, message->protocolResponse.status);
-          break;
+      HVDBGLOG("Got make code 0x%X (E0: %u, break: %u)", keyboardMsg->keystroke.makeCode, keyboardMsg->keystroke.isE0, keyboardMsg->keystroke.isBreak);
+      dispatchKeyboardEvent(getKeyCode(&keyboardMsg->keystroke), !keyboardMsg->keystroke.isBreak, *(AbsoluteTime*)&time);
+      break;
 
-        case kHyperVKeyboardMessageTypeEvent:
-          UInt64 time;
-          clock_get_uptime(&time);
-          
-          HVDBGLOG("Got make code 0x%X (E0: %u, break: %u)", message->keystroke.makeCode, message->keystroke.isE0, message->keystroke.isBreak);
-          dispatchKeyboardEvent(getKeyCode(&message->keystroke), !message->keystroke.isBreak, *(AbsoluteTime*)&time);
-          break;
-
-        default:
-          HVDBGLOG("Unknown message type %u, size %u", message->header.type, pktDataLength);
-          break;
-      }
-    }
-
-    //
-    // Free allocated packet if needed.
-    //
-    if (pktDataLength > sizeof (data128)) {
-      IOFree(message, pktDataLength);
-    }
-  } while (true);
+    default:
+      HVDBGLOG("Unknown message type %u, size %u", keyboardMsg->header.type, pktDataLength);
+      break;
+  }
 }
 
-const unsigned char* HyperVKeyboard::defaultKeymapOfLength(UInt32 * length)
-{
+const unsigned char* HyperVKeyboard::defaultKeymapOfLength(UInt32 * length) {
   //
   // Taken from 10.4.9's IOHIDFamily/IOHIDKeyboard.cpp
   //
@@ -198,12 +141,12 @@ const unsigned char* HyperVKeyboard::defaultKeymapOfLength(UInt32 * length)
     // Use byte units.
     //
     0x00, 0x00,
-          
+
     //
     // Number of modifier definitions.
     //
     0x0A,
-    
+
     //
     // Modifier definitions.
     // (modifier ID, number of keycodes modifier is tied to, keycodes modifier is tied to)
@@ -218,12 +161,12 @@ const unsigned char* HyperVKeyboard::defaultKeymapOfLength(UInt32 * length)
     NX_MODIFIERKEY_RCONTROL,    0x01, 0x3E,
     NX_MODIFIERKEY_RALTERNATE,  0x01, 0x3D,
     NX_MODIFIERKEY_RCOMMAND,    0x01, 0x36,
-    
+
     //
     // Number of keycode defintions.
     //
     0x7F,
-    
+
     //
     // Keycode definitions.
     // (modifier mask + number of character pairs, character pairs to generate (character set, character code))
@@ -358,12 +301,12 @@ const unsigned char* HyperVKeyboard::defaultKeymapOfLength(UInt32 * length)
     0x00, 0x01, 0xAE,                                                                                     // 7C RIGHT ARROW
     0x00, 0x01, 0xAF,                                                                                     // 7D DOWN ARROW
     0x00, 0x01, 0xAD,                                                                                     // 7E UP ARROW
-    
+
     //
     // Number of key sequence definitions.
     //
     0x0F,
-    
+
     //
     // Key sequence definitions.
     //
@@ -382,12 +325,12 @@ const unsigned char* HyperVKeyboard::defaultKeymapOfLength(UInt32 * length)
     0x02, 0xFF, 0x04, 0x00, 0x70, // Command + 'p'
     0x02, 0xFF, 0x04, 0x00, 0x5D, // Command + ']'
     0x02, 0xFF, 0x04, 0x00, 0x5B, // Command + '['
-    
+
     //
     // Number of special key definitions.
     //
     0x07,
-    
+
     //
     // Special key definitions.
     //
@@ -399,7 +342,7 @@ const unsigned char* HyperVKeyboard::defaultKeymapOfLength(UInt32 * length)
     NX_KEYTYPE_SOUND_DOWN,  0x49,
     NX_KEYTYPE_NUM_LOCK,    0x47,
   };
-  
+
   *length = sizeof(appleUSAKeyMap);
   return appleUSAKeyMap;
 }

@@ -8,7 +8,8 @@
 #ifndef HyperVMouseRegs_hpp
 #define HyperVMouseRegs_hpp
 
-#define kHyperVMouseRingBufferSize  (0x8000)
+#define kHyperVMouseRingBufferSize      0x8000
+#define kHyperVMouseResponsePacketSize  128
 
 #define kHyperVMouseInitTimeout     10000
 
@@ -16,6 +17,7 @@
 
 //
 // Current mouse protocol is 2.0.
+// First used in Windows Server 2008.
 //
 #define kHyperVMouseVersionMajor    2
 #define kHyperVMouseVersionMinor    0
