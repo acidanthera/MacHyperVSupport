@@ -5,8 +5,8 @@
 //  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
-#ifndef HyperVNetworkRegs_h
-#define HyperVNetworkRegs_h
+#ifndef HyperVNetworkRegs_hpp
+#define HyperVNetworkRegs_hpp
 
 #define kHyperVNetworkRingBufferSize (128 * PAGE_SIZE)
 
@@ -288,6 +288,14 @@ typedef enum : UInt32 {
 } HyperVNetworkRNDISMessageType;
 
 //
+// RNDIS message header.
+//
+typedef struct {
+  HyperVNetworkRNDISMessageType type;
+  UInt32                        length;
+} HyperVNetworkRNDISMessageHeader;
+
+//
 // Data packet message.
 // This message is used for Ethernet frames. Offsets are from
 // the beginning of the packet header.
@@ -482,9 +490,7 @@ typedef struct {
 // Main message structure.
 //
 typedef struct {
-  HyperVNetworkRNDISMessageType msgType;
-  UInt32                        msgLength;
-  
+  HyperVNetworkRNDISMessageHeader header;
   union {
     HyperVNetworkRNDISMessageDataPacket           dataPacket;
     HyperVNetworkRNDISMessageInitializeRequest    initRequest;
@@ -501,4 +507,4 @@ typedef struct {
   };
 } HyperVNetworkRNDISMessage;
 
-#endif /* HyperVNetworkRegs_h */
+#endif

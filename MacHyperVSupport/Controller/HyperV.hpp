@@ -532,7 +532,7 @@ typedef struct {
   IOBufferMemoryDescriptor  *bufDesc;
   IODMACommand              *dmaCmd;
   mach_vm_address_t         physAddr;
-  void                      *buffer;
+  UInt8                     *buffer;
   size_t                    size;
 } HyperVDMABuffer;
 

@@ -275,7 +275,7 @@ bool HyperVController::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size) {
   
   dmaBuf->bufDesc  = bufDesc;
   dmaBuf->physAddr = bufDesc->getPhysicalAddress();
-  dmaBuf->buffer   = bufDesc->getBytesNoCopy();
+  dmaBuf->buffer   = (UInt8*) bufDesc->getBytesNoCopy();
   dmaBuf->size     = size;
   
   memset(dmaBuf->buffer, 0, dmaBuf->size);

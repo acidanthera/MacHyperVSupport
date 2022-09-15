@@ -240,15 +240,15 @@ void HyperVNetwork::createMediumDictionary() {
 }
 
 bool HyperVNetwork::readMACAddress() {
-  UInt32 macSize = sizeof (ethAddress.bytes);
-  if (!queryRNDISOID(kHyperVNetworkRNDISOIDEthernetPermanentAddress, (void *)ethAddress.bytes, &macSize)) {
+  UInt32 macSize = sizeof (_ethAddress.bytes);
+  if (!queryRNDISOID(kHyperVNetworkRNDISOIDEthernetPermanentAddress, (void *)_ethAddress.bytes, &macSize)) {
     HVSYSLOG("Failed to get MAC address");
     return false;
   }
   
   HVDBGLOG("MAC address is %02X:%02X:%02X:%02X:%02X:%02X",
-         ethAddress.bytes[0], ethAddress.bytes[1], ethAddress.bytes[2],
-         ethAddress.bytes[3], ethAddress.bytes[4], ethAddress.bytes[5]);
+           _ethAddress.bytes[0], _ethAddress.bytes[1], _ethAddress.bytes[2],
+           _ethAddress.bytes[3], _ethAddress.bytes[4], _ethAddress.bytes[5]);
   return true;
 }
 

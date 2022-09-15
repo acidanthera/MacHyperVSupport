@@ -39,11 +39,17 @@ class HyperVNetwork : public IOEthernetController {
   typedef IOEthernetController super;
 
 private:
+  HyperVVMBusDevice *_hvDevice = nullptr;
+
   //
-  // Parent VMBus device.
+  // Network structures.
   //
-  HyperVVMBusDevice       *_hvDevice         = nullptr;
-  bool                          isEnabled = false;
+  bool                _isNetworkEnabled = false;
+  IOEthernetInterface *_ethInterface    = nullptr;
+  IOEthernetAddress   _ethAddress       = { };
+  bool                isLinkUp = false;
+  OSDictionary        *mediumDict = nullptr;
+  UInt32              currentMediumIndex;
   
   HyperVNetworkProtocolVersion  netVersion;
   
@@ -78,12 +84,9 @@ private:
   
   HyperVNetworkRNDISRequest     *rndisRequests;
   
-  IOEthernetInterface           *ethInterface;
-  IOEthernetAddress             ethAddress;
+
   
-  bool                          isLinkUp = false;
-  OSDictionary                  *mediumDict;
-  UInt32                        currentMediumIndex;
+
   
   void handleTimer();
   bool wakePacketHandler(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
@@ -128,7 +131,8 @@ public:
   //
   // IOService overrides.
   //
-  virtual bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
+  bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
+  void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
   
   //
   // IOEthernetController overrides.
