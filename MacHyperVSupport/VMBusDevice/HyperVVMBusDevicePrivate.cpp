@@ -88,7 +88,7 @@ void HyperVVMBusDevice::handleInterrupt(IOInterruptEventSource *sender, int coun
     
       getAvailableRxSpace(&readBytes, &writeBytes);
     }
-  } while (!_shouldFlushPackets && readBytes != 0);
+  } while (_shouldFlushPackets && readBytes != 0);
 }
 
 IOReturn HyperVVMBusDevice::openVMBusChannelGated(UInt32 *txSize, UInt32 *rxSize) {
