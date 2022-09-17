@@ -209,13 +209,7 @@ IOReturn HyperVVMBus::initVMBusChannelGPADL(UInt32 channelId, HyperVDMABuffer *d
   //
   // Get the next available GPADL handle.
   //
-  if (!IOSimpleLockTryLock(nextGpadlHandleLock)) {
-    HVDBGLOG("Failed to acquire GPADL handle lock");
-    return kIOReturnCannotLock;
-  }
-  *gpadlHandle = nextGpadlHandle;
-  nextGpadlHandle++;
-  IOSimpleLockUnlock(nextGpadlHandleLock);
+  *gpadlHandle = OSIncrementAtomic(&_nextGpadlHandle);
   
   //
   // For larger GPADL requests, a GPADL header and one or more GPADL body messages are required.

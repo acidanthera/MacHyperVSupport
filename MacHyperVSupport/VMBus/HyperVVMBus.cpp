@@ -291,11 +291,7 @@ bool HyperVVMBus::scanVMBus() {
   // Initialize children array.
   //
   memset(vmbusChannels, 0, sizeof (vmbusChannels));
-  nextGpadlHandle = kHyperVGpadlStartHandle;
-  nextGpadlHandleLock = IOSimpleLockAlloc();
-  if (nextGpadlHandleLock == NULL) {
-    return false;
-  }
+  _nextGpadlHandle = kHyperVGpadlStartHandle;
   vmbusChannelHighest = 0;
   
   //

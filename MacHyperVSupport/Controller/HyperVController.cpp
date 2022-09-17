@@ -285,11 +285,12 @@ bool HyperVController::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size) {
 
 void HyperVController::freeDmaBuffer(HyperVDMABuffer *dmaBuf) {
   IOBufferMemoryDescriptor *bufDesc = dmaBuf->bufDesc;
-  
-  memset(dmaBuf, 0, sizeof (*dmaBuf));
-  
-  bufDesc->complete();
-  bufDesc->release();
+
+  bzero(dmaBuf, sizeof (*dmaBuf));
+  if (bufDesc != nullptr) {
+    bufDesc->complete();
+    OSSafeReleaseNULL(bufDesc);
+  }
 }
 
 bool HyperVController::addInterruptProperties(OSDictionary *dict, UInt32 interruptVector) {

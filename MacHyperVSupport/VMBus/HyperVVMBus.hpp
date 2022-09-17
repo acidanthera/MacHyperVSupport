@@ -20,11 +20,6 @@
 
 #define kVMBusArrayInitialChildrenCount        10
 
-//
-// Unknown why this is the start handle, Linux and BSD both do this.
-//
-#define kHyperVGpadlStartHandle               0xE1E10
-
 class HyperVVMBusDevice;
 class VMBusInterruptProcessor;
 
@@ -113,8 +108,7 @@ private:
   bool                    cmdGateEvent = false;
   
   
-  UInt32                  nextGpadlHandle;
-  IOSimpleLock            *nextGpadlHandleLock;
+  UInt32                  _nextGpadlHandle = kHyperVGpadlNullHandle;
   UInt32                  vmbusVersion;
   UInt16                  vmbusMsgConnectionId;
 public:

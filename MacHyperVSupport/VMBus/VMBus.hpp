@@ -32,6 +32,12 @@
 #define VMBUS_CHANNEL_EVENT_MASK(chan)  (1 << (chan % 8))
 
 //
+// Linux and FreeBSD use this as a starting handle, but any non-zero value appears to work.
+//
+#define kHyperVGpadlNullHandle    0
+#define kHyperVGpadlStartHandle   0xE1E10
+
+//
 // VMBus protocol versions.
 //
 // 0.13 - Windows Server 2008
