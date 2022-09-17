@@ -128,7 +128,7 @@ UInt32 HyperVNetwork::outputPacket(mbuf_t m, void *param) {
   // Create RNDIS data request used for transmitting packet.
   //
   packetLength = mbuf_pkthdr_len(m);
-  rndisBuffer  = &sendBuffer.buffer[sendSectionSize * sendIndex];
+  rndisBuffer  = &_sendBuffer.buffer[_sendSectionSize * sendIndex];
   rndisMsg     = (HyperVNetworkRNDISMessage *)rndisBuffer;
   bzero(rndisMsg, sizeof (*rndisMsg));
 
@@ -137,8 +137,8 @@ UInt32 HyperVNetwork::outputPacket(mbuf_t m, void *param) {
   rndisMsg->dataPacket.dataLength = (UInt32)packetLength;
   rndisMsg->header.length         = sizeof (rndisMsg->header) + sizeof (rndisMsg->dataPacket) + rndisMsg->dataPacket.dataLength;
 
-  if (packetLength == 0 || rndisMsg->header.length > sendSectionSize) {
-    HVSYSLOG("Packet of %u bytes is too large or invalid, send section size is %u bytes", packetLength, sendSectionSize);
+  if (packetLength == 0 || rndisMsg->header.length > _sendSectionSize) {
+    HVSYSLOG("Packet of %u bytes is too large or invalid, send section size is %u bytes", packetLength, _sendSectionSize);
     return kIOReturnOutputDropped;
   }
 
@@ -161,7 +161,7 @@ UInt32 HyperVNetwork::outputPacket(mbuf_t m, void *param) {
   netMsg.v1.sendRNDISPacket.sendBufferSectionIndex = sendIndex;
   netMsg.v1.sendRNDISPacket.sendBufferSectionSize  = rndisMsg->header.length;
 
-  HVDBGLOG("Preparing to send packet of %u bytes using send section %u/%u", rndisMsg->header.length, sendIndex, sendSectionCount);
+  HVDBGLOG("Preparing to send packet of %u bytes using send section %u/%u", rndisMsg->header.length, sendIndex, _sendSectionCount);
   status = _hvDevice->writeInbandPacketWithTransactionId(&netMsg, sizeof (netMsg), sendIndex | kHyperVNetworkSendTransIdBits, true);
   if (status != kIOReturnSuccess) {
     HVSYSLOG("Failed to send packet with status 0x%X", status);

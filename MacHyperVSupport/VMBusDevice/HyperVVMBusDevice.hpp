@@ -164,6 +164,7 @@ public:
   IOReturn openVMBusChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId = UINT64_MAX);
   IOReturn closeVMBusChannel();
   IOReturn createGPADLBuffer(HyperVDMABuffer *dmaBuffer, UInt32 *gpadlHandle);
+  IOReturn freeGPADLBuffer(UInt32 gpadlHandle);
   UInt32 getChannelId() { return _channelId; }
   uuid_t* getInstanceId() { return &_instanceId; }
   

@@ -268,6 +268,10 @@ IOReturn HyperVVMBusDevice::createGPADLBuffer(HyperVDMABuffer *dmaBuffer, UInt32
   return _vmbusProvider->initVMBusChannelGPADL(_channelId, dmaBuffer, gpadlHandle);
 }
 
+IOReturn HyperVVMBusDevice::freeGPADLBuffer(UInt32 gpadlHandle) {
+  return _vmbusProvider->freeVMBusChannelGPADL(_channelId, gpadlHandle);
+}
+
 bool HyperVVMBusDevice::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size) {
   return _vmbusProvider->allocateDmaBuffer(dmaBuf, size);
 }

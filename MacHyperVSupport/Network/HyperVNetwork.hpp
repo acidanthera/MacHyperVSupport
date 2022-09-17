@@ -44,32 +44,31 @@ private:
   //
   // Network structures.
   //
-  bool                _isNetworkEnabled = false;
-  IOEthernetInterface *_ethInterface    = nullptr;
-  IOEthernetAddress   _ethAddress       = { };
-  bool                isLinkUp = false;
-  IONetworkMedium     *_networkMedium = nullptr;
-  
-  HyperVNetworkProtocolVersion  netVersion;
-  
+  HyperVNetworkProtocolVersion _netVersion;
+  bool                         _isNetworkEnabled = false;
+  IOEthernetInterface          *_ethInterface    = nullptr;
+  IOEthernetAddress            _ethAddress       = { };
+  bool                         _isLinkUp         = false;
+  IONetworkMedium              *_networkMedium   = nullptr;
+
   //
   // Receive buffer.
   //
-  HyperVDMABuffer               receiveBuffer;
-  UInt32                        receiveBufferSize;
-  UInt32                        receiveGpadlHandle;
-  
+  HyperVDMABuffer _receiveBuffer      = { };
+  UInt32          _receiveBufferSize  = 0;
+  UInt32          _receiveGpadlHandle = kHyperVGpadlNullHandle;
+
   //
   // Send buffer and tracking info.
   //
-  HyperVDMABuffer               sendBuffer;
-  UInt32                        sendBufferSize;
-  UInt32                        sendGpadlHandle;
-  UInt32                        sendSectionSize;
-  UInt32                        sendSectionCount;
-  UInt32                        *sendIndexMap = nullptr;
-  size_t                        sendIndexMapSize;
-  UInt32                        outstandingSends = 0;
+  HyperVDMABuffer _sendBuffer             = { };
+  UInt32          _sendBufferSize         = 0;
+  UInt32          _sendGpadlHandle        = kHyperVGpadlNullHandle;
+  UInt32          _sendSectionSize        = 0;
+  UInt32          _sendSectionCount       = 0;
+  UInt32          *_sendIndexMap          = nullptr;
+  size_t          _sendIndexMapSize       = 0;
+  UInt32          _sendIndexesOutstanding = 0;
   UInt32                        oldSends = 0;
   UInt64    totalbytes = 0;
   UInt64    totalRX = 0;
@@ -93,7 +92,16 @@ private:
   
   
   bool negotiateProtocol(HyperVNetworkProtocolVersion protocolVersion);
-  bool initBuffers();
+  
+  //
+  // Send/receive buffers.
+  //
+  IOReturn initSendReceiveBuffers();
+  void freeSendReceiveBuffers();
+  UInt32 getNextSendIndex();
+  UInt32 getFreeSendIndexCount();
+  void releaseSendIndex(UInt32 sendIndex);
+  
   bool connectNetwork();
   
   void handleRNDISRanges(VMBusPacketTransferPages *pktPages, UInt32 pktLength);
@@ -113,14 +121,6 @@ private:
   bool initializeRNDIS();
   IOReturn getRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 *valueSize);
   IOReturn setRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 valueSize);
-  
-  //
-  // RNDIS OID functions.
-  //
-  
-  UInt32 getNextSendIndex();
-  UInt32 getFreeSendIndexCount();
-  void releaseSendIndex(UInt32 sendIndex);
   
   //
   // Private
