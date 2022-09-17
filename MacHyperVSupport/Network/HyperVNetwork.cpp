@@ -64,7 +64,6 @@ bool HyperVNetwork::start(IOService *provider) {
     // TODO
     rndisLock = IOLockAlloc();
     connectNetwork();
-    createMediumDictionary();
     
     //
     // Attach and register network interface.
@@ -87,6 +86,11 @@ bool HyperVNetwork::start(IOService *provider) {
 
 void HyperVNetwork::stop(IOService *provider) {
   HVDBGLOG("Stopping Hyper-V Synthetic Networking");
+  
+  if (_ethInterface != nullptr) {
+    detachInterface(_ethInterface);
+    OSSafeReleaseNULL(_ethInterface);
+  }
 
   if (_hvDevice != nullptr) {
     _hvDevice->closeVMBusChannel();

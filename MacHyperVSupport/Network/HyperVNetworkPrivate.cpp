@@ -211,6 +211,7 @@ bool HyperVNetwork::connectNetwork() {
   
   initializeRNDIS();
   
+  createMediumDictionary();
   readMACAddress();
   updateLinkState(NULL);
   
@@ -220,28 +221,35 @@ bool HyperVNetwork::connectNetwork() {
   return true;
 }
 
-void HyperVNetwork::addNetworkMedium(UInt32 index, UInt32 type, UInt32 speed) {
-  IONetworkMedium *medium = IONetworkMedium::medium(type, speed * MBit, 0, index);
-  if (medium != NULL) {
-    IONetworkMedium::addMedium(mediumDict, medium);
-    medium->release();
-  }
-}
-
 void HyperVNetwork::createMediumDictionary() {
+  OSDictionary *mediumDict;
+  
   //
-  // Create medium dictionary with all possible speeds.
+  // Create medium dictionary.
+  // Speed/duplex is irrelvant for Hyper-V, use basic auto settings.
   //
   mediumDict = OSDictionary::withCapacity(1);
+  if (mediumDict == nullptr) {
+    return;
+  }
   
-  addNetworkMedium(0, kIOMediumEthernetAuto, 0);
+  _networkMedium = IONetworkMedium::medium(kIOMediumEthernetAuto | kIOMediumOptionFullDuplex, 0);
+  if (_networkMedium == nullptr) {
+    mediumDict->release();
+    return;
+  }
   
+  IONetworkMedium::addMedium(mediumDict, _networkMedium);
+
   publishMediumDictionary(mediumDict);
+  setCurrentMedium(_networkMedium);
+  
+  mediumDict->release();
 }
 
 bool HyperVNetwork::readMACAddress() {
   UInt32 macSize = sizeof (_ethAddress.bytes);
-  if (!queryRNDISOID(kHyperVNetworkRNDISOIDEthernetPermanentAddress, (void *)_ethAddress.bytes, &macSize)) {
+  if (getRNDISOID(kHyperVNetworkRNDISOIDEthernetPermanentAddress, (void *)_ethAddress.bytes, &macSize) != kIOReturnSuccess) {
     HVSYSLOG("Failed to get MAC address");
     return false;
   }
@@ -259,7 +267,7 @@ void HyperVNetwork::updateLinkState(HyperVNetworkRNDISMessageIndicateStatus *ind
   if (indicateStatus == NULL) {
     HyperVNetworkRNDISLinkState linkState;
     UInt32 linkStateSize = sizeof (linkState);
-    if (!queryRNDISOID(kHyperVNetworkRNDISOIDGeneralMediaConnectStatus, &linkState, &linkStateSize)) {
+    if (getRNDISOID(kHyperVNetworkRNDISOIDGeneralMediaConnectStatus, &linkState, &linkStateSize) != kIOReturnSuccess) {
       HVSYSLOG("Failed to get link state");
       return;
     }
@@ -267,7 +275,7 @@ void HyperVNetwork::updateLinkState(HyperVNetworkRNDISMessageIndicateStatus *ind
     HVDBGLOG("Link state is initially %s", linkState == kHyperVNetworkRNDISLinkStateConnected ? "up" : "down");
     isLinkUp = linkState == kHyperVNetworkRNDISLinkStateConnected;
     if (isLinkUp) {
-      setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive, 0);
+      setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive, _networkMedium);
     } else {
       setLinkStatus(kIONetworkLinkValid, 0);
     }
@@ -281,13 +289,13 @@ void HyperVNetwork::updateLinkState(HyperVNetworkRNDISMessageIndicateStatus *ind
          indicateStatus->status, indicateStatus->statusBufferOffset, indicateStatus->statusBufferLength);
   switch (indicateStatus->status) {
     case kHyperVNetworkRNDISStatusLinkSpeedChange:
-      HVDBGLOG("Link has changed speeds");
+      // Ignore.
       break;
 
     case kHyperVNetworkRNDISStatusMediaConnect:
       if (!isLinkUp) {
         HVDBGLOG("Link is coming up");
-        setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive, 0);
+        setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive, _networkMedium);
         isLinkUp = true;
       }
       break;
@@ -307,7 +315,7 @@ void HyperVNetwork::updateLinkState(HyperVNetworkRNDISMessageIndicateStatus *ind
         //
         HVDBGLOG("Link has changed networks");
         setLinkStatus(kIONetworkLinkValid, 0);
-        setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive, 0);
+        setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive, _networkMedium);
       }
       break;
 

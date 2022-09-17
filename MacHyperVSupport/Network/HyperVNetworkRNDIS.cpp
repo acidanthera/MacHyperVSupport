@@ -18,8 +18,8 @@ bool HyperVNetwork::processRNDISPacket(UInt8 *data, UInt32 dataLength) {
   
   switch (rndisPkt->header.type) {
     case kHyperVNetworkRNDISMessageTypeInitComplete:
-    case kHyperVNetworkRNDISMessageTypeQueryComplete:
-    case kHyperVNetworkRNDISMessageTypeSetComplete:
+    case kHyperVNetworkRNDISMessageTypeGetOIDComplete:
+    case kHyperVNetworkRNDISMessageTypeSetOIDComplete:
     case kHyperVNetworkRNDISMessageTypeResetComplete:
 
       
@@ -234,66 +234,113 @@ bool HyperVNetwork::initializeRNDIS() {
   return result;
 }
 
-bool HyperVNetwork::queryRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 *valueSize) {
-  if (value == NULL || valueSize == NULL) {
-    return false;
+IOReturn HyperVNetwork::getRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 *valueSize) {
+  HyperVNetworkRNDISRequest *rndisRequest;
+  bool                      result;
+  IOReturn                  status;
+
+  if (value == nullptr || valueSize == nullptr) {
+    return kIOReturnBadArgument;
   }
-  
-  HyperVNetworkRNDISRequest *rndisRequest = allocateRNDISRequest();
-  rndisRequest->message.header.type   = kHyperVNetworkRNDISMessageTypeQuery;
-  rndisRequest->message.header.length = sizeof(HyperVNetworkRNDISMessageQueryRequest) + 8;
-  
-  rndisRequest->message.queryRequest.oid              = oid;
-  rndisRequest->message.queryRequest.infoBufferOffset = sizeof(HyperVNetworkRNDISMessageQueryRequest);
-  rndisRequest->message.queryRequest.infoBufferLength = 0;
-  rndisRequest->message.queryRequest.deviceVcHandle   = 0;
-  
-  HVDBGLOG("OID query 0x%X request offset 0x%X, length 0x%X", oid,
-           rndisRequest->message.queryRequest.infoBufferOffset, rndisRequest->message.queryRequest.infoBufferLength);
-  
-  bool result = sendRNDISRequest(rndisRequest);
-  if (result) {
-    HVDBGLOG("OID query 0x%X response status 0x%X, offset 0x%X, length 0x%X", oid,
-             rndisRequest->message.queryComplete.status,
-             rndisRequest->message.queryComplete.infoBufferOffset, rndisRequest->message.queryComplete.infoBufferLength);
+
+  //
+  // Allocate RNDIS request.
+  //
+  rndisRequest = allocateRNDISRequest();
+  if (rndisRequest == nullptr) {
+    return kIOReturnNoResources;
+  }
+
+  //
+  // Get specified RNDIS OID.
+  //
+  rndisRequest->message.header.type                    = kHyperVNetworkRNDISMessageTypeGetOID;
+  rndisRequest->message.header.length                  = sizeof (rndisRequest->message.header) + sizeof (rndisRequest->message.getOIDRequest);
+  rndisRequest->message.getOIDRequest.oid              = oid;
+  rndisRequest->message.getOIDRequest.infoBufferOffset = sizeof (rndisRequest->message.getOIDRequest);
+  rndisRequest->message.getOIDRequest.infoBufferLength = 0;
+  rndisRequest->message.getOIDRequest.deviceVcHandle   = 0;
+
+  HVDBGLOG("Getting OID 0x%X", oid);
+  result = sendRNDISRequest(rndisRequest);
+  if (result && rndisRequest->message.getOIDComplete.status == kHyperVNetworkRNDISStatusSuccess) {
+    HVDBGLOG("Got OID 0x%X data at offset 0x%X (%u bytes)", oid,
+             rndisRequest->message.getOIDComplete.infoBufferOffset, rndisRequest->message.getOIDComplete.infoBufferLength);
     
-    memcpy(value, (UInt8*)(&rndisRequest->message.queryComplete) + rndisRequest->message.queryComplete.infoBufferOffset, rndisRequest->message.queryComplete.infoBufferLength);
-    *valueSize = rndisRequest->message.queryComplete.infoBufferLength;
+    //
+    // Copy OID data from RNDIS request to buffer.
+    //
+    if (*valueSize >= rndisRequest->message.getOIDComplete.infoBufferLength) {
+      memcpy(value, (UInt8*)(&rndisRequest->message.getOIDComplete) + rndisRequest->message.getOIDComplete.infoBufferOffset,
+             rndisRequest->message.getOIDComplete.infoBufferLength);
+      status = kIOReturnSuccess;
+    } else {
+      HVDBGLOG("OID value of %u bytes is too large for buffer of %u bytes", rndisRequest->message.getOIDComplete.infoBufferLength, *valueSize);
+      status = kIOReturnMessageTooLarge;
+    }
+    *valueSize = rndisRequest->message.getOIDComplete.infoBufferLength;
+
+  } else if (result) {
+    HVDBGLOG("Failed to get OID 0x%X with status 0x%X", oid, rndisRequest->message.getOIDComplete.status);
+    status = kIOReturnIOError;
+
   } else {
-    HVSYSLOG("Failed to send OID 0x%X query", oid);
+    HVDBGLOG("Failed to get OID 0x%X", oid);
+    status = kIOReturnIOError;
   }
-  
+
   freeRNDISRequest(rndisRequest);
-  return result;
+  return status;
 }
 
-bool HyperVNetwork::setRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 valueSize) {
+IOReturn HyperVNetwork::setRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 valueSize) {
+  HyperVNetworkRNDISRequest *rndisRequest;
+  bool                      result;
+  IOReturn                  status;
+
   if (value == nullptr || valueSize == 0) {
-    return false;
+    return kIOReturnBadArgument;
   }
+
+  //
+  // Allocate RNDIS request.
+  //
+  rndisRequest = allocateRNDISRequest(valueSize);
+  if (rndisRequest == nullptr) {
+    return kIOReturnNoResources;
+  }
+
+  //
+  // Set specified RNDIS OID.
+  //
+  rndisRequest->message.header.type                    = kHyperVNetworkRNDISMessageTypeSetOID;
+  rndisRequest->message.header.length                  = sizeof (rndisRequest->message.header) + sizeof (rndisRequest->message.setOIDRequest);
+  rndisRequest->message.setOIDRequest.oid              = oid;
+  rndisRequest->message.setOIDRequest.infoBufferOffset = sizeof (rndisRequest->message.setOIDRequest);
+  rndisRequest->message.setOIDRequest.infoBufferLength = valueSize;
+  rndisRequest->message.setOIDRequest.deviceVcHandle   = 0;
   
-  HyperVNetworkRNDISRequest *rndisRequest = allocateRNDISRequest(valueSize);
-  rndisRequest->message.header.type   = kHyperVNetworkRNDISMessageTypeSet;
-  rndisRequest->message.header.length = sizeof(HyperVNetworkRNDISMessageQueryRequest) + 8 + valueSize;
-  
-  rndisRequest->message.setRequest.oid              = oid;
-  rndisRequest->message.setRequest.infoBufferOffset = sizeof(HyperVNetworkRNDISMessageSetRequest);
-  rndisRequest->message.setRequest.infoBufferLength = valueSize;
-  rndisRequest->message.setRequest.deviceVcHandle   = 0;
-  memcpy((UInt8*)(&rndisRequest->message.setRequest) + rndisRequest->message.setRequest.infoBufferOffset, value, rndisRequest->message.setRequest.infoBufferLength);
-  
-  HVDBGLOG("OID set 0x%X request offset 0x%X, length 0x%X", oid,
-           rndisRequest->message.setRequest.infoBufferOffset, rndisRequest->message.setRequest.infoBufferLength);
-  
-  bool result = sendRNDISRequest(rndisRequest);
-  if (result) {
-    HVDBGLOG("OID set 0x%X response status 0x%X", oid, rndisRequest->message.setComplete.status);
+  //
+  // Copy OID data from buffer to RNDIS request.
+  //
+  memcpy((UInt8*)(&rndisRequest->message.setOIDRequest) + rndisRequest->message.setOIDRequest.infoBufferOffset, value, valueSize);
+
+  HVDBGLOG("Setting OID 0x%X of %u bytes", oid, valueSize);
+  result = sendRNDISRequest(rndisRequest);
+  if (result && rndisRequest->message.setOIDComplete.status == kHyperVNetworkRNDISStatusSuccess) {
+    HVDBGLOG("Set OID 0x%X of %u bytes", oid, valueSize);
+
+    status = kIOReturnSuccess;
+
+  } else if (result) {
+    HVDBGLOG("Failed to set OID 0x%X with status 0x%X", oid, rndisRequest->message.setOIDComplete.status);
+    status = kIOReturnIOError;
+
   } else {
-    HVSYSLOG("Failed to send OID 0x%X set", oid);
+    HVDBGLOG("Failed to set OID 0x%X", oid);
+    status = kIOReturnIOError;
   }
-  
+
   freeRNDISRequest(rndisRequest);
-  return result;
+  return status;
 }
-
-

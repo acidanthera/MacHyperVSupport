@@ -48,8 +48,7 @@ private:
   IOEthernetInterface *_ethInterface    = nullptr;
   IOEthernetAddress   _ethAddress       = { };
   bool                isLinkUp = false;
-  OSDictionary        *mediumDict = nullptr;
-  UInt32              currentMediumIndex;
+  IONetworkMedium     *_networkMedium = nullptr;
   
   HyperVNetworkProtocolVersion  netVersion;
   
@@ -104,20 +103,24 @@ private:
   void processIncoming(UInt8 *data, UInt32 dataLength);
   
   //
-  // RNDIS
+  // RNDIS setup and operations.
   //
-  UInt32 getNextSendIndex();
-  UInt32 getFreeSendIndexCount();
-  void releaseSendIndex(UInt32 sendIndex);
   HyperVNetworkRNDISRequest *allocateRNDISRequest(size_t additionalLength = 0);
   void freeRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest);
   UInt32 getNextRNDISTransId();
   bool sendRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest, bool waitResponse = false);
-  bool sendRNDISDataPacket(mbuf_t packet);
   
   bool initializeRNDIS();
-  bool queryRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 *valueSize);
-  bool setRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 valueSize);
+  IOReturn getRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 *valueSize);
+  IOReturn setRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 valueSize);
+  
+  //
+  // RNDIS OID functions.
+  //
+  
+  UInt32 getNextSendIndex();
+  UInt32 getFreeSendIndexCount();
+  void releaseSendIndex(UInt32 sendIndex);
   
   //
   // Private

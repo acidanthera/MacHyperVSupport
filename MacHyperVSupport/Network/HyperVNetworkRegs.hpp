@@ -276,10 +276,10 @@ typedef enum : UInt32 {
   kHyperVNetworkRNDISMessageTypeInit              = 0x2,
   kHyperVNetworkRNDISMessageTypeInitComplete      = (kHyperVNetworkRNDISMessageTypeInit | kHyperVNetworkRNDISMessageTypeCompletion),
   kHyperVNetworkRNDISMessageTypeHalt              = 0x3,
-  kHyperVNetworkRNDISMessageTypeQuery             = 0x4,
-  kHyperVNetworkRNDISMessageTypeQueryComplete     = (kHyperVNetworkRNDISMessageTypeQuery | kHyperVNetworkRNDISMessageTypeCompletion),
-  kHyperVNetworkRNDISMessageTypeSet               = 0x5,
-  kHyperVNetworkRNDISMessageTypeSetComplete       = (kHyperVNetworkRNDISMessageTypeSet | kHyperVNetworkRNDISMessageTypeCompletion),
+  kHyperVNetworkRNDISMessageTypeGetOID            = 0x4,
+  kHyperVNetworkRNDISMessageTypeGetOIDComplete    = (kHyperVNetworkRNDISMessageTypeGetOID | kHyperVNetworkRNDISMessageTypeCompletion),
+  kHyperVNetworkRNDISMessageTypeSetOID            = 0x5,
+  kHyperVNetworkRNDISMessageTypeSetOIDComplete    = (kHyperVNetworkRNDISMessageTypeSetOID | kHyperVNetworkRNDISMessageTypeCompletion),
   kHyperVNetworkRNDISMessageTypeReset             = 0x6,
   kHyperVNetworkRNDISMessageTypeResetComplete     = (kHyperVNetworkRNDISMessageTypeReset | kHyperVNetworkRNDISMessageTypeCompletion),
   kHyperVNetworkRNDISMessageTypeIndicate          = 0x7,
@@ -408,7 +408,7 @@ typedef enum : UInt32 {
 } HyperVNetworkRNDISLinkState;
 
 //
-// Query request message.
+// Get OID request message.
 //
 typedef struct {
   UInt32                requestId;
@@ -416,20 +416,20 @@ typedef struct {
   UInt32                infoBufferLength;
   UInt32                infoBufferOffset;
   UInt32                deviceVcHandle;
-} HyperVNetworkRNDISMessageQueryRequest;
+} HyperVNetworkRNDISMessageGetOIDRequest;
 
 //
-// Query complete message.
+// Get OID complete message.
 //
 typedef struct {
-  UInt32                    requestId;
-  HyperVNetworkRNDISStatus  status;
-  UInt32                    infoBufferLength;
-  UInt32                    infoBufferOffset;
-} HyperVNetworkRNDISMessageQueryComplete;
+  UInt32                   requestId;
+  HyperVNetworkRNDISStatus status;
+  UInt32                   infoBufferLength;
+  UInt32                   infoBufferOffset;
+} HyperVNetworkRNDISMessageGetOIDComplete;
 
 //
-// Set request message.
+// Set OID request message.
 //
 typedef struct {
   UInt32                requestId;
@@ -437,15 +437,15 @@ typedef struct {
   UInt32                infoBufferLength;
   UInt32                infoBufferOffset;
   UInt32                deviceVcHandle;
-} HyperVNetworkRNDISMessageSetRequest;
+} HyperVNetworkRNDISMessageSetOIDRequest;
 
 //
-// Set complete message.
+// Set OID complete message.
 //
 typedef struct {
-  UInt32                    requestId;
-  HyperVNetworkRNDISStatus  status;
-} HyperVNetworkRNDISMessageSetComplete;
+  UInt32                   requestId;
+  HyperVNetworkRNDISStatus status;
+} HyperVNetworkRNDISMessageSetOIDComplete;
 
 //
 // Reset request message.
@@ -495,10 +495,10 @@ typedef struct {
     HyperVNetworkRNDISMessageDataPacket           dataPacket;
     HyperVNetworkRNDISMessageInitializeRequest    initRequest;
     HyperVNetworkRNDISMessageInitializeComplete   initComplete;
-    HyperVNetworkRNDISMessageQueryRequest         queryRequest;
-    HyperVNetworkRNDISMessageQueryComplete        queryComplete;
-    HyperVNetworkRNDISMessageSetRequest           setRequest;
-    HyperVNetworkRNDISMessageSetComplete          setComplete;
+    HyperVNetworkRNDISMessageGetOIDRequest        getOIDRequest;
+    HyperVNetworkRNDISMessageGetOIDComplete       getOIDComplete;
+    HyperVNetworkRNDISMessageSetOIDRequest        setOIDRequest;
+    HyperVNetworkRNDISMessageSetOIDComplete       setOIDComplete;
     HyperVNetworkRNDISMessageResetRequest         resetRequest;
     HyperVNetworkRNDISMessageResetComplete        resetComplete;
     HyperVNetworkRNDISMessageIndicateStatus       indicateStatus;
