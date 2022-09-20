@@ -75,16 +75,27 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
 #define HVDeclareLogFunctionsVMBusChild(a) \
   private: \
   bool debugEnabled = false; \
+  bool debugDataEnabled = false; \
   inline bool HVCheckOffArg() { \
     return checkKernelArgument("-hv" a "off");; \
   } \
   inline void HVCheckDebugArgs() { \
     debugEnabled = checkKernelArgument("-hv" a "dbg"); \
+    debugDataEnabled = checkKernelArgument("-hv" a "datadbg"); \
     _hvDevice->setDebugMessagePrinting(checkKernelArgument("-hv" a "msgdbg")); \
     if (checkKernelArgument("-hv" a "statsdbg")) { _hvDevice->enableTimerDebugPrints(); } \
   } \
   inline void HVDBGLOG_PRINT(const char *func, const char *str, ...) const { \
     if (debugEnabled) { \
+      va_list args; \
+      va_start(args, str); \
+      logPrint(getMetaClass()->getClassName(), func, true, _hvDevice != nullptr ? _hvDevice->getChannelId() : -1, str, args); \
+      va_end(args); \
+    } \
+  } \
+    \
+  inline void HVDATADBGLOG_PRINT(const char *func, const char *str, ...) const { \
+    if (debugDataEnabled) { \
       va_list args; \
       va_start(args, str); \
       logPrint(getMetaClass()->getClassName(), func, true, _hvDevice != nullptr ? _hvDevice->getChannelId() : -1, str, args); \
@@ -139,9 +150,10 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
 //
 // Common logging macros to inject function name.
 //
-#define HVDBGLOG(str, ...) HVDBGLOG_PRINT(__FUNCTION__, str, ## __VA_ARGS__)
-#define HVSYSLOG(str, ...) HVSYSLOG_PRINT(__FUNCTION__, str, ## __VA_ARGS__)
-#define HVMSGLOG(str, ...) HVMSGLOG_PRINT(__FUNCTION__, str, ## __VA_ARGS__)
+#define HVDBGLOG(str, ...)     HVDBGLOG_PRINT(__FUNCTION__, str, ## __VA_ARGS__)
+#define HVDATADBGLOG(str, ...) HVDATADBGLOG_PRINT(__FUNCTION__, str, ## __VA_ARGS__)
+#define HVSYSLOG(str, ...)     HVSYSLOG_PRINT(__FUNCTION__, str, ## __VA_ARGS__)
+#define HVMSGLOG(str, ...)     HVMSGLOG_PRINT(__FUNCTION__, str, ## __VA_ARGS__)
 
 #else
 
@@ -188,6 +200,7 @@ inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId,
   } \
   inline void HVCheckDebugArgs() { } \
   inline void HVDBGLOG(const char *str, ...) const { } \
+  inline void HVDATADBGLOG(const char *str, ...) const { } \
     \
   inline void HVSYSLOG(const char *str, ...) const { \
     va_list args; \

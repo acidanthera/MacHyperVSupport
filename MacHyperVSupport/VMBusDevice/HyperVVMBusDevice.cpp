@@ -417,12 +417,14 @@ IOReturn HyperVVMBusDevice::writeGPADirectSinglePagePacket(void *buffer, UInt32 
 
 IOReturn HyperVVMBusDevice::writeGPADirectMultiPagePacket(void *buffer, UInt32 bufferLength, bool responseRequired,
                                                           VMBusPacketMultiPageBuffer *pagePacket, UInt32 pagePacketLength,
-                                                          void *responseBuffer, UInt32 responseBufferLength) {
+                                                          void *responseBuffer, UInt32 responseBufferLength, UInt64 transactionId) {
   //
   // For multi-page buffers, the packet header itself is passed to this function.
   // Ensure general header fields are set.
   //
-  UInt64 transactionId = getNextTransId();
+  if (transactionId == 0) {
+    transactionId = getNextTransId();
+  }
 
   pagePacket->header.type           = kVMBusPacketTypeDataUsingGPADirect;
   pagePacket->header.headerLength   = pagePacketLength >> kVMBusPacketSizeShift;

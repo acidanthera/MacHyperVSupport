@@ -218,7 +218,7 @@ public:
                                           void *responseBuffer = NULL, UInt32 responseBufferLength = 0);
   IOReturn writeGPADirectMultiPagePacket(void *buffer, UInt32 bufferLength, bool responseRequired,
                                          VMBusPacketMultiPageBuffer *pagePacket, UInt32 pagePacketLength,
-                                         void *responseBuffer = NULL, UInt32 responseBufferLength = 0);
+                                         void *responseBuffer = NULL, UInt32 responseBufferLength = 0, UInt64 transactionId = 0);
   IOReturn writeCompletionPacketWithTransactionId(void *buffer, UInt32 bufferLength, UInt64 transactionId, bool responseRequired);
   
   

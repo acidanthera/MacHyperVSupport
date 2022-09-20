@@ -2,13 +2,14 @@
 //  HyperVStorage.hpp
 //  Hyper-V storage driver
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperVStorage_hpp
 #define HyperVStorage_hpp
 
 #include <IOKit/IOInterruptEventSource.h>
+#include <IOKit/scsi/SCSICommandOperationCodes.h>
 #include <IOKit/storage/IOStorageDeviceCharacteristics.h>
 #include <IOKit/IOKitKeys.h>
 
@@ -26,7 +27,7 @@ class HyperVStorage : public IOSCSIParallelInterfaceController {
   typedef IOSCSIParallelInterfaceController super;
 
 private:
-  HyperVVMBusDevice       *_hvDevice         = nullptr;
+  HyperVVMBusDevice *_hvDevice = nullptr;
   
   UInt32                  protocolVersion;
   UInt32                  senseBufferSize;
@@ -36,30 +37,27 @@ private:
   UInt16                  maxSubChannels;
   UInt32                  maxTransferBytes;
   UInt32                  maxPageSegments;
-  
-  SCSIParallelTaskIdentifier  currentTask;
-  bool                        dataTransfer;
-  
-  HyperVDMABuffer             dmaBufTest;
-  
+
   IODMACommand::Segment64     *segs64;
-  
-  bool fullBufferUsed;
   
   bool wakePacketHandler(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
   void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
+  void handleIOCompletion(UInt64 transactionId, HyperVStoragePacket *packet);
   
-  IOReturn executeCommand(HyperVStoragePacket *packet, bool checkCompletion);
-  inline void clearPacket(HyperVStoragePacket *packet) {
-    memset(packet, 0, sizeof (*packet));
-  }
+  IOReturn sendStorageCommand(HyperVStoragePacket *packet, bool checkCompletion);
+  IOReturn prepareDataTransfer(SCSIParallelTaskIdentifier parallelRequest, VMBusPacketMultiPageBuffer **pagePacket, UInt32 *pagePacketLength);
+  void completeDataTransfer(SCSIParallelTaskIdentifier parallelRequest, HyperVStoragePacket *packet);
   
   void setHBAInfo();
   
-  void completeIO(HyperVStoragePacket *packet);
-  bool prepareDataTransfer(SCSIParallelTaskIdentifier parallelRequest, VMBusPacketMultiPageBuffer **pagePacket, UInt32 *pagePacketLength);
-  void completeDataTransfer(SCSIParallelTaskIdentifier parallelRequest, HyperVStoragePacket *packet);
-  
+  //
+  // Disk enumeration.
+  //
+  thread_call_t scanSCSIDiskThread;
+  bool checkSCSIDiskPresent(UInt8 diskId);
+  void startDiskEnumeration();
+  void scanSCSIDisks();
+
 protected:
   //
   // IOSCSIParallelInterfaceController overrides.

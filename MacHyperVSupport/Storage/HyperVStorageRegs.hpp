@@ -20,12 +20,18 @@
 #define kHyperVStorageVendor                  "Microsoft"
 #define kHyperVStorageProduct                 "Hyper-V SCSI Controller"
 
-#define kHyperVStorageMaxTargets              1
-#define kHyperVStorageMaxLuns                 64
+#define kHyperVStorageMaxTargets              64
+#define kHyperVStorageMaxLuns                 1
 
 #define kHyperVStorageSegmentSize             PAGE_SIZE
 #define kHyperVStorageSegmentAlignment        0xFFFFFFFFFFFFF000ULL
 #define kHyperVStorageSegmentBits             64
+
+#define kHyperVSRBStatusSuccess         0x01
+#define kHyperVSRBStatusAborted         0x02
+#define kHyperVSRBStatusError           0x04
+#define kHyperVSRBStatusInvalidLUN      0x20
+#define kHyperVSRBStatusAutosenseValid  0x80
 
 //
 // Packet operations.
@@ -85,7 +91,7 @@ typedef struct __attribute__((packed)) {
   UInt32  dataTransferLength;
   
   union {
-    UInt8 cdb[kHyperVStorageMaxCommandLength];
+    SCSICommandDescriptorBlock cdb;
     UInt8 senseData[kHyperVStorageSenseBufferSize];
     UInt8 reservedData[kHyperVStorageMaxBufferLengthPadding];
   };
