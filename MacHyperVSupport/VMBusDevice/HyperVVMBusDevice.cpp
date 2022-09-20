@@ -212,6 +212,13 @@ void HyperVVMBusDevice::uninstallPacketActions() {
   }
 }
 
+void HyperVVMBusDevice::triggerPacketAction() {
+  if (_packetActionTarget == nullptr) {
+    return;
+  }
+  handleInterrupt(nullptr, 0);
+}
+
 IOReturn HyperVVMBusDevice::openVMBusChannel(UInt32 txSize, UInt32 rxSize, UInt64 maxAutoTransId) {
   IOReturn status;
   

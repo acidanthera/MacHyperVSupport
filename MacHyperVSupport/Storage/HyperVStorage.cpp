@@ -69,12 +69,9 @@ bool HyperVStorage::InitializeController() {
   // macOS 10.4 always configures the interrupt in the superclass, do
   // not configure the interrupt ourselves in that case.
   //
+  _hvDevice->installPacketActions(this, OSMemberFunctionCast(HyperVVMBusDevice::PacketReadyAction, this, &HyperVStorage::handlePacket), OSMemberFunctionCast(HyperVVMBusDevice::WakePacketAction, this, &HyperVStorage::wakePacketHandler), PAGE_SIZE, getKernelVersion() >= KernelVersion::Leopard);
 #if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_5
-  if (getKernelVersion() >= KernelVersion::Leopard) {
-#endif
-    _hvDevice->installPacketActions(this, OSMemberFunctionCast(HyperVVMBusDevice::PacketReadyAction, this, &HyperVStorage::handlePacket), OSMemberFunctionCast(HyperVVMBusDevice::WakePacketAction, this, &HyperVStorage::wakePacketHandler), PAGE_SIZE);
-#if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_5
-  } else {
+  if (getKernelVersion() < KernelVersion::Leopard) {
     EnableInterrupt();
   }
 #endif
@@ -203,7 +200,7 @@ void HyperVStorage::HandleInterruptRequest() {
   // macOS 10.4 configures the interrupt in the superclass, invoke
   // our interrupt handler here.
   //
- // handleInterrupt(this, NULL, 0);
+  _hvDevice->triggerPacketAction();
 #endif
 }
 
