@@ -1,8 +1,16 @@
 MacHyperVSupport Changelog
 ============================
+#### v0.9.2
+- Fixed crash when control key is pressed under macOS 10.4
+- Fixed DMA allocations under macOS 10.4 and 10.5
+- Refactored and cleaned up VMBus core logic and integration services
+- Fixed crash caused by a buffer overrun in network packet sending
+- Fixed intermittent hangs in storage and network drivers
+- Added support for storage disk addition and removal while VM is running
+
 #### v0.9.1
 - Added initial PCI passthrough support
-- Fix crash related to IOPCIBridge on 12.0 and newer
+- Fixed crash related to IOPCIBridge on 12.0 and newer
 - Added support for macOS 10.4 and 10.5
 - Added hvshutdown daemon to support shutdowns from Hyper-V
 - Standardized boot arguments
