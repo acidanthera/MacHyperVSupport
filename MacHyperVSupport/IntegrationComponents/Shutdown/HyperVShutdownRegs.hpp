@@ -35,7 +35,7 @@ typedef enum : UInt32 {
 //
 typedef struct __attribute__((packed)) {
   VMBusICMessageHeader  header;
-  
+
   UInt32                reason;
   UInt32                timeoutSeconds;
   VMBusICShutdownFlags  flags;

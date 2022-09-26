@@ -69,7 +69,7 @@ void HyperVShutdown::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
       // Determine supported protocol version and communicate back to Hyper-V.
       //
       if (!processNegotiationResponse(&shutdownMsg->negotiate, shutdownVersions, arrsize(shutdownVersions))) {
-        HVSYSLOG("Failed to determine a supported Hyper-V Shutdown version");
+        HVSYSLOG("Failed to determine a supported Hyper-V Guest Shutdown version");
         shutdownMsg->header.status = kHyperVStatusFail;
       }
       break;
