@@ -3,7 +3,7 @@ MacHyperVSupport
 
 [![Build Status](https://github.com/acidanthera/MacHyperVSupport/workflows/CI/badge.svg?branch=master)](https://github.com/acidanthera/MacHyperVSupport/actions) [![Scan Status](https://scan.coverity.com/projects/23212/badge.svg?flat=1)](https://scan.coverity.com/projects/23212)
 
-Hyper-V integration services for macOS. Requires a Generation 2 virtual machine on Windows 8.1 or higher.
+Hyper-V integration services for macOS. Requires a Generation 2 virtual machine on Windows Server 2012 R2 / Windows 8.1 or higher. Windows Server 2016 is currently unsupported.
 
 All Intel macOS versions are supported. macOS 12.0 and newer should use `MacHyperVSupportMonterey.kext` instead.
 
@@ -19,9 +19,11 @@ All Intel macOS versions are supported. macOS 12.0 and newer should use `MacHype
 
 ### OpenCore configuration
 #### ACPI
-- [SSDT-HV-DEV](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-DEV.dsl): Required on Windows 10 and newer, provides proper processor objects and disables incompatible virtual devices under macOS
-- [SSDT-HV-PLUG](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-PLUG.dsl): Ensures VMPlatformPlugin loads on Big Sur, avoids freezes with the default PlatformPlugin
-- [SSDT-HV-VMBUS](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-VMBUS.dsl): Enables correct Startup Disk operation, ensure patches described within are also configured
+- [SSDT-HV-VMBUS](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-VMBUS.dsl): Enables correct Startup Disk operation, ensure patches described within are also configured.
+- [SSDT-HV-DEV](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-DEV.dsl): Required on Windows Server 2019 / Windows 10 and newer, provides proper processor objects and disables incompatible virtual devices under macOS.
+- [SSDT-HV-DEV-WS2022](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-DEV-WS2022.dsl): Required on Windows Server 2022 / Windows 11 and newer, disables addiitonal incompatible virtual devices under macOS.
+- [SSDT-HV-PLUG](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-PLUG.dsl): Ensures VMPlatformPlugin loads on Big Sur and above, avoids freezes with the default PlatformPlugin.
+* Ensure all patches described in above SSDTs are present in `ACPI->Patch`.
 
 #### Booter quirks
 - `AllowRelocationBlock` - required for macOS 10.7 and older
@@ -79,7 +81,7 @@ All Intel macOS versions are supported. macOS 12.0 and newer should use `MacHype
 
 #### UEFI
 - Quirks
-  - `DisableSecurityPolicy` - required on Windows 10 and newer
+  - `DisableSecurityPolicy` - required on Windows Server 2019 / Windows 10 and newer
 
 ### Installer image creation
 - Installer images can either be passed in from USB hard disks, or converted from a DMG to a VHDX image using `qemu-img`:
@@ -107,6 +109,6 @@ All Intel macOS versions are supported. macOS 12.0 and newer should use `MacHype
 ### Credits
 - [Apple](https://www.apple.com) for macOS
 - [Goldfish64](https://github.com/Goldfish64) for this software
-- [vit9696](https://github.com/vit9696) for [Lilu.kext](https://github.com/vit9696/Lilu) and providing assistance
-- [Microsoft Hypervisor Top-Level Functional Specification](https://docs.microsoft.com/en-us/virtualization/hyper-v-on-windows/reference/tlfs)
+- [vit9696](https://github.com/vit9696) for [Lilu.kext](https://github.com/acidanthera/Lilu) and providing assistance
+- [Microsoft Hypervisor Top-Level Functional Specification](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/reference/tlfs)
 - [Linux](https://github.com/torvalds/linux/tree/master/drivers/hv) and [FreeBSD](https://github.com/freebsd/freebsd-src/tree/main/sys/dev/hyperv) Hyper-V integration services
