@@ -94,10 +94,6 @@ private:
   void handleDebugPrintTimer(IOTimerEventSource *sender);
 #endif
   
-public:
-  UInt64                  txBufferWriteCount;
-  UInt64                  rxBufferReadCount;
-  
   HyperVVMBusDeviceRequest      *vmbusRequests = NULL;
   IOLock                        *vmbusRequestsLock;
   UInt64                        vmbusTransId = 1; // Some devices have issues with 0 as a transaction ID.

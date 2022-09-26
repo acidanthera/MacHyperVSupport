@@ -8,8 +8,7 @@
 #include "HyperVNetwork.hpp"
 
 void HyperVNetwork::handleTimer() {
-  HVSYSLOG("Outstanding sends %u r %X w %X bytes %X %X %X stalls %llu", _sendIndexesOutstanding,
-           _hvDevice->rxBufferReadCount, _hvDevice->txBufferWriteCount, preCycle, midCycle, postCycle, stalls);
+  HVSYSLOG("Outstanding sends %u bytes %X %X %X stalls %llu", _sendIndexesOutstanding, preCycle, midCycle, postCycle, stalls);
 }
 
 bool HyperVNetwork::wakePacketHandler(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {

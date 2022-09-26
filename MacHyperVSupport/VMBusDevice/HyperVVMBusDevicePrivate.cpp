@@ -226,7 +226,6 @@ IOReturn HyperVVMBusDevice::readRawPacketGated(void *header, UInt32 *headerLengt
   
   _rxBuffer->readIndex = readIndexNew;
   HVMSGLOG("RAW new RX read index 0x%X, RX new write index 0x%X", _rxBuffer->readIndex, _rxBuffer->writeIndex);
-  rxBufferReadCount++;
   return kIOReturnSuccess;
 }
 
@@ -276,7 +275,6 @@ IOReturn HyperVVMBusDevice::writeRawPacketGated(void *header, UInt32 *headerLeng
     _vmbusProvider->signalVMBusChannel(_channelId);
   }
   HVMSGLOG("RAW TX read index 0x%X, new TX write index 0x%X", _txBuffer->readIndex, _txBuffer->writeIndex);
-  txBufferWriteCount++;
   return kIOReturnSuccess;
 }
 
