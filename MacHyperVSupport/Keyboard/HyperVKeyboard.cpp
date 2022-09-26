@@ -345,7 +345,7 @@ const unsigned char* HyperVKeyboard::defaultKeymapOfLength(UInt32 * length) {
     NX_KEYTYPE_NUM_LOCK,    0x47,
   };
 
-  *length = sizeof(appleUSAKeyMap);
+  *length = sizeof (appleUSAKeyMap);
   return appleUSAKeyMap;
 }
 

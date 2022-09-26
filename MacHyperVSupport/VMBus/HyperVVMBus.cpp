@@ -48,7 +48,7 @@ VMBusMessageTypeTable[kVMBusChannelMessageTypeMax] = {
   { kVMBusChannelMessageTypeChannelOffer, sizeof (VMBusChannelMessage) },
   { kVMBusChannelMessageTypeRescindChannelOffer, sizeof (VMBusChannelMessageChannelRescindOffer) },
   { kVMBusChannelMessageTypeRequestChannels, sizeof (VMBusChannelMessage) },
-  { kVMBusChannelMessageTypeRequestChannelsDone, sizeof(VMBusChannelMessage) },
+  { kVMBusChannelMessageTypeRequestChannelsDone, sizeof (VMBusChannelMessage) },
   { kVMBusChannelMessageTypeChannelOpen, sizeof (VMBusChannelMessageChannelOpen) },
   { kVMBusChannelMessageTypeChannelOpenResponse, sizeof (VMBusChannelMessageChannelOpenResponse) },
   { kVMBusChannelMessageTypeChannelClose, sizeof (VMBusChannelMessageChannelClose) },

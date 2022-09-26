@@ -39,6 +39,7 @@ void HyperVHeartbeat::stop(IOService *provider) {
 
 void HyperVHeartbeat::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
   VMBusICMessageHeartbeat *heartbeatMsg = (VMBusICMessageHeartbeat*) pktData;
+  UInt32                  packetSize;
 
   switch (heartbeatMsg->header.type) {
     case kVMBusICMessageTypeNegotiate:
@@ -57,6 +58,13 @@ void HyperVHeartbeat::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeade
       // Normal heartbeat packet.
       // The sequence number is incremented twice per cycle, once by the guest and once by Hyper-V.
       //
+      packetSize = heartbeatMsg->header.dataSize + sizeof (heartbeatMsg->header);
+      if (packetSize < __offsetof (VMBusICMessageHeartbeatSequence, sequence)) {
+        HVSYSLOG("Heartbeat packet is invalid size (%u bytes)", packetSize);
+        heartbeatMsg->header.status = kHyperVStatusFail;
+        break;
+      }
+
       HVDBGLOG("Got heartbeat, seq = %u", heartbeatMsg->heartbeat.sequence);
       heartbeatMsg->heartbeat.sequence++;
 

@@ -188,7 +188,7 @@ bool HyperVNetwork::sendRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest, bo
 bool HyperVNetwork::initializeRNDIS() {
   HyperVNetworkRNDISRequest *rndisRequest = allocateRNDISRequest();
   rndisRequest->message.header.type   = kHyperVNetworkRNDISMessageTypeInit;
-  rndisRequest->message.header.length = sizeof(HyperVNetworkRNDISMessageInitializeRequest) + 8;
+  rndisRequest->message.header.length = sizeof (HyperVNetworkRNDISMessageInitializeRequest) + 8;
   
   rndisRequest->message.initRequest.majorVersion    = kHyperVNetworkRNDISVersionMajor;
   rndisRequest->message.initRequest.minorVersion    = kHyperVNetworkRNDISVersionMinor;

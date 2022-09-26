@@ -103,13 +103,19 @@ void HyperVShutdown::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
 }
 
 bool HyperVShutdown::handleShutdown(VMBusICMessageShutdownData *shutdownData) {
+  bool result       = false;
+  bool clientResult = false;
+  UInt32 packetSize = shutdownData->header.dataSize + sizeof (shutdownData->header);
+
+  if (packetSize < __offsetof (VMBusICMessageShutdownData, reason)) {
+    HVSYSLOG("Shutdown packet is invalid size (%u bytes)", packetSize);
+    return false;
+  }
   HVDBGLOG("Shutdown request received: flags 0x%X, reason 0x%X", shutdownData->flags, shutdownData->reason);
 
   //
   // Send message to userclients to see if we can shutdown.
   //
-  bool result       = false;
-  bool clientResult = false;
   if (_userClientInstance != nullptr) {
     IOReturn status = messageClient(kHyperVShutdownMessageTypeShutdownRequested, _userClientInstance, &clientResult, sizeof (clientResult));
     result = (status == kIOReturnSuccess) && clientResult;

@@ -96,9 +96,9 @@ bool HyperVICService::processNegotiationResponse(VMBusICMessageNegotiate *negMsg
   }
 
   versionCount = negMsg->frameworkVersionCount + negMsg->messageVersionCount;
-  packetSize   = negMsg->header.dataSize + sizeof(negMsg->header);
+  packetSize   = negMsg->header.dataSize + sizeof (negMsg->header);
   if (packetSize < __offsetof (VMBusICMessageNegotiate, versions[versionCount])) {
-    HVDBGLOG("Packet has invalid size and does not contain all versions");
+    HVSYSLOG("Negotiate packet is invalid size (%u bytes)", packetSize);
     return false;
   }
 
