@@ -19,6 +19,18 @@
 #define kHyperVShutdownVersionV3_2  { 3, 2 }
 
 //
+// Shutdown flags.
+//
+typedef enum : UInt32 {
+  kVMBusICShutdownFlagsShutdown        = 0,
+  kVMBusICShutdownFlagsShutdownForced  = 1,
+  kVMBusICShutdownFlagsRestart         = 2,
+  kVMBusICShutdownFlagsRestartForced   = 3,
+  kVMBusICShutdownFlagsHibernate       = 4,
+  kVMBusICShutdownFlagsHibernateForced = 5
+} VMBusICShutdownFlags;
+
+//
 // Shutdown messages.
 //
 typedef struct __attribute__((packed)) {
@@ -26,7 +38,7 @@ typedef struct __attribute__((packed)) {
   
   UInt32                reason;
   UInt32                timeoutSeconds;
-  UInt32                flags;
+  VMBusICShutdownFlags  flags;
   char                  displayMessage[2048];
 } VMBusICMessageShutdownData;
 

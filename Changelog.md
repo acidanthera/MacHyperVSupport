@@ -7,6 +7,7 @@ MacHyperVSupport Changelog
 - Fixed crash caused by a buffer overrun in network packet sending
 - Fixed intermittent hangs in storage and network drivers
 - Added support for storage disk addition and removal while VM is running
+- Added support for guest restart via Restart-VM
 
 #### v0.9.1
 - Added initial PCI passthrough support

@@ -2,7 +2,7 @@
 //  HyperVShutdown.hpp
 //  Hyper-V guest shutdown driver
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperVShutdown_hpp
@@ -13,7 +13,8 @@
 
 typedef enum : UInt32 {
   kHyperVShutdownMessageTypeShutdownRequested = 0x66697368,
-  kHyperVShutdownMessageTypePerformShutdown   = 0x66697369
+  kHyperVShutdownMessageTypePerformShutdown   = 0x66697369,
+  kHyperVShutdownMessageTypePerformRestart    = 0x66697370
 } HyperVShutdownMessageType;
 
 class HyperVShutdown : public HyperVICService {
@@ -22,9 +23,10 @@ class HyperVShutdown : public HyperVICService {
   typedef HyperVICService super;
 
 private:
-  IOService *userClientInstance = nullptr;
-  
+  IOService *_userClientInstance = nullptr;
+
   bool handleShutdown(VMBusICMessageShutdownData *shutdownData);
+  bool performShutdown(VMBusICMessageShutdownData *shutdownData, bool doShutdown);
 
 protected:
   void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) APPLE_KEXT_OVERRIDE;

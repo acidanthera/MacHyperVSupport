@@ -12,13 +12,14 @@
 #include <mach/message.h>
 
 typedef enum : UInt32 {
-  kHyperVShutdownNotificationTypePerformShutdown
+  kHyperVShutdownNotificationTypePerformShutdown,
+  kHyperVShutdownNotificationTypePerformRestart
 } HyperVShutdownNotificationType;
 
 typedef struct {
   mach_msg_header_t               header;
   HyperVShutdownNotificationType  type;
-  
+
 #ifndef KERNEL
   mach_msg_trailer_t              trailer;
 #endif

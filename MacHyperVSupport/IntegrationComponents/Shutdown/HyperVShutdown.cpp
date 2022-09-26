@@ -2,7 +2,7 @@
 //  HyperVShutdown.cpp
 //  Hyper-V guest shutdown driver
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
 #include "HyperVShutdown.hpp"
@@ -29,10 +29,10 @@ bool HyperVShutdown::start(IOService *provider) {
 
   HVCheckDebugArgs();
   setICDebug(debugEnabled);
-  
+
   HVDBGLOG("Initialized Hyper-V Guest Shutdown");
   registerService();
-  
+
   return true;
 }
 
@@ -42,20 +42,20 @@ void HyperVShutdown::stop(IOService *provider) {
 }
 
 bool HyperVShutdown::open(IOService *forClient, IOOptionBits options, void *arg) {
-  if (userClientInstance != nullptr) {
+  if (_userClientInstance != nullptr) {
     return false;
   }
-  
+
   if (!super::open(forClient, options, arg)) {
     return false;
   }
-  
-  userClientInstance = forClient;
+
+  _userClientInstance = forClient;
   return true;
 }
 
 void HyperVShutdown::close(IOService *forClient, IOOptionBits options) {
-  userClientInstance = nullptr;
+  _userClientInstance = nullptr;
   super::close(forClient, options);
 }
 
@@ -98,27 +98,59 @@ void HyperVShutdown::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
   //
   if (doShutdown) {
     HVDBGLOG("Shutdown request received, notifying userspace");
-    messageClients(kHyperVShutdownMessageTypePerformShutdown);
+    performShutdown(&shutdownMsg->shutdown, true);
   }
 }
 
 bool HyperVShutdown::handleShutdown(VMBusICMessageShutdownData *shutdownData) {
-  HVDBGLOG("Shutdown request received: flags 0x%X, reason 0x%X", shutdownData->flags, shutdownData->reason); // TODO: Flags may indicate restart or shutdown, need to handle.
+  HVDBGLOG("Shutdown request received: flags 0x%X, reason 0x%X", shutdownData->flags, shutdownData->reason);
 
   //
   // Send message to userclients to see if we can shutdown.
   //
   bool result       = false;
   bool clientResult = false;
-  if (userClientInstance != nullptr) {
-    IOReturn status = messageClient(kHyperVShutdownMessageTypeShutdownRequested, userClientInstance, &clientResult, sizeof (clientResult));
+  if (_userClientInstance != nullptr) {
+    IOReturn status = messageClient(kHyperVShutdownMessageTypeShutdownRequested, _userClientInstance, &clientResult, sizeof (clientResult));
     result = (status == kIOReturnSuccess) && clientResult;
     HVDBGLOG("Response from client: status 0x%X result %u", status, result);
   }
 
-  shutdownData->header.status = result ? kHyperVStatusSuccess : kHyperVStatusFail;
-  if (!result) {
+  if (result) {
+    result = performShutdown(shutdownData, false);
+    if (!result) {
+      HVSYSLOG("Unable to request shutdown (invalid flags)");
+    }
+  } else {
     HVSYSLOG("Unable to request shutdown (shutdown daemon is not running)");
   }
+
+  shutdownData->header.status = result ? kHyperVStatusSuccess : kHyperVStatusFail;
   return result;
+}
+
+bool HyperVShutdown::performShutdown(VMBusICMessageShutdownData *shutdownData, bool doShutdown) {
+  switch (shutdownData->flags) {
+    case kVMBusICShutdownFlagsShutdown:
+    case kVMBusICShutdownFlagsShutdownForced:
+      if (doShutdown) {
+        HVDBGLOG("Performing shutdown");
+        messageClients(kHyperVShutdownMessageTypePerformShutdown);
+      }
+      break;
+
+    case kVMBusICShutdownFlagsRestart:
+    case kVMBusICShutdownFlagsRestartForced:
+      if (doShutdown) {
+        HVDBGLOG("Performing restart");
+        messageClients(kHyperVShutdownMessageTypePerformRestart);
+      }
+      break;
+
+    default:
+      HVSYSLOG("Invalid shutdown flags %u");
+      return false;
+  }
+
+  return true;
 }
