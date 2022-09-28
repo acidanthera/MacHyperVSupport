@@ -12,6 +12,7 @@
 #include <IOKit/IOService.h>
 
 #include "HyperV.hpp"
+#include "HyperVUserClient.h"
 
 extern "C" {
 #include <i386/cpuid.h>
@@ -37,6 +38,7 @@ typedef struct {
 
 class HyperVInterruptController;
 class HyperVVMBus;
+class HyperVUserClient;
 
 class HyperVController : public IOService {
   OSDeclareDefaultStructors(HyperVController);
@@ -77,6 +79,7 @@ private:
   
   HyperVInterruptController *_hvInterruptController = nullptr;
   HyperVVMBus               *_hvVMBus               = nullptr;
+  HyperVUserClient          *_userClientInstance    = nullptr;
   
   //
   // Misc functions.
@@ -100,6 +103,8 @@ public:
   // IOService functions.
   //
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
+  bool open(IOService *forClient, IOOptionBits options = 0, void *arg = nullptr) APPLE_KEXT_OVERRIDE;
+  void close(IOService *forClient, IOOptionBits options = 0) APPLE_KEXT_OVERRIDE;
   
   //
   // Misc functions.
@@ -107,6 +112,8 @@ public:
   bool allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size);
   void freeDmaBuffer(HyperVDMABuffer *dmaBuf);
   bool addInterruptProperties(OSDictionary *dict, UInt32 interruptVector);
+  bool checkUserClient() { return _userClientInstance != nullptr; }
+  IOReturn notifyUserClient(HyperVUserClientNotificationType type, void *data, UInt32 dataLength);
   
   //
   // Hypercalls/interrupts.

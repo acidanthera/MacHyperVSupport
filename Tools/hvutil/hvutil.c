@@ -1,6 +1,6 @@
 //
-//  hvshutdown.c
-//  Hyper-V guest shutdown daemon
+//  hvutil.c
+//  Hyper-V guest utility daemon
 //
 //  Copyright © 2022 Goldfish64. All rights reserved.
 //
@@ -9,30 +9,30 @@
 #include <IOKit/IOKitLib.h>
 
 #include "hvdebug.h"
-#include "HyperVShutdownUserClient.h"
+#include "HyperVUserClient.h"
 
-#define HVSHUTDOWN_KERNEL_SERVICE   "HyperVShutdown"
-#define SHUTDOWN_BIN_PATH           "/sbin/shutdown"
+#define HYPERV_CONTROLLER_KERNEL_SERVICE   "HyperVController"
+#define SHUTDOWN_BIN_PATH                 "/sbin/shutdown"
 
-HVDeclareLogFunctionsUser("hvshutdown");
+HVDeclareLogFunctionsUser("util");
 
 static IONotificationPortRef  sIOKitNotificationPort                  = NULL;
 static CFRunLoopSourceRef     sIOKitNotificationCFRunLoopSource       = NULL;
 
 static io_service_t           sDevice                                 = 0;
 static io_connect_t           sConnection                             = 0;
-static io_iterator_t          sHVShutdownAppearedIterator             = 0;
-static io_iterator_t          sHVShutdownRemovedIterator              = 0;
+static io_iterator_t          shvUtilAppearedIterator             = 0;
+static io_iterator_t          shvUtilRemovedIterator              = 0;
 
-static mach_port_t            sHVShutdownNotificationPort             = MACH_PORT_NULL;
-static CFMachPortRef          sHVShutdownNotificationCFMachPort       = NULL;
-static CFRunLoopSourceRef     sHVShutdownNotificationCFRunLoopSource  = NULL;
+static mach_port_t            shvUtilNotificationPort             = MACH_PORT_NULL;
+static CFMachPortRef          shvUtilNotificationCFMachPort       = NULL;
+static CFRunLoopSourceRef     shvUtilNotificationCFRunLoopSource  = NULL;
 
-static void hvShutdownNotification(CFMachPortRef port, void *msg, CFIndex size, void *info) {
-  HyperVShutdownNotificationMessage *hvMsg = (HyperVShutdownNotificationMessage *) msg;
+static void hvUtilNotification(CFMachPortRef port, void *msg, CFIndex size, void *info) {
+  HyperVUserClientNotificationMessage *hvMsg = (HyperVUserClientNotificationMessage *) msg;
   HVDBGLOG(stdout, "Received notification of type 0x%X", hvMsg->type);
 
-  if (hvMsg->type == kHyperVShutdownNotificationTypePerformShutdown) {
+  if (hvMsg->type == kHyperVUserClientNotificationTypePerformShutdown) {
     HVSYSLOG(stdout, "Shutdown request received, performing shutdown");
 
     //
@@ -53,7 +53,7 @@ static void hvShutdownNotification(CFMachPortRef port, void *msg, CFIndex size, 
       HVSYSLOG(stderr, "Failed to execute %s", shutdownArgs[0]);
     }
 
-  } else if (hvMsg->type == kHyperVShutdownNotificationTypePerformRestart) {
+  } else if (hvMsg->type == kHyperVUserClientNotificationTypePerformRestart) {
     HVSYSLOG(stdout, "Restart request received, performing restart");
 
     //
@@ -76,7 +76,7 @@ static void hvShutdownNotification(CFMachPortRef port, void *msg, CFIndex size, 
   }
 }
 
-static void hvShutdownTeardownNotification() {
+static void hvUtilTeardownNotification() {
   if (sConnection) {
     IOServiceClose(sConnection);
     sConnection = 0;
@@ -87,32 +87,32 @@ static void hvShutdownTeardownNotification() {
     sDevice = 0;
   }
 
-  if (sHVShutdownNotificationCFRunLoopSource != NULL) {
-    CFRunLoopRemoveSource(CFRunLoopGetCurrent(), sHVShutdownNotificationCFRunLoopSource, kCFRunLoopCommonModes);
-    CFRelease(sHVShutdownNotificationCFRunLoopSource);
-    sHVShutdownNotificationCFRunLoopSource = NULL;
+  if (shvUtilNotificationCFRunLoopSource != NULL) {
+    CFRunLoopRemoveSource(CFRunLoopGetCurrent(), shvUtilNotificationCFRunLoopSource, kCFRunLoopCommonModes);
+    CFRelease(shvUtilNotificationCFRunLoopSource);
+    shvUtilNotificationCFRunLoopSource = NULL;
   }
 
-  if (sHVShutdownNotificationCFMachPort != NULL) {
-    CFMachPortInvalidate(sHVShutdownNotificationCFMachPort);
-    CFRelease(sHVShutdownNotificationCFMachPort);
-    sHVShutdownNotificationCFMachPort = NULL;
+  if (shvUtilNotificationCFMachPort != NULL) {
+    CFMachPortInvalidate(shvUtilNotificationCFMachPort);
+    CFRelease(shvUtilNotificationCFMachPort);
+    shvUtilNotificationCFMachPort = NULL;
   }
 
-  if (sHVShutdownNotificationPort != MACH_PORT_NULL) {
-    mach_port_destroy(mach_task_self(), sHVShutdownNotificationPort);
-    sHVShutdownNotificationPort = MACH_PORT_NULL;
+  if (shvUtilNotificationPort != MACH_PORT_NULL) {
+    mach_port_destroy(mach_task_self(), shvUtilNotificationPort);
+    shvUtilNotificationPort = MACH_PORT_NULL;
   }
 
   HVDBGLOG(stdout, "Service closed");
 }
 
-static IOReturn hvShutdownSetupNotification(io_service_t device) {
+static IOReturn hvUtilSetupNotification(io_service_t device) {
   IOReturn          result;
   CFMachPortContext context;
 
   //
-  // Setup notification for shutdown requests.
+  // Setup notification for userspace requests.
   //
   context.version = 1;
   context.info = &context;
@@ -120,26 +120,26 @@ static IOReturn hvShutdownSetupNotification(io_service_t device) {
   context.release = NULL;
   context.copyDescription = NULL;
 
-  result = IOCreateReceivePort(kOSAsyncCompleteMessageID, &sHVShutdownNotificationPort);
+  result = IOCreateReceivePort(kOSAsyncCompleteMessageID, &shvUtilNotificationPort);
   if (result != kIOReturnSuccess) {
     HVSYSLOG(stderr, "Failure while creating notification port: 0x%X", result);
     return result;
   }
 
-  sHVShutdownNotificationCFMachPort = CFMachPortCreateWithPort(kCFAllocatorDefault, sHVShutdownNotificationPort, hvShutdownNotification, &context, NULL);
-  if (sHVShutdownNotificationCFMachPort == NULL) {
+  shvUtilNotificationCFMachPort = CFMachPortCreateWithPort(kCFAllocatorDefault, shvUtilNotificationPort, hvUtilNotification, &context, NULL);
+  if (shvUtilNotificationCFMachPort == NULL) {
     HVSYSLOG(stderr, "Failed while creating notification CFMachPort");
-    hvShutdownTeardownNotification();
+    hvUtilTeardownNotification();
     return kIOReturnNoResources;
   }
 
-  sHVShutdownNotificationCFRunLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, sHVShutdownNotificationCFMachPort, 0);
-  if (sHVShutdownNotificationCFRunLoopSource == NULL) {
+  shvUtilNotificationCFRunLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, shvUtilNotificationCFMachPort, 0);
+  if (shvUtilNotificationCFRunLoopSource == NULL) {
     HVSYSLOG(stderr, "Failed while creating notification run loop source");
-    hvShutdownTeardownNotification();
+    hvUtilTeardownNotification();
     return kIOReturnNoResources;
   }
-  CFRunLoopAddSource(CFRunLoopGetCurrent(), sHVShutdownNotificationCFRunLoopSource, kCFRunLoopDefaultMode);
+  CFRunLoopAddSource(CFRunLoopGetCurrent(), shvUtilNotificationCFRunLoopSource, kCFRunLoopDefaultMode);
 
   //
   // Connect to service.
@@ -148,23 +148,23 @@ static IOReturn hvShutdownSetupNotification(io_service_t device) {
   result = IOServiceOpen(sDevice, mach_task_self(), 0, &sConnection);
   if (result != kIOReturnSuccess) {
     HVSYSLOG(stderr, "Failure while opening service: 0x%X\n", result);
-    hvShutdownTeardownNotification();
+    hvUtilTeardownNotification();
     return result;
   }
   HVDBGLOG(stdout, "Opened connection to service");
 
-  result = IOConnectSetNotificationPort(sConnection, 0, sHVShutdownNotificationPort, 0);
+  result = IOConnectSetNotificationPort(sConnection, 0, shvUtilNotificationPort, 0);
   if (result != kIOReturnSuccess) {
     HVSYSLOG(stderr, "Failed to set notification port: 0x%X", result);
-    hvShutdownTeardownNotification();
+    hvUtilTeardownNotification();
     return result;
   }
-  HVDBGLOG(stdout, "Port 0x%p setup for notifications", sHVShutdownNotificationPort);
+  HVDBGLOG(stdout, "Port 0x%p setup for notifications", shvUtilNotificationPort);
 
   return kIOReturnSuccess;
 }
 
-static void hvShutdownAppeared(void *refCon, io_iterator_t iterator) {
+static void hvUtilAppeared(void *refCon, io_iterator_t iterator) {
   IOReturn      result;
   io_service_t  obj;
   io_service_t  device = 0;
@@ -178,14 +178,14 @@ static void hvShutdownAppeared(void *refCon, io_iterator_t iterator) {
   }
 
   if (device) {
-    result = hvShutdownSetupNotification(device);
+    result = hvUtilSetupNotification(device);
     if (result != kIOReturnSuccess) {
       return;
     }
   }
 }
 
-static void hvShutdownRemoved(void *refCon, io_iterator_t iterator) {
+static void hvUtilRemoved(void *refCon, io_iterator_t iterator) {
   io_service_t  obj;
   bool          deviceIsRemoved = false;
 
@@ -201,11 +201,11 @@ static void hvShutdownRemoved(void *refCon, io_iterator_t iterator) {
   // Close connection to service.
   //
   if (deviceIsRemoved) {
-    hvShutdownTeardownNotification();
+    hvUtilTeardownNotification();
   }
 }
 
-static IOReturn hvShutdownSetupIOKitNotifications() {
+static IOReturn hvUtilSetupIOKitNotifications() {
   CFMutableDictionaryRef  matching;
   IOReturn                result;
 
@@ -223,7 +223,7 @@ static IOReturn hvShutdownSetupIOKitNotifications() {
   // An extra retain call is required as IOServiceAddMatchingNotification
   // will release the dictionary (called twice).
   //
-  matching = IOServiceMatching(HVSHUTDOWN_KERNEL_SERVICE);
+  matching = IOServiceMatching(HYPERV_CONTROLLER_KERNEL_SERVICE);
   if (matching == NULL) {
     HVSYSLOG(stderr, "Failure while creating matching dictionary");
     return kIOReturnNoResources;
@@ -233,26 +233,26 @@ static IOReturn hvShutdownSetupIOKitNotifications() {
   result = IOServiceAddMatchingNotification(sIOKitNotificationPort,
                                             kIOPublishNotification,
                                             matching,
-                                            hvShutdownAppeared,
+                                            hvUtilAppeared,
                                             NULL,
-                                            &sHVShutdownAppearedIterator);
+                                            &shvUtilAppearedIterator);
   if (result != kIOReturnSuccess) {
     HVSYSLOG(stderr, "Failure while adding matching notification (published): 0x%X", result);
     return result;
   }
-  hvShutdownAppeared(NULL, sHVShutdownAppearedIterator);
+  hvUtilAppeared(NULL, shvUtilAppearedIterator);
 
   result = IOServiceAddMatchingNotification(sIOKitNotificationPort,
                                             kIOTerminatedNotification,
                                             matching,
-                                            hvShutdownRemoved,
+                                            hvUtilRemoved,
                                             NULL,
-                                            &sHVShutdownRemovedIterator);
+                                            &shvUtilRemovedIterator);
   if (result != kIOReturnSuccess) {
     HVSYSLOG(stderr, "Failure while adding matching notification (terminated): 0x%X", result);
     return result;
   }
-  hvShutdownRemoved(NULL, sHVShutdownRemovedIterator);
+  hvUtilRemoved(NULL, shvUtilRemovedIterator);
 
   sIOKitNotificationCFRunLoopSource = IONotificationPortGetRunLoopSource(sIOKitNotificationPort);
   if (sIOKitNotificationCFRunLoopSource == NULL) {
@@ -268,7 +268,7 @@ int main(int argc, const char * argv[]) {
   //
   // Setup I/O Kit notifications.
   //
-  if (hvShutdownSetupIOKitNotifications() != kIOReturnSuccess) {
+  if (hvUtilSetupIOKitNotifications() != kIOReturnSuccess) {
     return -1;
   }
 

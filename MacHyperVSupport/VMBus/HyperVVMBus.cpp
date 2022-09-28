@@ -472,3 +472,11 @@ bool HyperVVMBus::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size) {
 void HyperVVMBus::freeDmaBuffer(HyperVDMABuffer *dmaBuf) {
   hvController->freeDmaBuffer(dmaBuf);
 }
+
+bool HyperVVMBus::checkUserClient() {
+  return hvController->checkUserClient();
+}
+
+IOReturn HyperVVMBus::notifyUserClient(HyperVUserClientNotificationType type, void *data, UInt32 dataLength) {
+  return hvController->notifyUserClient(type, data, dataLength);
+}

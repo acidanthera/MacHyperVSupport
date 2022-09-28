@@ -193,7 +193,8 @@ public:
   void setDebugMessagePrinting(bool enabled) { debugPackets = enabled; }
   bool allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size);
   void freeDmaBuffer(HyperVDMABuffer *dmaBuf);
-
+  bool checkUserClient();
+  IOReturn notifyUserClient(HyperVUserClientNotificationType type, void *data, UInt32 dataLength);
   
   //
   // Messages.

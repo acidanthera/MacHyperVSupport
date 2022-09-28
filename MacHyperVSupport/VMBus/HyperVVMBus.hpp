@@ -155,10 +155,12 @@ public:
   bool attach(IOService *provider) APPLE_KEXT_OVERRIDE;
   
   //
-  // DMA buffers.
+  // Misc functions.
   //
   bool allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size);
   void freeDmaBuffer(HyperVDMABuffer *dmaBuf);
+  bool checkUserClient();
+  IOReturn notifyUserClient(HyperVUserClientNotificationType type, void *data, UInt32 dataLength);
   
   //
   // VMBus channel management.

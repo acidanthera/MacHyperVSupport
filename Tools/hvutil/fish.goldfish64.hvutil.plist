@@ -3,10 +3,10 @@
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>fish.goldfish64.hvshutdown</string>
+	<string>fish.goldfish64.hvutil</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/Library/Application Support/MacHyperVSupport/hvshutdown</string>
+		<string>/Library/Application Support/MacHyperVSupport/hvutil</string>
 	</array>
 	<key>Disabled</key>
 	<false/>

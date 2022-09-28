@@ -11,20 +11,12 @@
 #include "HyperVICService.hpp"
 #include "HyperVShutdownRegs.hpp"
 
-typedef enum : UInt32 {
-  kHyperVShutdownMessageTypeShutdownRequested = 0x66697368,
-  kHyperVShutdownMessageTypePerformShutdown   = 0x66697369,
-  kHyperVShutdownMessageTypePerformRestart    = 0x66697370
-} HyperVShutdownMessageType;
-
 class HyperVShutdown : public HyperVICService {
   OSDeclareDefaultStructors(HyperVShutdown);
   HVDeclareLogFunctionsVMBusChild("shut");
   typedef HyperVICService super;
 
 private:
-  IOService *_userClientInstance = nullptr;
-
   bool handleShutdown(VMBusICMessageShutdownData *shutdownData);
   bool performShutdown(VMBusICMessageShutdownData *shutdownData, bool doShutdown);
 
@@ -37,8 +29,6 @@ public:
   //
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
   void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
-  bool open(IOService *forClient, IOOptionBits options = 0, void *arg = nullptr) APPLE_KEXT_OVERRIDE;
-  void close(IOService *forClient, IOOptionBits options = 0) APPLE_KEXT_OVERRIDE;
 };
 
 #endif

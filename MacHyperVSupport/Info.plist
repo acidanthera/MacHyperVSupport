@@ -43,6 +43,8 @@
 			<string>VMBS</string>
 			<key>IOProviderClass</key>
 			<string>IOACPIPlatformDevice</string>
+			<key>IOUserClientClass</key>
+			<string>HyperVUserClient</string>
 		</dict>
 		<key>HyperVGraphics</key>
 		<dict>
@@ -179,8 +181,6 @@
 			<string>HyperVShutdown</string>
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
-			<key>IOUserClientClass</key>
-			<string>HyperVShutdownUserClient</string>
 		</dict>
 		<key>HyperVStorage</key>
 		<dict>
