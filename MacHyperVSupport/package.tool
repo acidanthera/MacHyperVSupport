@@ -30,7 +30,7 @@ if [ ! -f ../libaistat.dylib ]; then
   sleep 5
 fi
 
-cp ../hvshutdown Tools/ || exit 1
+cp ../hvutil Tools/ || exit 1
 
 for kext in ../*.kext; do
   echo "$kext"
