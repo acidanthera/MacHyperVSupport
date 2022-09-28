@@ -18,7 +18,6 @@ class HyperVTimeSync : public HyperVICService {
 
 private:
   VMBusICVersion _timeSyncCurrentVersion = kHyperVTimeSyncVersionV1_0;
-  IOService      *_userClientInstance    = nullptr;
 
 protected:
   void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) APPLE_KEXT_OVERRIDE;
@@ -30,8 +29,6 @@ public:
   //
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
   void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
-  bool open(IOService *forClient, IOOptionBits options = 0, void *arg = nullptr) APPLE_KEXT_OVERRIDE;
-  void close(IOService *forClient, IOOptionBits options = 0) APPLE_KEXT_OVERRIDE;
 };
 
 #endif

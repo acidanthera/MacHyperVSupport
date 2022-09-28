@@ -374,11 +374,8 @@ constexpr size_t ARRAY_SIZE(const T (&array)[N]) {
 #define kHyperVCpuidMsrReferenceTsc    0x0200
 #define kHyperVCpuidMsrGuestIdle       0x0400
 
-#ifndef NANOSEC
-#define NANOSEC        1000000000ULL
-#endif
-#define HYPERV_TIMER_NS_FACTOR    100ULL
-#define HYPERV_TIMER_FREQ    (NANOSEC / HYPERV_TIMER_NS_FACTOR)
+#define kHyperVTimerNanosecondFactor  100ULL
+#define HYPERV_TIMER_FREQ    (kHyperVNanosecond / kHyperVTimerNanosecondFactor)
 
 //
 // Hyper-V MSRs

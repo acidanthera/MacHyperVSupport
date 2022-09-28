@@ -17,6 +17,8 @@
 #define kHyperVTimeSyncVersionV3_0  { 3, 0 }
 #define kHyperVTimeSyncVersionV4_0  { 4, 0 }
 
+#define kHyperVTimeSyncTimeBase     116444736000000000ULL
+
 //
 // Time sync flags.
 //

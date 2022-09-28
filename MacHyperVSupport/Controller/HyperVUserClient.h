@@ -20,6 +20,11 @@ typedef enum : UInt32 {
 } HyperVUserClientNotificationType;
 
 typedef struct {
+  UInt64 seconds;
+  UInt64 microseconds;
+} HyperVUserClientTimeData;
+
+typedef struct {
   mach_msg_header_t                header;
   HyperVUserClientNotificationType type;
   UInt8                            data[kHyperVUserClientNotificationMessageDataLength];

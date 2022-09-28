@@ -8,6 +8,8 @@
 #include <mach/mach_port.h>
 #include <IOKit/IOKitLib.h>
 
+#include <sys/time.h>
+
 #include "hvdebug.h"
 #include "HyperVUserClient.h"
 
@@ -28,51 +30,65 @@ static mach_port_t            shvUtilNotificationPort             = MACH_PORT_NU
 static CFMachPortRef          shvUtilNotificationCFMachPort       = NULL;
 static CFRunLoopSourceRef     shvUtilNotificationCFRunLoopSource  = NULL;
 
+static void hvUtilDoShutdown(bool restart) {
+  HVSYSLOG(stdout, "Shutdown request received, performing shutdown (restart %u)", restart);
+
+  //
+  // Shutdown/restart has been requested, invoke /sbin/shutdown.
+  //
+  char *shutdownArgs[] = {
+    SHUTDOWN_BIN_PATH,
+    restart ? "-r" : "-h",
+    "now",
+    "Hyper-V Guest Shutdown initiated",
+    NULL
+  };
+
+  //
+  // This should not return.
+  //
+  int ret = execv(shutdownArgs[0], shutdownArgs);
+  if (ret == -1) {
+    HVSYSLOG(stderr, "Failed to execute %s", shutdownArgs[0]);
+  }
+}
+
+static void hvUtilDoTimeSync(void *data, UInt32 dataLength) {
+  HyperVUserClientTimeData *timeData;
+  struct timeval timeValData;
+
+  //
+  // Get received epoch.
+  //
+  if (dataLength != sizeof (*timeData)) {
+    HVSYSLOG(stderr, "Incorrect data size for time sync data");
+    return;
+  }
+  timeData = (HyperVUserClientTimeData *) data;
+  HVDBGLOG(stdout, "Got new time data (seconds: %llu, microseconds: %llu)", timeData->seconds, timeData->microseconds);
+
+  timeValData.tv_sec = timeData->seconds;
+  timeValData.tv_usec = timeData->microseconds;
+  settimeofday(&timeValData, NULL);
+}
+
 static void hvUtilNotification(CFMachPortRef port, void *msg, CFIndex size, void *info) {
   HyperVUserClientNotificationMessage *hvMsg = (HyperVUserClientNotificationMessage *) msg;
   HVDBGLOG(stdout, "Received notification of type 0x%X", hvMsg->type);
 
-  if (hvMsg->type == kHyperVUserClientNotificationTypePerformShutdown) {
-    HVSYSLOG(stdout, "Shutdown request received, performing shutdown");
+  switch (hvMsg->type) {
+    case kHyperVUserClientNotificationTypePerformShutdown:
+    case kHyperVUserClientNotificationTypePerformRestart:
+      hvUtilDoShutdown(hvMsg->type == kHyperVUserClientNotificationTypePerformRestart);
+      break;
+      
+    case kHyperVUserClientNotificationTypeTimeSync:
+      hvUtilDoTimeSync(hvMsg->data, hvMsg->dataLength);
+      break;
 
-    //
-    // Shutdown has been requested, invoke /sbin/shutdown.
-    //
-    char *shutdownArgs[] = {
-      SHUTDOWN_BIN_PATH,
-      "-h",
-      "now",
-      NULL
-    };
-
-    //
-    // This should not return.
-    //
-    int ret = execv(shutdownArgs[0], shutdownArgs);
-    if (ret == -1) {
-      HVSYSLOG(stderr, "Failed to execute %s", shutdownArgs[0]);
-    }
-
-  } else if (hvMsg->type == kHyperVUserClientNotificationTypePerformRestart) {
-    HVSYSLOG(stdout, "Restart request received, performing restart");
-
-    //
-    // Restart has been requested, invoke /sbin/shutdown.
-    //
-    char *restartArgs[] = {
-      SHUTDOWN_BIN_PATH,
-      "-r",
-      "now",
-      NULL
-    };
-
-    //
-    // This should not return.
-    //
-    int ret = execv(restartArgs[0], restartArgs);
-    if (ret == -1) {
-      HVSYSLOG(stderr, "Failed to execute %s", restartArgs[0]);
-    }
+    default:
+      HVDBGLOG(stdout, "Unknown notification type 0x%X", hvMsg->type);
+      break;
   }
 }
 

@@ -30,32 +30,12 @@ bool HyperVTimeSync::start(IOService *provider) {
   setICDebug(debugEnabled);
 
   HVDBGLOG("Initialized Hyper-V Time Synchronization");
-  registerService();
-
   return true;
 }
 
 void HyperVTimeSync::stop(IOService *provider) {
   HVDBGLOG("Stopping Hyper-V Time Synchronization");
   super::stop(provider);
-}
-
-bool HyperVTimeSync::open(IOService *forClient, IOOptionBits options, void *arg) {
-  if (_userClientInstance != nullptr) {
-    return false;
-  }
-
-  if (!super::open(forClient, options, arg)) {
-    return false;
-  }
-
-  _userClientInstance = forClient;
-  return true;
-}
-
-void HyperVTimeSync::close(IOService *forClient, IOOptionBits options) {
-  _userClientInstance = nullptr;
-  super::close(forClient, options);
 }
 
 void HyperVTimeSync::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
@@ -110,5 +90,21 @@ void HyperVTimeSync::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
 }
 
 void HyperVTimeSync::handleTimeAdjust(UInt64 hostTime, UInt64 referenceTime, VMBusICTimeSyncFlags flags) {
+  UInt64 hvTimeNs;
+  HyperVUserClientTimeData timeData;
+
   HVDBGLOG("Time sync request %u received (host time: %llu, ref time: %llu)", flags, hostTime, referenceTime);
+
+  if (flags != kVMBusICTimeSyncFlagsSync) {
+    return;
+  }
+
+  //
+  // Calculate epoch.
+  //
+  hvTimeNs = (hostTime - kHyperVTimeSyncTimeBase) * kHyperVTimerNanosecondFactor;
+  timeData.seconds      = (clock_sec_t)(hvTimeNs / NSEC_PER_SEC);
+  timeData.microseconds = 0;//hvTimeNs / NSEC_PER_USEC;
+
+  _hvDevice->notifyUserClient(kHyperVUserClientNotificationTypeTimeSync, &timeData, sizeof (timeData));
 }
