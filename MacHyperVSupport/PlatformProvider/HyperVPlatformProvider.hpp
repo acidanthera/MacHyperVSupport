@@ -2,7 +2,7 @@
 //  HyperVPlatformProvider.hpp
 //  Hyper-V platform functions provider
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperVPlatformProvider_hpp
@@ -11,13 +11,17 @@
 #include <IOKit/IOService.h>
 #include <Headers/kern_patcher.hpp>
 
+#include "HyperV.hpp"
+
 class HyperVPlatformProvider {
+  HVDeclareLogFunctionsNonIOKit("prov", "HyperVPlatformProvider");
+
 private:
   //
   // Global instance.
   //
   static HyperVPlatformProvider *instance;
-  
+
   //
   // IOPlatformExpert::setConsoleInfo wrapping
   //
@@ -30,19 +34,19 @@ private:
   //
   void init();
   void onLiluPatcherLoad(KernelPatcher &patcher);
-  
+
 public:
   //
   // Instance creator.
   //
   static HyperVPlatformProvider *getInstance() {
-    if (instance == NULL) {
+    if (instance == nullptr) {
       instance = new HyperVPlatformProvider;
-      if (instance != NULL) {
+      if (instance != nullptr) {
         instance->init();
       }
     }
-    
+
     return instance;
   }
 };
