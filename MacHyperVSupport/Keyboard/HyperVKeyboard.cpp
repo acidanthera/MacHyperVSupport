@@ -6,7 +6,7 @@
 //
 
 #include "HyperVKeyboard.hpp"
-#include "HyperVADBMap.hpp"
+#include "HyperVADBMaps.hpp"
 
 OSDefineMetaClassAndStructors(HyperVKeyboard, super);
 
@@ -97,6 +97,50 @@ IOReturn HyperVKeyboard::connectKeyboard() {
   return _hvDevice->writeInbandPacket(&requestMsg, sizeof (requestMsg), true);
 }
 
+void HyperVKeyboard::dispatchUnicodeKeyboardEvent(UInt16 unicodeChar, bool isBreak) {
+  UInt16 keyCode;
+  UInt64 time;
+
+  //
+  // Ignore break codes as the simulated key goes down and back up within this function.
+  //
+  if (isBreak) {
+    return;
+  }
+
+  if (unicodeChar > arrsize(UnicodeToADBMap)) {
+    HVDBGLOG("Unknown Unicode character 0x%X break: %u", unicodeChar, isBreak);
+    return;
+  }
+  keyCode = UnicodeToADBMap[unicodeChar];
+  HVDBGLOG("Handling Unicode character 0x%X keycode: 0x%X shift: %u", unicodeChar,
+           keyCode, (keyCode & kADBUnicodeShift) ? 1 : 0);
+
+  //
+  // Simulate shift key press for shifted characters.
+  //
+  if (keyCode & kADBUnicodeShift) {
+    clock_get_uptime(&time);
+    dispatchKeyboardEvent(kADBKeyCodeShift, true, *(AbsoluteTime*)&time);
+  }
+
+  //
+  // Simulate key press and release for character.
+  //
+  clock_get_uptime(&time);
+  dispatchKeyboardEvent((UInt8)keyCode, true, *(AbsoluteTime*)&time);
+  clock_get_uptime(&time);
+  dispatchKeyboardEvent((UInt8)keyCode, false, *(AbsoluteTime*)&time);
+
+  //
+  // Simulate shift key release for shifted characters.
+  //
+  if (keyCode & kADBUnicodeShift) {
+    clock_get_uptime(&time);
+    dispatchKeyboardEvent(kADBKeyCodeShift, false, *(AbsoluteTime*)&time);
+  }
+}
+
 UInt32 HyperVKeyboard::deviceType() {
   //
   // Apple keyboard.
@@ -114,6 +158,7 @@ inline UInt32 getKeyCode(HyperVKeyboardMessageKeystroke *keyEvent) {
 
 void HyperVKeyboard::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
   HyperVKeyboardMessage *keyboardMsg = (HyperVKeyboardMessage*) pktData;
+  UInt64                time;
 
   switch (keyboardMsg->header.type) {
     case kHyperVKeyboardMessageTypeProtocolResponse:
@@ -121,11 +166,14 @@ void HyperVKeyboard::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
       break;
 
     case kHyperVKeyboardMessageTypeEvent:
-      UInt64 time;
-      clock_get_uptime(&time);
-
-      HVDBGLOG("Got make code 0x%X (E0: %u, break: %u)", keyboardMsg->keystroke.makeCode, keyboardMsg->keystroke.isE0, keyboardMsg->keystroke.isBreak);
-      dispatchKeyboardEvent(getKeyCode(&keyboardMsg->keystroke), !keyboardMsg->keystroke.isBreak, *(AbsoluteTime*)&time);
+      HVDBGLOG("Got make code 0x%X (E0: %u, E1: %u, break: %u, Unicode: %u)", keyboardMsg->keystroke.makeCode,
+               keyboardMsg->keystroke.isE0, keyboardMsg->keystroke.isE1, keyboardMsg->keystroke.isBreak, keyboardMsg->keystroke.isUnicode);
+      if (keyboardMsg->keystroke.isUnicode) {
+        dispatchUnicodeKeyboardEvent(keyboardMsg->keystroke.makeCode, keyboardMsg->keystroke.isBreak);
+      } else {
+        clock_get_uptime(&time);
+        dispatchKeyboardEvent(getKeyCode(&keyboardMsg->keystroke), !keyboardMsg->keystroke.isBreak, *(AbsoluteTime*)&time);
+      }
       break;
 
     default:

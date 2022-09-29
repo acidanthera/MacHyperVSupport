@@ -1,22 +1,25 @@
 //
-//  HyperVPS2ToADBMap.hpp
+//  HyperVPS2ToADBMaps.hpp
 //  Hyper-V keyboard driver
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
-#ifndef HyperVADBMap_h
-#define HyperVADBMap_h
+#ifndef HyperVADBMaps_hpp
+#define HyperVADBMaps_hpp
 
 #define kADBDeadKey               0x80
 
 #define kADBConverterLength       256 * 2     // 0x00~0xff : normal key , 0x100~0x1ff : extended key
 #define kADBConverterExStart      256
 
+//
+// PS/2 to ADB mappings. Used for standard keyboard input.
+//
 // PS/2 scancode reference : USB HID to PS/2 Scan Code Translation Table PS/2 Set 1 columns
 // http://download.microsoft.com/download/1/6/1/161ba512-40e2-4cc9-843a-923143f3456c/translate.pdf
-static const UInt8 PS2ToADBMapStock[kADBConverterLength] =
-{
+//
+static const UInt8 PS2ToADBMapStock[kADBConverterLength] = {
 /*  ADB        AT  ANSI Key-Legend
     ======================== */
     kADBDeadKey,// 00
@@ -531,6 +534,156 @@ static const UInt8 PS2ToADBMapStock[kADBConverterLength] =
     kADBDeadKey,// e0 fd
     kADBDeadKey,// e0 fe
     kADBDeadKey // e0 ff
+};
+
+//
+// Unicode to ADB mappings. Used for Hyper-V's "type clipboard text" "feature".
+//
+#define kADBUnicodeShift            0xF000
+#define kADBKeyCodeShift            0x38
+
+static const UInt16 UnicodeToADBMap[0x80] = {
+  //
+  // Control characters.
+  //
+  kADBDeadKey,  // 00 NUL
+  kADBDeadKey,  // 01 SOH
+  kADBDeadKey,  // 02 STX
+  kADBDeadKey,  // 03 ETX
+  kADBDeadKey,  // 04 EOT
+  kADBDeadKey,  // 05 ENQ
+  kADBDeadKey,  // 06 ACK
+  kADBDeadKey,  // 07 BEL
+  0x33,         // 08 Backspace
+  0x30,         // 09 Tab
+  kADBDeadKey,  // 0A Line Feed
+  kADBDeadKey,  // 0B VT
+  kADBDeadKey,  // 0C Form Feed
+  0x24,         // 0D Carriage Return
+  kADBDeadKey,  // 0E SO
+  kADBDeadKey,  // 0F SI
+
+  kADBDeadKey,  // 10 DLE
+  kADBDeadKey,  // 11 DC1
+  kADBDeadKey,  // 12 DC2
+  kADBDeadKey,  // 13 DC3
+  kADBDeadKey,  // 14 DC4
+  kADBDeadKey,  // 15 NAK
+  kADBDeadKey,  // 16 SYN
+  kADBDeadKey,  // 17 ETB
+  kADBDeadKey,  // 18 CAN
+  kADBDeadKey,  // 19 EM
+  kADBDeadKey,  // 1A SUB
+  0x35,         // 1B Escape
+  kADBDeadKey,  // 1C FS
+  kADBDeadKey,  // 1D GS
+  kADBDeadKey,  // 1E GS
+  kADBDeadKey,  // 1F US
+
+  //
+  // ASCII characters.
+  //
+  0x31,                     // 20 Space
+  0x12 | kADBUnicodeShift,  // 21 !
+  0x27 | kADBUnicodeShift,  // 22 "
+  0x14 | kADBUnicodeShift,  // 23 #
+  0x15 | kADBUnicodeShift,  // 24 $
+  0x17 | kADBUnicodeShift,  // 25 %
+  0x1A | kADBUnicodeShift,  // 26 &
+  0x27,                     // 27 '
+  0x19 | kADBUnicodeShift,  // 28 (
+  0x1D | kADBUnicodeShift,  // 29 )
+  0x1C | kADBUnicodeShift,  // 2A *
+  0x18 | kADBUnicodeShift,  // 2B +
+  0x2B,                     // 2C ,
+  0x1B,                     // 2D -
+  0x2F,                     // 2E .
+  0x2C,                     // 2F /
+
+  0x1D,                     // 30 0
+  0x12,                     // 31 1
+  0x13,                     // 32 2
+  0x14,                     // 33 3
+  0x15,                     // 34 4
+  0x17,                     // 35 5
+  0x16,                     // 36 6
+  0x1A,                     // 37 7
+  0x1C,                     // 38 8
+  0x19,                     // 39 9
+  0x29 | kADBUnicodeShift,  // 3A :
+  0x29,                     // 3B ;
+  0x2B | kADBUnicodeShift,  // 3C <
+  0x18,                     // 3D =
+  0x2F | kADBUnicodeShift,  // 3E >
+  0x2C | kADBUnicodeShift,  // 3F ?
+
+  0x13 | kADBUnicodeShift,  // 40 @
+  0x00 | kADBUnicodeShift,  // 41 A
+  0x0B | kADBUnicodeShift,  // 42 B
+  0x08 | kADBUnicodeShift,  // 43 C
+  0x02 | kADBUnicodeShift,  // 44 D
+  0x0E | kADBUnicodeShift,  // 45 E
+  0x03 | kADBUnicodeShift,  // 46 F
+  0x05 | kADBUnicodeShift,  // 47 G
+  0x04 | kADBUnicodeShift,  // 48 H
+  0x22 | kADBUnicodeShift,  // 49 I
+  0x26 | kADBUnicodeShift,  // 4A J
+  0x28 | kADBUnicodeShift,  // 4B K
+  0x25 | kADBUnicodeShift,  // 4C L
+  0x2E | kADBUnicodeShift,  // 4D M
+  0x2D | kADBUnicodeShift,  // 4E N
+  0x1F | kADBUnicodeShift,  // 4F O
+
+  0x23 | kADBUnicodeShift,  // 50 P
+  0x0C | kADBUnicodeShift,  // 51 Q
+  0x0F | kADBUnicodeShift,  // 52 R
+  0x01 | kADBUnicodeShift,  // 53 S
+  0x11 | kADBUnicodeShift,  // 54 T
+  0x20 | kADBUnicodeShift,  // 55 U
+  0x09 | kADBUnicodeShift,  // 56 V
+  0x0D | kADBUnicodeShift,  // 57 W
+  0x07 | kADBUnicodeShift,  // 58 X
+  0x10 | kADBUnicodeShift,  // 59 Y
+  0x06 | kADBUnicodeShift,  // 5A Z
+  0x21,                     // 5B [
+  0x2A,                     // 5C \ Backslash
+  0x1E,                     // 5D ]
+  0x16 | kADBUnicodeShift,  // 5E ^
+  0x1B | kADBUnicodeShift,  // 5F _
+
+  0x32,                     // 60 `
+  0x00,                     // 61 a
+  0x0B,                     // 62 b
+  0x08,                     // 63 c
+  0x02,                     // 64 d
+  0x0E,                     // 65 e
+  0x03,                     // 66 f
+  0x05,                     // 67 g
+  0x04,                     // 68 h
+  0x22,                     // 69 i
+  0x26,                     // 6A j
+  0x28,                     // 6B k
+  0x25,                     // 6C l
+  0x2E,                     // 6D m
+  0x2D,                     // 6E n
+  0x1F,                     // 6F o
+
+  0x23,                     // 70 p
+  0x0C,                     // 71 q
+  0x0F,                     // 72 r
+  0x01,                     // 73 s
+  0x11,                     // 74 t
+  0x20,                     // 75 u
+  0x09,                     // 76 v
+  0x0D,                     // 77 w
+  0x07,                     // 78 x
+  0x10,                     // 79 y
+  0x06,                     // 7A z
+  0x21 | kADBUnicodeShift,  // 7B {
+  0x2A | kADBUnicodeShift,  // 7C |
+  0x1E | kADBUnicodeShift,  // 7D }
+  0x32 | kADBUnicodeShift,  // 7E ~
+  0x75,                     // 7F DEL
 };
 
 #endif

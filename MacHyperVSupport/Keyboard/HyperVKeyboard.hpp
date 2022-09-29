@@ -22,7 +22,8 @@ private:
   HyperVVMBusDevice *_hvDevice = nullptr;
 
   void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
-  OSReturn connectKeyboard();
+  IOReturn connectKeyboard();
+  void dispatchUnicodeKeyboardEvent(UInt16 unicodeChar, bool isBreak);
 
 protected:
   //

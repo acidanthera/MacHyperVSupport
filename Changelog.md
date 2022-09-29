@@ -10,6 +10,7 @@ MacHyperVSupport Changelog
 - Added support for guest restart via Restart-VM
 - Renamed hvshutdown daemon to hvutil to support all userspace-side functions
 - Added guest time synchronization support
+- Added support for "Type clipboard text" function
 
 #### v0.9.1
 - Added initial PCI passthrough support
