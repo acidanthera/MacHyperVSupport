@@ -265,10 +265,10 @@ inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId,
   inline void HVCheckDebugArgs() { } \
   inline void HVDBGLOG(const char *str, ...) const { } \
     \
-  inline void HVSYSLOG_PRINT(const char *func, const char *str, ...) const { \
+  inline void HVSYSLOG(const char *str, ...) const { \
     va_list args; \
     va_start(args, str); \
-    logPrint(className, func, false, 0, str, args); \
+    logPrint(className, false, 0, str, args); \
     va_end(args); \
   } \
   protected:
