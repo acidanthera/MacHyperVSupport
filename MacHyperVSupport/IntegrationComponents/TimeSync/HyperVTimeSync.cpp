@@ -91,15 +91,22 @@ void HyperVTimeSync::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
 
 void HyperVTimeSync::handleTimeAdjust(UInt64 hostTime, UInt64 referenceTime, VMBusICTimeSyncFlags flags) {
   UInt64 hvTimeNs;
+  UInt64 vmTimeNs;
+  UInt64 diffTimeNs;
   UInt64 hvRefTimeAdjust = 0;
+
+  clock_sec_t              seconds;
+  clock_nsec_t             nanoseconds;
   HyperVUserClientTimeData timeData;
 
-  HVDBGLOG("Time sync request %u received (host time: %llu, ref time: %llu)", flags, hostTime, referenceTime);
-
-  if (flags != kVMBusICTimeSyncFlagsSync) {
+  //
+  // Only handle regular time samples and forced syncs.
+  //
+  if (!(flags & (kVMBusICTimeSyncFlagsSample | kVMBusICTimeSyncFlagsSync))) {
     return;
   }
-  
+  HVDBGLOG("Time sync request received (flags: 0x%X, host time: %llu, ref time: %llu)", flags, hostTime, referenceTime);
+
   //
   // Adjust time based on provided and current reference counter.
   //
@@ -114,6 +121,31 @@ void HyperVTimeSync::handleTimeAdjust(UInt64 hostTime, UInt64 referenceTime, VMB
   hvTimeNs = (hostTime - kHyperVTimeSyncTimeBase + hvRefTimeAdjust) * kHyperVTimerNanosecondFactor;
   timeData.seconds      = (clock_sec_t)(hvTimeNs / NSEC_PER_SEC);
   timeData.microseconds = (hvTimeNs % NSEC_PER_SEC) / NSEC_PER_USEC;
+  HVDBGLOG("New system time: (%llu seconds, %u microseconds, %llu total nanoseconds)", timeData.seconds, timeData.microseconds, hvTimeNs);
 
+  //
+  // Only handle sample if current time has drifted too far.
+  //
+  if (flags & kVMBusICTimeSyncFlagsSample) {
+    clock_get_calendar_nanotime(&seconds, &nanoseconds);
+    vmTimeNs = (seconds * NSEC_PER_SEC) + nanoseconds;
+    HVDBGLOG("Current system time: (%llu seconds, %u nanoseconds, %llu total nanoseconds)", seconds, nanoseconds, vmTimeNs);
+
+    if (hvTimeNs > vmTimeNs) {
+      diffTimeNs = hvTimeNs - vmTimeNs;
+    } else {
+      diffTimeNs = vmTimeNs - hvTimeNs;
+    }
+    HVDBGLOG("Time difference: %llu nanoseconds", diffTimeNs);
+
+    if (diffTimeNs <= kHyperVTimeSyncDiffThreshold) {
+      return;
+    }
+    HVDBGLOG("Time difference is above %llu nanosecond threshold", kHyperVTimeSyncDiffThreshold);
+  }
+
+  //
+  // Update time via userspace daemon.
+  //
   _hvDevice->getHvController()->notifyUserClient(kHyperVUserClientNotificationTypeTimeSync, &timeData, sizeof (timeData));
 }

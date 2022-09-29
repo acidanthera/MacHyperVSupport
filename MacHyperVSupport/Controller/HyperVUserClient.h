@@ -21,7 +21,7 @@ typedef enum : UInt32 {
 
 typedef struct {
   UInt64 seconds;
-  UInt64 microseconds;
+  UInt32 microseconds;
 } HyperVUserClientTimeData;
 
 typedef struct {

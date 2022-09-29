@@ -20,6 +20,11 @@
 #define kHyperVTimeSyncTimeBase     116444736000000000ULL
 
 //
+// Threshold is 500ms.
+//
+#define kHyperVTimeSyncDiffThreshold (500 * NSEC_PER_MSEC)
+
+//
 // Time sync flags.
 //
 typedef enum : UInt8 {
