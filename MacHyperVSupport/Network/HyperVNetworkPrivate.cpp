@@ -129,7 +129,7 @@ IOReturn HyperVNetwork::initSendReceiveBuffers() {
   //
   // Allocate receive and send buffers and create GPADLs for them.
   //
-  if (!_hvDevice->allocateDmaBuffer(&_receiveBuffer, _receiveBufferSize)) {
+  if (!_hvDevice->getHvController()->allocateDmaBuffer(&_receiveBuffer, _receiveBufferSize)) {
     HVSYSLOG("Failed to allocate receive buffer");
     freeSendReceiveBuffers();
     return kIOReturnNoResources;
@@ -139,7 +139,7 @@ IOReturn HyperVNetwork::initSendReceiveBuffers() {
     freeSendReceiveBuffers();
     return kIOReturnIOError;
   }
-  if (!_hvDevice->allocateDmaBuffer(&_sendBuffer, _sendBufferSize)) {
+  if (!_hvDevice->getHvController()->allocateDmaBuffer(&_sendBuffer, _sendBufferSize)) {
     HVSYSLOG("Failed to allocate send buffer");
     freeSendReceiveBuffers();
     return kIOReturnNoResources;
@@ -234,7 +234,7 @@ void HyperVNetwork::freeSendReceiveBuffers() {
     _hvDevice->freeGPADLBuffer(_receiveGpadlHandle);
     _receiveGpadlHandle = kHyperVGpadlNullHandle;
   }
-  _hvDevice->freeDmaBuffer(&_receiveBuffer);
+  _hvDevice->getHvController()->freeDmaBuffer(&_receiveBuffer);
 
   //
   // Release and free send buffer.
@@ -243,7 +243,7 @@ void HyperVNetwork::freeSendReceiveBuffers() {
     _hvDevice->freeGPADLBuffer(_sendGpadlHandle);
     _sendGpadlHandle = kHyperVGpadlNullHandle;
   }
-  _hvDevice->freeDmaBuffer(&_sendBuffer);
+  _hvDevice->getHvController()->freeDmaBuffer(&_sendBuffer);
 
   //
   // Free send section tracking bitmap.

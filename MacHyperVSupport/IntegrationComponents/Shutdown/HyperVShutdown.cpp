@@ -95,7 +95,7 @@ bool HyperVShutdown::handleShutdown(VMBusICMessageShutdownData *shutdownData) {
   //
   // Send message to userclients to see if we can shutdown.
   //
-  result = _hvDevice->checkUserClient();
+  result = _hvDevice->getHvController()->checkUserClient();
   if (result) {
     result = performShutdown(shutdownData, false);
     if (!result) {
@@ -115,7 +115,7 @@ bool HyperVShutdown::performShutdown(VMBusICMessageShutdownData *shutdownData, b
     case kVMBusICShutdownFlagsShutdownForced:
       if (doShutdown) {
         HVDBGLOG("Performing shutdown");
-        _hvDevice->notifyUserClient(kHyperVUserClientNotificationTypePerformShutdown, nullptr, 0);
+        _hvDevice->getHvController()->notifyUserClient(kHyperVUserClientNotificationTypePerformShutdown, nullptr, 0);
       }
       break;
 
@@ -123,7 +123,7 @@ bool HyperVShutdown::performShutdown(VMBusICMessageShutdownData *shutdownData, b
     case kVMBusICShutdownFlagsRestartForced:
       if (doShutdown) {
         HVDBGLOG("Performing restart");
-        _hvDevice->notifyUserClient(kHyperVUserClientNotificationTypePerformRestart, nullptr, 0);
+        _hvDevice->getHvController()->notifyUserClient(kHyperVUserClientNotificationTypePerformRestart, nullptr, 0);
       }
       break;
 

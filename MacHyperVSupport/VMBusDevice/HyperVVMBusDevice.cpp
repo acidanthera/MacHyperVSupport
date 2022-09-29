@@ -279,22 +279,6 @@ IOReturn HyperVVMBusDevice::freeGPADLBuffer(UInt32 gpadlHandle) {
   return _vmbusProvider->freeVMBusChannelGPADL(_channelId, gpadlHandle);
 }
 
-bool HyperVVMBusDevice::allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size) {
-  return _vmbusProvider->allocateDmaBuffer(dmaBuf, size);
-}
-
-void HyperVVMBusDevice::freeDmaBuffer(HyperVDMABuffer *dmaBuf) {
-  _vmbusProvider->freeDmaBuffer(dmaBuf);
-}
-
-bool HyperVVMBusDevice::checkUserClient() {
-  return _vmbusProvider->checkUserClient();
-}
-
-IOReturn HyperVVMBusDevice::notifyUserClient(HyperVUserClientNotificationType type, void *data, UInt32 dataLength) {
-  return _vmbusProvider->notifyUserClient(type, data, dataLength);
-}
-
 bool HyperVVMBusDevice::nextPacketAvailable(VMBusPacketType *type, UInt32 *packetHeaderLength, UInt32 *packetTotalLength) {
   return _commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVVMBusDevice::nextPacketAvailableGated),
                                 type, packetHeaderLength, packetTotalLength) == kIOReturnSuccess;

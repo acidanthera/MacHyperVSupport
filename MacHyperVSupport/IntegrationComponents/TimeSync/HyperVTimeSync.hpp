@@ -19,9 +19,11 @@ class HyperVTimeSync : public HyperVICService {
 private:
   VMBusICVersion _timeSyncCurrentVersion = kHyperVTimeSyncVersionV1_0;
 
+ // 
+  void handleTimeAdjust(UInt64 hostTime, UInt64 referenceTime, VMBusICTimeSyncFlags flags);
+
 protected:
   void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) APPLE_KEXT_OVERRIDE;
-  void handleTimeAdjust(UInt64 hostTime, UInt64 referenceTime, VMBusICTimeSyncFlags flags);
 
 public:
   //

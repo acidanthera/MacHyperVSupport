@@ -8,6 +8,8 @@ MacHyperVSupport Changelog
 - Fixed intermittent hangs in storage and network drivers
 - Added support for storage disk addition and removal while VM is running
 - Added support for guest restart via Restart-VM
+- Renamed hvshutdown daemon to hvutil to support all userspace-side functions
+- Added guest time synchronization support
 
 #### v0.9.1
 - Added initial PCI passthrough support

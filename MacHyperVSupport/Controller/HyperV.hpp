@@ -406,8 +406,6 @@ constexpr size_t ARRAY_SIZE(const T (&array)[N]) {
 //
 // Hyper-V CPUID feature support
 //
-#define MSR_HV_TIME_REF_COUNT    0x40000020
-
 #define kHyperVCpuidMsrTimeRefCnt      0x0002
 #define kHyperVCpuidMsrSynIC           0x0004
 #define kHyperVCpuidMsrSynTimer        0x0008
@@ -423,7 +421,7 @@ constexpr size_t ARRAY_SIZE(const T (&array)[N]) {
 //
 // Hyper-V MSRs
 //
-#define kHyperVMsrGuestID                     0x40000000
+#define kHyperVMsrGuestID                       0x40000000
 #define kHyperVMsrGuestIDBuildMask              0xFFFFULL
 #define kHyperVMsrGuestIDServicePackMask        0x0000000000FF0000ULL
 #define kHyperVMsrGuestIDServicePackShift       16
@@ -443,6 +441,8 @@ constexpr size_t ARRAY_SIZE(const T (&array)[N]) {
 #define kHyperVMsrHypercallPageShift            PAGE_SHIFT
 
 #define kHyperVMsrVPIndex                       0x40000002
+
+#define kHyperVMsrTimeRefCount                  0x40000020
 
 #define kHyperVMsrReferenceTsc                  0x40000021
 #define kHyperVMsrReferenceTscEnable            0x0001ULL

@@ -111,7 +111,7 @@ HyperVNetworkRNDISRequest* HyperVNetwork::allocateRNDISRequest(size_t additional
   //
   // Create DMA buffer with required specifications and get physical address.
   //
-  if (!_hvDevice->allocateDmaBuffer(&dmaBuffer, sizeof (HyperVNetworkRNDISRequest) + additionalLength)) {
+  if (!_hvDevice->getHvController()->allocateDmaBuffer(&dmaBuffer, sizeof (HyperVNetworkRNDISRequest) + additionalLength)) {
     HVSYSLOG("Failed to allocate buffer memory for RNDIS request");
     IOLockFree(lock);
   }
@@ -129,7 +129,7 @@ HyperVNetworkRNDISRequest* HyperVNetwork::allocateRNDISRequest(size_t additional
 
 void HyperVNetwork::freeRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest) {
   IOLockFree(rndisRequest->lock);
-  _hvDevice->freeDmaBuffer(&rndisRequest->dmaBuffer);
+  _hvDevice->getHvController()->freeDmaBuffer(&rndisRequest->dmaBuffer);
 }
 
 UInt32 HyperVNetwork::getNextRNDISTransId() {

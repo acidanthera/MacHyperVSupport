@@ -125,6 +125,12 @@ public:
   void sendSynICEOM(UInt32 cpu);
   
   //
+  // Time reference counter.
+  //
+  inline bool isTimeRefCounterSupported() { return (_hvFeatures & kHyperVCpuidMsrTimeRefCnt); }
+  inline UInt64 readTimeRefCounter() { return isTimeRefCounterSupported() ? rdmsr64(kHyperVMsrTimeRefCount) : 0; }
+
+  //
   // Messages.
   //
   inline HyperVMessage* getPendingMessage(UInt32 cpuIndex, UInt32 messageIndex) {

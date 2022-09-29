@@ -91,6 +91,7 @@ void HyperVTimeSync::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
 
 void HyperVTimeSync::handleTimeAdjust(UInt64 hostTime, UInt64 referenceTime, VMBusICTimeSyncFlags flags) {
   UInt64 hvTimeNs;
+  UInt64 hvRefTimeAdjust = 0;
   HyperVUserClientTimeData timeData;
 
   HVDBGLOG("Time sync request %u received (host time: %llu, ref time: %llu)", flags, hostTime, referenceTime);
@@ -98,13 +99,21 @@ void HyperVTimeSync::handleTimeAdjust(UInt64 hostTime, UInt64 referenceTime, VMB
   if (flags != kVMBusICTimeSyncFlagsSync) {
     return;
   }
+  
+  //
+  // Adjust time based on provided and current reference counter.
+  //
+  if (referenceTime != 0 && _hvDevice->getHvController()->isTimeRefCounterSupported()) {
+    hvRefTimeAdjust = _hvDevice->getHvController()->readTimeRefCounter() - referenceTime;
+    HVDBGLOG("Time sync will be adjusted by %llu", hvRefTimeAdjust);
+  }
 
   //
   // Calculate epoch and break out into seconds and microseconds remainder.
   //
-  hvTimeNs = (hostTime - kHyperVTimeSyncTimeBase) * kHyperVTimerNanosecondFactor;
+  hvTimeNs = (hostTime - kHyperVTimeSyncTimeBase + hvRefTimeAdjust) * kHyperVTimerNanosecondFactor;
   timeData.seconds      = (clock_sec_t)(hvTimeNs / NSEC_PER_SEC);
   timeData.microseconds = (hvTimeNs % NSEC_PER_SEC) / NSEC_PER_USEC;
 
-  _hvDevice->notifyUserClient(kHyperVUserClientNotificationTypeTimeSync, &timeData, sizeof (timeData));
+  _hvDevice->getHvController()->notifyUserClient(kHyperVUserClientNotificationTypeTimeSync, &timeData, sizeof (timeData));
 }

@@ -157,10 +157,7 @@ public:
   //
   // Misc functions.
   //
-  bool allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size);
-  void freeDmaBuffer(HyperVDMABuffer *dmaBuf);
-  bool checkUserClient();
-  IOReturn notifyUserClient(HyperVUserClientNotificationType type, void *data, UInt32 dataLength);
+  inline HyperVController *getHvController() { return hvController; }
   
   //
   // VMBus channel management.

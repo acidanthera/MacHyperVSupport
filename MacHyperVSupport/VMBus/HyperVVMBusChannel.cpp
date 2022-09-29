@@ -65,8 +65,8 @@ IOReturn HyperVVMBus::openVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VM
   // Allocate channel ring buffers.
   // TX and RX ring buffers are allocated and provided to Hyper-V as a single large buffer.
   //
-  allocateDmaBuffer(&channel->dataBuffer, totalBufferSize);
-  allocateDmaBuffer(&channel->eventBuffer, PAGE_SIZE);
+  getHvController()->allocateDmaBuffer(&channel->dataBuffer, totalBufferSize);
+  getHvController()->allocateDmaBuffer(&channel->eventBuffer, PAGE_SIZE);
   
   //
   // Configure GPADL for channel.
@@ -74,8 +74,8 @@ IOReturn HyperVVMBus::openVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VM
   status = initVMBusChannelGPADL(channelId, &channel->dataBuffer, &channel->dataGpadlHandle);
   if (status != kIOReturnSuccess) {
     HVSYSLOG("Failed to initialize GPADL for channel %u ring buffer with status 0x%X", channelId, status);
-    freeDmaBuffer(&channel->dataBuffer);
-    freeDmaBuffer(&channel->eventBuffer);
+    getHvController()->freeDmaBuffer(&channel->dataBuffer);
+    getHvController()->freeDmaBuffer(&channel->eventBuffer);
     return status;
   }
   
@@ -102,8 +102,8 @@ IOReturn HyperVVMBus::openVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VM
   //
   VMBusChannelMessageChannelOpenResponse openResponseMsg;
   if (!sendVMBusMessage((VMBusChannelMessage*) &openMsg, kVMBusChannelMessageTypeChannelOpenResponse, (VMBusChannelMessage*) &openResponseMsg)) {
-    freeDmaBuffer(&channel->dataBuffer);
-    freeDmaBuffer(&channel->eventBuffer);
+    getHvController()->freeDmaBuffer(&channel->dataBuffer);
+    getHvController()->freeDmaBuffer(&channel->eventBuffer);
     return kIOReturnIOError;
   }
   HVDBGLOG("Channel %u open result: 0x%X", channelId, openResponseMsg.status);
@@ -161,8 +161,8 @@ IOReturn HyperVVMBus::closeVMBusChannel(UInt32 channelId) {
   channel->txBuffer    = nullptr;
   channel->rxBuffer    = nullptr;
   channel->rxPageIndex = 0;
-  freeDmaBuffer(&channel->dataBuffer);
-  freeDmaBuffer(&channel->eventBuffer);
+  getHvController()->freeDmaBuffer(&channel->dataBuffer);
+  getHvController()->freeDmaBuffer(&channel->eventBuffer);
   
   HVDBGLOG("Channel %u is now closed", channelId);
   return kIOReturnSuccess;
