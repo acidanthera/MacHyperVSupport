@@ -100,11 +100,11 @@ void HyperVTimeSync::handleTimeAdjust(UInt64 hostTime, UInt64 referenceTime, VMB
   }
 
   //
-  // Calculate epoch.
+  // Calculate epoch and break out into seconds and microseconds remainder.
   //
   hvTimeNs = (hostTime - kHyperVTimeSyncTimeBase) * kHyperVTimerNanosecondFactor;
   timeData.seconds      = (clock_sec_t)(hvTimeNs / NSEC_PER_SEC);
-  timeData.microseconds = 0;//hvTimeNs / NSEC_PER_USEC;
+  timeData.microseconds = (hvTimeNs % NSEC_PER_SEC) / NSEC_PER_USEC;
 
   _hvDevice->notifyUserClient(kHyperVUserClientNotificationTypeTimeSync, &timeData, sizeof (timeData));
 }
