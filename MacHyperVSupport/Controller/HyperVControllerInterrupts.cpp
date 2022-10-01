@@ -264,7 +264,7 @@ void HyperVController::handleInterrupt(OSObject *target, void *refCon, IOService
     //
     // Check each channel for pending interrupt and invoke handler.
     //
-    for (UInt32 i = 1; i <= kVMBusMaxChannels; i++) {
+    for (UInt32 i = 1; i < kVMBusMaxChannels; i++) {
       if (sync_test_and_clear_bit(i, _vmbusRxEventFlags->flags32)) {
         _hvInterruptController->handleInterrupt(nullptr, nullptr, i);
       }
@@ -273,7 +273,7 @@ void HyperVController::handleInterrupt(OSObject *target, void *refCon, IOService
     //
     // Check each channel for pending interrupt and invoke handler.
     //
-    for (UInt32 i = 1; i <= kVMBusMaxChannels; i++) {
+    for (UInt32 i = 1; i < kVMBusMaxChannels; i++) {
       if (sync_test_and_clear_bit(i, _cpuData[cpuIndex].eventFlags[kVMBusInterruptMessage].flags32)) {
         _hvInterruptController->handleInterrupt(nullptr, nullptr, i);
       }

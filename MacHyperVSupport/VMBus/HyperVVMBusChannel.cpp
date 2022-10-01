@@ -8,7 +8,7 @@
 #include "HyperVVMBus.hpp"
 
 VMBusChannelStatus HyperVVMBus::getVMBusChannelStatus(UInt32 channelId) {
-  if (channelId == 0 || channelId > kVMBusMaxChannels) {
+  if (channelId == 0 || channelId >= kVMBusMaxChannels) {
     HVDBGLOG("One or more incorrect arguments provided");
     return kVMBusChannelStatusNotPresent;
   }
@@ -29,7 +29,7 @@ IOReturn HyperVVMBus::openVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VM
   //
   // TX and RX buffer sizes must be page-aligned.
   //
-  if (channelId == 0 || channelId > kVMBusMaxChannels
+  if (channelId == 0 || channelId >= kVMBusMaxChannels
       || txBufferSize == 0 || txBuffer == nullptr
       || rxBufferSize == 0 || rxBuffer == nullptr) {
     HVDBGLOG("One or more incorrect arguments provided");
@@ -126,7 +126,7 @@ IOReturn HyperVVMBus::closeVMBusChannel(UInt32 channelId) {
   
   VMBusChannelMessageChannelClose closeMsg;
   
-  if (channelId == 0 || channelId > kVMBusMaxChannels) {
+  if (channelId == 0 || channelId >= kVMBusMaxChannels) {
     HVDBGLOG("One or more incorrect arguments provided");
     return kIOReturnBadArgument;
   }
@@ -187,7 +187,7 @@ IOReturn HyperVVMBus::initVMBusChannelGPADL(UInt32 channelId, HyperVDMABuffer *d
   //
   // DMA buffer size must be page-aligned.
   //
-  if (channelId == 0 || channelId > kVMBusMaxChannels
+  if (channelId == 0 || channelId >= kVMBusMaxChannels
       || dmaBuffer == nullptr || gpadlHandle == nullptr) {
     HVDBGLOG("One or more incorrect arguments provided");
     return kIOReturnBadArgument;
@@ -328,7 +328,7 @@ IOReturn HyperVVMBus::freeVMBusChannelGPADL(UInt32 channelId, UInt32 gpadlHandle
   VMBusChannelMessageGPADLTeardown         gpadlTeardownMsg;
   VMBusChannelMessageGPADLTeardownResponse gpadlTeardownResponseMsg;
   
-  if (channelId == 0 || channelId > kVMBusMaxChannels) {
+  if (channelId == 0 || channelId >= kVMBusMaxChannels) {
     HVDBGLOG("One or more incorrect arguments provided");
     return kIOReturnBadArgument;
   }

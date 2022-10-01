@@ -108,7 +108,7 @@ void HyperVKeyboard::dispatchUnicodeKeyboardEvent(UInt16 unicodeChar, bool isBre
     return;
   }
 
-  if (unicodeChar > arrsize(UnicodeToADBMap)) {
+  if (unicodeChar >= arrsize(UnicodeToADBMap)) {
     HVDBGLOG("Unknown Unicode character 0x%X break: %u", unicodeChar, isBreak);
     return;
   }
