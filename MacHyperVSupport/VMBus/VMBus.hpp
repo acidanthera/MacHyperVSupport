@@ -237,7 +237,7 @@ typedef struct __attribute__((packed)) {
   UInt64                    pfn[];
 } VMBusChannelMessageGPADLBody;
 
-#define kHyperVMaxGpadlBodyPfns   ((kHyperVMessageDataSizeMax - \
+#define kHyperVMaxGpadlBodyPfns   ((kHyperVMessageDataSize - \
   sizeof (VMBusChannelMessageGPADLBody)) / sizeof (UInt64))
 
 // kVMBusChannelMessageTypeGPADLCreated

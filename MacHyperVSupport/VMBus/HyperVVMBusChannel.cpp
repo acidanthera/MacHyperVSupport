@@ -215,7 +215,7 @@ IOReturn HyperVVMBus::initVMBusChannelGPADL(UInt32 channelId, HyperVDMABuffer *d
   // For larger GPADL requests, a GPADL header and one or more GPADL body messages are required.
   // Otherwise we can use just the GPADL header.
   //
-  pfnSize = kHyperVMessageDataSizeMax - sizeof (VMBusChannelMessageGPADLHeader) - sizeof (HyperVGPARange);
+  pfnSize = kHyperVMessageDataSize - sizeof (VMBusChannelMessageGPADLHeader) - sizeof (HyperVGPARange);
   pageHeaderCount = pfnSize / sizeof (UInt64);
   needsMultipleMessages = pageCount > pageHeaderCount;
   HVDBGLOG("Configuring GPADL handle 0x%X for channel %u of %u pages, multiple messages: %u",

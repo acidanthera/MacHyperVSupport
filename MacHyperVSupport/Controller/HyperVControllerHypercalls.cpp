@@ -15,7 +15,7 @@ bool HyperVController::initHypercalls() {
   kern_return_t kernStatus;
   UInt64 hvHypercall;
   UInt64 hypercallPhysAddr;
-  
+
   //
   // Allocate hypercall memory.
   // This must be a page that can be executed.
@@ -31,7 +31,7 @@ bool HyperVController::initHypercalls() {
     freeHypercallPage();
     return false;
   }
-  
+
   hypercallDesc = IOMemoryDescriptor::withAddress(hypercallPage, PAGE_SIZE, kIODirectionInOut);
   if (hypercallDesc == nullptr) {
     HVSYSLOG("Failed to map hypercall page");
@@ -47,14 +47,14 @@ bool HyperVController::initHypercalls() {
   hvHypercall = rdmsr64(kHyperVMsrHypercall);
   HVDBGLOG("Hypercall MSR current value: 0x%llX", hvHypercall);
   HVDBGLOG("Allocated hypercall page to phys 0x%llX", hypercallPhysAddr);
-  
+
   hvHypercall = ((hypercallPhysAddr << PAGE_SHIFT) >> kHyperVMsrHypercallPageShift)
                 | (hvHypercall & kHyperVMsrHypercallRsvdMask) | kHyperVMsrHypercallEnable;
   wrmsr64(kHyperVMsrHypercall, hvHypercall);
-  
+
   hvHypercall = rdmsr64(kHyperVMsrHypercall);
   HVDBGLOG("Hypercall MSR new value: 0x%llX", hvHypercall);
-  
+
   //
   // Verify hypercalls are enabled.
   //
@@ -63,14 +63,14 @@ bool HyperVController::initHypercalls() {
     freeHypercallPage();
     return false;
   }
-  
+
   HVDBGLOG("Hypercalls are now enabled");
   return true;
 }
 
 void HyperVController::destroyHypercalls() {
   UInt64 hvHypercall;
-  
+
   //
   // Disable hypercalls.
   //
@@ -87,7 +87,7 @@ void HyperVController::freeHypercallPage() {
     hypercallDesc->release();
     hypercallDesc = nullptr;
   }
-  
+
   if (hypercallPage != nullptr) {
     vm_deallocate(kernel_map, reinterpret_cast<vm_address_t>(hypercallPage), PAGE_SIZE);
     hypercallPage = nullptr;
@@ -96,8 +96,8 @@ void HyperVController::freeHypercallPage() {
 
 UInt32 HyperVController::hypercallPostMessage(UInt32 connectionId, HyperVMessageType messageType, void *data, UInt32 size) {
   UInt64 status;
-  
-  if (size > kHyperVMessageSize) {
+
+  if (size > kHyperVMessageDataSize) {
     HVSYSLOG("Attempted to send message that is too big of %u bytes", size);
     return kHypercallStatusInvalidParameter;
   }
@@ -113,7 +113,7 @@ UInt32 HyperVController::hypercallPostMessage(UInt32 connectionId, HyperVMessage
   postMessage->messageType  = messageType;
   postMessage->size         = size;
   memcpy(&postMessage->data[0], data, size);
-  
+
   //
   // Perform HvPostMessage hypercall.
   //
@@ -132,7 +132,7 @@ UInt32 HyperVController::hypercallPostMessage(UInt32 connectionId, HyperVMessage
 
 bool HyperVController::hypercallSignalEvent(UInt32 connectionId) {
   UInt64 status;
-  
+
   //
   // Perform a fast version of HvSignalEvent hypercall.
   //

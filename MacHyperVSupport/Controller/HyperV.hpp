@@ -511,7 +511,7 @@ typedef enum : UInt32 {
 //
 // Message posting
 //
-#define kHyperVMessageDataSizeMax     240
+#define kHyperVMessageDataSize        240
 #define kHyperVMessageSize            256
 
 typedef struct __attribute__((packed)) {
@@ -519,7 +519,7 @@ typedef struct __attribute__((packed)) {
   UInt32              reserved;
   HyperVMessageType   messageType;
   UInt32              size;
-  UInt8               data[kHyperVMessageDataSizeMax];
+  UInt8               data[kHyperVMessageDataSize];
 } HypercallPostMessage;
 
 typedef union {
@@ -547,7 +547,7 @@ typedef struct __attribute__((packed)) {
     UInt64                      sender;
     HyperVPortId                portId;
   };
-  UInt8                         data[kHyperVMessageDataSizeMax];
+  UInt8                         data[kHyperVMessageDataSize];
 } HyperVMessage;
 
 //
