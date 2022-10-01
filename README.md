@@ -9,7 +9,8 @@ All Intel macOS versions are supported. macOS 12.0 and newer should use `MacHype
 
 ### Supported Hyper-V devices and services
 - Heartbeat
-- Guest shutdown
+- Guest shutdown (with daemon)
+- Time synchronization (with daemon)
 - PCI passthrough (partial support)
 - Synthetic graphics (partial support)
 - Synthetic keyboard
@@ -103,6 +104,7 @@ All Intel macOS versions are supported. macOS 12.0 and newer should use `MacHype
 | PCI root bridge     | -hvpcirdbg       | N/A               | N/A               |
 | Shutdown            | -hvshutdbg       | -hvshutmsgdbg     | -hvshutoff        |
 | Storage             | -hvstordbg       | -hvstormsgdbg     | -hvstoroff        |
+| Time sync           | -hvtimedbg       | -hvtimemsgdbg     | -hvtimeoff        |
 | VMBus controller    | -hvvmbusdbg      | N/A               | N/A               |
 | VMBus device nub    | -hvvmbusdevdbg   | N/A               | N/A               |
 
