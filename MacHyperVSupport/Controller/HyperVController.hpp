@@ -57,8 +57,8 @@ private:
   UInt32 _hvRecommends   = 0;
   
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_6
-  pmCallBacks_t _pmCallbacks;
-  IOSimpleLock  *_preemptionLock;
+  pmCallBacks_t _pmCallbacks     = { };
+  IOSimpleLock  *_preemptionLock = nullptr;
 #endif
   
   //
