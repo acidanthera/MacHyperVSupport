@@ -120,7 +120,7 @@ bool HyperVPCIBridge::negotiateProtocolVersion() {
   pktVersion.header.type = kHyperVPCIBridgeMessageTypeQueryProtocolVersion;
   
   // Attempt to find newest version host can support.
-  for (int i = 0; i < ARRAY_SIZE(usableVersions); i++) {
+  for (int i = 0; i < arrsize(usableVersions); i++) {
     pktVersion.version = usableVersions[i];
     HVDBGLOG("Attempting to use version 0x%X", pktVersion.version);
     

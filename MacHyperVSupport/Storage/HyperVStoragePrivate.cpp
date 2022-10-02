@@ -7,6 +7,37 @@
 
 #include "HyperVStorage.hpp"
 
+//
+// Hyper-V storage protocol list.
+//
+static const HyperVStorageProtocol storageProtocols[] = {
+  {
+    kHyperVStorageVersionWin10,
+    kHyperVStoragePostWin7SenseBufferSize,
+    0
+  },
+  {
+    kHyperVStorageVersionWin8_1,
+    kHyperVStoragePostWin7SenseBufferSize,
+    0
+  },
+  {
+    kHyperVStorageVersionWin8,
+    kHyperVStoragePostWin7SenseBufferSize,
+    0
+  },
+  {
+    kHyperVStorageVersionWin7,
+    kHyperVStoragePreWin8SenseBufferSize,
+    sizeof (HyperVStorageSCSIRequestWin8Extension)
+  },
+  {
+    kHyperVStorageVersionWin2008,
+    kHyperVStoragePreWin8SenseBufferSize,
+    sizeof (HyperVStorageSCSIRequestWin8Extension)
+  },
+};
+
 bool HyperVStorage::wakePacketHandler(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
   return true;
 }
@@ -63,7 +94,7 @@ IOReturn HyperVStorage::sendStorageCommand(HyperVStoragePacket *packet, bool che
   //
   // Send packet and get response.
   //
-  IOReturn status = _hvDevice->writeInbandPacket(packet, sizeof (HyperVStoragePacket) - packetSizeDelta, true, packet, sizeof (HyperVStoragePacket));
+  IOReturn status = _hvDevice->writeInbandPacket(packet, sizeof (HyperVStoragePacket) - _packetSizeDelta, true, packet, sizeof (HyperVStoragePacket));
   if (status != kIOReturnSuccess) {
     return status;
   }
@@ -83,7 +114,7 @@ IOReturn HyperVStorage::sendStorageCommand(HyperVStoragePacket *packet, bool che
 IOReturn HyperVStorage::prepareDataTransfer(SCSIParallelTaskIdentifier parallelRequest, VMBusPacketMultiPageBuffer **pagePacket, UInt32 *pagePacketLength) {
   IOReturn     status;
   UInt64       offsetSeg   = 0;
-  UInt32       numSegs     = maxPageSegments;
+  UInt32       numSegs     = _maxPageSegments;
   UInt64       dataLength  = GetRequestedDataTransferCount(parallelRequest);
   IODMACommand *dmaCommand = GetDMACommand(parallelRequest);
 
@@ -107,7 +138,7 @@ IOReturn HyperVStorage::prepareDataTransfer(SCSIParallelTaskIdentifier parallelR
     return status;
   }
 
-  status = dmaCommand->gen64IOVMSegments(&offsetSeg, segs64, &numSegs);
+  status = dmaCommand->gen64IOVMSegments(&offsetSeg, _segs64, &numSegs);
   if (status != kIOReturnSuccess) {
     HVSYSLOG("Failed to generate segments for buffer of %u bytes", dataLength, status);
     dmaCommand->complete();
@@ -122,12 +153,12 @@ IOReturn HyperVStorage::prepareDataTransfer(SCSIParallelTaskIdentifier parallelR
 
   for (UInt32 i = 0; i < numSegs; i++) {
     if (i != 0 && i != (numSegs - 1)) {
-      if (segs64[i].fLength != PAGE_SIZE && segs64[i].fLength != 0) {
-        panic("Invalid segment %u: 0x%llX %llu bytes", (unsigned int) i, segs64[i].fIOVMAddr, segs64[i].fLength);
+      if (_segs64[i].fLength != PAGE_SIZE && _segs64[i].fLength != 0) {
+        panic("Invalid segment %u: 0x%llX %llu bytes", (unsigned int) i, _segs64[i].fIOVMAddr, _segs64[i].fLength);
       }
     }
 
-    (*pagePacket)->range.pfns[i] = segs64[i].fIOVMAddr >> PAGE_SHIFT;
+    (*pagePacket)->range.pfns[i] = _segs64[i].fIOVMAddr >> PAGE_SHIFT;
   }
 
   *pagePacketLength = sizeof (**pagePacket) + (sizeof (UInt64) * numSegs);
@@ -165,13 +196,91 @@ void HyperVStorage::setHBAInfo() {
   // Populate protocol version.
   //
   snprintf(verString, sizeof (verString), "%u.%u",
-           (unsigned int) HYPERV_STORAGE_PROTCOL_VERSION_MAJOR(protocolVersion),
-           (unsigned int) HYPERV_STORAGE_PROTCOL_VERSION_MINOR(protocolVersion));
+           (unsigned int) HYPERV_STORAGE_PROTCOL_VERSION_MAJOR(_protocolVersion),
+           (unsigned int) HYPERV_STORAGE_PROTCOL_VERSION_MINOR(_protocolVersion));
   propString = OSString::withCString(verString);
   if (propString != nullptr) {
     SetHBAProperty(kIOPropertyProductRevisionLevelKey, propString);
     propString->release();
   }
+}
+
+IOReturn HyperVStorage::connectStorage() {
+  IOReturn            status;
+  HyperVStoragePacket storPkt;
+
+  //
+  // Begin controller initialization.
+  //
+  bzero(&storPkt, sizeof (storPkt));
+  storPkt.operation = kHyperVStoragePacketOperationBeginInitialization;
+  status = sendStorageCommand(&storPkt, true);
+  if (status != kIOReturnSuccess) {
+    HVSYSLOG("Failed to send begin initialization command with status 0x%X", status);
+    return status;
+  }
+
+  //
+  // Negotiate protocol version.
+  //
+  for (UInt32 i = 0; i < arrsize(storageProtocols); i++) {
+    bzero(&storPkt, sizeof (storPkt));
+    storPkt.operation                  = kHyperVStoragePacketOperationQueryProtocolVersion;
+    storPkt.protocolVersion.majorMinor = storageProtocols[i].protocolVersion;
+    storPkt.protocolVersion.revision   = 0; // Revision is zero for non-Windows.
+
+    status = sendStorageCommand(&storPkt, false);
+    if (status != kIOReturnSuccess) {
+      HVSYSLOG("Failed to send query protocol command with status 0x%X", status);
+      return status;
+    }
+
+    //
+    // A success means this protocol version is acceptable.
+    //
+    if (storPkt.status == 0) {
+      _protocolVersion = storageProtocols[i].protocolVersion;
+      _senseBufferSize = storageProtocols[i].senseBufferSize;
+      _packetSizeDelta = storageProtocols[i].packetSizeDelta;
+      HVDBGLOG("SCSI protocol version: 0x%X, sense buffer size: %u", _protocolVersion, _senseBufferSize);
+      break;
+    }
+  }
+  if (storPkt.status != 0) {
+    HVSYSLOG("Query protocol command return error status 0x%X", storPkt.status);
+    return kIOReturnIOError;
+  }
+
+  //
+  // Query controller properties.
+  //
+  bzero(&storPkt, sizeof (storPkt));
+  storPkt.operation = kHyperVStoragePacketOperationQueryProperties;
+  status = sendStorageCommand(&storPkt, true);
+  if (status != kIOReturnSuccess) {
+    HVSYSLOG("Failed to send query properties command with status 0x%X", status);
+    return status;
+  }
+
+  _subChannelsSupported = storPkt.storageChannelProperties.flags & kHyperVStorageFlagSupportsMultiChannel;
+  _maxSubChannels       = storPkt.storageChannelProperties.maxChannelCount;
+  _maxTransferBytes     = storPkt.storageChannelProperties.maxTransferBytes;
+  _maxPageSegments      = _maxTransferBytes / PAGE_SIZE;
+  HVDBGLOG("Multi channel supported: %s, max sub channels: %u, max transfer bytes: %u (%u segments)",
+           _subChannelsSupported ? "yes" : "no", _maxSubChannels, _maxTransferBytes, _maxPageSegments);
+
+  //
+  // Complete initialization.
+  //
+  bzero(&storPkt, sizeof (storPkt));
+  storPkt.operation = kHyperVStoragePacketOperationEndInitialization;
+  status = sendStorageCommand(&storPkt, true);
+  if (status != kIOReturnSuccess) {
+    HVSYSLOG("Failed to send end initialization command with status 0x%X", status);
+    return status;
+  }
+
+  return kIOReturnSuccess;
 }
 
 bool HyperVStorage::checkSCSIDiskPresent(UInt8 diskId) {
@@ -188,7 +297,7 @@ bool HyperVStorage::checkSCSIDiskPresent(UInt8 diskId) {
   packet.scsiRequest.lun                     = diskId;
   packet.scsiRequest.win8Extension.srbFlags |= 0x00000008;
   packet.scsiRequest.length                  = sizeof (packet.scsiRequest);
-  packet.scsiRequest.senseInfoLength         = senseBufferSize;
+  packet.scsiRequest.senseInfoLength         = _senseBufferSize;
   packet.scsiRequest.dataIn                  = kHyperVStorageSCSIRequestTypeUnknown;
 
   //
@@ -205,7 +314,7 @@ bool HyperVStorage::checkSCSIDiskPresent(UInt8 diskId) {
   //
   // Send SCSI packet and check result to see if disk is present.
   //
-  status = _hvDevice->writeInbandPacket(&packet, sizeof (packet) - packetSizeDelta, true, &packet, sizeof (packet));
+  status = _hvDevice->writeInbandPacket(&packet, sizeof (packet) - _packetSizeDelta, true, &packet, sizeof (packet));
   if (status != kIOReturnSuccess) {
     HVDBGLOG("Failed to send TEST UNIT READY SCSI packet with status 0x%X", status);
     return false;
@@ -220,7 +329,7 @@ void HyperVStorage::startDiskEnumeration() {
   // Begin disk enumeration on separate thread.
   //
   HVDBGLOG("Starting disk enumeration thread");
-  thread_call_enter(scanSCSIDiskThread);
+  thread_call_enter(_scanSCSIDiskThread);
 }
 
 void HyperVStorage::scanSCSIDisks() {

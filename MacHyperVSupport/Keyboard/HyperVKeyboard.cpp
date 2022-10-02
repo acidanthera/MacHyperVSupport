@@ -51,7 +51,7 @@ bool HyperVKeyboard::start(IOService *provider) {
     }
 
     //
-    // Open VMBus channel.
+    // Open VMBus channel and connect to keyboard.
     //
     status = _hvDevice->openVMBusChannel(kHyperVKeyboardRingBufferSize, kHyperVKeyboardRingBufferSize);
     if (status != kIOReturnSuccess) {

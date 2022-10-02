@@ -363,11 +363,6 @@ static inline int sync_test_and_clear_bit(long nr, volatile void *addr)
   return oldbit;
 }
 
-template <class T, size_t N>
-constexpr size_t ARRAY_SIZE(const T (&array)[N]) {
-  return N;
-}
-
 //
 // Pages are assumed to be 4KB
 //
