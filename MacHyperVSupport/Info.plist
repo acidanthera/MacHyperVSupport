@@ -211,6 +211,17 @@
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
 		</dict>
+		<key>HyperVFileCopy</key>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>HVType</key>
+			<string>34d14be3-dee4-41c8-9ae7-6b174977c192</string>
+			<key>IOClass</key>
+			<string>HyperVFileCopy</string>
+			<key>IOProviderClass</key>
+			<string>HyperVVMBusDevice</string>
+		</dict>
 	</dict>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2021-2022 Goldfish64. All rights reserved.</string>
