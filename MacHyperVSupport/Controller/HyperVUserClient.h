@@ -39,10 +39,11 @@ typedef enum : UInt32 {
 } HyperVUserClientFileCopyFlags;
 
 typedef struct __attribute__((packed)) {
+  // fileName & filePath are UTF-16 strings
+  UInt16                         fileName[260];
+  UInt16                         filePath[260];
   HyperVUserClientFileCopyFlags  copyFlags;
   UInt64                         fileSize;
-  UInt8                          fileName[1024];
-  UInt8                          filePath[1024];
 } HyperVUserClientFileCopyStartCopy;
 
 typedef struct __attribute__((packed)) {
