@@ -18,9 +18,6 @@ class HyperVFileCopy : public HyperVICService {
   HVDeclareLogFunctionsVMBusChild("fcopy");
   typedef HyperVICService super;
 
-private:
-  bool firstFileCopyReceived = false;
-
 protected:
   void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) APPLE_KEXT_OVERRIDE;
 

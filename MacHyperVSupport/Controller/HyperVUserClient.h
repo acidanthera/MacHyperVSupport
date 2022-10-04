@@ -17,7 +17,8 @@
 typedef enum : UInt32 {
   kHyperVUserClientNotificationTypePerformShutdown = 0x66697368,
   kHyperVUserClientNotificationTypePerformRestart,
-  kHyperVUserClientNotificationTypeTimeSync
+  kHyperVUserClientNotificationTypeTimeSync,
+  kHyperVUserClientNotificationTypeFileCopy
 } HyperVUserClientNotificationType;
 
 typedef struct {
@@ -25,6 +26,39 @@ typedef struct {
   UInt32 microseconds;
 } HyperVUserClientTimeData;
 
+typedef enum : UInt32 {
+  kHyperVUserClientFileCopyOperationStartFileCopy     = 0,
+  kHyperVUserClientFileCopyOperationWriteToFile       = 1,
+  kHyperVUserClientFileCopyOperationCompleteFileCopy  = 2,
+  kHyperVUserClientFileCopyOperationCancelFileCopy    = 3
+} HyperVUserClientFileCopyOperation;
+
+typedef enum : UInt32 {
+  kHyperVUserClientFileCopyFlagsOverwrite   = 1,
+  kHyperVUserClientFileCopyFlagsCreatePath  = 2
+} HyperVUserClientFileCopyFlags;
+
+typedef struct __attribute__((packed)) {
+  HyperVUserClientFileCopyFlags  copyFlags;
+  UInt64                         fileSize;
+  UInt8                          fileName[1024];
+  UInt8                          filePath[1024];
+} HyperVUserClientFileCopyStartCopy;
+
+typedef struct __attribute__((packed)) {
+  UInt32  reserved;
+  UInt64  offset;
+  UInt32  size;
+  UInt8   data[(6 * 1024)];
+} HyperVUserClientFileCopyDoCopy;
+
+typedef struct __attribute__((packed)) {
+  HyperVUserClientFileCopyOperation    operation;
+  union {
+    HyperVUserClientFileCopyStartCopy  startCopy;
+    HyperVUserClientFileCopyDoCopy     doCopy;
+  } operationData;
+} HyperVUserClientFileCopy;
 
 typedef union {
   struct {

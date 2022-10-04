@@ -49,7 +49,7 @@ typedef struct __attribute__((packed)) {
   // fileName & filePath are UTF-16 strings
   UInt16                        fileName[kHyperVFileCopyMaxPath];
   UInt16                        filePath[kHyperVFileCopyMaxPath];
-  UInt32                        copyFlags;
+  VMBusICFileCopyFlags          copyFlags;
   UInt64                        fileSize;
 } VMBusICMessageFileCopyStartCopy;
 

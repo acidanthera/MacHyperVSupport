@@ -38,6 +38,9 @@ void HyperVFileCopy::stop(IOService *provider) {
 
 void HyperVFileCopy::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
   VMBusICMessageFileCopy *fileCopyMsg = (VMBusICMessageFileCopy*) pktData;
+  HyperVUserClientFileCopy userClientMsg;
+  size_t nlen;
+  size_t plen;
 
   switch (fileCopyMsg->header.type) {
     case kVMBusICMessageTypeNegotiate:
@@ -57,10 +60,24 @@ void HyperVFileCopy::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
       }
       switch (fileCopyMsg->fcopyHeader.operation) {
         case kVMBusICFileCopyOperationStartFileCopy:
-          UInt8 pbuf[PATH_MAX];
-          size_t plen;
-          utf8_encodestr(fileCopyMsg->startCopy.fileName, kHyperVFileCopyMaxPath, (UInt8*)&pbuf, &plen, PATH_MAX, 0, 0);
-          HVSYSLOG("File copy attempted for file: %s", &pbuf);
+        case kVMBusICFileCopyOperationWriteToFile:
+        case kVMBusICFileCopyOperationCompleteFileCopy:
+        case kVMBusICFileCopyOperationCancelFileCopy:
+          memset(&userClientMsg, 0, sizeof (userClientMsg));
+          if (fileCopyMsg->fcopyHeader.operation == kVMBusICFileCopyOperationStartFileCopy) {
+            memset(&userClientMsg.operationData.startCopy.fileName, 0, PATH_MAX);
+            utf8_encodestr(fileCopyMsg->startCopy.fileName, kHyperVFileCopyMaxPath, (UInt8*)&userClientMsg.operationData.startCopy.fileName, &nlen, PATH_MAX, 0, 0);
+            memset(&userClientMsg.operationData.startCopy.filePath, 0, PATH_MAX);
+            utf8_encodestr(fileCopyMsg->startCopy.filePath, kHyperVFileCopyMaxPath, (UInt8*)&userClientMsg.operationData.startCopy.filePath, &plen, PATH_MAX, 0, 0);
+            userClientMsg.operationData.startCopy.fileSize = fileCopyMsg->startCopy.fileSize;
+            userClientMsg.operationData.startCopy.copyFlags = (HyperVUserClientFileCopyFlags)fileCopyMsg->startCopy.copyFlags;
+            HVSYSLOG("File copy attempted for file %s at path %s", &userClientMsg.operationData.startCopy.fileName, &userClientMsg.operationData.startCopy.filePath);
+          } else {
+            memcpy(&userClientMsg.operationData, fileCopyMsg + sizeof (VMBusICMessageFileCopyHeader), pktDataLength - sizeof (VMBusICMessageFileCopyHeader));
+          }
+          userClientMsg.operation = (HyperVUserClientFileCopyOperation)fileCopyMsg->fcopyHeader.operation;
+          _hvDevice->getHvController()->notifyUserClient(kHyperVUserClientNotificationTypeFileCopy, &userClientMsg, sizeof (userClientMsg));
+          
           break;
         default:
           HVDBGLOG("Unknown file copy operation type %u", fileCopyMsg->fcopyHeader.operation);
