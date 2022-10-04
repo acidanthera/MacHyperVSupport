@@ -10,8 +10,6 @@
 
 #include <sys/time.h>
 
-#include <iconv.h>
-
 #include "hvdebug.h"
 #include "HyperVUserClient.h"
 
@@ -74,67 +72,15 @@ static void hvUtilDoTimeSync(void *data, UInt32 dataLength) {
   settimeofday(&timeValData, NULL);
 }
 
-static void hvUtilFileCopyStartCopy(HyperVUserClientFileCopyStartCopy *startCopyMsg) {
-  UInt16 *origFileName;
-  UInt16 *origFilePath;
-  UInt8 *utf8FileName;
-  UInt8 *utf8FilePath;
-  UInt8 *utf8FileNameOrig;
-  UInt8 *utf8FilePathOrig;
-  size_t origFileNameSize = sizeof (startCopyMsg->fileName);
-  size_t utf8FileNameSize = sizeof (startCopyMsg->fileName) / 2;
-  size_t origFilePathSize = sizeof (startCopyMsg->filePath);
-  size_t utf8FilePathSize = sizeof (startCopyMsg->filePath) / 2;
-  
-  iconv_t iconvFcopy = iconv_open("UTF-8", "UTF-16LE");
-  if ((int) iconvFcopy == -1) {
-    if (errno == EINVAL) { HVDBGLOG(stderr, "Unsupported conversion"); }
-    else { HVDBGLOG(stderr, "Initialization failure"); }
-  }
-  
-  origFileName = &startCopyMsg->fileName;
-  origFilePath = &startCopyMsg->filePath;
-  utf8FileName = malloc(utf8FileNameSize);
-  utf8FilePath = malloc(utf8FilePathSize);
-  memset(utf8FileName, 0, utf8FileNameSize);
-  memset(utf8FilePath, 0, utf8FilePathSize);
-  utf8FileNameOrig = utf8FileName;
-  utf8FilePathOrig = utf8FilePath;
-  
-  
-  int ret1 = iconv(iconvFcopy, &origFileName, &origFileNameSize, &utf8FileName, &utf8FileNameSize);
-  int ret2 = iconv(iconvFcopy, NULL, NULL, NULL, NULL);
-  int ret3 = iconv(iconvFcopy, &origFilePath, &origFilePathSize, &utf8FilePath, &utf8FilePathSize);
-  
-  if (ret1 == (iconv_t) -1 || ret2 == (iconv_t) -1 || ret3 == (iconv_t) -1) {
-    HVSYSLOG(stderr, "Failed to convert with iconv");
-    free(utf8FileNameOrig);
-    free(utf8FilePathOrig);
-    iconv_close(iconvFcopy);
-    return;
-  }
-  
-  HVSYSLOG(stdout, "%s | %s", utf8FileNameOrig, utf8FilePathOrig);
-  free(utf8FileNameOrig);
-  free(utf8FilePathOrig);
-  iconv_close(iconvFcopy);
-}
-
 static void hvUtilFileCopy(void *data, UInt32 dataLength) {
   HyperVUserClientFileCopy *fcopyMsg;
-  if (dataLength > sizeof (*fcopyMsg)) {
-    HVSYSLOG(stderr, "File copy packet larger than expected");
+  if (dataLength > sizeof (HyperVUserClientFileCopy)) {
+    HVSYSLOG(stderr, "Packet larger than expected");
     return;
   }
   fcopyMsg = (HyperVUserClientFileCopy *) data;
   
-  switch (fcopyMsg->operation) {
-    case kHyperVUserClientFileCopyOperationStartFileCopy:
-      hvUtilFileCopyStartCopy(&fcopyMsg->operationData.startCopy);
-    default:
-      HVDBGLOG(stdout, "Unknown file copy operation type 0x%X", fcopyMsg->operation);
-      break;
-  }
+  HVSYSLOG(stdout, "%s | %s", fcopyMsg->operationData.startCopy.fileName, fcopyMsg->operationData.startCopy.filePath);
 }
 
 static void hvUtilNotification(CFMachPortRef port, void *msg, CFIndex size, void *info) {

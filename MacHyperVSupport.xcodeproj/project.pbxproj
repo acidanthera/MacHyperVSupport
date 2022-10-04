@@ -182,7 +182,6 @@
 		817C3CB928EB754C002EA298 /* HyperVFileCopy.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 817C3CB628EB754C002EA298 /* HyperVFileCopy.hpp */; };
 		817C3CBA28EB755E002EA298 /* HyperVFileCopy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 817C3CB528EB754C002EA298 /* HyperVFileCopy.cpp */; };
 		817C3CBB28EB7561002EA298 /* HyperVFileCopy.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 817C3CB628EB754C002EA298 /* HyperVFileCopy.hpp */; };
-		817C3CBD28EBD791002EA298 /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 817C3CBC28EBD77E002EA298 /* libiconv.tbd */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -340,7 +339,6 @@
 		817C3CB428EB754C002EA298 /* HyperVFileCopyRegs.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = HyperVFileCopyRegs.hpp; sourceTree = "<group>"; };
 		817C3CB528EB754C002EA298 /* HyperVFileCopy.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVFileCopy.cpp; sourceTree = "<group>"; };
 		817C3CB628EB754C002EA298 /* HyperVFileCopy.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = HyperVFileCopy.hpp; sourceTree = "<group>"; };
-		817C3CBC28EBD77E002EA298 /* libiconv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.tbd; path = usr/lib/libiconv.tbd; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -348,7 +346,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				817C3CBD28EBD791002EA298 /* libiconv.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -569,7 +566,6 @@
 		41BE4112263EDEA10018C52B /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				817C3CBC28EBD77E002EA298 /* libiconv.tbd */,
 				41BE4113263EDEA10018C52B /* libkmod.a */,
 			);
 			name = Frameworks;
