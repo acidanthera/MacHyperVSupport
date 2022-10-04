@@ -41,12 +41,12 @@ bool HyperVUserClient::start(IOService *provider) {
   //
   // Populate notification message info.
   //
-  _notificationMsg.header.msgh_bits        = MACH_MSGH_BITS(MACH_MSG_TYPE_COPY_SEND, 0);
-  _notificationMsg.header.msgh_size        = sizeof (_notificationMsg);
-  _notificationMsg.header.msgh_remote_port = MACH_PORT_NULL;
-  _notificationMsg.header.msgh_local_port  = MACH_PORT_NULL;
-  _notificationMsg.header.msgh_reserved    = 0;
-  _notificationMsg.header.msgh_id          = 0;
+  _notificationMsg.standard.header.msgh_bits        = MACH_MSGH_BITS(MACH_MSG_TYPE_COPY_SEND, 0);
+  _notificationMsg.standard.header.msgh_size        = sizeof (_notificationMsg.standard);
+  _notificationMsg.standard.header.msgh_remote_port = MACH_PORT_NULL;
+  _notificationMsg.standard.header.msgh_local_port  = MACH_PORT_NULL;
+  _notificationMsg.standard.header.msgh_reserved    = 0;
+  _notificationMsg.standard.header.msgh_id          = 0;
 
   HVDBGLOG("Initialized Hyper-V user client");
   return true;
@@ -91,19 +91,27 @@ IOReturn HyperVUserClient::registerNotificationPort(mach_port_t port, UInt32 typ
   }
 
   HVDBGLOG("Registering notification port 0x%p", port);
-  _notificationMsg.header.msgh_remote_port = port;
+  _notificationMsg.standard.header.msgh_remote_port = port;
   return kIOReturnSuccess;
 }
 
 IOReturn HyperVUserClient::notifyClientApplication(HyperVUserClientNotificationType type, void *data, UInt32 dataLength) {
-  if (dataLength > sizeof (_notificationMsg.data)) {
+  if (dataLength > sizeof (_notificationMsg.large.data)) {
     return kIOReturnMessageTooLarge;
   }
 
   HVDBGLOG("Sending notification type %u with %u bytes of data", type, dataLength);
-  _notificationMsg.type = type;
-  memcpy(_notificationMsg.data, data, dataLength);
-  _notificationMsg.dataLength = dataLength;
+  _notificationMsg.standard.type = type;
+  memcpy(_notificationMsg.standard.data, data, dataLength);
+  
+  if (dataLength > sizeof (_notificationMsg.standard.data)) {
+    _notificationMsg.standard.header.msgh_size = sizeof (_notificationMsg.large.data);
+    _notificationMsg.large.dataLength = dataLength;
+  } else {
+    _notificationMsg.standard.header.msgh_size = sizeof (_notificationMsg.standard.data);
+    _notificationMsg.standard.dataLength = dataLength;
+  }
+  
 
-  return mach_msg_send_from_kernel(&_notificationMsg.header, _notificationMsg.header.msgh_size);
+  return mach_msg_send_from_kernel(&_notificationMsg.standard.header, _notificationMsg.standard.header.msgh_size);
 }

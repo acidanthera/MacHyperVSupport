@@ -11,7 +11,8 @@
 #include <libkern/OSTypes.h>
 #include <mach/message.h>
 
-#define kHyperVUserClientNotificationMessageDataLength 64
+#define kHyperVUserClientNotificationMessageDataStandardLength 64
+#define kHyperVUserClientNotificationMessageDataLargeLength (kHyperVUserClientNotificationMessageDataStandardLength + (6 * 1024))
 
 typedef enum : UInt32 {
   kHyperVUserClientNotificationTypePerformShutdown = 0x66697368,
@@ -24,15 +25,28 @@ typedef struct {
   UInt32 microseconds;
 } HyperVUserClientTimeData;
 
-typedef struct {
-  mach_msg_header_t                header;
-  HyperVUserClientNotificationType type;
-  UInt8                            data[kHyperVUserClientNotificationMessageDataLength];
-  UInt32                           dataLength;
 
+typedef union {
+  struct {
+    mach_msg_header_t                header;
+    HyperVUserClientNotificationType type;
+    UInt8                            data[kHyperVUserClientNotificationMessageDataStandardLength];
+    UInt32                           dataLength;
+    
 #ifndef KERNEL
-  mach_msg_trailer_t               trailer;
+    mach_msg_trailer_t               trailer;
 #endif
+  } standard;
+  struct {
+    mach_msg_header_t                header;
+    HyperVUserClientNotificationType type;
+    UInt8                            data[kHyperVUserClientNotificationMessageDataLargeLength];
+    UInt32                           dataLength;
+    
+#ifndef KERNEL
+    mach_msg_trailer_t               trailer;
+#endif
+  } large;
 } HyperVUserClientNotificationMessage;
 
 #endif
