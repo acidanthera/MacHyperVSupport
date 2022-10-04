@@ -9,6 +9,19 @@
 
 OSDefineMetaClassAndStructors(HyperVUserClient, super);
 
+// User client dispatch table
+const IOExternalMethodDispatch HyperVUserClient::sMethods[kNumberOfMethods] = {
+  { // kMethodReturnFileCopy
+    (IOExternalMethodAction) &HyperVUserClient::sMethodReturnFileCopy, // Method pointer
+    1,                                                                 // Num of scalar input values
+    0,                                                                 // Num of struct input values
+    0,                                                                 // Num of scalar output values
+    0                                                                  // Num of struct output values
+  }
+};
+
+UInt64 HyperVUserClient::callbacks[kNumberOfMethods];
+
 bool HyperVUserClient::start(IOService *provider) {
   //
   // Get parent HyperVController object.
@@ -79,6 +92,19 @@ IOReturn HyperVUserClient::message(UInt32 type, IOService *provider, void *argum
   return super::message(type, provider, argument);
 }
 
+bool HyperVUserClient::initWithTask(task_t owningTask, void *securityToken, UInt32 type, OSDictionary *properties)
+{
+    if (!owningTask)
+        return false;
+    
+    if (!super::initWithTask(owningTask, securityToken, type))
+        return false;
+    
+    mTask = owningTask;
+    
+    return true;
+}
+
 IOReturn HyperVUserClient::clientClose() {
   HVDBGLOG("Hyper-V Guest Shutdown user client is closing");
   terminate();
@@ -114,4 +140,28 @@ IOReturn HyperVUserClient::notifyClientApplication(HyperVUserClientNotificationT
   
 
   return mach_msg_send_from_kernel(&_notificationMsg.standard.header, _notificationMsg.standard.header.msgh_size);
+}
+
+IOReturn HyperVUserClient::externalMethod(uint32_t selector, IOExternalMethodArguments* arguments, IOExternalMethodDispatch* dispatch, OSObject* target, void* reference) {
+  if (selector >= kNumberOfMethods)
+    return kIOReturnUnsupported;
+  
+  dispatch = (IOExternalMethodDispatch*) &sMethods[selector];
+  target = this;
+  reference = NULL;
+  
+  return super::externalMethod(selector, arguments, dispatch, target, reference);
+}
+
+IOReturn HyperVUserClient::sMethodReturnFileCopy(HyperVUserClient* target, void* ref, IOExternalMethodArguments* args) {
+  if (!callbacks[kMethodReturnFileCopy])
+    return kIOReturnNotReady;
+  IOSleep(1000);
+  reinterpret_cast<void (*)(int *)>(callbacks[kMethodReturnFileCopy])((int *)args->scalarInput);
+  
+  return kIOReturnSuccess;
+}
+
+void HyperVUserClient::registerDriverCallback(HyperVUserClientMethod index, UInt64 callback) {
+  callbacks[index] = callback;
 }

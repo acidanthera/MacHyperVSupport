@@ -14,6 +14,20 @@
 #define kHyperVUserClientNotificationMessageDataStandardLength 64
 #define kHyperVUserClientNotificationMessageDataLargeLength (kHyperVUserClientNotificationMessageDataStandardLength + (6 * 1024))
 
+typedef enum {
+    kMethodReturnFileCopy,
+    
+    kNumberOfMethods // Must be last
+} HyperVUserClientMethod;
+
+typedef enum : UInt32 {
+  kHyperVUserClientStatusSuccess        = 0x00000000,
+  kHyperVUserClientStatusFailure        = 0x80004005,
+  kHyperVUserClientStatusInvalidArg     = 0x80070057,
+  kHyperVUserClientStatusAlreadyExists  = 0x80070050,
+  kHyperVUserClientStatusDiskFull       = 0x80070070
+} HyperVUserClientStatusCode;
+
 typedef enum : UInt32 {
   kHyperVUserClientNotificationTypePerformShutdown = 0x66697368,
   kHyperVUserClientNotificationTypePerformRestart,

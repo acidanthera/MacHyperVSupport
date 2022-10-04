@@ -21,12 +21,21 @@ class HyperVFileCopy : public HyperVICService {
 protected:
   void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) APPLE_KEXT_OVERRIDE;
 
+private:
+  UInt32 status;
+  IOLock *lock = nullptr;
+  bool isSleeping = false;
+  void sleepForUserspace();
+  void wakeForUserspace();
+
 public:
   //
   // IOService overrides.
   //
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
   void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
+  
+  static void responseFromUserspace(int *status);
 };
 
 #endif
