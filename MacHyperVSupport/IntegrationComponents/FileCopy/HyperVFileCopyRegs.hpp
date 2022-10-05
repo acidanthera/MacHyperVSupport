@@ -12,6 +12,7 @@
 
 #define kHyperVFileCopyMaxPath       260
 #define kHyperVFileCopyFragmentSize  (6 * 1024)
+#define kHyperVFileCopyBufferSize    (8 * PAGE_SIZE)
 
 //
 // File Copy versions.

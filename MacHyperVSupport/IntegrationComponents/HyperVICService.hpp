@@ -25,6 +25,8 @@ protected:
   void setICDebug(bool debug) { debugEnabled = debug; }
 
   virtual void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) = 0;
+  virtual UInt32 txBufferSize() { return kHyperVICBufferSize; };
+  virtual UInt32 rxBufferSize() { return kHyperVICBufferSize; };
   bool processNegotiationResponse(VMBusICMessageNegotiate *negMsg, const VMBusICVersion *msgVersions,
                                   UInt32 msgVersionsCount, VMBusICVersion *msgVersionUsed = nullptr);
 

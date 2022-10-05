@@ -20,6 +20,8 @@ class HyperVFileCopy : public HyperVICService {
 
 protected:
   void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) APPLE_KEXT_OVERRIDE;
+  UInt32 txBufferSize() APPLE_KEXT_OVERRIDE { return kHyperVFileCopyBufferSize; };
+  UInt32 rxBufferSize() APPLE_KEXT_OVERRIDE { return kHyperVFileCopyBufferSize; };
 
 private:
   UInt32 status;

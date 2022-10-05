@@ -51,7 +51,7 @@ bool HyperVICService::start(IOService *provider) {
     //
     // Open VMBus channel
     //
-    status = _hvDevice->openVMBusChannel(kHyperVICBufferSize, kHyperVICBufferSize);
+    status = _hvDevice->openVMBusChannel(txBufferSize(), rxBufferSize());
     if (status != kIOReturnSuccess) {
       HVSYSLOG("Failed to open VMBus channel with status 0x%X", status);
       break;
