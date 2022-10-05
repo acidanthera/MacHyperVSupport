@@ -87,9 +87,9 @@ static UInt32 hvUtilFileCopyStartCopy(HyperVUserClientFileCopyStartCopyParam *st
   
   kern_return_t ioConnectRet = IOConnectCallStructMethod(sConnection, kMethodFileCopyGetStartCopyData, NULL, 0, &startCopyData, &startCopyDataSize);
   if (ioConnectRet == kIOReturnSuccess) {
-    HVDBGLOG(stdout, "Successfully called index %u with %u", kMethodFileCopyReturnGeneric, ret);
+    HVDBGLOG(stdout, "Successfully called index %u with %u", kMethodFileCopyGetStartCopyData, ret);
   } else {
-    HVSYSLOG(stderr, "Failed to call index %u with error %s", kMethodFileCopyReturnGeneric, mach_error_string(ioConnectRet));
+    HVSYSLOG(stderr, "Failed to call index %u with error %s", kMethodFileCopyGetStartCopyData, mach_error_string(ioConnectRet));
     return ret;
   }
   
@@ -139,23 +139,33 @@ static UInt32 hvUtilFileCopyStartCopy(HyperVUserClientFileCopyStartCopyParam *st
 }
 
 static UInt32 hvUtilFileCopyDoCopy(HyperVUserClientFileCopyDoCopyParam *fileDataParams) {
+  HyperVUserClientFileCopyDoCopyData doCopyData;
+  size_t doCopyDataSize = sizeof (doCopyData);
   int ret = kHyperVUserClientStatusSuccess;
+  
+  kern_return_t ioConnectRet = IOConnectCallStructMethod(sConnection, kMethodFileCopyGetDoCopyData, NULL, 0, &doCopyData, &doCopyDataSize);
+  if (ioConnectRet == kIOReturnSuccess) {
+    HVDBGLOG(stdout, "Successfully called index %u with %u", kMethodFileCopyGetDoCopyData, ret);
+  } else {
+    HVSYSLOG(stderr, "Failed to call index %u with error %s", kMethodFileCopyGetDoCopyData, mach_error_string(ioConnectRet));
+    return ret;
+  }
   size_t bytesWritten;
 
-//  bytesWritten = pwrite(fcopyTargetFileDesc, fcopyBuffer, fileDataParams->size, fileDataParams->offset);
-//
-//  fcopyFileSize += fileDataParams->size;
-//  if (bytesWritten != fileDataParams->size) {
-//    switch (errno) {
-//      case ENOSPC:
-//        ret = kHyperVUserClientStatusDiskFull;
-//        break;
-//      default:
-//        ret = kHyperVUserClientStatusFailure;
-//        break;
-//    }
-//    HVSYSLOG(stderr, "pwrite() failed to write %llu bytes: %ld (%s)", fcopyFileSize, (long) bytesWritten, strerror(errno));
-//  }
+  bytesWritten = pwrite(fcopyTargetFileDesc, &doCopyData, fileDataParams->size, fileDataParams->offset);
+
+  fcopyFileSize += fileDataParams->size;
+  if (bytesWritten != fileDataParams->size) {
+    switch (errno) {
+      case ENOSPC:
+        ret = kHyperVUserClientStatusDiskFull;
+        break;
+      default:
+        ret = kHyperVUserClientStatusFailure;
+        break;
+    }
+    HVSYSLOG(stderr, "pwrite() failed to write %llu bytes: %ld (%s)", fcopyFileSize, (long) bytesWritten, strerror(errno));
+  }
   
   return ret;
 }

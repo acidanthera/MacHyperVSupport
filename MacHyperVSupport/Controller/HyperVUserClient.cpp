@@ -115,12 +115,12 @@ IOReturn HyperVUserClient::registerNotificationPort(mach_port_t port, UInt32 typ
 }
 
 bool HyperVUserClient::registerDriver(IOService *driver) {
-  HVDBGLOG("Registering driver to receive callbacks %s", driver->getMetaClass()->getClassName());
+  HVDBGLOG("Registering driver (%s) to receive callbacks", driver->getMetaClass()->getClassName());
   return _drivers->setObject(driver->getMetaClass()->getClassName(), driver);
 }
 
 void HyperVUserClient::deregisterDriver(IOService *driver) {
-  HVDBGLOG("Deregistering callback-recipient driver %s", driver->getMetaClass()->getClassName());
+  HVDBGLOG("Deregistering callback-recipient driver (%s)", driver->getMetaClass()->getClassName());
   _drivers->removeObject(driver->getMetaClass()->getClassName());
 }
 
@@ -164,6 +164,13 @@ const IOExternalMethodDispatch HyperVUserClient::sMethods[kNumberOfMethods] = {
     0,
     0,
     sizeof (HyperVUserClientFileCopyStartCopyData)
+  },
+  { // kMethodFileCopyGetDoCopyData
+    (IOExternalMethodAction) &HyperVUserClient::sMethodFileCopyGetDoCopyData,
+    0,
+    0,
+    0,
+    sizeof (HyperVUserClientFileCopyDoCopyData)
   }
 };
 
@@ -188,7 +195,43 @@ IOReturn HyperVUserClient::sMethodFileCopyGetStartCopyData(HyperVUserClient* tar
   if (!fCopy)
     return kIOReturnNotReady;
   
-  fCopy->callPlatformFunction("getStartCopyData", true, (void *)args->structureOutput, NULL, NULL, NULL);
+  fCopy->callPlatformFunction("getStartCopyData", true, (void *) args->structureOutput, NULL, NULL, NULL);
   
+  return kIOReturnSuccess;
+}
+
+IOReturn HyperVUserClient::sMethodFileCopyGetDoCopyData(HyperVUserClient* target, void* ref, IOExternalMethodArguments* args) {
+  IOService *fCopy;
+  IOMemoryMap* map = nullptr;
+  const HyperVUserClientFileCopyDoCopyData *doCopyData;
+  size_t doCopyDataSize;
+  target->HVDBGLOG("Userspace called sMethodFileCopyGetDoCopyData in userclient");
+  
+  fCopy = OSDynamicCast(IOService, target->_drivers->getObject("HyperVFileCopy"));
+  if (!fCopy)
+    return kIOReturnNotReady;
+  
+  if (args->structureOutputDescriptor != nullptr) {
+    map = args->structureOutputDescriptor->createMappingInTask(kernel_task, 0, kIOMapAnywhere);
+    
+    if (map == nullptr)
+      return kIOReturnError;
+    
+    doCopyData = reinterpret_cast<const HyperVUserClientFileCopyDoCopyData *>(map->getAddress());
+    doCopyDataSize = map->getLength();
+  } else {
+    doCopyData = reinterpret_cast<const HyperVUserClientFileCopyDoCopyData *>(args->structureInput);
+    doCopyDataSize = args->structureInputSize;
+  }
+  
+  if (doCopyDataSize < sizeof (HyperVUserClientFileCopyDoCopyData)) {
+    OSSafeReleaseNULL(map);
+    target->HVSYSLOG("doCopyDataSize smaller than expected");
+    return kIOReturnError;
+  }
+  
+  fCopy->callPlatformFunction("getDoCopyData", true, (void *) doCopyData, NULL, NULL, NULL);
+  
+  OSSafeReleaseNULL(map);
   return kIOReturnSuccess;
 }

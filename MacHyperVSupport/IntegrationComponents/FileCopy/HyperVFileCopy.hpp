@@ -43,6 +43,7 @@ private:
 #endif
   void returnCodeFromUserspace(UInt64 *status);
   void getStartCopyData(HyperVUserClientFileCopyStartCopyData *startCopyDataOut);
+  void getDoCopyData(HyperVUserClientFileCopyDoCopyData *doCopyDataOut);
   bool convertNameAndPath(VMBusICMessageFileCopy *input, HyperVUserClientFileCopyStartCopyData *output);
 
 public:

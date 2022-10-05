@@ -16,6 +16,7 @@
 typedef enum {
   kMethodFileCopyReturnGeneric,
   kMethodFileCopyGetStartCopyData,
+  kMethodFileCopyGetDoCopyData,
   kNumberOfMethods // Must be last
 } HyperVUserClientMethod;
 

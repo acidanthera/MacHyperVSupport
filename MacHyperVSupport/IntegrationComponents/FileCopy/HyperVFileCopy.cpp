@@ -86,18 +86,14 @@ void HyperVFileCopy::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
           if (_fileCopyPkt->fcopyHeader.operation == kHyperVUserClientFileCopyOperationStartFileCopy) {
             fileCopyMsg.startCopy.fileSize = _fileCopyPkt->startCopy.fileSize;
             fileCopyMsg.startCopy.copyFlags = _fileCopyPkt->startCopy.copyFlags;
-            // Ask userspace to start a copy transaction and wait for it to provide a buffer.
-            _hvDevice->getHvController()->notifyUserClient(kHyperVUserClientNotificationTypeFileCopy, &fileCopyMsg, sizeof (fileCopyMsg));
-            sleepForUserspace();
-            _fileCopyPkt->header.status = this->status;
-            
           } else if (_fileCopyPkt->fcopyHeader.operation == kHyperVUserClientFileCopyOperationWriteToFile) {
             fileCopyMsg.doCopy.offset = _fileCopyPkt->doCopy.offset;
             fileCopyMsg.doCopy.size = _fileCopyPkt->doCopy.size;
-            _hvDevice->getHvController()->notifyUserClient(kHyperVUserClientNotificationTypeFileCopy, &fileCopyMsg, sizeof (fileCopyMsg));
-            sleepForUserspace();
-            _fileCopyPkt->header.status = this->status;
           }
+          // Ask userspace to start a copy transaction and wait for it to provide a buffer.
+          _hvDevice->getHvController()->notifyUserClient(kHyperVUserClientNotificationTypeFileCopy, &fileCopyMsg, sizeof (fileCopyMsg));
+          sleepForUserspace();
+          _fileCopyPkt->header.status = this->status;
           break;
         case kHyperVUserClientFileCopyOperationCompleteFileCopy:
         case kHyperVUserClientFileCopyOperationCancelFileCopy:
@@ -185,6 +181,9 @@ IOReturn HyperVFileCopy::callPlatformFunction(const OSSymbol *functionName,
   } else if (functionName->isEqualTo("getStartCopyData")) {
     getStartCopyData((HyperVUserClientFileCopyStartCopyData *) param1);
     return kIOReturnSuccess;
+  } else if (functionName->isEqualTo("getDoCopyData")) {
+    getDoCopyData((HyperVUserClientFileCopyDoCopyData *) param1);
+    return kIOReturnSuccess;
   }
   return super::callPlatformFunction(functionName, waitForFunction,
                                      param1, param2, param3, param4);
@@ -199,6 +198,11 @@ void HyperVFileCopy::returnCodeFromUserspace(UInt64 *status) {
 void HyperVFileCopy::getStartCopyData(HyperVUserClientFileCopyStartCopyData *startCopyDataOut) {
   HVDBGLOG("Got request for file name and file path from userspace");
   convertNameAndPath(_fileCopyPkt, startCopyDataOut);
+}
+
+void HyperVFileCopy::getDoCopyData(HyperVUserClientFileCopyDoCopyData *doCopyDataOut) {
+  HVDBGLOG("Got request for file data chunk from userspace");
+  memcpy(doCopyDataOut, (void *)&_fileCopyPkt->doCopy.data, sizeof (*doCopyDataOut));
 }
 
 bool HyperVFileCopy::convertNameAndPath(VMBusICMessageFileCopy *input, HyperVUserClientFileCopyStartCopyData *output) {
