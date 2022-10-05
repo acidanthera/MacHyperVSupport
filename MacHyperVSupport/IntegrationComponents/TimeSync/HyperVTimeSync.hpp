@@ -18,8 +18,6 @@ class HyperVTimeSync : public HyperVICService {
 
 private:
   VMBusICVersion _timeSyncCurrentVersion = kHyperVTimeSyncVersionV1_0;
-
- // 
   void handleTimeAdjust(UInt64 hostTime, UInt64 referenceTime, VMBusICTimeSyncFlags flags);
 
 protected:
