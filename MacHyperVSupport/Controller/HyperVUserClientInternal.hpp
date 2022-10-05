@@ -23,8 +23,8 @@ private:
   HyperVController                      *_hvController   = nullptr;
   HyperVUserClientNotificationMessage    _notificationMsg = { };
   static const IOExternalMethodDispatch  sMethods[kNumberOfMethods];
-  static UInt64                          callbacks[kNumberOfMethods];
   task_t                                 mTask;
+  OSDictionary                          *_drivers;
 
 public:
   //
@@ -47,7 +47,8 @@ public:
   // Other functions.
   //
   IOReturn notifyClientApplication(HyperVUserClientNotificationType type, void *data, UInt32 dataLength);
-  static void registerDriverCallback(HyperVUserClientMethod index, UInt64 callback);
+  bool registerDriver(IOService *driver);
+  void deregisterDriver(IOService *driver);
   
 protected:
   static IOReturn sMethodReturnFileCopy(HyperVUserClient* target, void* ref, IOExternalMethodArguments* args);

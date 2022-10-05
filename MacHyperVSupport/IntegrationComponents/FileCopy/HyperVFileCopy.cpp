@@ -27,12 +27,23 @@ bool HyperVFileCopy::start(IOService *provider) {
   HVCheckDebugArgs();
   setICDebug(debugEnabled);
   
-  _hvDevice->getHvController()->registerUserClientDriverCallback(kMethodReturnFileCopy, (mach_vm_address_t)responseFromUserspace);
   lock = IOLockAlloc();
   if (lock == NULL) {
     HVSYSLOG("Failed to allocate lock for userspace transactions");
     return false;
   }
+  
+#if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
+  _userClientNotify = addNotification(gIOPublishNotification,
+                      serviceMatching("HyperVUserClient"),
+                      &HyperVFileCopy::_userClientAvailable,
+                      this, 0 );
+#else
+  _userClientNotify = addMatchingNotification(gIOPublishNotification,
+                      serviceMatching("HyperVUserClient"),
+                      &HyperVFileCopy::_userClientAvailable,
+                      this, 0 );
+#endif
 
   HVDBGLOG("Initializing Hyper-V File Copy");
   registerService();
@@ -41,7 +52,7 @@ bool HyperVFileCopy::start(IOService *provider) {
 
 void HyperVFileCopy::stop(IOService *provider) {
   HVDBGLOG("Stopping Hyper-V File Copy");
-  _hvDevice->getHvController()->registerUserClientDriverCallback(kMethodReturnFileCopy, (mach_vm_address_t)nullptr);
+  _hvDevice->getHvController()->deregisterUserClientDriver(this);
   IOLockFree(lock);
   super::stop(provider);
 }
@@ -66,8 +77,8 @@ void HyperVFileCopy::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
       break;
 
     case kVMBusICMessageTypeFileCopy:
-      if (!_hvDevice->getHvController()->checkUserClient()) {
-        HVDBGLOG("Userspace is not ready yet");
+      if (!_hvDevice->getHvController()->checkUserClient() || !isRegistered) {
+        HVDBGLOG("Userspace or user client is not ready yet");
         fileCopyMsg->header.status = kHyperVStatusFail;
         break;
       }
@@ -104,9 +115,13 @@ void HyperVFileCopy::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
             memcpy(&userClientMsg.operationData, fileCopyMsg + sizeof (VMBusICMessageFileCopyHeader), pktDataLength - sizeof (VMBusICMessageFileCopyHeader));
           }
           userClientMsg.operation = (HyperVUserClientFileCopyOperation)fileCopyMsg->fcopyHeader.operation;
+          HVDBGLOG("Sending file copy operation type %u", fileCopyMsg->fcopyHeader.operation);
           _hvDevice->getHvController()->notifyUserClient(kHyperVUserClientNotificationTypeFileCopy, &userClientMsg, sizeof (userClientMsg));
-          sleepForUserspace();
-          fileCopyMsg->header.status = status;
+          if (sleepForUserspace(15) == THREAD_TIMED_OUT) {
+            fileCopyMsg->header.status = kHyperVUserClientStatusTimedOut;
+            break;
+          }
+          fileCopyMsg->header.status = this->status;
           
           break;
         default:
@@ -129,14 +144,27 @@ void HyperVFileCopy::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
   _hvDevice->writeInbandPacket(fileCopyMsg, pktDataLength, false);
 }
 
-void HyperVFileCopy::sleepForUserspace() {
+int HyperVFileCopy::sleepForUserspace(UInt32 seconds) {
+  AbsoluteTime deadline = 0;
+  int waitResult = THREAD_AWAKENED;
+  bool computeDeadline = true;
+  
   HVDBGLOG("Sleeping until response from userspace", status);
   isSleeping = true;
   IOLockLock(lock);
   while (isSleeping) {
-    IOLockSleep(lock, &isSleeping, THREAD_INTERRUPTIBLE);
+    if (seconds) {
+      if (computeDeadline) {
+        clock_interval_to_deadline(seconds, kSecondScale, &deadline);
+        computeDeadline = false;
+      }
+      waitResult = IOLockSleepDeadline(lock, &isSleeping, deadline, THREAD_INTERRUPTIBLE);
+    } else {
+      waitResult = IOLockSleep(lock, &isSleeping, THREAD_INTERRUPTIBLE);
+    }
   }
   IOLockUnlock(lock);
+  return waitResult;
 }
 
 void HyperVFileCopy::wakeForUserspace() {
@@ -147,25 +175,32 @@ void HyperVFileCopy::wakeForUserspace() {
   IOLockUnlock(lock);
 }
 
-void HyperVFileCopy::responseFromUserspace(int *status) {
-  OSDictionary *fcopyMatching = IOService::serviceMatching("HyperVFileCopy");
-  if (fcopyMatching == NULL) {
-    return;
+#if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
+bool HyperVFileCopy::_userClientAvailable(void *target, void *ref, IOService *newService) {
+#else
+bool HyperVFileCopy::_userClientAvailable(void *target, void *ref, IOService *newService, IONotifier *notifier) {
+#endif
+  HyperVFileCopy *fcopy = (HyperVFileCopy *) target;
+  if (fcopy) {
+    fcopy->HVDBGLOG("User client is now available; attempting registration");
+    if (!fcopy->_hvDevice->getHvController()->registerUserClientDriver(fcopy)) {
+      fcopy->HVSYSLOG("Failed to register driver in user client");
+    } else { fcopy->isRegistered = true; }
   }
+  return true;
+}
   
-  OSIterator *fcopyIterator = IOService::getMatchingServices(fcopyMatching);
-  if (fcopyIterator == NULL) {
-    return;
+IOReturn HyperVFileCopy::callPlatformFunction(const OSSymbol *functionName,
+                              bool waitForFunction, void *param1,
+                              void *param2, void *param3, void *param4) {
+  UInt64 *status;
+  if (functionName->isEqualTo("responseFromUserspace")) {
+    status = (UInt64 *) param1;
+    HVDBGLOG("Got response from userspace: 0x%x", *status);
+    this->status = *status;
+    wakeForUserspace();
+    return kIOReturnSuccess;
   }
-  
-  fcopyIterator->reset();
-  HyperVFileCopy *fcopyInstance = OSDynamicCast(HyperVFileCopy, fcopyIterator->getNextObject());
-  fcopyIterator->release();
-  
-  if (fcopyInstance == NULL) {
-    return;
-  }
-  fcopyInstance->HVDBGLOG("Got response from userspace: 0x%x", status);
-  fcopyInstance->status = *status;
-  fcopyInstance->wakeForUserspace();
+  return super::callPlatformFunction(functionName, waitForFunction,
+                                     param1, param2, param3, param4);
 }

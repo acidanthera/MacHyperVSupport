@@ -114,7 +114,8 @@ public:
   bool addInterruptProperties(OSDictionary *dict, UInt32 interruptVector);
   bool checkUserClient() { return _userClientInstance != nullptr; }
   IOReturn notifyUserClient(HyperVUserClientNotificationType type, void *data, UInt32 dataLength);
-  void registerUserClientDriverCallback(HyperVUserClientMethod index, mach_vm_address_t callback);
+  bool registerUserClientDriver(IOService *driver);
+  bool deregisterUserClientDriver(IOService *driver);
   
   //
   // Hypercalls/interrupts.

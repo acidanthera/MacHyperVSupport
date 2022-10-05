@@ -20,8 +20,6 @@ const IOExternalMethodDispatch HyperVUserClient::sMethods[kNumberOfMethods] = {
   }
 };
 
-UInt64 HyperVUserClient::callbacks[kNumberOfMethods];
-
 bool HyperVUserClient::start(IOService *provider) {
   //
   // Get parent HyperVController object.
@@ -34,7 +32,7 @@ bool HyperVUserClient::start(IOService *provider) {
   _hvController->retain();
 
   HVCheckDebugArgs();
-  HVDBGLOG("Initializing Hyper-V Guest Shutdown userclient");
+  HVDBGLOG("Initializing Hyper-V user client");
 
   if (!super::start(provider)) {
     HVSYSLOG("super::start() returned false");
@@ -61,6 +59,12 @@ bool HyperVUserClient::start(IOService *provider) {
   _notificationMsg.standard.header.msgh_reserved    = 0;
   _notificationMsg.standard.header.msgh_id          = 0;
 
+  _drivers = OSDictionary::withCapacity(1);
+  if (_drivers == nullptr) {
+    HVSYSLOG("Failed to create driver dictionary");
+    return false;
+  }
+  registerService();
   HVDBGLOG("Initialized Hyper-V user client");
   return true;
 }
@@ -106,7 +110,7 @@ bool HyperVUserClient::initWithTask(task_t owningTask, void *securityToken, UInt
 }
 
 IOReturn HyperVUserClient::clientClose() {
-  HVDBGLOG("Hyper-V Guest Shutdown user client is closing");
+  HVDBGLOG("Hyper-V user client is closing");
   terminate();
   return kIOReturnSuccess;
 }
@@ -154,14 +158,22 @@ IOReturn HyperVUserClient::externalMethod(uint32_t selector, IOExternalMethodArg
 }
 
 IOReturn HyperVUserClient::sMethodReturnFileCopy(HyperVUserClient* target, void* ref, IOExternalMethodArguments* args) {
-  if (!callbacks[kMethodReturnFileCopy])
+  IOService *fCopy;
+  target->HVDBGLOG("Userspace called sMethodReturnFileCopy in userclient");
+  
+  fCopy = OSDynamicCast(IOService, target->_drivers->getObject("HyperVFileCopy"));
+  if (!fCopy)
     return kIOReturnNotReady;
-  IOSleep(1000);
-  reinterpret_cast<void (*)(int *)>(callbacks[kMethodReturnFileCopy])((int *)args->scalarInput);
+  
+  fCopy->callPlatformFunction("responseFromUserspace", true, (void *)args->scalarInput, NULL, NULL, NULL);
   
   return kIOReturnSuccess;
 }
 
-void HyperVUserClient::registerDriverCallback(HyperVUserClientMethod index, UInt64 callback) {
-  callbacks[index] = callback;
+bool HyperVUserClient::registerDriver(IOService *driver) {
+  return _drivers->setObject(driver->getMetaClass()->getClassName(), driver);
+}
+
+void HyperVUserClient::deregisterDriver(IOService *driver) {
+  _drivers->removeObject(driver->getMetaClass()->getClassName());
 }

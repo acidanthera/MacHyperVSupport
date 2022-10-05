@@ -25,8 +25,18 @@ private:
   UInt32 status;
   IOLock *lock = nullptr;
   bool isSleeping = false;
-  void sleepForUserspace();
+  IONotifier *_userClientNotify;
+  bool isRegistered = false;
+  int sleepForUserspace(UInt32 seconds = 0);
   void wakeForUserspace();
+#if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
+  static bool _userClientAvailable(void *target, void *ref,
+                                   IOService *newService);
+#else
+  static bool _userClientAvailable(void *target, void *ref,
+                                   IOService *newService,
+                                   IONotifier *notifier);
+#endif
 
 public:
   //
@@ -34,8 +44,10 @@ public:
   //
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
   void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
-  
-  static void responseFromUserspace(int *status);
+  IOReturn callPlatformFunction(const OSSymbol *functionName,
+                                bool waitForFunction, void *param1,
+                                void *param2, void *param3,
+                                void *param4) APPLE_KEXT_OVERRIDE;
 };
 
 #endif

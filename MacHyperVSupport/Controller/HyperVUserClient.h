@@ -23,6 +23,7 @@ typedef enum {
 typedef enum : UInt32 {
   kHyperVUserClientStatusSuccess        = 0x00000000,
   kHyperVUserClientStatusFailure        = 0x80004005,
+  kHyperVUserClientStatusTimedOut       = 0x800705B4,
   kHyperVUserClientStatusInvalidArg     = 0x80070057,
   kHyperVUserClientStatusAlreadyExists  = 0x80070050,
   kHyperVUserClientStatusDiskFull       = 0x80070070

@@ -358,6 +358,16 @@ IOReturn HyperVController::notifyUserClient(HyperVUserClientNotificationType typ
   return _userClientInstance->notifyClientApplication(type, data, dataLength);
 }
 
-void HyperVController::registerUserClientDriverCallback(HyperVUserClientMethod index, mach_vm_address_t callback) {
-  HyperVUserClient::registerDriverCallback(index, callback);
+bool HyperVController::registerUserClientDriver(IOService *driver) {
+  if (_userClientInstance == nullptr) {
+    return false;
+  }
+  return _userClientInstance->registerDriver(driver);
+}
+
+bool HyperVController::deregisterUserClientDriver(IOService *driver) {
+  if (_userClientInstance == nullptr) {
+    return false;
+  }
+  return _userClientInstance->registerDriver(driver);
 }
