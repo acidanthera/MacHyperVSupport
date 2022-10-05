@@ -11,8 +11,7 @@
 #include <libkern/OSTypes.h>
 #include <mach/message.h>
 
-#define kHyperVUserClientNotificationMessageDataStandardLength 64
-#define kHyperVUserClientNotificationMessageDataLargeLength (kHyperVUserClientNotificationMessageDataStandardLength + (6 * 1024))
+#define kHyperVUserClientNotificationMessageDataLength 64
 
 typedef enum {
     kMethodReturnFileCopy,
@@ -75,27 +74,15 @@ typedef struct __attribute__((packed)) {
   } operationData;
 } HyperVUserClientFileCopy;
 
-typedef union {
-  struct {
-    mach_msg_header_t                header;
-    HyperVUserClientNotificationType type;
-    UInt8                            data[kHyperVUserClientNotificationMessageDataStandardLength];
-    UInt32                           dataLength;
-    
+typedef struct {
+  mach_msg_header_t                header;
+  HyperVUserClientNotificationType type;
+  UInt8                            data[kHyperVUserClientNotificationMessageDataLength];
+  UInt32                           dataLength;
+  
 #ifndef KERNEL
-    mach_msg_trailer_t               trailer;
+  mach_msg_trailer_t               trailer;
 #endif
-  } standard;
-  struct {
-    mach_msg_header_t                header;
-    HyperVUserClientNotificationType type;
-    UInt8                            data[kHyperVUserClientNotificationMessageDataLargeLength];
-    UInt32                           dataLength;
-    
-#ifndef KERNEL
-    mach_msg_trailer_t               trailer;
-#endif
-  } large;
 } HyperVUserClientNotificationMessage;
 
 #endif

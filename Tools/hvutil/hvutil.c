@@ -201,24 +201,24 @@ static void hvUtilFileCopy(void *data, UInt32 dataLength) {
 
 static void hvUtilNotification(CFMachPortRef port, void *msg, CFIndex size, void *info) {
   HyperVUserClientNotificationMessage *hvMsg = (HyperVUserClientNotificationMessage *) msg;
-  HVDBGLOG(stdout, "Received notification of type 0x%X", hvMsg->standard.type);
+  HVDBGLOG(stdout, "Received notification of type 0x%X", hvMsg->type);
 
-  switch (hvMsg->standard.type) {
+  switch (hvMsg->type) {
     case kHyperVUserClientNotificationTypePerformShutdown:
     case kHyperVUserClientNotificationTypePerformRestart:
-      hvUtilDoShutdown(hvMsg->standard.type == kHyperVUserClientNotificationTypePerformRestart);
+      hvUtilDoShutdown(hvMsg->type == kHyperVUserClientNotificationTypePerformRestart);
       break;
       
     case kHyperVUserClientNotificationTypeTimeSync:
-      hvUtilDoTimeSync(hvMsg->standard.data, hvMsg->standard.dataLength);
+      hvUtilDoTimeSync(hvMsg->data, hvMsg->dataLength);
       break;
     
     case kHyperVUserClientNotificationTypeFileCopy:
-      hvUtilFileCopy(hvMsg->large.data, hvMsg->large.dataLength);
+      hvUtilFileCopy(hvMsg->data, hvMsg->dataLength);
       break;
 
     default:
-      HVDBGLOG(stdout, "Unknown notification type 0x%X", hvMsg->standard.type);
+      HVDBGLOG(stdout, "Unknown notification type 0x%X", hvMsg->type);
       break;
   }
 }
