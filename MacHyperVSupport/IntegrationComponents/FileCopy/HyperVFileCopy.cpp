@@ -152,7 +152,7 @@ int HyperVFileCopy::sleepForUserspace(UInt32 seconds) {
   HVDBGLOG("Sleeping until response from userspace", status);
   isSleeping = true;
   IOLockLock(lock);
-  while (isSleeping) {
+  while (isSleeping && waitResult != THREAD_TIMED_OUT) {
     if (seconds) {
       if (computeDeadline) {
         clock_interval_to_deadline(seconds, kSecondScale, &deadline);
