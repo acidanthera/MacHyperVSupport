@@ -73,7 +73,7 @@ void HyperVFileCopy::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
       break;
 
     case kVMBusICMessageTypeFileCopy:
-      if (!_hvDevice->getHvController()->checkUserClient() || !isRegistered || !userClientChunkBuffer) {
+      if (!_hvDevice->getHvController()->checkUserClient() || !isRegistered) {
         HVDBGLOG("Userspace or user client is not ready yet");
         _fileCopyPkt->header.status = kHyperVStatusFail;
         break;
@@ -168,10 +168,6 @@ bool HyperVFileCopy::_userClientAvailable(void *target, void *ref, IOService *ne
     if (!fcopy->_hvDevice->getHvController()->registerUserClientDriver(fcopy)) {
       fcopy->HVSYSLOG("Failed to register driver in user client");
     } else {
-      fileCopyMsg.operation = kHyperVUserClientFileCopySetup;
-      IOSleep(2000);
-      fcopy->HVSYSLOG("Notifying user client to tell user-space to send a buffer for mapping.");
-      fcopy->_hvDevice->getHvController()->notifyUserClient(kHyperVUserClientNotificationTypeFileCopy, &fileCopyMsg, sizeof (fileCopyMsg.operation));
       fcopy->isRegistered = true;
     }
   }
@@ -183,10 +179,7 @@ IOReturn HyperVFileCopy::callPlatformFunction(const OSSymbol *functionName,
                                               bool waitForFunction, void *param1,
                                               void *param2, void *param3, void *param4) {
   HVDBGLOG("Calling function '%s'", functionName->getCStringNoCopy());
-  if (functionName->isEqualTo("mapSharedBuffer")) {
-    *(IOReturn *) param1 = mapSharedBuffer((task_t) param2, (mach_vm_address_t) param3, *(size_t *) param4);
-    return kIOReturnSuccess;
-  } else if (functionName->isEqualTo("returnCodeFromUserspace")) {
+  if (functionName->isEqualTo("returnCodeFromUserspace")) {
     returnCodeFromUserspace((UInt64 *) param1);
     return kIOReturnSuccess;
   } else if (functionName->isEqualTo("getStartCopyData")) {
@@ -195,44 +188,6 @@ IOReturn HyperVFileCopy::callPlatformFunction(const OSSymbol *functionName,
   }
   return super::callPlatformFunction(functionName, waitForFunction,
                                      param1, param2, param3, param4);
-}
-
-IOReturn HyperVFileCopy::mapSharedBuffer(task_t task, mach_vm_address_t userBuffer, size_t userBufferSize) {
-  memoryDescriptor = IOMemoryDescriptor::withAddressRange(userBuffer, userBufferSize,
-                                                          kIODirectionNone, task);
-  if (!memoryDescriptor) {
-    HVSYSLOG("Failed to create memory descriptor");
-    return kIOReturnError;
-  }
-  
-  if (memoryDescriptor->prepare() != kIOReturnSuccess) {
-    HVSYSLOG("Failed to prepare memory descriptor");
-    memoryDescriptor->release();
-    memoryDescriptor = NULL;
-    return kIOReturnError;
-  }
-  
-  memoryMap = memoryDescriptor->createMappingInTask(kernel_task, 0, kIOMapAnywhere | kIOMapDefaultCache);
-  if (!memoryMap) {
-    HVSYSLOG("Failed to create memory mapping for memory descriptor");
-    memoryDescriptor->complete();
-    memoryDescriptor->release();
-    memoryDescriptor = NULL;
-    return kIOReturnError;
-  }
-  
-  userClientChunkBuffer = (UInt8 *) memoryMap->getVirtualAddress();
-  if (!userClientChunkBuffer) {
-    HVSYSLOG("Failed to get kernel address of mapped daemon file chunk buffer");
-    memoryDescriptor->complete();
-    memoryDescriptor->release();
-    memoryDescriptor = NULL;
-    memoryMap->release();
-    return kIOReturnError;
-  }
-  
-  HVDBGLOG("Successfully mapped daemon file chunk buffer");
-  return kIOReturnSuccess;
 }
 
 void HyperVFileCopy::returnCodeFromUserspace(UInt64 *status) {

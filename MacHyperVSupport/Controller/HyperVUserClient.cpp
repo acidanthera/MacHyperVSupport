@@ -158,13 +158,6 @@ const IOExternalMethodDispatch HyperVUserClient::sMethods[kNumberOfMethods] = {
     0,                                                                 // Num of scalar output values
     0                                                                  // Size of struct output
   },
-  { // kMethodFileCopyMapSharedBuffer
-    (IOExternalMethodAction) &HyperVUserClient::sMethodFileCopyMapSharedBuffer,
-    2,
-    0,
-    1,
-    0
-  },
   { // kMethodFileCopyGetStartCopyData
     (IOExternalMethodAction) &HyperVUserClient::sMethodFileCopyGetStartCopyData,
     0,
@@ -183,23 +176,6 @@ IOReturn HyperVUserClient::sMethodFileCopyReturnGeneric(HyperVUserClient* target
     return kIOReturnNotReady;
   
   fCopy->callPlatformFunction("returnCodeFromUserspace", true, (void *)args->scalarInput, NULL, NULL, NULL);
-  
-  return kIOReturnSuccess;
-}
-
-IOReturn HyperVUserClient::sMethodFileCopyMapSharedBuffer(HyperVUserClient* target, void* ref, IOExternalMethodArguments* args) {
-  IOService *fCopy;
-  IOReturn fCopyRet;
-  
-  target->HVDBGLOG("Userspace called sMethodFileCopyMapSharedBuffer in userclient");
-  
-  fCopy = OSDynamicCast(IOService, target->_drivers->getObject("HyperVFileCopy"));
-  if (!fCopy)
-    return kIOReturnNotReady;
-  
-  // return value, task, user buffer location, user buffer size
-  fCopy->callPlatformFunction("mapSharedBuffer", true, &fCopyRet, target->mTask, (void *) &args->scalarInput[0], (void *) &args->scalarInput[1]);
-  args->scalarOutput[0] = fCopyRet;
   
   return kIOReturnSuccess;
 }

@@ -79,8 +79,6 @@ static void hvUtilDoTimeSync(void *data, UInt32 dataLength) {
 static int fcopyTargetFileDesc;
 static char fcopyTargetFilePath[PATH_MAX];
 static unsigned long long fcopyFileSize;
-static void * fcopyBuffer = NULL;
-static size_t fcopyBufferSize;
 
 static UInt32 hvUtilFileCopyStartCopy(HyperVUserClientFileCopyStartCopyParam *startCopyParams) {
   HyperVUserClientFileCopyStartCopyData startCopyData;
@@ -144,20 +142,20 @@ static UInt32 hvUtilFileCopyDoCopy(HyperVUserClientFileCopyDoCopyParam *fileData
   int ret = kHyperVUserClientStatusSuccess;
   size_t bytesWritten;
 
-  bytesWritten = pwrite(fcopyTargetFileDesc, fcopyBuffer, fileDataParams->size, fileDataParams->offset);
-
-  fcopyFileSize += fileDataParams->size;
-  if (bytesWritten != fileDataParams->size) {
-    switch (errno) {
-      case ENOSPC:
-        ret = kHyperVUserClientStatusDiskFull;
-        break;
-      default:
-        ret = kHyperVUserClientStatusFailure;
-        break;
-    }
-    HVSYSLOG(stderr, "pwrite() failed to write %llu bytes: %ld (%s)", fcopyFileSize, (long) bytesWritten, strerror(errno));
-  }
+//  bytesWritten = pwrite(fcopyTargetFileDesc, fcopyBuffer, fileDataParams->size, fileDataParams->offset);
+//
+//  fcopyFileSize += fileDataParams->size;
+//  if (bytesWritten != fileDataParams->size) {
+//    switch (errno) {
+//      case ENOSPC:
+//        ret = kHyperVUserClientStatusDiskFull;
+//        break;
+//      default:
+//        ret = kHyperVUserClientStatusFailure;
+//        break;
+//    }
+//    HVSYSLOG(stderr, "pwrite() failed to write %llu bytes: %ld (%s)", fcopyFileSize, (long) bytesWritten, strerror(errno));
+//  }
   
   return ret;
 }
@@ -173,41 +171,6 @@ static UInt32 hvUtilFileCopyCancelCopy(void) {
   return kHyperVUserClientStatusSuccess;
 }
 
-static kern_return_t hvUtilFileCopySetup() {
-  kern_return_t ret = kIOReturnError;
-  kern_return_t ioConnectRet;
-  UInt32    scalarOutCount = 1;
-  
-  if (!fcopyBuffer) {
-    HVSYSLOG(stdout, "File copy buffer not allocated yet; allocating");
-    fcopyBufferSize = (2 * 4096);
-    ret = vm_allocate((vm_map_t) mach_task_self(),
-                      (vm_address_t*) &fcopyBuffer,
-                      fcopyBufferSize, VM_FLAGS_ANYWHERE);
-    
-    if (ret == kIOReturnSuccess) {
-      HVDBGLOG(stdout, "Allocated 0x8000 bytes for fcopy buffer");
-    } else {
-      fcopyBuffer = NULL;
-      HVSYSLOG(stderr, "Failed to allocate buffer with error '%s'", mach_error_string(ret));
-    }
-  } else {
-    HVDBGLOG(stdout, "File copy buffer already allocated; skipping");
-  }
-  
-  if (ret == kIOReturnSuccess || (fcopyBuffer && fcopyBufferSize)) {
-    UInt64 input[2] = { (UInt64) fcopyBuffer, fcopyBufferSize };
-    ioConnectRet = IOConnectCallScalarMethod(sConnection, kMethodFileCopyMapSharedBuffer, &input, 2, &ret, &scalarOutCount);
-    if (ioConnectRet == kIOReturnSuccess) {
-      HVDBGLOG(stdout, "Successfully called index %u with return code %u", kMethodFileCopyMapSharedBuffer, ret);
-    } else {
-      HVSYSLOG(stderr, "Failed to call index %u with error '%s'", kMethodFileCopyMapSharedBuffer, mach_error_string(ioConnectRet));
-    }
-  }
-  
-  return ret;
-}
-
 static void hvUtilFileCopy(void *data, UInt32 dataLength) {
   UInt64 ret;
   HyperVUserClientFileCopyMessage *fcopyMsg;
@@ -220,9 +183,6 @@ static void hvUtilFileCopy(void *data, UInt32 dataLength) {
   
   HVDBGLOG(stdout, "Received file copy operation of type 0x%X", fcopyMsg->operation);
   switch (fcopyMsg->operation) {
-    case kHyperVUserClientFileCopySetup:
-      ret = hvUtilFileCopySetup();
-      break;
     case kHyperVUserClientFileCopyOperationStartFileCopy:
       ret = hvUtilFileCopyStartCopy(&fcopyMsg->startCopy);
       break;

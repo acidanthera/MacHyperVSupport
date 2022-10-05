@@ -31,10 +31,6 @@ private:
   bool isRegistered = false;
   VMBusICMessageFileCopy *_fileCopyPkt;
   
-  IOMemoryDescriptor *memoryDescriptor = NULL;
-  IOMemoryMap        *memoryMap = NULL;
-  UInt8              *userClientChunkBuffer;
-  
   int sleepForUserspace(UInt32 seconds = 0);
   void wakeForUserspace();
 #if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
@@ -45,7 +41,6 @@ private:
                                    IOService *newService,
                                    IONotifier *notifier);
 #endif
-  IOReturn mapSharedBuffer(task_t task, mach_vm_address_t userBuffer, size_t userBufferSize);
   void returnCodeFromUserspace(UInt64 *status);
   void getStartCopyData(HyperVUserClientFileCopyStartCopyData *startCopyDataOut);
   bool convertNameAndPath(VMBusICMessageFileCopy *input, HyperVUserClientFileCopyStartCopyData *output);
