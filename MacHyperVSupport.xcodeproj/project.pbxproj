@@ -251,7 +251,7 @@
 		418F052726483CAE00E1D14C /* HyperVIC.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVIC.hpp; sourceTree = "<group>"; };
 		418F052A2648451200E1D14C /* HyperVShutdown.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVShutdown.cpp; sourceTree = "<group>"; };
 		418F052B2648451200E1D14C /* HyperVShutdown.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVShutdown.hpp; sourceTree = "<group>"; };
-		418F842E2648A885003F8520 /* HyperVADBMap.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVADBMap.hpp; sourceTree = "<group>"; };
+		418F842E2648A885003F8520 /* HyperVADBMaps.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVADBMaps.hpp; sourceTree = "<group>"; };
 		418F84322648B07E003F8520 /* HyperVMouse.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVMouse.cpp; sourceTree = "<group>"; };
 		418F84332648B07E003F8520 /* HyperVMouse.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVMouse.hpp; sourceTree = "<group>"; };
 		418F84382648B108003F8520 /* HyperVMouseRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVMouseRegs.hpp; sourceTree = "<group>"; };
@@ -435,7 +435,7 @@
 				418219642648607600619C15 /* HyperVKeyboard.cpp */,
 				418219652648607600619C15 /* HyperVKeyboard.hpp */,
 				418219692648659B00619C15 /* HyperVKeyboardRegs.hpp */,
-				418F842E2648A885003F8520 /* HyperVADBMap.hpp */,
+				418F842E2648A885003F8520 /* HyperVADBMaps.hpp */,
 			);
 			path = Keyboard;
 			sourceTree = "<group>";
