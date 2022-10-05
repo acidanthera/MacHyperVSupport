@@ -14,9 +14,10 @@
 #define kHyperVUserClientNotificationMessageDataLength 64
 
 typedef enum {
-    kMethodReturnFileCopy,
-    
-    kNumberOfMethods // Must be last
+  kMethodFileCopyReturnGeneric,
+  kMethodFileCopyMapSharedBuffer,
+  kMethodFileCopyGetStartCopyData,
+  kNumberOfMethods // Must be last
 } HyperVUserClientMethod;
 
 typedef enum : UInt32 {
@@ -44,7 +45,8 @@ typedef enum : UInt32 {
   kHyperVUserClientFileCopyOperationStartFileCopy     = 0,
   kHyperVUserClientFileCopyOperationWriteToFile       = 1,
   kHyperVUserClientFileCopyOperationCompleteFileCopy  = 2,
-  kHyperVUserClientFileCopyOperationCancelFileCopy    = 3
+  kHyperVUserClientFileCopyOperationCancelFileCopy    = 3,
+  kHyperVUserClientFileCopySetup                      = 4
 } HyperVUserClientFileCopyOperation;
 
 typedef enum : UInt32 {
@@ -53,26 +55,32 @@ typedef enum : UInt32 {
 } HyperVUserClientFileCopyFlags;
 
 typedef struct __attribute__((packed)) {
-  HyperVUserClientFileCopyFlags  copyFlags;
-  UInt64                         fileSize;
-  UInt8                          fileName[1024];
-  UInt8                          filePath[1024];
-} HyperVUserClientFileCopyStartCopy;
+  UInt8  fileName[PATH_MAX];
+  UInt8  filePath[PATH_MAX];
+} HyperVUserClientFileCopyStartCopyData;
 
+#define kHyperVFileCopyFragmentSize (6 * 1024)
 typedef struct __attribute__((packed)) {
-  UInt32  reserved;
+  UInt8   data[kHyperVFileCopyFragmentSize];
+} HyperVUserClientFileCopyDoCopyData;
+
+typedef struct {
+  UInt64                         fileSize;
+  HyperVUserClientFileCopyFlags  copyFlags;
+} HyperVUserClientFileCopyStartCopyParam;
+
+typedef struct {
   UInt64  offset;
   UInt32  size;
-  UInt8   data[(6 * 1024)];
-} HyperVUserClientFileCopyDoCopy;
+} HyperVUserClientFileCopyDoCopyParam;
 
-typedef struct __attribute__((packed)) {
-  HyperVUserClientFileCopyOperation    operation;
+typedef struct {
+  HyperVUserClientFileCopyOperation  operation;
   union {
-    HyperVUserClientFileCopyStartCopy  startCopy;
-    HyperVUserClientFileCopyDoCopy     doCopy;
-  } operationData;
-} HyperVUserClientFileCopy;
+    HyperVUserClientFileCopyStartCopyParam startCopy;
+    HyperVUserClientFileCopyDoCopyParam doCopy;
+  };
+} HyperVUserClientFileCopyMessage;
 
 typedef struct {
   mach_msg_header_t                header;

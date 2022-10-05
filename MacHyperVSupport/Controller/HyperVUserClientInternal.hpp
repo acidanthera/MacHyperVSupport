@@ -51,7 +51,12 @@ public:
   void deregisterDriver(IOService *driver);
   
 protected:
-  static IOReturn sMethodReturnFileCopy(HyperVUserClient* target, void* ref, IOExternalMethodArguments* args);
+  //
+  // File Copy functions.
+  //
+  static IOReturn sMethodFileCopyReturnGeneric(HyperVUserClient* target, void* ref, IOExternalMethodArguments* args);
+  static IOReturn sMethodFileCopyMapSharedBuffer(HyperVUserClient* target, void* ref, IOExternalMethodArguments* args);
+  static IOReturn sMethodFileCopyGetStartCopyData(HyperVUserClient* target, void* ref, IOExternalMethodArguments* args);
 };
 
 #endif

@@ -9,17 +9,6 @@
 
 OSDefineMetaClassAndStructors(HyperVUserClient, super);
 
-// User client dispatch table
-const IOExternalMethodDispatch HyperVUserClient::sMethods[kNumberOfMethods] = {
-  { // kMethodReturnFileCopy
-    (IOExternalMethodAction) &HyperVUserClient::sMethodReturnFileCopy, // Method pointer
-    1,                                                                 // Num of scalar input values
-    0,                                                                 // Num of struct input values
-    0,                                                                 // Num of scalar output values
-    0                                                                  // Num of struct output values
-  }
-};
-
 bool HyperVUserClient::start(IOService *provider) {
   //
   // Get parent HyperVController object.
@@ -125,6 +114,17 @@ IOReturn HyperVUserClient::registerNotificationPort(mach_port_t port, UInt32 typ
   return kIOReturnSuccess;
 }
 
+bool HyperVUserClient::registerDriver(IOService *driver) {
+  HVDBGLOG("Registering driver to receive callbacks %s", driver->getMetaClass()->getClassName());
+  return _drivers->setObject(driver->getMetaClass()->getClassName(), driver);
+}
+
+void HyperVUserClient::deregisterDriver(IOService *driver) {
+  HVDBGLOG("Deregistering callback-recipient driver %s", driver->getMetaClass()->getClassName());
+  _drivers->removeObject(driver->getMetaClass()->getClassName());
+}
+
+
 IOReturn HyperVUserClient::notifyClientApplication(HyperVUserClientNotificationType type, void *data, UInt32 dataLength) {
   if (dataLength > sizeof (_notificationMsg.data)) {
     return kIOReturnMessageTooLarge;
@@ -149,23 +149,70 @@ IOReturn HyperVUserClient::externalMethod(uint32_t selector, IOExternalMethodArg
   return super::externalMethod(selector, arguments, dispatch, target, reference);
 }
 
-IOReturn HyperVUserClient::sMethodReturnFileCopy(HyperVUserClient* target, void* ref, IOExternalMethodArguments* args) {
+// User client dispatch table
+const IOExternalMethodDispatch HyperVUserClient::sMethods[kNumberOfMethods] = {
+  { // kMethodFileCopyReturnGeneric
+    (IOExternalMethodAction) &HyperVUserClient::sMethodFileCopyReturnGeneric, // Method pointer
+    1,                                                                 // Num of scalar input values
+    0,                                                                 // Size of struct input
+    0,                                                                 // Num of scalar output values
+    0                                                                  // Size of struct output
+  },
+  { // kMethodFileCopyMapSharedBuffer
+    (IOExternalMethodAction) &HyperVUserClient::sMethodFileCopyMapSharedBuffer,
+    2,
+    0,
+    1,
+    0
+  },
+  { // kMethodFileCopyGetStartCopyData
+    (IOExternalMethodAction) &HyperVUserClient::sMethodFileCopyGetStartCopyData,
+    0,
+    0,
+    0,
+    sizeof (HyperVUserClientFileCopyStartCopyData)
+  }
+};
+
+IOReturn HyperVUserClient::sMethodFileCopyReturnGeneric(HyperVUserClient* target, void* ref, IOExternalMethodArguments* args) {
   IOService *fCopy;
-  target->HVDBGLOG("Userspace called sMethodReturnFileCopy in userclient");
+  target->HVDBGLOG("Userspace called sMethodFileCopyReturnGeneric in userclient");
   
   fCopy = OSDynamicCast(IOService, target->_drivers->getObject("HyperVFileCopy"));
   if (!fCopy)
     return kIOReturnNotReady;
   
-  fCopy->callPlatformFunction("responseFromUserspace", true, (void *)args->scalarInput, NULL, NULL, NULL);
+  fCopy->callPlatformFunction("returnCodeFromUserspace", true, (void *)args->scalarInput, NULL, NULL, NULL);
   
   return kIOReturnSuccess;
 }
 
-bool HyperVUserClient::registerDriver(IOService *driver) {
-  return _drivers->setObject(driver->getMetaClass()->getClassName(), driver);
+IOReturn HyperVUserClient::sMethodFileCopyMapSharedBuffer(HyperVUserClient* target, void* ref, IOExternalMethodArguments* args) {
+  IOService *fCopy;
+  IOReturn fCopyRet;
+  
+  target->HVDBGLOG("Userspace called sMethodFileCopyMapSharedBuffer in userclient");
+  
+  fCopy = OSDynamicCast(IOService, target->_drivers->getObject("HyperVFileCopy"));
+  if (!fCopy)
+    return kIOReturnNotReady;
+  
+  // return value, task, user buffer location, user buffer size
+  fCopy->callPlatformFunction("mapSharedBuffer", true, &fCopyRet, target->mTask, (void *) &args->scalarInput[0], (void *) &args->scalarInput[1]);
+  args->scalarOutput[0] = fCopyRet;
+  
+  return kIOReturnSuccess;
 }
 
-void HyperVUserClient::deregisterDriver(IOService *driver) {
-  _drivers->removeObject(driver->getMetaClass()->getClassName());
+IOReturn HyperVUserClient::sMethodFileCopyGetStartCopyData(HyperVUserClient* target, void* ref, IOExternalMethodArguments* args) {
+  IOService *fCopy;
+  target->HVDBGLOG("Userspace called sMethodFileCopyGetStartCopyData in userclient");
+  
+  fCopy = OSDynamicCast(IOService, target->_drivers->getObject("HyperVFileCopy"));
+  if (!fCopy)
+    return kIOReturnNotReady;
+  
+  fCopy->callPlatformFunction("getStartCopyData", true, (void *)args->structureOutput, NULL, NULL, NULL);
+  
+  return kIOReturnSuccess;
 }

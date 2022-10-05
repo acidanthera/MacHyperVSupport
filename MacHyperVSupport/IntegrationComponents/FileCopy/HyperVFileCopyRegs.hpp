@@ -9,9 +9,9 @@
 #define HyperVFileCopyRegs_hpp
 
 #include "HyperVIC.hpp"
+#include "HyperVUserClient.h"
 
 #define kHyperVFileCopyMaxPath       260
-#define kHyperVFileCopyFragmentSize  (6 * 1024)
 #define kHyperVFileCopyBufferSize    (8 * PAGE_SIZE)
 
 //
@@ -20,38 +20,23 @@
 #define kHyperVFileCopyVersionV1 { 1, 1 }
 
 //
-// File Copy operations.
-//
-typedef enum : UInt32 {
-  kVMBusICFileCopyOperationStartFileCopy    = 0,
-  kVMBusICFileCopyOperationWriteToFile      = 1,
-  kVMBusICFileCopyOperationCompleteFileCopy = 2,
-  kVMBusICFileCopyOperationCancelFileCopy   = 3
-} VMBusICFileCopyOperation;
-
-//
 // File Copy messages.
 //
 typedef struct __attribute__((packed)) {
-  VMBusICMessageHeader      header;
+  VMBusICMessageHeader               header;
   
-  VMBusICFileCopyOperation  operation;
-  uuid_t                    unused1;
-  uuid_t                    unused2;
+  HyperVUserClientFileCopyOperation  operation;
+  uuid_t                             unused1;
+  uuid_t                             unused2;
 } VMBusICMessageFileCopyHeader;
 
-typedef enum : UInt32 {
-  kVMBusICFileCopyFlagsOverwrite    = 1,
-  kVMBusICFileCopyFlagsCreatePath   = 2
-} VMBusICFileCopyFlags;
-
 typedef struct __attribute__((packed)) {
-  VMBusICMessageFileCopyHeader  fcopyHeader;
+  VMBusICMessageFileCopyHeader   fcopyHeader;
   // fileName & filePath are UTF-16 strings
-  UInt16                        fileName[kHyperVFileCopyMaxPath];
-  UInt16                        filePath[kHyperVFileCopyMaxPath];
-  VMBusICFileCopyFlags          copyFlags;
-  UInt64                        fileSize;
+  UInt16                         fileName[kHyperVFileCopyMaxPath];
+  UInt16                         filePath[kHyperVFileCopyMaxPath];
+  HyperVUserClientFileCopyFlags  copyFlags;
+  UInt64                         fileSize;
 } VMBusICMessageFileCopyStartCopy;
 
 typedef struct __attribute__((packed)) {
