@@ -85,8 +85,7 @@ IOReturn HyperVUserClient::message(UInt32 type, IOService *provider, void *argum
   return super::message(type, provider, argument);
 }
 
-bool HyperVUserClient::initWithTask(task_t owningTask, void *securityToken, UInt32 type, OSDictionary *properties)
-{
+bool HyperVUserClient::initWithTask(task_t owningTask, void *securityToken, UInt32 type, OSDictionary *properties) {
     if (!owningTask)
         return false;
     
@@ -138,7 +137,7 @@ IOReturn HyperVUserClient::notifyClientApplication(HyperVUserClientNotificationT
   return mach_msg_send_from_kernel(&_notificationMsg.header, _notificationMsg.header.msgh_size);
 }
 
-IOReturn HyperVUserClient::externalMethod(uint32_t selector, IOExternalMethodArguments* arguments, IOExternalMethodDispatch* dispatch, OSObject* target, void* reference) {
+IOReturn HyperVUserClient::externalMethod(uint32_t selector, IOExternalMethodArguments *arguments, IOExternalMethodDispatch *dispatch, OSObject *target, void *reference) {
   if (selector >= kNumberOfMethods)
     return kIOReturnUnsupported;
   
@@ -174,7 +173,7 @@ const IOExternalMethodDispatch HyperVUserClient::sMethods[kNumberOfMethods] = {
   }
 };
 
-IOReturn HyperVUserClient::sMethodFileCopyReturnGeneric(HyperVUserClient* target, void* ref, IOExternalMethodArguments* args) {
+IOReturn HyperVUserClient::sMethodFileCopyReturnGeneric(HyperVUserClient *target, void *ref, IOExternalMethodArguments *args) {
   IOService *fCopy;
   target->HVDBGLOG("Userspace called sMethodFileCopyReturnGeneric in userclient");
   
@@ -182,12 +181,12 @@ IOReturn HyperVUserClient::sMethodFileCopyReturnGeneric(HyperVUserClient* target
   if (!fCopy)
     return kIOReturnNotReady;
   
-  fCopy->callPlatformFunction("returnCodeFromUserspace", true, (void *)args->scalarInput, NULL, NULL, NULL);
+  fCopy->callPlatformFunction("returnCodeFromUserspace", true, (void *) args->scalarInput, NULL, NULL, NULL);
   
   return kIOReturnSuccess;
 }
 
-IOReturn HyperVUserClient::sMethodFileCopyGetStartCopyData(HyperVUserClient* target, void* ref, IOExternalMethodArguments* args) {
+IOReturn HyperVUserClient::sMethodFileCopyGetStartCopyData(HyperVUserClient *target, void *ref, IOExternalMethodArguments *args) {
   IOService *fCopy;
   target->HVDBGLOG("Userspace called sMethodFileCopyGetStartCopyData in userclient");
   
@@ -200,9 +199,9 @@ IOReturn HyperVUserClient::sMethodFileCopyGetStartCopyData(HyperVUserClient* tar
   return kIOReturnSuccess;
 }
 
-IOReturn HyperVUserClient::sMethodFileCopyGetDoCopyData(HyperVUserClient* target, void* ref, IOExternalMethodArguments* args) {
+IOReturn HyperVUserClient::sMethodFileCopyGetDoCopyData(HyperVUserClient *target, void *ref, IOExternalMethodArguments *args) {
   IOService *fCopy;
-  IOMemoryMap* map = nullptr;
+  IOMemoryMap *map = nullptr;
   const HyperVUserClientFileCopyDoCopyData *doCopyData;
   size_t doCopyDataSize;
   target->HVDBGLOG("Userspace called sMethodFileCopyGetDoCopyData in userclient");
