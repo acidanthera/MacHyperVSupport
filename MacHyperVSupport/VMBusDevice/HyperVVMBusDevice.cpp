@@ -10,8 +10,7 @@
 OSDefineMetaClassAndStructors(HyperVVMBusDevice, super);
 
 bool HyperVVMBusDevice::attach(IOService *provider) {
-  bool superAttached = false;
-  bool attached      = false;
+  bool result = false;
   
   char     channelLocation[10];
   OSString *typeIdString;
@@ -31,14 +30,14 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
   }
   _vmbusProvider->retain();
   HVCheckDebugArgs();
-  
+
+  if (!super::attach(provider)) {
+    HVSYSLOG("super::attach() returned false");
+    OSSafeReleaseNULL(_vmbusProvider);
+    return false;
+  }
+
   do {
-    superAttached = super::attach(provider);
-    if (!superAttached) {
-      HVSYSLOG("super::attach() returned false");
-      break;
-    }
-    
     //
     // Initialize work loop and command gate.
     //
@@ -98,40 +97,36 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
     threadZeroRequest.lock = IOLockAlloc();
     prepareSleepThread();
     
-    attached = true;
+    result = true;
   } while (false);
 
-  if (!attached) {
-    if (!superAttached) {
-      super::detach(provider);
-    }
-    
-    if (_commandGate != nullptr) {
-      _workLoop->removeEventSource(_commandGate);
-    }
-    OSSafeReleaseNULL(_commandGate);
-    OSSafeReleaseNULL(_workLoop);
-    OSSafeReleaseNULL(_vmbusProvider);
+  if (!result) {
+    detach(provider);
   }
-  
-  return attached;
+  return result;
 }
 
 void HyperVVMBusDevice::detach(IOService *provider) {
   //
   // Close and free channel.
   //
-  if (_channelIsOpen) {
+  if (_vmbusProvider != nullptr) {
     closeVMBusChannel();
+    uninstallPacketActions();
+    _vmbusProvider->freeVMBusChannel(_channelId);
+    OSSafeReleaseNULL(_vmbusProvider);
   }
-  _vmbusProvider->freeVMBusChannel(_channelId);
-  
+
   IOLockFree(vmbusRequestsLock);
   IOLockFree(vmbusTransLock);
   IOLockFree(threadZeroRequest.lock);
-  
-  uninstallPacketActions();
-  
+
+  if (_commandGate != nullptr) {
+    _workLoop->removeEventSource(_commandGate);
+    OSSafeReleaseNULL(_commandGate);
+  }
+  OSSafeReleaseNULL(_workLoop);
+
   super::detach(provider);
 }
 
