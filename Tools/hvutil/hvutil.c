@@ -5,10 +5,14 @@
 //  Copyright © 2022 Goldfish64. All rights reserved.
 //
 
+#import <mach/mach.h>
 #include <mach/mach_port.h>
 #include <IOKit/IOKitLib.h>
 
 #include <sys/time.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/stat.h>
 
 #include "hvdebug.h"
 #include "HyperVUserClient.h"
@@ -72,6 +76,147 @@ static void hvUtilDoTimeSync(void *data, UInt32 dataLength) {
   settimeofday(&timeValData, NULL);
 }
 
+static int fcopyTargetFileDesc;
+static char fcopyTargetFilePath[PATH_MAX];
+static unsigned long long fcopyFileSize;
+
+static UInt32 hvUtilFileCopyStartCopy(HyperVUserClientFileCopyStartCopyParam *startCopyParams) {
+  HyperVUserClientFileCopyStartCopyData startCopyData;
+  size_t startCopyDataSize = sizeof (startCopyData);
+  int ret = kHyperVUserClientStatusFailure;
+  
+  kern_return_t ioConnectRet = IOConnectCallStructMethod(sConnection, kMethodFileCopyGetStartCopyData, NULL, 0, &startCopyData, &startCopyDataSize);
+  if (ioConnectRet == kIOReturnSuccess) {
+    HVDBGLOG(stdout, "Successfully called index %u with %u", kMethodFileCopyGetStartCopyData, ret);
+  } else {
+    HVSYSLOG(stderr, "Failed to call index %u with error %s", kMethodFileCopyGetStartCopyData, mach_error_string(ioConnectRet));
+    return ret;
+  }
+  
+  char *q, *p;
+
+  p = (char *)&startCopyData.filePath;
+  snprintf(fcopyTargetFilePath, sizeof(fcopyTargetFilePath), "%s/%s",
+       (char *)&startCopyData.filePath, (char *) &startCopyData.fileName);
+  HVDBGLOG(stdout, "Target file path: %s", p);
+  while ((q = strchr(p, '/')) != NULL) {
+    if (q == p) {
+      p++;
+      continue;
+    }
+    *q = '\0';
+    if (access((char *) &startCopyData.filePath, F_OK)) {
+      if (startCopyParams->copyFlags & kHyperVUserClientFileCopyFlagsCreatePath) {
+        if (mkdir((char *) &startCopyData.filePath, 0755)) {
+          HVSYSLOG(stderr, "Failed to create %s", (char *)&startCopyData.filePath);
+          return ret;
+        }
+      } else {
+        HVSYSLOG(stderr, "Invalid path: %s", (char *)&startCopyData.filePath);
+        return ret;
+      }
+    }
+    p = q + 1;
+    *q = '/';
+  }
+
+  if (!access(fcopyTargetFilePath, F_OK)) {
+    HVSYSLOG(stderr, "File '%s' already exists", fcopyTargetFilePath);
+    if (!(startCopyParams->copyFlags & kHyperVUserClientFileCopyFlagsOverwrite)) {
+      ret = kHyperVUserClientStatusAlreadyExists;
+      return ret;
+    }
+  }
+
+  fcopyTargetFileDesc = open(fcopyTargetFilePath, O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC, 0744);
+  if (fcopyTargetFileDesc == -1) {
+    HVSYSLOG(stderr, "Open failed with err: %s", strerror(errno));
+    return ret;
+  }
+  
+  ret = kHyperVUserClientStatusSuccess;
+  return ret;
+}
+
+static UInt32 hvUtilFileCopyDoCopy(HyperVUserClientFileCopyDoCopyParam *fileDataParams) {
+  HyperVUserClientFileCopyDoCopyData doCopyData;
+  size_t doCopyDataSize = sizeof (doCopyData);
+  int ret = kHyperVUserClientStatusSuccess;
+  
+  kern_return_t ioConnectRet = IOConnectCallStructMethod(sConnection, kMethodFileCopyGetDoCopyData, NULL, 0, &doCopyData, &doCopyDataSize);
+  if (ioConnectRet == kIOReturnSuccess) {
+    HVDBGLOG(stdout, "Successfully called index %u with %u", kMethodFileCopyGetDoCopyData, ret);
+  } else {
+    HVSYSLOG(stderr, "Failed to call index %u with error %s", kMethodFileCopyGetDoCopyData, mach_error_string(ioConnectRet));
+    return ret;
+  }
+  size_t bytesWritten;
+
+  bytesWritten = pwrite(fcopyTargetFileDesc, &doCopyData, fileDataParams->size, fileDataParams->offset);
+
+  fcopyFileSize += fileDataParams->size;
+  if (bytesWritten != fileDataParams->size) {
+    switch (errno) {
+      case ENOSPC:
+        ret = kHyperVUserClientStatusDiskFull;
+        break;
+      default:
+        ret = kHyperVUserClientStatusFailure;
+        break;
+    }
+    HVSYSLOG(stderr, "pwrite() failed to write %llu bytes: %ld (%s)", fcopyFileSize, (long) bytesWritten, strerror(errno));
+  }
+  
+  return ret;
+}
+
+static UInt32 hvUtilFileCopyCompleteCopy(void) {
+  close(fcopyTargetFileDesc);
+  return kHyperVUserClientStatusSuccess;
+}
+
+static UInt32 hvUtilFileCopyCancelCopy(void) {
+  close(fcopyTargetFileDesc);
+  unlink(fcopyTargetFilePath);
+  return kHyperVUserClientStatusSuccess;
+}
+
+static void hvUtilFileCopy(void *data, UInt32 dataLength) {
+  UInt64 ret;
+  HyperVUserClientFileCopyMessage *fcopyMsg;
+  
+  if (dataLength > sizeof (HyperVUserClientFileCopyMessage)) {
+    HVSYSLOG(stderr, "Packet larger than expected");
+    return;
+  }
+  fcopyMsg = (HyperVUserClientFileCopyMessage *) data;
+  
+  HVDBGLOG(stdout, "Received file copy operation of type 0x%X", fcopyMsg->operation);
+  switch (fcopyMsg->operation) {
+    case kHyperVUserClientFileCopyOperationStartFileCopy:
+      ret = hvUtilFileCopyStartCopy(&fcopyMsg->startCopy);
+      break;
+    case kHyperVUserClientFileCopyOperationWriteToFile:
+      ret = hvUtilFileCopyDoCopy(&fcopyMsg->doCopy);
+      break;
+    case kHyperVUserClientFileCopyOperationCompleteFileCopy:
+      ret = hvUtilFileCopyCompleteCopy();
+      break;
+    case kHyperVUserClientFileCopyOperationCancelFileCopy:
+      ret = hvUtilFileCopyCancelCopy();
+      break;
+    default:
+      HVDBGLOG(stdout, "Unknown file copy operation type 0x%X", fcopyMsg->operation);
+      break;
+  }
+  kern_return_t ioConnectRet = IOConnectCallScalarMethod(sConnection, kMethodFileCopyReturnGeneric, &ret, 1, NULL, NULL);
+  if (ioConnectRet == kIOReturnSuccess) {
+    HVDBGLOG(stdout, "Successfully called index %u with return code %u", kMethodFileCopyReturnGeneric, ret);
+  } else {
+    HVSYSLOG(stderr, "Failed to call index %u with error '%s'", kMethodFileCopyReturnGeneric, mach_error_string(ioConnectRet));
+  }
+}
+
 static void hvUtilNotification(CFMachPortRef port, void *msg, CFIndex size, void *info) {
   HyperVUserClientNotificationMessage *hvMsg = (HyperVUserClientNotificationMessage *) msg;
   HVDBGLOG(stdout, "Received notification of type 0x%X", hvMsg->type);
@@ -84,6 +229,10 @@ static void hvUtilNotification(CFMachPortRef port, void *msg, CFIndex size, void
       
     case kHyperVUserClientNotificationTypeTimeSync:
       hvUtilDoTimeSync(hvMsg->data, hvMsg->dataLength);
+      break;
+    
+    case kHyperVUserClientNotificationTypeFileCopy:
+      hvUtilFileCopy(hvMsg->data, hvMsg->dataLength);
       break;
 
     default:

@@ -357,3 +357,17 @@ IOReturn HyperVController::notifyUserClient(HyperVUserClientNotificationType typ
   }
   return _userClientInstance->notifyClientApplication(type, data, dataLength);
 }
+
+bool HyperVController::registerUserClientDriver(IOService *driver) {
+  if (_userClientInstance == nullptr) {
+    return false;
+  }
+  return _userClientInstance->registerDriver(driver);
+}
+
+bool HyperVController::deregisterUserClientDriver(IOService *driver) {
+  if (_userClientInstance == nullptr) {
+    return false;
+  }
+  return _userClientInstance->registerDriver(driver);
+}

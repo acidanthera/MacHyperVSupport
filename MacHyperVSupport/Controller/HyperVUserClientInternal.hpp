@@ -20,8 +20,11 @@ class HyperVUserClient : public IOUserClient {
   typedef IOUserClient super;
 
 private:
-  HyperVController                    *_hvController   = nullptr;
-  HyperVUserClientNotificationMessage _notificationMsg = { };
+  HyperVController                      *_hvController   = nullptr;
+  HyperVUserClientNotificationMessage    _notificationMsg = { };
+  static const IOExternalMethodDispatch  sMethods[kNumberOfMethods];
+  task_t                                 mTask;
+  OSDictionary                          *_drivers;
 
 public:
   //
@@ -34,13 +37,26 @@ public:
   //
   // IOUserClient overrides.
   //
+  virtual bool initWithTask(task_t owningTask, void *securityToken,
+                                UInt32 type, OSDictionary *properties) APPLE_KEXT_OVERRIDE;
   IOReturn clientClose() APPLE_KEXT_OVERRIDE;
   IOReturn registerNotificationPort(mach_port_t port, UInt32 type, UInt32 refCon) APPLE_KEXT_OVERRIDE;
+  IOReturn externalMethod(uint32_t selector, IOExternalMethodArguments *arguments, IOExternalMethodDispatch *dispatch, OSObject *target, void *reference) APPLE_KEXT_OVERRIDE;
 
   //
   // Other functions.
   //
   IOReturn notifyClientApplication(HyperVUserClientNotificationType type, void *data, UInt32 dataLength);
+  bool registerDriver(IOService *driver);
+  void deregisterDriver(IOService *driver);
+  
+protected:
+  //
+  // File Copy functions.
+  //
+  static IOReturn sMethodFileCopyReturnGeneric(HyperVUserClient *target, void *ref, IOExternalMethodArguments *args);
+  static IOReturn sMethodFileCopyGetStartCopyData(HyperVUserClient *target, void *ref, IOExternalMethodArguments *args);
+  static IOReturn sMethodFileCopyGetDoCopyData(HyperVUserClient *target, void *ref, IOExternalMethodArguments *args);
 };
 
 #endif

@@ -21,7 +21,7 @@ bool HyperVUserClient::start(IOService *provider) {
   _hvController->retain();
 
   HVCheckDebugArgs();
-  HVDBGLOG("Initializing Hyper-V Guest Shutdown userclient");
+  HVDBGLOG("Initializing Hyper-V user client");
 
   if (!super::start(provider)) {
     HVSYSLOG("super::start() returned false");
@@ -48,6 +48,12 @@ bool HyperVUserClient::start(IOService *provider) {
   _notificationMsg.header.msgh_reserved    = 0;
   _notificationMsg.header.msgh_id          = 0;
 
+  _drivers = OSDictionary::withCapacity(1);
+  if (_drivers == nullptr) {
+    HVSYSLOG("Failed to create driver dictionary");
+    return false;
+  }
+  registerService();
   HVDBGLOG("Initialized Hyper-V user client");
   return true;
 }
@@ -79,8 +85,20 @@ IOReturn HyperVUserClient::message(UInt32 type, IOService *provider, void *argum
   return super::message(type, provider, argument);
 }
 
+bool HyperVUserClient::initWithTask(task_t owningTask, void *securityToken, UInt32 type, OSDictionary *properties) {
+    if (!owningTask)
+        return false;
+    
+    if (!super::initWithTask(owningTask, securityToken, type))
+        return false;
+    
+    mTask = owningTask;
+    
+    return true;
+}
+
 IOReturn HyperVUserClient::clientClose() {
-  HVDBGLOG("Hyper-V Guest Shutdown user client is closing");
+  HVDBGLOG("Hyper-V user client is closing");
   terminate();
   return kIOReturnSuccess;
 }
@@ -95,6 +113,17 @@ IOReturn HyperVUserClient::registerNotificationPort(mach_port_t port, UInt32 typ
   return kIOReturnSuccess;
 }
 
+bool HyperVUserClient::registerDriver(IOService *driver) {
+  HVDBGLOG("Registering driver (%s) to receive callbacks", driver->getMetaClass()->getClassName());
+  return _drivers->setObject(driver->getMetaClass()->getClassName(), driver);
+}
+
+void HyperVUserClient::deregisterDriver(IOService *driver) {
+  HVDBGLOG("Deregistering callback-recipient driver (%s)", driver->getMetaClass()->getClassName());
+  _drivers->removeObject(driver->getMetaClass()->getClassName());
+}
+
+
 IOReturn HyperVUserClient::notifyClientApplication(HyperVUserClientNotificationType type, void *data, UInt32 dataLength) {
   if (dataLength > sizeof (_notificationMsg.data)) {
     return kIOReturnMessageTooLarge;
@@ -106,4 +135,102 @@ IOReturn HyperVUserClient::notifyClientApplication(HyperVUserClientNotificationT
   _notificationMsg.dataLength = dataLength;
 
   return mach_msg_send_from_kernel(&_notificationMsg.header, _notificationMsg.header.msgh_size);
+}
+
+IOReturn HyperVUserClient::externalMethod(uint32_t selector, IOExternalMethodArguments *arguments, IOExternalMethodDispatch *dispatch, OSObject *target, void *reference) {
+  if (selector >= kNumberOfMethods)
+    return kIOReturnUnsupported;
+  
+  dispatch = (IOExternalMethodDispatch*) &sMethods[selector];
+  target = this;
+  reference = NULL;
+  
+  return super::externalMethod(selector, arguments, dispatch, target, reference);
+}
+
+// User client dispatch table
+const IOExternalMethodDispatch HyperVUserClient::sMethods[kNumberOfMethods] = {
+  { // kMethodFileCopyReturnGeneric
+    (IOExternalMethodAction) &HyperVUserClient::sMethodFileCopyReturnGeneric, // Method pointer
+    1,                                                                 // Num of scalar input values
+    0,                                                                 // Size of struct input
+    0,                                                                 // Num of scalar output values
+    0                                                                  // Size of struct output
+  },
+  { // kMethodFileCopyGetStartCopyData
+    (IOExternalMethodAction) &HyperVUserClient::sMethodFileCopyGetStartCopyData,
+    0,
+    0,
+    0,
+    sizeof (HyperVUserClientFileCopyStartCopyData)
+  },
+  { // kMethodFileCopyGetDoCopyData
+    (IOExternalMethodAction) &HyperVUserClient::sMethodFileCopyGetDoCopyData,
+    0,
+    0,
+    0,
+    sizeof (HyperVUserClientFileCopyDoCopyData)
+  }
+};
+
+IOReturn HyperVUserClient::sMethodFileCopyReturnGeneric(HyperVUserClient *target, void *ref, IOExternalMethodArguments *args) {
+  IOService *fCopy;
+  target->HVDBGLOG("Userspace called sMethodFileCopyReturnGeneric in userclient");
+  
+  fCopy = OSDynamicCast(IOService, target->_drivers->getObject("HyperVFileCopy"));
+  if (!fCopy)
+    return kIOReturnNotReady;
+  
+  fCopy->callPlatformFunction("returnCodeFromUserspace", true, (void *) args->scalarInput, NULL, NULL, NULL);
+  
+  return kIOReturnSuccess;
+}
+
+IOReturn HyperVUserClient::sMethodFileCopyGetStartCopyData(HyperVUserClient *target, void *ref, IOExternalMethodArguments *args) {
+  IOService *fCopy;
+  target->HVDBGLOG("Userspace called sMethodFileCopyGetStartCopyData in userclient");
+  
+  fCopy = OSDynamicCast(IOService, target->_drivers->getObject("HyperVFileCopy"));
+  if (!fCopy)
+    return kIOReturnNotReady;
+  
+  fCopy->callPlatformFunction("getStartCopyData", true, (void *) args->structureOutput, NULL, NULL, NULL);
+  
+  return kIOReturnSuccess;
+}
+
+IOReturn HyperVUserClient::sMethodFileCopyGetDoCopyData(HyperVUserClient *target, void *ref, IOExternalMethodArguments *args) {
+  IOService *fCopy;
+  IOMemoryMap *map = nullptr;
+  const HyperVUserClientFileCopyDoCopyData *doCopyData;
+  size_t doCopyDataSize;
+  target->HVDBGLOG("Userspace called sMethodFileCopyGetDoCopyData in userclient");
+  
+  fCopy = OSDynamicCast(IOService, target->_drivers->getObject("HyperVFileCopy"));
+  if (!fCopy)
+    return kIOReturnNotReady;
+  
+  if (args->structureOutputDescriptor != nullptr) {
+    map = args->structureOutputDescriptor->createMappingInTask(kernel_task, 0, kIOMapAnywhere);
+    
+    if (map == nullptr)
+      return kIOReturnError;
+    
+    doCopyData = reinterpret_cast<const HyperVUserClientFileCopyDoCopyData *>(map->getAddress());
+    doCopyDataSize = map->getLength();
+  } else {
+    doCopyData = reinterpret_cast<const HyperVUserClientFileCopyDoCopyData *>(args->structureInput);
+    doCopyDataSize = args->structureInputSize;
+  }
+  
+  if (doCopyDataSize < sizeof (HyperVUserClientFileCopyDoCopyData)) {
+    OSSafeReleaseNULL(map);
+    target->HVSYSLOG("doCopyDataSize smaller than expected");
+    return kIOReturnError;
+  }
+  
+  fCopy->callPlatformFunction("getDoCopyData", true, (void *) doCopyData, NULL, NULL, NULL);
+  
+  OSSafeReleaseNULL(map);
+  return kIOReturnSuccess;
 }
