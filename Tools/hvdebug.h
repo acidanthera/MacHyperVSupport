@@ -8,11 +8,14 @@
 #ifndef hvdebug_h
 #define hvdebug_h
 
+#import <mach/mach.h>
 #include <stdio.h>
+
+void HVLOG_PRINT(const char *func, FILE *file, const char *str, ...);
 
 #if DEBUG
 #define HVDeclareLogFunctionsUser(appName) \
-  static inline void HVLOG_PRINT(const char *func, FILE *file, const char *str, ...) { \
+  void HVLOG_PRINT(const char *func, FILE *file, const char *str, ...) { \
     char tmp[256]; \
     tmp[0] = '\0'; \
     va_list args; \
@@ -27,7 +30,7 @@
 
 #else
 #define HVDeclareLogFunctionsUser(appName) \
-  static inline void HVLOG_PRINT(FILE *file, const char *str, ...) { \
+  void HVLOG_PRINT(FILE *file, const char *str, ...) { \
     char tmp[256]; \
     tmp[0] = '\0'; \
     va_list args; \

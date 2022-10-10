@@ -10,6 +10,7 @@
 
 #include "HyperVICService.hpp"
 #include "HyperVShutdownRegs.hpp"
+#include "HyperVShutdownUserClientInternal.hpp"
 
 class HyperVShutdown : public HyperVICService {
   OSDeclareDefaultStructors(HyperVShutdown);
@@ -17,8 +18,11 @@ class HyperVShutdown : public HyperVICService {
   typedef HyperVICService super;
 
 private:
+  HyperVShutdownUserClient *_userClientInstance = nullptr;
+  
   bool handleShutdown(VMBusICMessageShutdownData *shutdownData);
-  bool performShutdown(VMBusICMessageShutdownData *shutdownData, bool doShutdown);
+  bool checkShutdown(VMBusICMessageShutdownData *shutdownData);
+  void performShutdown(VMBusICMessageShutdownData *shutdownData);
 
 protected:
   void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) APPLE_KEXT_OVERRIDE;
@@ -29,6 +33,8 @@ public:
   //
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
   void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
+  bool open(IOService *forClient, IOOptionBits options = 0, void *arg = nullptr) APPLE_KEXT_OVERRIDE;
+  void close(IOService *forClient, IOOptionBits options) APPLE_KEXT_OVERRIDE;
 };
 
 #endif

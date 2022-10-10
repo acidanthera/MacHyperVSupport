@@ -137,7 +137,7 @@ IOReturn HyperVUserClient::notifyClientApplication(HyperVUserClientNotificationT
   return mach_msg_send_from_kernel(&_notificationMsg.header, _notificationMsg.header.msgh_size);
 }
 
-IOReturn HyperVUserClient::externalMethod(uint32_t selector, IOExternalMethodArguments *arguments, IOExternalMethodDispatch *dispatch, OSObject *target, void *reference) {
+/*IOReturn HyperVUserClient::externalMethod(uint32_t selector, IOExternalMethodArguments *arguments, IOExternalMethodDispatch *dispatch, OSObject *target, void *reference) {
   if (selector >= kNumberOfMethods)
     return kIOReturnUnsupported;
   
@@ -146,7 +146,7 @@ IOReturn HyperVUserClient::externalMethod(uint32_t selector, IOExternalMethodArg
   reference = NULL;
   
   return super::externalMethod(selector, arguments, dispatch, target, reference);
-}
+}*/
 
 // User client dispatch table
 const IOExternalMethodDispatch HyperVUserClient::sMethods[kNumberOfMethods] = {

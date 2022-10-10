@@ -30,6 +30,7 @@ bool HyperVShutdown::start(IOService *provider) {
   HVCheckDebugArgs();
   setICDebug(debugEnabled);
 
+  registerService();
   HVDBGLOG("Initialized Hyper-V Guest Shutdown");
   return true;
 }
@@ -37,6 +38,25 @@ bool HyperVShutdown::start(IOService *provider) {
 void HyperVShutdown::stop(IOService *provider) {
   HVDBGLOG("Stopping Hyper-V Guest Shutdown");
   super::stop(provider);
+}
+
+bool HyperVShutdown::open(IOService *forClient, IOOptionBits options, void *arg) {
+  HyperVShutdownUserClient *hvShutdownUserClient = OSDynamicCast(HyperVShutdownUserClient, forClient);
+  if (hvShutdownUserClient == nullptr || _userClientInstance != nullptr) {
+    return false;
+  }
+
+  if (!super::open(forClient, options, arg)) {
+    return false;
+  }
+
+  _userClientInstance = hvShutdownUserClient;
+  return true;
+}
+
+void HyperVShutdown::close(IOService *forClient, IOOptionBits options) {
+  _userClientInstance = nullptr;
+  super::close(forClient, options);
 }
 
 void HyperVShutdown::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
@@ -74,11 +94,11 @@ void HyperVShutdown::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
   _hvDevice->writeInbandPacket(shutdownMsg, pktDataLength, false);
 
   //
-  // Shutdown machine if requested. This should not return.
+  // Shutdown/restart machine if requested. This should not return.
   //
   if (doShutdown) {
     HVDBGLOG("Shutdown request received, notifying userspace");
-    performShutdown(&shutdownMsg->shutdown, true);
+    performShutdown(&shutdownMsg->shutdown);
   }
 }
 
@@ -92,45 +112,48 @@ bool HyperVShutdown::handleShutdown(VMBusICMessageShutdownData *shutdownData) {
   }
   HVDBGLOG("Shutdown request received: flags 0x%X, reason 0x%X", shutdownData->flags, shutdownData->reason);
 
-  //
-  // Send message to userclients to see if we can shutdown.
-  //
-  result = _hvDevice->getHvController()->checkUserClient();
-  if (result) {
-    result = performShutdown(shutdownData, false);
-    if (!result) {
-      HVSYSLOG("Unable to request shutdown (invalid flags)");
-    }
-  } else {
-    HVSYSLOG("Unable to request shutdown (shutdown daemon is not running)");
-  }
-
+  result = checkShutdown(shutdownData);
   shutdownData->header.status = result ? kHyperVStatusSuccess : kHyperVStatusFail;
   return result;
 }
 
-bool HyperVShutdown::performShutdown(VMBusICMessageShutdownData *shutdownData, bool doShutdown) {
+bool HyperVShutdown::checkShutdown(VMBusICMessageShutdownData *shutdownData) {
   switch (shutdownData->flags) {
     case kVMBusICShutdownFlagsShutdown:
     case kVMBusICShutdownFlagsShutdownForced:
-      if (doShutdown) {
-        HVDBGLOG("Performing shutdown");
-        _hvDevice->getHvController()->notifyUserClient(kHyperVUserClientNotificationTypePerformShutdown, nullptr, 0);
-      }
-      break;
-
     case kVMBusICShutdownFlagsRestart:
     case kVMBusICShutdownFlagsRestartForced:
-      if (doShutdown) {
-        HVDBGLOG("Performing restart");
-        _hvDevice->getHvController()->notifyUserClient(kHyperVUserClientNotificationTypePerformRestart, nullptr, 0);
+      if (_userClientInstance != nullptr) {
+        return _userClientInstance->canShutdown();
+      } else {
+        HVSYSLOG("Unable to request shutdown (shutdown daemon is not running)");
       }
       break;
 
     default:
       HVSYSLOG("Invalid shutdown flags %u");
-      return false;
+      break;
   }
 
-  return true;
+  return false;
+}
+
+void HyperVShutdown::performShutdown(VMBusICMessageShutdownData *shutdownData) {
+  switch (shutdownData->flags) {
+    case kVMBusICShutdownFlagsShutdown:
+    case kVMBusICShutdownFlagsShutdownForced:
+      HVDBGLOG("Performing shutdown");
+      _userClientInstance->doShutdown(false);
+      break;
+
+    case kVMBusICShutdownFlagsRestart:
+    case kVMBusICShutdownFlagsRestartForced:
+      HVDBGLOG("Performing restart");
+      _userClientInstance->doShutdown(true);
+      break;
+
+    default:
+      HVSYSLOG("Invalid shutdown flags %u");
+      break;
+  }
 }
