@@ -11,9 +11,9 @@
 #import <mach/mach.h>
 #include <stdio.h>
 
+#if DEBUG
 void HVLOG_PRINT(const char *func, FILE *file, const char *str, ...);
 
-#if DEBUG
 #define HVDeclareLogFunctionsUser(appName) \
   void HVLOG_PRINT(const char *func, FILE *file, const char *str, ...) { \
     char tmp[256]; \
@@ -29,6 +29,8 @@ void HVLOG_PRINT(const char *func, FILE *file, const char *str, ...);
 #define HVSYSLOG(file, str, ...) HVLOG_PRINT(__FUNCTION__, file, str, ## __VA_ARGS__)
 
 #else
+void HVLOG_PRINT(FILE *file, const char *str, ...);
+
 #define HVDeclareLogFunctionsUser(appName) \
   void HVLOG_PRINT(FILE *file, const char *str, ...) { \
     char tmp[256]; \
