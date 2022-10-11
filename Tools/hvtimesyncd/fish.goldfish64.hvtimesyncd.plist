@@ -7,10 +7,10 @@
 	<key>KeepAlive</key>
 	<true/>
 	<key>Label</key>
-	<string>fish.goldfish64.hvshutdownd</string>
+	<string>fish.goldfish64.hvtimesyncd</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/Library/Application Support/MacHyperVSupport/hvshutdownd</string>
+		<string>/Library/Application Support/MacHyperVSupport/hvtimesyncd</string>
 	</array>
 </dict>
 </plist>
