@@ -73,6 +73,11 @@ IOReturn HyperVShutdownUserClient::externalMethod(uint32_t selector, IOExternalM
 IOReturn HyperVShutdownUserClient::notifyClientApplication(HyperVShutdownUserClientNotificationType type) {
   HyperVShutdownUserClientNotificationMessage notificationMsg = { };
 
+  if (_notificationPort == MACH_PORT_NULL) {
+    HVDBGLOG("Notification port is not open");
+    return kIOReturnNotFound;
+  }
+
   HVDBGLOG("Sending shutdown notification type %u", type);
 
   notificationMsg.header.msgh_bits        = MACH_MSGH_BITS(MACH_MSG_TYPE_COPY_SEND, 0);

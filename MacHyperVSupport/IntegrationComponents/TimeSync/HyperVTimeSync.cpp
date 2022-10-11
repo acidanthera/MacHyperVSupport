@@ -29,6 +29,7 @@ bool HyperVTimeSync::start(IOService *provider) {
   HVCheckDebugArgs();
   setICDebug(debugEnabled);
 
+  registerService();
   HVDBGLOG("Initialized Hyper-V Time Synchronization");
   return true;
 }
@@ -36,6 +37,25 @@ bool HyperVTimeSync::start(IOService *provider) {
 void HyperVTimeSync::stop(IOService *provider) {
   HVDBGLOG("Stopping Hyper-V Time Synchronization");
   super::stop(provider);
+}
+
+bool HyperVTimeSync::open(IOService *forClient, IOOptionBits options, void *arg) {
+  HyperVTimeSyncUserClient *hvTimeSyncUserClient = OSDynamicCast(HyperVTimeSyncUserClient, forClient);
+  if (hvTimeSyncUserClient == nullptr || _userClientInstance != nullptr) {
+    return false;
+  }
+
+  if (!super::open(forClient, options, arg)) {
+    return false;
+  }
+
+  _userClientInstance = hvTimeSyncUserClient;
+  return true;
+}
+
+void HyperVTimeSync::close(IOService *forClient, IOOptionBits options) {
+  _userClientInstance = nullptr;
+  super::close(forClient, options);
 }
 
 void HyperVTimeSync::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
@@ -95,9 +115,10 @@ void HyperVTimeSync::handleTimeAdjust(UInt64 hostTime, UInt64 referenceTime, VMB
   UInt64 diffTimeNs;
   UInt64 hvRefTimeAdjust = 0;
 
-  clock_sec_t              seconds;
-  clock_nsec_t             nanoseconds;
-  HyperVUserClientTimeData timeData;
+  clock_sec_t  clockSeconds;
+  clock_nsec_t clockNanoseconds;
+  UInt64       userSeconds;
+  UInt32       userMicroseconds;
 
   //
   // Only handle regular time samples and forced syncs.
@@ -118,18 +139,18 @@ void HyperVTimeSync::handleTimeAdjust(UInt64 hostTime, UInt64 referenceTime, VMB
   //
   // Calculate epoch and break out into seconds and microseconds remainder.
   //
-  hvTimeNs = (hostTime - kHyperVTimeSyncTimeBase + hvRefTimeAdjust) * kHyperVTimerNanosecondFactor;
-  timeData.seconds      = (clock_sec_t)(hvTimeNs / NSEC_PER_SEC);
-  timeData.microseconds = (hvTimeNs % NSEC_PER_SEC) / NSEC_PER_USEC;
-  HVDBGLOG("New system time: (%llu seconds, %u microseconds, %llu total nanoseconds)", timeData.seconds, timeData.microseconds, hvTimeNs);
+  hvTimeNs         = (hostTime - kHyperVTimeSyncTimeBase + hvRefTimeAdjust) * kHyperVTimerNanosecondFactor;
+  userSeconds      = (clock_sec_t)(hvTimeNs / NSEC_PER_SEC);
+  userMicroseconds = (hvTimeNs % NSEC_PER_SEC) / NSEC_PER_USEC;
+  HVDBGLOG("New system time: (%llu seconds, %u microseconds, %llu total nanoseconds)", userSeconds, userMicroseconds, hvTimeNs);
 
   //
   // Only handle sample if current time has drifted too far.
   //
   if (flags & kVMBusICTimeSyncFlagsSample) {
-    clock_get_calendar_nanotime(&seconds, &nanoseconds);
-    vmTimeNs = (seconds * NSEC_PER_SEC) + nanoseconds;
-    HVDBGLOG("Current system time: (%llu seconds, %u nanoseconds, %llu total nanoseconds)", seconds, nanoseconds, vmTimeNs);
+    clock_get_calendar_nanotime(&clockSeconds, &clockNanoseconds);
+    vmTimeNs = (clockSeconds * NSEC_PER_SEC) + clockNanoseconds;
+    HVDBGLOG("Current system time: (%llu seconds, %u nanoseconds, %llu total nanoseconds)", clockSeconds, clockNanoseconds, vmTimeNs);
 
     if (hvTimeNs > vmTimeNs) {
       diffTimeNs = hvTimeNs - vmTimeNs;
@@ -147,5 +168,7 @@ void HyperVTimeSync::handleTimeAdjust(UInt64 hostTime, UInt64 referenceTime, VMB
   //
   // Update time via userspace daemon.
   //
-  _hvDevice->getHvController()->notifyUserClient(kHyperVUserClientNotificationTypeTimeSync, &timeData, sizeof (timeData));
+  if (_userClientInstance != nullptr) {
+    _userClientInstance->doTimeSync(userSeconds, userMicroseconds);
+  }
 }

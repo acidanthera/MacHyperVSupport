@@ -221,6 +221,8 @@
 			<string>HyperVTimeSync</string>
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
+			<key>IOUserClientClass</key>
+			<string>HyperVTimeSyncUserClient</string>
 		</dict>
 	</dict>
 	<key>NSHumanReadableCopyright</key>

@@ -33,7 +33,7 @@ public:
   //
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
   void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
-  bool open(IOService *forClient, IOOptionBits options = 0, void *arg = nullptr) APPLE_KEXT_OVERRIDE;
+  bool open(IOService *forClient, IOOptionBits options, void *arg) APPLE_KEXT_OVERRIDE;
   void close(IOService *forClient, IOOptionBits options) APPLE_KEXT_OVERRIDE;
 };
 

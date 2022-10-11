@@ -10,6 +10,7 @@
 
 #include "HyperVICService.hpp"
 #include "HyperVTimeSyncRegs.hpp"
+#include "HyperVTimeSyncUserClientInternal.hpp"
 
 class HyperVTimeSync : public HyperVICService {
   OSDeclareDefaultStructors(HyperVTimeSync);
@@ -17,6 +18,8 @@ class HyperVTimeSync : public HyperVICService {
   typedef HyperVICService super;
 
 private:
+  HyperVTimeSyncUserClient *_userClientInstance = nullptr;
+
   VMBusICVersion _timeSyncCurrentVersion = kHyperVTimeSyncVersionV1_0;
   void handleTimeAdjust(UInt64 hostTime, UInt64 referenceTime, VMBusICTimeSyncFlags flags);
 
@@ -29,6 +32,8 @@ public:
   //
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
   void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
+  bool open(IOService *forClient, IOOptionBits options, void *arg) APPLE_KEXT_OVERRIDE;
+  void close(IOService *forClient, IOOptionBits options) APPLE_KEXT_OVERRIDE;
 };
 
 #endif

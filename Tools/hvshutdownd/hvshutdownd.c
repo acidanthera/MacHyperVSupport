@@ -1,6 +1,6 @@
 //
 //  hvshutdownd.c
-//  Hyper-V Guest Shutdown userspace daemon
+//  Hyper-V guest shutdown userspace daemon
 //
 //  Copyright © 2022 Goldfish64. All rights reserved.
 //
@@ -9,8 +9,8 @@
 #include "hvdebug.h"
 #include "hviokit.h"
 
-#define HYPERV_SHUTDOWN_KERNEL_SERVICE   "HyperVShutdown"
-#define SHUTDOWN_BIN_PATH                "/sbin/shutdown"
+#define HYPERV_SHUTDOWN_KERNEL_SERVICE "HyperVShutdown"
+#define SHUTDOWN_BIN_PATH              "/sbin/shutdown"
 
 HVDeclareLogFunctionsUser("hvshutdownd");
 
@@ -38,12 +38,17 @@ static void hvShutdownDoShutdown(bool restart) {
 }
 
 void hvIOKitNotificationHandler(io_connect_t connection, CFMachPortRef port, void *msg, CFIndex size, void *info) {
-  uint64_t input[1];
+  HyperVShutdownUserClientNotificationMessage *shutdownMsg = (HyperVShutdownUserClientNotificationMessage *) msg;
+  UInt64 input[1];
 
-  HyperVShutdownUserClientNotificationMessage *hvMsg = (HyperVShutdownUserClientNotificationMessage *) msg;
-  HVDBGLOG(stdout, "Received notification of type 0x%X", hvMsg->type);
+  if (size < __offsetof(HyperVShutdownUserClientNotificationMessage, type)) {
+    HVSYSLOG(stderr, "Invalid message size %u received, should be at least %u",
+             size, __offsetof(HyperVShutdownUserClientNotificationMessage, type));
+    return;
+  }
 
-  switch (hvMsg->type) {
+  HVDBGLOG(stdout, "Received notification of type 0x%X", shutdownMsg->type);
+  switch (shutdownMsg->type) {
     case kHyperVShutdownUserClientNotificationTypeCheck:
       input[0] = true;
       IOConnectCallScalarMethod(connection, kHyperVShutdownUserClientMethodReportShutdownAbility, input, 1, NULL, NULL);
@@ -51,11 +56,11 @@ void hvIOKitNotificationHandler(io_connect_t connection, CFMachPortRef port, voi
 
     case kHyperVShutdownUserClientNotificationTypePerformShutdown:
     case kHyperVShutdownUserClientNotificationTypePerformRestart:
-      hvShutdownDoShutdown(hvMsg->type == kHyperVShutdownUserClientNotificationTypePerformRestart);
+      hvShutdownDoShutdown(shutdownMsg->type == kHyperVShutdownUserClientNotificationTypePerformRestart);
       break;
 
     default:
-      HVDBGLOG(stdout, "Unknown notification type 0x%X", hvMsg->type);
+      HVDBGLOG(stdout, "Unknown notification type 0x%X", shutdownMsg->type);
       break;
   }
 }
