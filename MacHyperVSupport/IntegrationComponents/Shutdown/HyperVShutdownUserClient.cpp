@@ -14,9 +14,9 @@ const IOExternalMethodDispatch HyperVShutdownUserClient::sShutdownMethods[kHyper
   { // kHyperVShutdownUserClientMethodReportShutdownAbility
     reinterpret_cast<IOExternalMethodAction>(&HyperVShutdownUserClient::methodReportShutdownAbility),  // Method pointer
     1,                                        // Num of scalar input values
-    0,                                        // Num of struct input values
+    0,                                        // Size of struct input
     0,                                        // Num of scalar output values
-    0                                         // Num of struct output values
+    0                                         // Size of struct output
   }
 };
 
@@ -68,6 +68,7 @@ IOReturn HyperVShutdownUserClient::externalMethod(uint32_t selector, IOExternalM
 
   return super::externalMethod(selector, arguments, dispatch, target, reference);
 }
+#else
 #endif
 
 IOReturn HyperVShutdownUserClient::notifyClientApplication(HyperVShutdownUserClientNotificationType type) {

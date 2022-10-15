@@ -15,7 +15,7 @@ class HyperVShutdownUserClient : public HyperVICUserClient {
   OSDeclareDefaultStructors(HyperVShutdownUserClient);
   HVDeclareLogFunctions("shutuser");
   typedef HyperVICUserClient super;
-  
+
 private:
   bool _isShutdownSupported = false;
 
@@ -25,6 +25,10 @@ private:
 #endif
 
   IOReturn notifyClientApplication(HyperVShutdownUserClientNotificationType type);
+
+  //
+  // Userspace external methods.
+  //
   static IOReturn methodReportShutdownAbility(HyperVShutdownUserClient *target, void *ref, IOExternalMethodArguments *args);
 
 public:

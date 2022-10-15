@@ -11,7 +11,7 @@
 #include <libkern/OSTypes.h>
 #include <mach/message.h>
 
-typedef enum {
+typedef enum : UInt32 {
   kHyperVShutdownUserClientMethodReportShutdownAbility,
 
   kHyperVShutdownUserClientMethodNumberOfMethods
