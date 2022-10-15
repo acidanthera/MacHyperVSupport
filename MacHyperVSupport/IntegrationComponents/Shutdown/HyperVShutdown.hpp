@@ -19,7 +19,7 @@ class HyperVShutdown : public HyperVICService {
 
 private:
   HyperVShutdownUserClient *_userClientInstance = nullptr;
-  
+
   bool handleShutdown(VMBusICMessageShutdownData *shutdownData);
   bool checkShutdown(VMBusICMessageShutdownData *shutdownData);
   void performShutdown(VMBusICMessageShutdownData *shutdownData);

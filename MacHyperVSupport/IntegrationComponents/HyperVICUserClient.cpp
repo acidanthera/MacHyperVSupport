@@ -126,9 +126,10 @@ bool HyperVICUserClient::sleepThread() {
   clock_interval_to_deadline(15, kSecondScale, &deadline);
 
   IOLockLock(_sleepLock);
-  while (_isSleeping) {
-    result = IOLockSleepDeadline(_sleepLock, &_isSleeping, deadline, THREAD_UNINT);
+  while (_isSleeping && result != THREAD_TIMED_OUT) {
+    result = IOLockSleepDeadline(_sleepLock, &_isSleeping, deadline, THREAD_INTERRUPTIBLE);
   }
+  _isSleeping = false;
   IOLockUnlock(_sleepLock);
 
   return result != THREAD_TIMED_OUT;
