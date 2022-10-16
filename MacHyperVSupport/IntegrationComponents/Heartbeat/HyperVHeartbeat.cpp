@@ -49,7 +49,7 @@ void HyperVHeartbeat::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeade
       firstHeartbeatReceived = false;
       if (!processNegotiationResponse(&heartbeatMsg->negotiate, heartbeatVersions, arrsize(heartbeatVersions))) {
         HVSYSLOG("Failed to determine a supported Hyper-V Heartbeat version");
-        heartbeatMsg->header.status = kHyperVStatusFail;
+        heartbeatMsg->header.status = kHyperVStatusFailure;
       }
       break;
 
@@ -61,7 +61,7 @@ void HyperVHeartbeat::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeade
       packetSize = heartbeatMsg->header.dataSize + sizeof (heartbeatMsg->header);
       if (packetSize < __offsetof (VMBusICMessageHeartbeatSequence, sequence)) {
         HVSYSLOG("Heartbeat packet is invalid size (%u bytes)", packetSize);
-        heartbeatMsg->header.status = kHyperVStatusFail;
+        heartbeatMsg->header.status = kHyperVStatusFailure;
         break;
       }
 
@@ -76,7 +76,7 @@ void HyperVHeartbeat::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeade
 
     default:
       HVDBGLOG("Unknown heartbeat message type %u", heartbeatMsg->header.type);
-      heartbeatMsg->header.status = kHyperVStatusFail;
+      heartbeatMsg->header.status = kHyperVStatusFailure;
       break;
   }
 

@@ -60,7 +60,7 @@ static IOReturn hvFileCopyStartCopy(io_connect_t connection, HyperVFileCopyMessa
   //
   if (!access(_currentFilePath, F_OK) && !(flags & kHyperVFileCopyMessageFlagsOverwrite)) {
     HVSYSLOG(stderr, "File %s already exists", _currentFilePath);
-    return kIOReturnNoResources;
+    return kIOReturnStillOpen;
   }
 
   //

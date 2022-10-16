@@ -49,7 +49,7 @@ typedef struct __attribute__((packed)) {
   VMBusICMessageType  type;
   VMBusICVersion      msgVersion;
   UInt16              dataSize;
-  UInt32              status;
+  HyperVStatus        status;
   UInt8               transactionId;
   UInt8               flags;
   UInt16              reserved;

@@ -70,7 +70,7 @@ void HyperVShutdown::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
       //
       if (!processNegotiationResponse(&shutdownMsg->negotiate, shutdownVersions, arrsize(shutdownVersions))) {
         HVSYSLOG("Failed to determine a supported Hyper-V Guest Shutdown version");
-        shutdownMsg->header.status = kHyperVStatusFail;
+        shutdownMsg->header.status = kHyperVStatusFailure;
       }
       break;
 
@@ -83,7 +83,7 @@ void HyperVShutdown::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
 
     default:
       HVDBGLOG("Unknown shutdown message type %u", shutdownMsg->header.type);
-      shutdownMsg->header.status = kHyperVStatusFail;
+      shutdownMsg->header.status = kHyperVStatusFailure;
       break;
   }
 
@@ -113,7 +113,7 @@ bool HyperVShutdown::handleShutdown(VMBusICMessageShutdownData *shutdownData) {
   HVDBGLOG("Shutdown request received: flags 0x%X, reason 0x%X", shutdownData->flags, shutdownData->reason);
 
   result = checkShutdown(shutdownData);
-  shutdownData->header.status = result ? kHyperVStatusSuccess : kHyperVStatusFail;
+  shutdownData->header.status = result ? kHyperVStatusSuccess : kHyperVStatusFailure;
   return result;
 }
 

@@ -14,8 +14,17 @@
 
 #include <Headers/kern_api.hpp>
 
-#define kHyperVStatusSuccess    0
-#define kHyperVStatusFail       0x80004005
+//
+// Hyper-V HRESULT status codes.
+//
+typedef enum : UInt32 {
+  kHyperVStatusSuccess          = 0x0,
+  kHyperVStatusFailure          = 0x80004005,
+  kHyperVStatusTimedOut         = 0x800705B4,
+  kHyperVStatusInvalidArgument  = 0x80070057,
+  kHyperVStatusAlreadyExists    = 0x80070050,
+  kHyperVStatusDiskFull         = 0x80070070
+} HyperVStatus;
 
 #define BIT(a)                  (1 << (a))
 

@@ -68,7 +68,7 @@ void HyperVFileCopy::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
       //
       if (!processNegotiationResponse(&fileCopyMsg->negotiate, fileCopyVersions, arrsize(fileCopyVersions))) {
         HVSYSLOG("Failed to determine a supported Hyper-V File Copy version");
-        fileCopyMsg->icHeader.status = kHyperVStatusFail;
+        fileCopyMsg->icHeader.status = kHyperVStatusFailure;
       }
       break;
 
@@ -76,7 +76,7 @@ void HyperVFileCopy::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
       HVDBGLOG("Attempting file copy operation of type 0x%X", fileCopyMsg->fileCopyHeader.type);
       if (_userClientInstance == nullptr) {
         HVSYSLOG("Unable to start file copy (file copy daemon is not running)");
-        fileCopyMsg->icHeader.status = kHyperVStatusFail;
+        fileCopyMsg->icHeader.status = kHyperVStatusFailure;
         break;
       }
 
@@ -103,12 +103,29 @@ void HyperVFileCopy::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
           status = kIOReturnUnsupported;
           break;
       }
-      fileCopyMsg->icHeader.status = status == kIOReturnSuccess ? kHyperVStatusSuccess : kHyperVStatusFail;
+
+      switch (status) {
+        case kIOReturnSuccess:
+          fileCopyMsg->icHeader.status = kHyperVStatusSuccess;
+          break;
+
+        case kIOReturnStillOpen:
+          fileCopyMsg->icHeader.status = kHyperVStatusAlreadyExists;
+          break;
+
+        case kIOReturnNoSpace:
+          fileCopyMsg->icHeader.status = kHyperVStatusDiskFull;
+          break;
+
+        default:
+          fileCopyMsg->icHeader.status = kHyperVStatusFailure;
+          break;
+      }
       break;
 
     default:
       HVDBGLOG("Unknown file copy message type %u", fileCopyMsg->fileCopyHeader.type);
-      fileCopyMsg->icHeader.status = kHyperVStatusFail;
+      fileCopyMsg->icHeader.status = kHyperVStatusFailure;
       break;
   }
 

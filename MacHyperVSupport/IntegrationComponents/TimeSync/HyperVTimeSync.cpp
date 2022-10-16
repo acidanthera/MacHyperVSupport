@@ -70,7 +70,7 @@ void HyperVTimeSync::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
       //
       if (!processNegotiationResponse(&timeSyncMsg->negotiate, timeSyncVersions, arrsize(timeSyncVersions), &_timeSyncCurrentVersion)) {
         HVSYSLOG("Failed to determine a supported Hyper-V Time Synchronization version");
-        timeSyncMsg->header.status = kHyperVStatusFail;
+        timeSyncMsg->header.status = kHyperVStatusFailure;
       }
       break;
 
@@ -82,14 +82,14 @@ void HyperVTimeSync::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
       if (_timeSyncCurrentVersion.major >= timeSyncRefVersion.major && _timeSyncCurrentVersion.minor >= timeSyncRefVersion.minor) {
         if (packetSize < __offsetof (VMBusICMessageTimeSyncRefData, parentTime)) {
           HVSYSLOG("Time sync ref packet is invalid size (%u bytes)", packetSize);
-          timeSyncMsg->header.status = kHyperVStatusFail;
+          timeSyncMsg->header.status = kHyperVStatusFailure;
           break;
         }
         handleTimeAdjust(timeSyncMsg->timeSyncRef.parentTime, timeSyncMsg->timeSyncRef.referenceTime, timeSyncMsg->timeSyncRef.flags);
       } else {
         if (packetSize < __offsetof (VMBusICMessageTimeSyncData, parentTime)) {
           HVSYSLOG("Time sync packet is invalid size (%u bytes)", packetSize);
-          timeSyncMsg->header.status = kHyperVStatusFail;
+          timeSyncMsg->header.status = kHyperVStatusFailure;
           break;
         }
         handleTimeAdjust(timeSyncMsg->timeSync.parentTime, 0, timeSyncMsg->timeSync.flags);
@@ -98,7 +98,7 @@ void HyperVTimeSync::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
 
     default:
       HVDBGLOG("Unknown shutdown message type %u", timeSyncMsg->header.type);
-      timeSyncMsg->header.status = kHyperVStatusFail;
+      timeSyncMsg->header.status = kHyperVStatusFailure;
       break;
   }
 
