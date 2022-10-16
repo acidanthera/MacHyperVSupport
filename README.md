@@ -11,6 +11,7 @@ All Intel macOS versions are supported. macOS 12.0 and newer should use `MacHype
 - Heartbeat
 - Guest shutdown (with daemon)
 - Time synchronization (with daemon)
+- Host to guest file copy (with daemon)
 - PCI passthrough (partial support)
 - Synthetic graphics (partial support)
 - Synthetic keyboard

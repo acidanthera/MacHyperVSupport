@@ -1,5 +1,9 @@
 MacHyperVSupport Changelog
 ============================
+#### v0.9.3
+- Created daemons for each userspace function replacing hvutil
+- Added support for host to guest file copy (Guest Services integration service)
+
 #### v0.9.2
 - Fixed crash when control key is pressed under macOS 10.4
 - Fixed DMA allocations under macOS 10.4 and 10.5
