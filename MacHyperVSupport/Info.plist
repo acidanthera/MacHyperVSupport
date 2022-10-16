@@ -54,6 +54,8 @@
 			<string>HyperVFileCopy</string>
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
+			<key>IOUserClientClass</key>
+			<string>HyperVFileCopyUserClient</string>
 		</dict>
 		<key>HyperVGraphics</key>
 		<dict>

@@ -112,5 +112,6 @@ All Intel macOS versions are supported. macOS 12.0 and newer should use `MacHype
 - [Apple](https://www.apple.com) for macOS
 - [Goldfish64](https://github.com/Goldfish64) for this software
 - [vit9696](https://github.com/vit9696) for [Lilu.kext](https://github.com/acidanthera/Lilu) and providing assistance
+- [flagers](https://github.com/flagersgit) for file copy implementation and providing assistance
 - [Microsoft Hypervisor Top-Level Functional Specification](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/reference/tlfs)
 - [Linux](https://github.com/torvalds/linux/tree/master/drivers/hv) and [FreeBSD](https://github.com/freebsd/freebsd-src/tree/main/sys/dev/hyperv) Hyper-V integration services

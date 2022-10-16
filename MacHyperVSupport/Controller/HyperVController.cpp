@@ -10,7 +10,6 @@
 
 #include "HyperVVMBus.hpp"
 #include "HyperVInterruptController.hpp"
-#include "HyperVUserClientInternal.hpp"
 
 //
 // Hyper-V reported signature.
@@ -114,30 +113,6 @@ bool HyperVController::start(IOService *provider) {
     super::stop(provider);
   }
   return result;
-}
-
-bool HyperVController::open(IOService *forClient, IOOptionBits options, void *arg) {
-  HyperVUserClient *clientInstance;
-  if (_userClientInstance != nullptr) {
-    return false;
-  }
-
-  clientInstance = OSDynamicCast(HyperVUserClient, forClient);
-  if (clientInstance == nullptr) {
-    return false;
-  }
-
-  if (!super::open(forClient, options, arg)) {
-    return false;
-  }
-
-  _userClientInstance = clientInstance;
-  return true;
-}
-
-void HyperVController::close(IOService *forClient, IOOptionBits options) {
-  _userClientInstance = nullptr;
-  super::close(forClient, options);
 }
 
 bool HyperVController::identifyHyperV() {
@@ -349,25 +324,4 @@ bool HyperVController::addInterruptProperties(OSDictionary *dict, UInt32 interru
   interruptSpecifiers->release();
   
   return result;
-}
-
-IOReturn HyperVController::notifyUserClient(HyperVUserClientNotificationType type, void *data, UInt32 dataLength) {
-  if (_userClientInstance == nullptr) {
-    return kIOReturnNotReady;
-  }
-  return _userClientInstance->notifyClientApplication(type, data, dataLength);
-}
-
-bool HyperVController::registerUserClientDriver(IOService *driver) {
-  if (_userClientInstance == nullptr) {
-    return false;
-  }
-  return _userClientInstance->registerDriver(driver);
-}
-
-bool HyperVController::deregisterUserClientDriver(IOService *driver) {
-  if (_userClientInstance == nullptr) {
-    return false;
-  }
-  return _userClientInstance->registerDriver(driver);
 }

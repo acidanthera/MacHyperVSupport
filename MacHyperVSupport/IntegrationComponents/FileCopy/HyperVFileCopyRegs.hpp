@@ -9,53 +9,57 @@
 #define HyperVFileCopyRegs_hpp
 
 #include "HyperVIC.hpp"
-#include "HyperVUserClient.h"
+#include "HyperVFileCopyRegsUser.h"
 
-#define kHyperVFileCopyMaxPath       260
-#define kHyperVFileCopyBufferSize    (8 * PAGE_SIZE)
-
-//
-// File Copy versions.
-//
-#define kHyperVFileCopyVersionV1 { 1, 1 }
+#define kHyperVFileCopyBufferSize   (8 * PAGE_SIZE)
 
 //
-// File Copy messages.
+// File copy versions.
+//
+#define kHyperVFileCopyVersionV1_1  { 1, 1 }
+
+//
+// File copy messages.
 //
 typedef struct __attribute__((packed)) {
-  VMBusICMessageHeader               header;
-  
-  HyperVUserClientFileCopyOperation  operation;
-  uuid_t                             unused1;
-  uuid_t                             unused2;
-} VMBusICMessageFileCopyHeader;
+  VMBusICMessageHeader      icHeader;
+
+  HyperVFileCopyMessageType type;
+  uuid_t                    unused1;
+  uuid_t                    unused2;
+} HyperVFileCopyMessageHeader;
 
 typedef struct __attribute__((packed)) {
-  VMBusICMessageFileCopyHeader   fcopyHeader;
-  // fileName & filePath are UTF-16 strings
-  UInt16                         fileName[kHyperVFileCopyMaxPath];
-  UInt16                         filePath[kHyperVFileCopyMaxPath];
-  HyperVUserClientFileCopyFlags  copyFlags;
-  UInt64                         fileSize;
-} VMBusICMessageFileCopyStartCopy;
+  HyperVFileCopyMessageHeader header;
+
+  //
+  // fileName & filePath are UTF-16 strings.
+  //
+  UInt16                      fileName[kHyperVFileCopyMaxPath];
+  UInt16                      filePath[kHyperVFileCopyMaxPath];
+
+  HyperVFileCopyMessageFlags  flags;
+  UInt64                      fileSize;
+} HyperVFileCopyMessageStartCopy;
 
 typedef struct __attribute__((packed)) {
-  VMBusICMessageFileCopyHeader  fcopyHeader;
-  UInt32                        reserved;
-  UInt64                        offset;
-  UInt32                        size;
-  UInt8                         data[kHyperVFileCopyFragmentSize];
-} VMBusICMessageFileCopyDoCopy;
+  HyperVFileCopyMessageHeader header;
+
+  UInt32                      reserved;
+  UInt64                      offset;
+  UInt32                      size;
+  UInt8                       data[kHyperVFileCopyFragmentSize];
+} HyperVFileCopyMessageDataFragment;
 
 typedef struct __attribute__((packed)) {
   union {
-    VMBusICMessageHeader             header;
-    VMBusICMessageNegotiate          negotiate;
+    VMBusICMessageHeader              icHeader;
+    HyperVFileCopyMessageHeader       fileCopyHeader;
 
-    VMBusICMessageFileCopyHeader     fcopyHeader;
-    VMBusICMessageFileCopyStartCopy  startCopy;
-    VMBusICMessageFileCopyDoCopy     doCopy;
+    VMBusICMessageNegotiate           negotiate;
+    HyperVFileCopyMessageStartCopy    startCopy;
+    HyperVFileCopyMessageDataFragment dataFragment;
   };
-} VMBusICMessageFileCopy;
+} HyperVFileCopyMessage;
 
 #endif

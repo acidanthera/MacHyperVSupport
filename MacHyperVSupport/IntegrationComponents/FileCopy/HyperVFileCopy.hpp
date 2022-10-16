@@ -10,8 +10,7 @@
 
 #include "HyperVICService.hpp"
 #include "HyperVFileCopyRegs.hpp"
-#include <sys/syslimits.h>
-#include <sys/utfconv.h>
+#include "HyperVFileCopyUserClientInternal.hpp"
 
 class HyperVFileCopy : public HyperVICService {
   OSDeclareDefaultStructors(HyperVFileCopy);
@@ -24,27 +23,8 @@ protected:
   UInt32 rxBufferSize() APPLE_KEXT_OVERRIDE { return kHyperVFileCopyBufferSize; };
 
 private:
-  UInt32 status;
-  IOLock *lock = nullptr;
-  bool isSleeping = false;
-  IONotifier *_userClientNotify;
-  bool isRegistered = false;
-  VMBusICMessageFileCopy *_fileCopyPkt;
-  
-  int sleepForUserspace(UInt32 seconds = 0);
-  void wakeForUserspace();
-#if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
-  static bool _userClientAvailable(void *target, void *ref,
-                                   IOService *newService);
-#else
-  static bool _userClientAvailable(void *target, void *ref,
-                                   IOService *newService,
-                                   IONotifier *notifier);
-#endif
-  void returnCodeFromUserspace(UInt64 *status);
-  void getStartCopyData(HyperVUserClientFileCopyStartCopyData *startCopyDataOut);
-  void getDoCopyData(HyperVUserClientFileCopyDoCopyData *doCopyDataOut);
-  bool convertNameAndPath(VMBusICMessageFileCopy *input, HyperVUserClientFileCopyStartCopyData *output);
+  HyperVFileCopyUserClient *_userClientInstance = nullptr;
+
 
 public:
   //
@@ -52,10 +32,8 @@ public:
   //
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
   void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
-  IOReturn callPlatformFunction(const OSSymbol *functionName,
-                                bool waitForFunction, void *param1,
-                                void *param2, void *param3,
-                                void *param4) APPLE_KEXT_OVERRIDE;
+  bool open(IOService *forClient, IOOptionBits options, void *arg) APPLE_KEXT_OVERRIDE;
+  void close(IOService *forClient, IOOptionBits options) APPLE_KEXT_OVERRIDE;
 };
 
 #endif

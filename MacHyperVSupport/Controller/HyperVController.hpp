@@ -12,7 +12,6 @@
 #include <IOKit/IOService.h>
 
 #include "HyperV.hpp"
-#include "HyperVUserClient.h"
 
 extern "C" {
 #include <i386/cpuid.h>
@@ -103,8 +102,6 @@ public:
   // IOService functions.
   //
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
-  bool open(IOService *forClient, IOOptionBits options = 0, void *arg = nullptr) APPLE_KEXT_OVERRIDE;
-  void close(IOService *forClient, IOOptionBits options = 0) APPLE_KEXT_OVERRIDE;
   
   //
   // Misc functions.
@@ -112,10 +109,6 @@ public:
   bool allocateDmaBuffer(HyperVDMABuffer *dmaBuf, size_t size);
   void freeDmaBuffer(HyperVDMABuffer *dmaBuf);
   bool addInterruptProperties(OSDictionary *dict, UInt32 interruptVector);
-  bool checkUserClient() { return _userClientInstance != nullptr; }
-  IOReturn notifyUserClient(HyperVUserClientNotificationType type, void *data, UInt32 dataLength);
-  bool registerUserClientDriver(IOService *driver);
-  bool deregisterUserClientDriver(IOService *driver);
   
   //
   // Hypercalls/interrupts.
