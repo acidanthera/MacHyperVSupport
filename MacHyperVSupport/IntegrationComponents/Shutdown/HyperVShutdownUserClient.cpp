@@ -94,28 +94,27 @@ IOReturn HyperVShutdownUserClient::notifyClientApplication(HyperVShutdownUserCli
 }
 
 IOReturn HyperVShutdownUserClient::methodReportShutdownAbility(HyperVShutdownUserClient *target, void *ref, IOExternalMethodArguments *args) {
-  target->_isShutdownSupported = static_cast<bool>(args->scalarInput[0]);
-  target->wakeThread();
+  target->wakeThread(static_cast<bool>(args->scalarInput[0]) ? kIOReturnSuccess : kIOReturnUnsupported);
   return kIOReturnSuccess;
 }
 
 bool HyperVShutdownUserClient::canShutdown() {
   IOReturn status;
 
-  _isShutdownSupported = false;
   _isSleeping = true;
   status = notifyClientApplication(kHyperVShutdownUserClientNotificationTypeCheck);
   if (status != kIOReturnSuccess) {
     HVSYSLOG("Failed to notify shutdown daemon with status 0x%X", status);
     return false;
   }
-  if (!sleepThread()) {
+  status = sleepThread();
+  if (status == kIOReturnTimeout) {
     HVSYSLOG("Timed out while waiting for shutdown daemon");
     return false;
   }
 
-  HVDBGLOG("Shutdown supported: %u", _isShutdownSupported);
-  return _isShutdownSupported;
+  HVDBGLOG("Shutdown supported: %u", status == kIOReturnSuccess);
+  return status == kIOReturnSuccess;
 }
 
 void HyperVShutdownUserClient::doShutdown(bool restart) {

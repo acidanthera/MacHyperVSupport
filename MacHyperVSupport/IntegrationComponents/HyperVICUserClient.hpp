@@ -22,14 +22,15 @@ private:
   HyperVICService *_hvICProvider = nullptr;
 
 protected:
-  task_t        _task;
-  IOLock        *_sleepLock;
-  bool          _isSleeping;
+  task_t        _task             = nullptr;
+  IOLock        *_sleepLock       = nullptr;
+  bool          _isSleeping       = false;
+  IOReturn      _sleepStatus      = kIOReturnSuccess;
   mach_port_t   _notificationPort = MACH_PORT_NULL;
 
   void setICDebug(bool debug) { debugEnabled = debug; }
-  bool sleepThread();
-  void wakeThread();
+  IOReturn sleepThread();
+  void wakeThread(IOReturn status);
 
 public:
   //

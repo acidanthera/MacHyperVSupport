@@ -17,8 +17,6 @@ class HyperVShutdownUserClient : public HyperVICUserClient {
   typedef HyperVICUserClient super;
 
 private:
-  bool _isShutdownSupported = false;
-
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_5
   static const IOExternalMethodDispatch sShutdownMethods[kHyperVShutdownUserClientMethodNumberOfMethods];
 #else

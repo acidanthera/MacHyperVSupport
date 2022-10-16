@@ -119,7 +119,7 @@ IOReturn HyperVICUserClient::registerNotificationPort(mach_port_t port, UInt32 t
   return kIOReturnSuccess;
 }
 
-bool HyperVICUserClient::sleepThread() {
+IOReturn HyperVICUserClient::sleepThread() {
   int          result = THREAD_AWAKENED;
   AbsoluteTime deadline;
 
@@ -129,15 +129,20 @@ bool HyperVICUserClient::sleepThread() {
   while (_isSleeping && result != THREAD_TIMED_OUT) {
     result = IOLockSleepDeadline(_sleepLock, &_isSleeping, deadline, THREAD_INTERRUPTIBLE);
   }
+  if (_isSleeping) {
+    _sleepStatus = kIOReturnTimeout;
+  }
   _isSleeping = false;
   IOLockUnlock(_sleepLock);
 
-  return result != THREAD_TIMED_OUT;
+  HVDBGLOG("Thread woken up with status 0x%X", _sleepStatus);
+  return _sleepStatus;
 }
 
-void HyperVICUserClient::wakeThread() {
+void HyperVICUserClient::wakeThread(IOReturn status) {
   IOLockLock(_sleepLock);
-  _isSleeping = false;
+  _sleepStatus = status;
+  _isSleeping  = false;
   IOLockUnlock(_sleepLock);
   IOLockWakeup(_sleepLock, &_isSleeping, true);
 }
