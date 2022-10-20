@@ -91,10 +91,10 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
     setProperty("built-in", builtInData);
     builtInData->release();
 
-    vmbusRequestsLock = IOLockAlloc();
-    vmbusTransLock = IOLockAlloc();
+    _vmbusRequestsLock = IOLockAlloc();
+    _vmbusTransLock    = IOLockAlloc();
     
-    threadZeroRequest.lock = IOLockAlloc();
+    _threadZeroRequest.lock = IOLockAlloc();
     prepareSleepThread();
     
     result = true;
@@ -117,9 +117,9 @@ void HyperVVMBusDevice::detach(IOService *provider) {
     OSSafeReleaseNULL(_vmbusProvider);
   }
 
-  IOLockFree(vmbusRequestsLock);
-  IOLockFree(vmbusTransLock);
-  IOLockFree(threadZeroRequest.lock);
+  IOLockFree(_vmbusRequestsLock);
+  IOLockFree(_vmbusTransLock);
+  IOLockFree(_threadZeroRequest.lock);
 
   if (_commandGate != nullptr) {
     _workLoop->removeEventSource(_commandGate);
@@ -166,8 +166,8 @@ IOReturn HyperVVMBusDevice::installPacketActions(OSObject *target, PacketReadyAc
     return kIOReturnExclusiveAccess;
   }
   
-  _receivePacketBufferLength = initialResponseBufferLength;
-  _receivePacketBuffer       = (UInt8*) IOMalloc(_receivePacketBufferLength);
+  _rxPacketBufferLength = initialResponseBufferLength;
+  _rxPacketBuffer       = (UInt8*) IOMalloc(_rxPacketBufferLength);
   
   _packetActionTarget = target;
   _packetReadyAction  = packetReadyAction;
@@ -179,7 +179,7 @@ IOReturn HyperVVMBusDevice::installPacketActions(OSObject *target, PacketReadyAc
                                                                     this, 0);
     if (_interruptSource == nullptr) {
       HVSYSLOG("Failed to configure interrupt for channel %u", _channelId);
-      IOFree(_receivePacketBuffer, _receivePacketBufferLength);
+      IOFree(_rxPacketBuffer, _rxPacketBufferLength);
       return kIOReturnNoResources;
     }
     _workLoop->addEventSource(_interruptSource);
@@ -201,9 +201,9 @@ void HyperVVMBusDevice::uninstallPacketActions() {
   _packetReadyAction  = nullptr;
   _packetActionTarget = nullptr;
   
-  if (_receivePacketBuffer != nullptr) {
-    IOFree(_receivePacketBuffer, _receivePacketBufferLength);
-    _receivePacketBuffer = nullptr;
+  if (_rxPacketBuffer != nullptr) {
+    IOFree(_rxPacketBuffer, _rxPacketBufferLength);
+    _rxPacketBuffer = nullptr;
   }
 }
 
@@ -302,14 +302,14 @@ bool HyperVVMBusDevice::nextInbandPacketAvailable(UInt32 *packetDataLength) {
 }
 
 UInt64 HyperVVMBusDevice::getNextTransId() {
-  IOLockLock(vmbusTransLock);
-  UInt64 value = vmbusTransId;
-  vmbusTransId++;
-  if (vmbusTransId > _maxAutoTransId) {
+  IOLockLock(_vmbusTransLock);
+  UInt64 value = _vmbusTransId;
+  _vmbusTransId++;
+  if (_vmbusTransId > _maxAutoTransId) {
     // Some devices have issues with 0 as a transaction ID.
-    vmbusTransId = 1;
+    _vmbusTransId = 1;
   }
-  IOLockUnlock(vmbusTransLock);
+  IOLockUnlock(_vmbusTransLock);
   return value;
 }
 
@@ -462,31 +462,31 @@ IOReturn HyperVVMBusDevice::writeCompletionPacketWithTransactionId(void *buffer,
 }
 
 bool HyperVVMBusDevice::getPendingTransaction(UInt64 transactionId, void **buffer, UInt32 *bufferLength) {
-  IOLockLock(vmbusRequestsLock);
+  IOLockLock(_vmbusRequestsLock);
 
-  HyperVVMBusDeviceRequest *current = vmbusRequests;
+  HyperVVMBusDeviceRequest *current = _vmbusRequests;
   while (current != NULL) {
     if (current->transactionId == transactionId) {
       HVMSGLOG("Found transaction %u", transactionId);
 
       *buffer       = current->responseData;
       *bufferLength = current->responseDataLength;
-      IOLockUnlock(vmbusRequestsLock);
+      IOLockUnlock(_vmbusRequestsLock);
       return true;
     }
     current = current->next;
   }
 
-  IOLockUnlock(vmbusRequestsLock);
+  IOLockUnlock(_vmbusRequestsLock);
   return false;
 }
 
 void HyperVVMBusDevice::wakeTransaction(UInt64 transactionId) {
-  IOLockLock(vmbusRequestsLock);
+  IOLockLock(_vmbusRequestsLock);
 
-  HyperVVMBusDeviceRequest *current  = vmbusRequests;
-  HyperVVMBusDeviceRequest *previous = NULL;
-  while (current != NULL) {
+  HyperVVMBusDeviceRequest *current  = _vmbusRequests;
+  HyperVVMBusDeviceRequest *previous = nullptr;
+  while (current != nullptr) {
     if (current->transactionId == transactionId) {
       HVMSGLOG("Waking transaction %u", transactionId);
 
@@ -496,9 +496,9 @@ void HyperVVMBusDevice::wakeTransaction(UInt64 transactionId) {
       if (previous != NULL) {
         previous->next = current->next;
       } else {
-        vmbusRequests = current->next;
+        _vmbusRequests = current->next;
       }
-      IOLockUnlock(vmbusRequestsLock);
+      IOLockUnlock(_vmbusRequestsLock);
 
       //
       // Wake sleeping thread.
@@ -512,11 +512,11 @@ void HyperVVMBusDevice::wakeTransaction(UInt64 transactionId) {
     previous  = current;
     current   = current->next;
   }
-  IOLockUnlock(vmbusRequestsLock);
+  IOLockUnlock(_vmbusRequestsLock);
 }
 
 void HyperVVMBusDevice::sleepThreadZero() {
-  sleepPacketRequest(&threadZeroRequest);
+  sleepPacketRequest(&_threadZeroRequest);
   prepareSleepThread();
 }
 

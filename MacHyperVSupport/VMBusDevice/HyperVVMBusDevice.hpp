@@ -25,7 +25,7 @@ typedef struct HyperVVMBusDeviceRequest {
   HyperVVMBusDeviceRequest  *next;
   IOLock                    *lock;
   bool                      isSleeping;
-  
+
   UInt64                    transactionId;
   void                      *responseData;
   UInt32                    responseDataLength;
@@ -35,14 +35,14 @@ class HyperVVMBusDevice : public IOService {
   OSDeclareDefaultStructors(HyperVVMBusDevice);
   HVDeclareLogFunctionsVMBusDeviceNub("vmbusdev");
   typedef IOService super;
-  
+
 public:
   //
   // Packet action handlers.
   //
   typedef void (*PacketReadyAction)(void *target, VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
   typedef bool (*WakePacketAction)(void *target, VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
-  
+
 #if DEBUG
   typedef void (*TimerDebugAction)(void *target);
 #endif
@@ -56,7 +56,7 @@ private:
   UInt32        _channelId      = 0;
   uuid_t        _instanceId;
   bool          _channelIsOpen = false;
-  
+
   //
   // Work loop and related.
   //
@@ -68,18 +68,17 @@ private:
   PacketReadyAction     _packetReadyAction    = nullptr;
   WakePacketAction      _wakePacketAction     = nullptr;
   bool                  _shouldFlushPackets   = true;
-  
+
   //
   // Ring buffers for channel.
   //
-  VMBusRingBuffer *_txBuffer    = nullptr;
-  UInt32          _txBufferSize = 0;
-  VMBusRingBuffer *_rxBuffer    = nullptr;
-  UInt32          _rxBufferSize = 0;
-  
-  UInt8           *_receivePacketBuffer      = nullptr;
-  UInt32          _receivePacketBufferLength = 0;
-  
+  VMBusRingBuffer *_txBuffer            = nullptr;
+  UInt32          _txBufferSize         = 0;
+  VMBusRingBuffer *_rxBuffer            = nullptr;
+  UInt32          _rxBufferSize         = 0;
+  UInt8           *_rxPacketBuffer      = nullptr;
+  UInt32          _rxPacketBufferLength = 0;
+
 #if DEBUG
   //
   // Timer event source for debug prints.
@@ -90,36 +89,40 @@ private:
   TimerDebugAction    _timerDebugAction    = nullptr;
   UInt64              _numInterrupts       = 0;
   UInt64              _numPackets          = 0;
-  
+
   void handleDebugPrintTimer(IOTimerEventSource *sender);
 #endif
-  
-  HyperVVMBusDeviceRequest      *vmbusRequests = NULL;
-  IOLock                        *vmbusRequestsLock;
-  UInt64                        vmbusTransId = 1; // Some devices have issues with 0 as a transaction ID.
-  UInt64                        _maxAutoTransId = UINT64_MAX;
-  IOLock                        *vmbusTransLock;
-  
-  HyperVVMBusDeviceRequest      threadZeroRequest;
 
-  
+  //
+  // VMBus packet requests.
+  //
+  HyperVVMBusDeviceRequest *_vmbusRequests     = nullptr;
+  IOLock                   *_vmbusRequestsLock = nullptr;
+  UInt64                   _vmbusTransId       = 1; // Some devices have issues with 0 as a transaction ID.
+  UInt64                   _maxAutoTransId     = UINT64_MAX;
+  IOLock                   *_vmbusTransLock    = nullptr;
+  HyperVVMBusDeviceRequest _threadZeroRequest = { };
+
+  //
+  // Internal functions.
+  //
   IOReturn writePacketInternal(void *buffer, UInt32 bufferLength, VMBusPacketType packetType, UInt64 transactionId,
                                bool responseRequired, void *responseBuffer, UInt32 responseBufferLength);
-  
+
   IOReturn nextPacketAvailableGated(VMBusPacketType *type, UInt32 *packetHeaderLength, UInt32 *packetTotalLength);
   IOReturn readRawPacketGated(void *header, UInt32 *headerLength, void *buffer, UInt32 *bufferLength);
   IOReturn writeRawPacketGated(void *header, UInt32 *headerLength, void *buffer, UInt32 *bufferLength);
   IOReturn writeInbandPacketGated(void *buffer, UInt32 *bufferLength, bool *responseRequired, UInt64 *transactionId);
-  
+
   UInt32 copyPacketDataFromRingBuffer(UInt32 readIndex, UInt32 readLength, void *data, UInt32 dataLength);
   UInt32 seekPacketDataFromRingBuffer(UInt32 readIndex, UInt32 readLength);
   UInt32 copyPacketDataToRingBuffer(UInt32 writeIndex, void *data, UInt32 length);
   UInt32 zeroPacketDataToRingBuffer(UInt32 writeIndex, UInt32 length);
-  
+
   void addPacketRequest(HyperVVMBusDeviceRequest *vmbusRequest);
   void sleepPacketRequest(HyperVVMBusDeviceRequest *vmbusRequest);
   void prepareSleepThread();
-  
+
   //
   // Ring buffer.
   //
@@ -133,11 +136,11 @@ private:
     __sync_synchronize();
     UInt32 writeIndex = getRingWriteIndex(ringBuffer);
     UInt32 readIndex  = getRingReadIndex(ringBuffer);
-    
+
     *writeBytes = (writeIndex >= readIndex) ? (ringBufferSize - (writeIndex - readIndex)) : (readIndex - writeIndex);
     *readBytes = ringBufferSize - *writeBytes;
   }
-  
+
 private:
   void handleInterrupt(IOInterruptEventSource *sender, int count);
   IOReturn openVMBusChannelGated(UInt32 *txBufferSize, UInt32 *rxBufferSize);
@@ -150,7 +153,7 @@ public:
   void detach(IOService *provider) APPLE_KEXT_OVERRIDE;
   bool matchPropertyTable(OSDictionary *table, SInt32 *score) APPLE_KEXT_OVERRIDE;
   IOWorkLoop* getWorkLoop() const APPLE_KEXT_OVERRIDE;
-  
+
   //
   // Channel management.
   //
@@ -164,7 +167,7 @@ public:
   IOReturn freeGPADLBuffer(UInt32 gpadlHandle);
   UInt32 getChannelId() { return _channelId; }
   uuid_t* getInstanceId() { return &_instanceId; }
-  
+
   //
   // Ring buffer.
   //
@@ -186,23 +189,23 @@ public:
   inline void getAvailableRxSpace(UInt32 *readBytes, UInt32 *writeBytes) {
     getAvailableRingSpace(_rxBuffer, _rxBufferSize, readBytes, writeBytes);
   }
-  
+
   //
   // Misc.
   //
   inline void setDebugMessagePrinting(bool enabled) { debugPackets = enabled; }
   inline HyperVController *getHvController() { return _vmbusProvider->getHvController(); }
-  
+
   //
   // Messages.
   //
   bool nextPacketAvailable(VMBusPacketType *type, UInt32 *packetHeaderLength, UInt32 *packetTotalLength);
   bool nextInbandPacketAvailable(UInt32 *packetDataLength);
   UInt64 getNextTransId();
-  
+
   IOReturn readRawPacket(void *buffer, UInt32 bufferLength);
   IOReturn readInbandCompletionPacket(void *buffer, UInt32 bufferLength, UInt64 *transactionId = NULL);
-  
+
   IOReturn writeRawPacket(void *buffer, UInt32 bufferLength);
   IOReturn writeInbandPacket(void *buffer, UInt32 bufferLength, bool responseRequired,
                              void *responseBuffer = NULL, UInt32 responseBufferLength = 0);
@@ -215,13 +218,12 @@ public:
                                          VMBusPacketMultiPageBuffer *pagePacket, UInt32 pagePacketLength,
                                          void *responseBuffer = NULL, UInt32 responseBufferLength = 0, UInt64 transactionId = 0);
   IOReturn writeCompletionPacketWithTransactionId(void *buffer, UInt32 bufferLength, UInt64 transactionId, bool responseRequired);
-  
-  
+
   bool getPendingTransaction(UInt64 transactionId, void **buffer, UInt32 *bufferLength);
   void wakeTransaction(UInt64 transactionId);
   void sleepThreadZero();
   void wakeThreadZero();
-  
+
   //
   // Timer debug printing.
   //

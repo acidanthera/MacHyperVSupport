@@ -39,7 +39,7 @@ void HyperVVMBusDevice::handleInterrupt(IOInterruptEventSource *sender, int coun
     }
     
     while (true) {
-      status = readRawPacket(_receivePacketBuffer, _receivePacketBufferLength);
+      status = readRawPacket(_rxPacketBuffer, _rxPacketBufferLength);
       if (status == kIOReturnNotReady) {
         //
         // No more packets in RX buffer.
@@ -49,17 +49,17 @@ void HyperVVMBusDevice::handleInterrupt(IOInterruptEventSource *sender, int coun
         //
         // Received packet is larger than current buffer, reallocate and try again.
         //
-        IOFree(_receivePacketBuffer, _receivePacketBufferLength);
-        _receivePacketBufferLength *= 2;
-        _receivePacketBuffer = (UInt8*) IOMalloc(_receivePacketBufferLength);
-        HVDBGLOG("Incoming packet too big for buffer, reallocated to %u bytes", _receivePacketBufferLength);
+        IOFree(_rxPacketBuffer, _rxPacketBufferLength);
+        _rxPacketBufferLength *= 2;
+        _rxPacketBuffer = (UInt8*) IOMalloc(_rxPacketBufferLength);
+        HVDBGLOG("Incoming packet too big for buffer, reallocated to %u bytes", _rxPacketBufferLength);
         continue;
       }
       
-      pktHeader = (VMBusPacketHeader*) _receivePacketBuffer;
+      pktHeader = (VMBusPacketHeader *) _rxPacketBuffer;
       pktHeaderLength = HV_GET_VMBUS_PACKETSIZE(pktHeader->headerLength);
       pktDataLength = HV_GET_VMBUS_PACKETSIZE(pktHeader->totalLength) - pktHeaderLength;
-      pktData = &_receivePacketBuffer[pktHeaderLength];
+      pktData = &_rxPacketBuffer[pktHeaderLength];
       
 #if DEBUG
       _numPackets++;
@@ -331,15 +331,15 @@ UInt32 HyperVVMBusDevice::zeroPacketDataToRingBuffer(UInt32 writeIndex, UInt32 l
 }
 
 void HyperVVMBusDevice::addPacketRequest(HyperVVMBusDeviceRequest *vmbusRequest) {
-  IOLockLock(vmbusRequestsLock);
-  if (vmbusRequests == NULL) {
-    vmbusRequests = vmbusRequest;
-    vmbusRequests->next = NULL;
+  IOLockLock(_vmbusRequestsLock);
+  if (_vmbusRequests == nullptr) {
+    _vmbusRequests       = vmbusRequest;
+    _vmbusRequests->next = nullptr;
   } else {
-    vmbusRequest->next = vmbusRequests;
-    vmbusRequests = vmbusRequest;
+    vmbusRequest->next = _vmbusRequests;
+    _vmbusRequests     = vmbusRequest;
   }
-  IOLockUnlock(vmbusRequestsLock);
+  IOLockUnlock(_vmbusRequestsLock);
 }
 
 void HyperVVMBusDevice::sleepPacketRequest(HyperVVMBusDeviceRequest *vmbusRequest) {
@@ -357,9 +357,9 @@ void HyperVVMBusDevice::prepareSleepThread() {
   // Sleep on transaction 0.
   // Used by clients for disconnected response sleeping.
   //
-  threadZeroRequest.isSleeping = true;
-  threadZeroRequest.transactionId = 0;
-  addPacketRequest(&threadZeroRequest);
+  _threadZeroRequest.isSleeping    = true;
+  _threadZeroRequest.transactionId = 0;
+  addPacketRequest(&_threadZeroRequest);
 }
 
 #if DEBUG
