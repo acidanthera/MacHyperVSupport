@@ -94,7 +94,7 @@ All Intel macOS versions are supported. macOS 12.0 and newer should use `MacHype
 | Module              | Debug            | Message Debug     | Off               |
 |---------------------|------------------|-------------------|-------------------|
 | CPU disabler (10.4) | -hvcpudbg        | N/A               | N/A               |
-| Graphics            | -hvgfxdbg        | -hvgfxmsgdbg      | -hvgfxoff         |
+| Basic Graphics      | -hvbgfxdbg       | -hvbgfxmsgdbg     | -hvbgfxoff         |
 | Heartbeat           | -hvheartdbg      | -hvheartmsgdbg    | -hvheartoff       |
 | Keyboard            | -hvkbddbg        | -hvkbdmsgdbg      | -hvkbdoff         |
 | Mouse               | -hvmousdbg       | -hvmousmsgdbg     | -hvmousoff        |
