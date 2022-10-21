@@ -1,19 +1,19 @@
 //
-//  HyperVBasicGraphics.cpp
-//  Hyper-V basic graphics driver
+//  HyperVGraphicsBridge.cpp
+//  Hyper-V synthetic graphics bridge
 //
 //  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
-#include "HyperVBasicGraphics.hpp"
+#include "HyperVGraphicsBridge.hpp"
 #include "HyperVPCIRoot.hpp"
 
 #include <IOKit/IOPlatformExpert.h>
 #include <IOKit/IODeviceTreeSupport.h>
 
-OSDefineMetaClassAndStructors(HyperVBasicGraphics, super);
+OSDefineMetaClassAndStructors(HyperVGraphicsBridge, super);
 
-void HyperVBasicGraphics::fillFakePCIDeviceSpace() {
+void HyperVGraphicsBridge::fillFakePCIDeviceSpace() {
   //
   // Fill PCI device config space.
   //
@@ -24,16 +24,16 @@ void HyperVBasicGraphics::fillFakePCIDeviceSpace() {
   //
   bzero(_fakePCIDeviceSpace, sizeof (_fakePCIDeviceSpace));
 
-  OSWriteLittleInt16(_fakePCIDeviceSpace, kIOPCIConfigVendorID, 0x1414);
-  OSWriteLittleInt16(_fakePCIDeviceSpace, kIOPCIConfigDeviceID, 0x5353);
+  OSWriteLittleInt16(_fakePCIDeviceSpace, kIOPCIConfigVendorID, kHyperVPCIVendorMicrosoft);
+  OSWriteLittleInt16(_fakePCIDeviceSpace, kIOPCIConfigDeviceID, kHyperVPCIDeviceHyperVVideo);
   OSWriteLittleInt32(_fakePCIDeviceSpace, kIOPCIConfigRevisionID, 0x3000000);
-  OSWriteLittleInt16(_fakePCIDeviceSpace, kIOPCIConfigSubSystemVendorID, 0x1414);
-  OSWriteLittleInt16(_fakePCIDeviceSpace, kIOPCIConfigSubSystemID, 0x5353);
+  OSWriteLittleInt16(_fakePCIDeviceSpace, kIOPCIConfigSubSystemVendorID, kHyperVPCIVendorMicrosoft);
+  OSWriteLittleInt16(_fakePCIDeviceSpace, kIOPCIConfigSubSystemID, kHyperVPCIDeviceHyperVVideo);
 
   OSWriteLittleInt32(_fakePCIDeviceSpace, kIOPCIConfigBaseAddress0, (UInt32)_consoleInfo.v_baseAddr);
 }
 
-bool HyperVBasicGraphics::configure(IOService *provider) {
+bool HyperVGraphicsBridge::configure(IOService *provider) {
   //
   // Add framebuffer memory range to bridge.
   //
@@ -42,7 +42,7 @@ bool HyperVBasicGraphics::configure(IOService *provider) {
   return super::configure(provider);
 }
 
-bool HyperVBasicGraphics::start(IOService *provider) {
+bool HyperVGraphicsBridge::start(IOService *provider) {
   if (HVCheckOffArg()) {
     return false;
   }
@@ -119,7 +119,7 @@ bool HyperVBasicGraphics::start(IOService *provider) {
   return true;
 }
 
-UInt32 HyperVBasicGraphics::configRead32(IOPCIAddressSpace space, UInt8 offset) {
+UInt32 HyperVGraphicsBridge::configRead32(IOPCIAddressSpace space, UInt8 offset) {
   HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
   UInt32 data;
@@ -140,7 +140,7 @@ UInt32 HyperVBasicGraphics::configRead32(IOPCIAddressSpace space, UInt8 offset) 
   return data;
 }
 
-void HyperVBasicGraphics::configWrite32(IOPCIAddressSpace space, UInt8 offset, UInt32 data) {
+void HyperVGraphicsBridge::configWrite32(IOPCIAddressSpace space, UInt8 offset, UInt32 data) {
   HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
   IOInterruptState ints;
@@ -167,7 +167,7 @@ void HyperVBasicGraphics::configWrite32(IOPCIAddressSpace space, UInt8 offset, U
   IOSimpleLockUnlockEnableInterrupt(_pciLock, ints);
 }
 
-UInt16 HyperVBasicGraphics::configRead16(IOPCIAddressSpace space, UInt8 offset) {
+UInt16 HyperVGraphicsBridge::configRead16(IOPCIAddressSpace space, UInt8 offset) {
   HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
   UInt16 data;
@@ -184,7 +184,7 @@ UInt16 HyperVBasicGraphics::configRead16(IOPCIAddressSpace space, UInt8 offset) 
   return data;
 }
 
-void HyperVBasicGraphics::configWrite16(IOPCIAddressSpace space, UInt8 offset, UInt16 data) {
+void HyperVGraphicsBridge::configWrite16(IOPCIAddressSpace space, UInt8 offset, UInt16 data) {
   HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
   IOInterruptState ints;
@@ -199,7 +199,7 @@ void HyperVBasicGraphics::configWrite16(IOPCIAddressSpace space, UInt8 offset, U
   IOSimpleLockUnlockEnableInterrupt(_pciLock, ints);
 }
 
-UInt8 HyperVBasicGraphics::configRead8(IOPCIAddressSpace space, UInt8 offset) {
+UInt8 HyperVGraphicsBridge::configRead8(IOPCIAddressSpace space, UInt8 offset) {
   HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
   UInt8 data;
@@ -216,7 +216,7 @@ UInt8 HyperVBasicGraphics::configRead8(IOPCIAddressSpace space, UInt8 offset) {
   return data;
 }
 
-void HyperVBasicGraphics::configWrite8(IOPCIAddressSpace space, UInt8 offset, UInt8 data) {
+void HyperVGraphicsBridge::configWrite8(IOPCIAddressSpace space, UInt8 offset, UInt8 data) {
   HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
   
   IOInterruptState ints;

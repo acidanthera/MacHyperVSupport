@@ -1,19 +1,19 @@
 //
-//  HyperVBasicGraphics.hpp
-//  Hyper-V basic graphics driver
+//  HyperVGraphicsBridge.hpp
+//  Hyper-V synthetic graphics bridge
 //
 //  Copyright © 2021-2022 Goldfish64. All rights reserved.
 //
 
-#ifndef HyperVBasicGraphics_hpp
-#define HyperVBasicGraphics_hpp
+#ifndef HyperVGraphicsBridge_hpp
+#define HyperVGraphicsBridge_hpp
 
 #include <IOKit/pci/IOPCIBridge.h>
 #include "HyperVVMBusDevice.hpp"
 
-class HyperVBasicGraphics : public HV_PCIBRIDGE_CLASS {
-  OSDeclareDefaultStructors(HyperVBasicGraphics);
-  HVDeclareLogFunctionsVMBusChild("bgfx");
+class HyperVGraphicsBridge : public HV_PCIBRIDGE_CLASS {
+  OSDeclareDefaultStructors(HyperVGraphicsBridge);
+  HVDeclareLogFunctionsVMBusChild("gfxb");
   typedef HV_PCIBRIDGE_CLASS super;
 
 private:
