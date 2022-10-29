@@ -10,6 +10,7 @@
 
 #include <IOKit/pci/IOPCIBridge.h>
 #include "HyperVVMBusDevice.hpp"
+#include "HyperVGraphicsBridgeRegs.hpp"
 
 class HyperVGraphicsBridge : public HV_PCIBRIDGE_CLASS {
   OSDeclareDefaultStructors(HyperVGraphicsBridge);

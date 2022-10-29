@@ -36,9 +36,6 @@ typedef enum : UInt32 {
 #define kHyperVPCIBusSyntheticGraphics    0xFB
 #define kHyperVPCIBusDummy                0xFE
 
-#define kHyperVPCIVendorMicrosoft   0x1414
-#define kHyperVPCIDeviceHyperVVideo 0x5353
-
 #if DEBUG
 //
 // Debug logging function.

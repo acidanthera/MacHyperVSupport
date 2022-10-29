@@ -281,6 +281,7 @@
 		412E109F28C589DF00B8A699 /* HyperVVMBus.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVVMBus.hpp; sourceTree = "<group>"; };
 		414678B528C4F0E5000E8F83 /* HyperVInterruptController.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVInterruptController.cpp; sourceTree = "<group>"; };
 		414678B628C4F0E5000E8F83 /* HyperVInterruptController.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVInterruptController.hpp; sourceTree = "<group>"; };
+		4159EDD7290221C300867664 /* HyperVGraphicsBridgeRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVGraphicsBridgeRegs.hpp; sourceTree = "<group>"; };
 		415D990028F324860078FA71 /* HyperVShutdownUserClient.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVShutdownUserClient.cpp; sourceTree = "<group>"; };
 		415D990128F324860078FA71 /* HyperVShutdownUserClientInternal.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVShutdownUserClientInternal.hpp; sourceTree = "<group>"; };
 		415D990628F325700078FA71 /* HyperVShutdownUserClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HyperVShutdownUserClient.h; sourceTree = "<group>"; };
@@ -795,6 +796,7 @@
 			children = (
 				41F2E43A2666E6A100CE26CE /* HyperVGraphicsBridge.cpp */,
 				41F2E43B2666E6A100CE26CE /* HyperVGraphicsBridge.hpp */,
+				4159EDD7290221C300867664 /* HyperVGraphicsBridgeRegs.hpp */,
 			);
 			path = GraphicsBridge;
 			sourceTree = "<group>";
