@@ -12,7 +12,7 @@ VMBusChannelStatus HyperVVMBus::getVMBusChannelStatus(UInt32 channelId) {
     HVDBGLOG("One or more incorrect arguments provided");
     return kVMBusChannelStatusNotPresent;
   }
-  return vmbusChannels[channelId].status;
+  return _vmbusChannels[channelId].status;
 }
 
 IOReturn HyperVVMBus::openVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VMBusRingBuffer **txBuffer, UInt32 rxBufferSize, VMBusRingBuffer **rxBuffer) {
@@ -40,7 +40,7 @@ IOReturn HyperVVMBus::openVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VM
     return kIOReturnNotAligned;
   }
   
-  channel = &vmbusChannels[channelId];
+  channel = &_vmbusChannels[channelId];
   if (channel->status == kVMBusChannelStatusOpen) {
     HVDBGLOG("Channel %u is already open", channelId);
     return kIOReturnStillOpen;
@@ -130,7 +130,7 @@ IOReturn HyperVVMBus::closeVMBusChannel(UInt32 channelId) {
     HVDBGLOG("One or more incorrect arguments provided");
     return kIOReturnBadArgument;
   }
-  channel = &vmbusChannels[channelId];
+  channel = &_vmbusChannels[channelId];
   
   if (channel->status == kVMBusChannelStatusClosed) {
     HVDBGLOG("Channel %u is already closed", channelId);
@@ -352,7 +352,7 @@ IOReturn HyperVVMBus::freeVMBusChannelGPADL(UInt32 channelId, UInt32 gpadlHandle
 }
 
 void HyperVVMBus::signalVMBusChannel(UInt32 channelId) {
-  VMBusChannel *channel = &vmbusChannels[channelId];
+  VMBusChannel *channel = &_vmbusChannels[channelId];
   
   //
   // Signal Hyper-V the specified channel has data waiting on the TX ring.

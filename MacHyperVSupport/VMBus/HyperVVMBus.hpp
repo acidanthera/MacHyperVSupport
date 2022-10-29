@@ -92,28 +92,27 @@ private:
   HyperVDMABuffer     vmbusEventFlags;
   HyperVEventFlags    *vmbusRxEventFlags;
   HyperVEventFlags    *vmbusTxEventFlags;
-  HyperVDMABuffer     vmbusMnf1;
-  HyperVDMABuffer     vmbusMnf2;
+  HyperVDMABuffer     _vmbusMnf1 = { };
+  HyperVDMABuffer     _vmbusMnf2 = { };
   
   //
   // Flag used for waiting for incoming message response.
   // 0 = disable.
   //
-  UInt8               vmbusWaitForMessageType;
-  UInt32              vmbusWaitMessageCpu;
-  HyperVMessage       vmbusWaitMessage;
+  UInt8               _vmbusWaitForMessageType = 0;
+  UInt32              _vmbusWaitMessageCpu = 0;
+  HyperVMessage       _vmbusWaitMessage = { };
   
-  IOCommandGate           *cmdGate;
-  bool                    cmdShouldWake = false;
-  bool                    cmdGateEvent = false;
+  IOCommandGate           *_cmdGate = nullptr;
+  bool                    _cmdShouldWake = false;
+  bool                    _cmdGateEvent = false;
   
   
-  UInt32                  _nextGpadlHandle = kHyperVGpadlNullHandle;
-  UInt32                  vmbusVersion;
-  UInt16                  vmbusMsgConnectionId;
+  UInt32                  _nextGpadlHandle      = kHyperVGpadlNullHandle;
+  UInt32                  _vmbusVersion         = 0;
+  UInt16                  _vmbusMsgConnectionId = 0;
 public:
-  VMBusChannel            vmbusChannels[kVMBusMaxChannels];
-  UInt32                  vmbusChannelHighest;
+  VMBusChannel            _vmbusChannels[kVMBusMaxChannels] = { };
   
   
 private:

@@ -14,8 +14,8 @@ bool HyperVVMBus::allocateVMBusBuffers() {
   // Allocate common VMBus structures.
   //
   getHvController()->allocateDmaBuffer(&vmbusEventFlags, PAGE_SIZE);
-  getHvController()->allocateDmaBuffer(&vmbusMnf1, PAGE_SIZE);
-  getHvController()->allocateDmaBuffer(&vmbusMnf2, PAGE_SIZE);
+  getHvController()->allocateDmaBuffer(&_vmbusMnf1, PAGE_SIZE);
+  getHvController()->allocateDmaBuffer(&_vmbusMnf2, PAGE_SIZE);
   
   //
   // Event flag bits primarily used on Windows Server 2008 R2 and older.
