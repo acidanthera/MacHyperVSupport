@@ -5,7 +5,7 @@ MacHyperVSupport
 
 Hyper-V integration services for macOS. Requires a Generation 2 virtual machine on Windows Server 2012 R2 / Windows 8.1 or higher. Windows Server 2016 is currently unsupported.
 
-All Intel macOS versions are supported. macOS 12.0 and newer should use `MacHyperVSupportMonterey.kext` instead.
+All Intel macOS versions are supported.
 
 ### Supported Hyper-V devices and services
 - Heartbeat
@@ -18,6 +18,13 @@ All Intel macOS versions are supported. macOS 12.0 and newer should use `MacHype
 - Synthetic mouse
 - Synthetic network controller
 - Synthetic SCSI controller
+
+### Binaries
+- MacHyperVSupport.kext: Core Hyper-V support kext for macOS 10.4 to 11.0.
+- MacHyperVSupportMonterey.kext: Core Hyper-V support kext for macOS 12.0 and newer.
+- hvfilecopyd: File copy userspace daemon.
+- hvshutdownd: Shutdown userspace daemon.
+- hvtimesyncd: Time synchronization userspace daemon.
 
 ### OpenCore configuration
 #### ACPI
