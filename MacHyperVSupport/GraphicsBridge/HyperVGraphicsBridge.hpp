@@ -19,6 +19,7 @@ class HyperVGraphicsBridge : public HV_PCIBRIDGE_CLASS {
 
 private:
   HyperVVMBusDevice *_hvDevice;
+  VMBusVersion      _currentGraphicsVersion = { };
 
   //
   // Fake PCI structures.
@@ -29,17 +30,23 @@ private:
 
   void fillFakePCIDeviceSpace();
 
+  void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
+  IOReturn sendGraphicsMessage(HyperVGraphicsMessage *gfxMessage, HyperVGraphicsMessage *gfxMessageResponse = nullptr, UInt32 gfxMessageResponseSize = 0);
+  IOReturn negotiateVersion(VMBusVersion version);
+  IOReturn connectGraphics();
+
 public:
   //
   // IOService overrides.
   //
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
+  void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
 
   //
   // IOPCIBridge overrides.
   //
   bool configure(IOService *provider) APPLE_KEXT_OVERRIDE;
-  IODeviceMemory *ioDeviceMemory() APPLE_KEXT_OVERRIDE { HVDBGLOG("start"); return NULL; }
+  IODeviceMemory *ioDeviceMemory() APPLE_KEXT_OVERRIDE { HVDBGLOG("start"); return nullptr; }
   UInt32 configRead32(IOPCIAddressSpace space, UInt8 offset) APPLE_KEXT_OVERRIDE;
   void configWrite32(IOPCIAddressSpace space, UInt8 offset, UInt32 data) APPLE_KEXT_OVERRIDE;
   UInt16 configRead16(IOPCIAddressSpace space, UInt8 offset) APPLE_KEXT_OVERRIDE;

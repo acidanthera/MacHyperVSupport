@@ -16,13 +16,20 @@
 #define kHyperVGraphicsMinWidth       640
 #define kHyperVGraphicsMinHeight      480
 
-#define kHyperVGraphicsRingSize       (64 * PAGE_SIZE)
+#define kHyperVGraphicsRingBufferSize (64 * PAGE_SIZE)
+#define kHyperVGraphicsMaxPacketSize  (4 * PAGE_SIZE)
 
 //
 // Graphics versions.
 //
-#define kHyperVGraphicsVersionV3_0  { 3, 0 }
-#define kHyperVGraphicsVersionV3_2  { 3, 2 }
+#define kHyperVGraphicsVersionV3_0  { 3, 0 } // Windows Server 2008 R2 and older
+#define kHyperVGraphicsVersionV3_2  { 3, 2 } // Windows 8 / Windows Server 2012 and newer
+
+//
+// Fixed transaction IDs for request/response due to transaction IDs
+// not being respected by graphics system.
+//
+#define kHyperVGraphicsVersionRequestTransactionID 0xCAFECAFE
 
 //
 // Graphics messages.
