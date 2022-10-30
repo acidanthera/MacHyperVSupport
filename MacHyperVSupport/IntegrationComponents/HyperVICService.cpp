@@ -9,7 +9,7 @@
 
 OSDefineMetaClassAndAbstractStructors(HyperVICService, super);
 
-static const VMBusICVersion frameworkVersions[] = {
+static const VMBusVersion frameworkVersions[] = {
   kHyperVICVersionV3,
   kHyperVICVersion2008
 };
@@ -79,16 +79,16 @@ void HyperVICService::stop(IOService *provider) {
   super::stop(provider);
 }
 
-bool HyperVICService::processNegotiationResponse(VMBusICMessageNegotiate *negMsg, const VMBusICVersion *msgVersions,
-                                                 UInt32 msgVersionsCount, VMBusICVersion *msgVersionUsed) {
+bool HyperVICService::processNegotiationResponse(VMBusICMessageNegotiate *negMsg, const VMBusVersion *msgVersions,
+                                                 UInt32 msgVersionsCount, VMBusVersion *msgVersionUsed) {
   UInt32 versionCount;
   UInt32 packetSize;
 
   bool foundFwMatch  = false;
   bool foundMsgMatch = false;
 
-  VMBusICVersion frameworkVersion = { };
-  VMBusICVersion msgVersion       = { };
+  VMBusVersion frameworkVersion = { };
+  VMBusVersion msgVersion       = { };
 
   if (negMsg->frameworkVersionCount == 0 || negMsg->messageVersionCount == 0) {
     HVDBGLOG("Invalid framework or message version count");

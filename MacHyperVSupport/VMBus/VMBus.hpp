@@ -38,6 +38,14 @@
 #define kHyperVGpadlStartHandle   0xE1E10
 
 //
+// Version structure.
+//
+typedef struct __attribute__((packed)) {
+  UInt16 major;
+  UInt16 minor;
+} VMBusVersion;
+
+//
 // VMBus protocol versions.
 //
 // 0.13 - Windows Server 2008

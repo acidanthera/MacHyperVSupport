@@ -37,17 +37,12 @@ typedef enum : UInt16 {
 // Header and common negotiation message.
 //
 typedef struct __attribute__((packed)) {
-  UInt16 major;
-  UInt16 minor;
-} VMBusICVersion;
-
-typedef struct __attribute__((packed)) {
   UInt32              pipeFlags;
   UInt32              pipeMsgs;
 
-  VMBusICVersion      frameworkVersion;
+  VMBusVersion        frameworkVersion;
   VMBusICMessageType  type;
-  VMBusICVersion      msgVersion;
+  VMBusVersion        msgVersion;
   UInt16              dataSize;
   HyperVStatus        status;
   UInt8               transactionId;
@@ -61,7 +56,7 @@ typedef struct __attribute__((packed)) {
   UInt16                frameworkVersionCount;
   UInt16                messageVersionCount;
   UInt32                reserved;
-  VMBusICVersion        versions[];
+  VMBusVersion          versions[];
 } VMBusICMessageNegotiate;
 
 #endif

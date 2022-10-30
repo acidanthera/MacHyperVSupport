@@ -61,13 +61,13 @@ typedef struct __attribute__((packed)) {
 } HyperVGraphicsMessageHeader;
 
 typedef struct __attribute__((packed)) {
-  UInt32 version;
+  VMBusVersion version;
 } HyperVGraphicsMessageVersionRequest;
 
 typedef struct __attribute__((packed)) {
-  UInt32 version;
-  UInt8  accepted;
-  UInt8  maxVideoOutputs;
+  VMBusVersion version;
+  UInt8        accepted;
+  UInt8        maxVideoOutputs;
 } HyperVGraphicsMessageVersionResponse;
 
 typedef struct __attribute__((packed)) {

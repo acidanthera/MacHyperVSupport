@@ -9,7 +9,7 @@
 
 OSDefineMetaClassAndStructors(HyperVShutdown, super);
 
-static const VMBusICVersion shutdownVersions[] = {
+static const VMBusVersion shutdownVersions[] = {
   kHyperVShutdownVersionV3_2,
   kHyperVShutdownVersionV3_1,
   kHyperVShutdownVersionV3_0,

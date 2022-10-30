@@ -20,7 +20,7 @@ class HyperVTimeSync : public HyperVICService {
 private:
   HyperVTimeSyncUserClient *_userClientInstance = nullptr;
 
-  VMBusICVersion _timeSyncCurrentVersion = kHyperVTimeSyncVersionV1_0;
+  VMBusVersion _timeSyncCurrentVersion = kHyperVTimeSyncVersionV1_0;
   void handleTimeAdjust(UInt64 hostTime, UInt64 referenceTime, VMBusICTimeSyncFlags flags);
 
 protected:

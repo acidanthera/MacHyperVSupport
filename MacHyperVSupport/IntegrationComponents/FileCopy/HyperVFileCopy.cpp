@@ -9,7 +9,7 @@
 
 OSDefineMetaClassAndStructors(HyperVFileCopy, super);
 
-static const VMBusICVersion fileCopyVersions[] = {
+static const VMBusVersion fileCopyVersions[] = {
   kHyperVFileCopyVersionV1_1
 };
 

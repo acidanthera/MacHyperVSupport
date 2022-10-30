@@ -9,7 +9,7 @@
 
 OSDefineMetaClassAndStructors(HyperVHeartbeat, super);
 
-static const VMBusICVersion heartbeatVersions[] = {
+static const VMBusVersion heartbeatVersions[] = {
   kHyperVHeartbeatVersionV3,
   kHyperVHeartbeatVersionV1
 };
