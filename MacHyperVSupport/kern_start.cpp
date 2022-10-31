@@ -7,7 +7,6 @@
 // This kext is not a plugin, but requires an early start to
 // properly register with Lilu's patcher functions.
 //
-// Certain platform functions like shutdown will reside here.
 //
 
 #include <Headers/plugin_start.hpp>
