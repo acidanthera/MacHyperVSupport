@@ -17,9 +17,10 @@
 #include "HyperV.hpp"
 #include "VMBus.hpp"
 
-#define kHyperVVMBusDeviceChannelTypeKey      "HVType"
-#define kHyperVVMBusDeviceChannelInstanceKey  "HVInstance"
-#define kHyperVVMBusDeviceChannelIDKey        "HVChannel"
+#define kHyperVVMBusDeviceChannelTypeKey        "HVType"
+#define kHyperVVMBusDeviceChannelInstanceKey    "HVInstance"
+#define kHyperVVMBusDeviceChannelIDKey          "HVChannel"
+#define kHyperVVMBusDeviceChannelMMIOByteCount  "HVMMIOByteCount"
 
 typedef struct HyperVVMBusDeviceRequest {
   HyperVVMBusDeviceRequest  *next;

@@ -370,50 +370,59 @@ bool HyperVVMBus::registerVMBusDevice(VMBusChannel *channel) {
   // Allocate and initialize child VMBus device object.
   //
   HyperVVMBusDevice *childDevice = OSTypeAlloc(HyperVVMBusDevice);
-  if (childDevice == NULL) {
+  if (childDevice == nullptr) {
     return false;
   }
-  
+
   //
   // Create property objects for channel information.
   //
-  OSString *devType     = OSString::withCString(channel->typeGuidString);
-  OSData   *devInstance = OSData::withBytes(channel->instanceId, sizeof (channel->instanceId));
-  OSNumber *channelNumber = OSNumber::withNumber(channel->offerMessage.channelId, 32);
-  if (devType == NULL || devInstance == NULL || channelNumber == NULL) {
+  OSString *devType         = OSString::withCString(channel->typeGuidString);
+  OSData   *devInstance     = OSData::withBytes(channel->instanceId, sizeof (channel->instanceId));
+  OSNumber *channelNumber   = OSNumber::withNumber(channel->offerMessage.channelId, 32);
+  OSNumber *mmioBytesNumber = (channel->offerMessage.mmioSizeMegabytes > 0) ?
+    OSNumber::withNumber(channel->offerMessage.mmioSizeMegabytes * 1024 * 1024, 64) : nullptr;
+  if (devType == nullptr || devInstance == nullptr || channelNumber == nullptr
+      || ((channel->offerMessage.mmioSizeMegabytes > 0) && mmioBytesNumber == nullptr)) {
     OSSafeReleaseNULL(devType);
     OSSafeReleaseNULL(devInstance);
     OSSafeReleaseNULL(channelNumber);
+    OSSafeReleaseNULL(mmioBytesNumber);
     childDevice->release();
     return false;
   }
-  
+
   //
   // Create dictionary and set properties, releasing them after completion.
   //
   OSDictionary *dict = OSDictionary::withCapacity(5);
-  if (dict == NULL) {
+  if (dict == nullptr) {
     devType->release();
     devInstance->release();
     channelNumber->release();
     childDevice->release();
+    OSSafeReleaseNULL(mmioBytesNumber);
     return false;
   }
-  
+
   bool result = dict->setObject(kHyperVVMBusDeviceChannelTypeKey, devType) &&
                 dict->setObject(kHyperVVMBusDeviceChannelInstanceKey, devInstance) &&
                 dict->setObject(kHyperVVMBusDeviceChannelIDKey, channelNumber);
-  
+  if (mmioBytesNumber != nullptr) {
+    result &= dict->setObject(kHyperVVMBusDeviceChannelMMIOByteCount, mmioBytesNumber);
+  }
+
   devType->release();
   devInstance->release();
   channelNumber->release();
-  
+  OSSafeReleaseNULL(mmioBytesNumber);
+
   if (!result) {
     dict->release();
     childDevice->release();
     return false;
   }
-  
+
   if (!hvController->addInterruptProperties(dict, channel->offerMessage.channelId)) {
     dict->release();
     childDevice->release();
@@ -425,12 +434,12 @@ bool HyperVVMBus::registerVMBusDevice(VMBusChannel *channel) {
   //
   result = childDevice->init(dict) && childDevice->attach(this);
   dict->release();
-  
+
   if (!result) {
     childDevice->release();
     return false;
   }
-  
+
   childDevice->registerService();
   channel->deviceNub = childDevice;
 
