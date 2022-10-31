@@ -99,7 +99,7 @@ private:
   
 public:
   //
-  // IOService functions.
+  // IOService overrides.
   //
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
   

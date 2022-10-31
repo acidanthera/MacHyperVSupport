@@ -58,6 +58,9 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
 #define HVDeclareLogFunctions(a) \
   private: \
   bool debugEnabled = false; \
+  inline bool HVCheckOffArg() { \
+    return checkKernelArgument("-hv" a "off"); \
+  } \
   inline void HVCheckDebugArgs() { \
     debugEnabled = checkKernelArgument("-hv" a "dbg"); \
   } \
@@ -86,7 +89,7 @@ inline void logPrint(const char *className, const char *funcName, bool hasChanne
   bool debugEnabled = false; \
   bool debugDataEnabled = false; \
   inline bool HVCheckOffArg() { \
-    return checkKernelArgument("-hv" a "off");; \
+    return checkKernelArgument("-hv" a "off"); \
   } \
   inline void HVCheckDebugArgs() { \
     debugEnabled = checkKernelArgument("-hv" a "dbg"); \
@@ -213,6 +216,9 @@ inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId,
 #define HVDeclareLogFunctions(a) \
   private: \
   bool debugEnabled = false; \
+  inline bool HVCheckOffArg() { \
+    return checkKernelArgument("-hv" a "off"); \
+  } \
   inline void HVCheckDebugArgs() { } \
   inline void HVDBGLOG(const char *str, ...) const { } \
     \
@@ -231,7 +237,7 @@ inline void logPrint(const char *className, bool hasChannelId, UInt32 channelId,
   private: \
   bool debugEnabled = false; \
   inline bool HVCheckOffArg() { \
-    return checkKernelArgument("-hv" a "off");; \
+    return checkKernelArgument("-hv" a "off"); \
   } \
   inline void HVCheckDebugArgs() { } \
   inline void HVDBGLOG(const char *str, ...) const { } \
