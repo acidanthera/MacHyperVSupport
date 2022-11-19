@@ -507,11 +507,55 @@ typedef enum : UInt32 {
 //
 // This driver only uses HvPostMessage and HvSignalEvent.
 //
-#define kHypercallStatusSuccess               0x0000
-#define kHypercallStatusInvalidParameter      0x0005
-#define kHypercallStatusInsufficientMemory    0x000B
-#define kHypercallStatusInvalidConnectionId   0x0012
-#define kHypercallStatusInsufficientBuffers   0x0013 // TLFS has this incorrectly as 0x33
+typedef enum : UInt16 {
+  kHypercallStatusSuccess                       = 0x0000,
+  kHypercallStatusInvalidHypercallCode          = 0x0002,
+  kHypercallStatusInvalidHypercallInput         = 0x0003,
+  kHypercallStatusInvalidAlignment              = 0x0004,
+  kHypercallStatusInvalidParameter              = 0x0005,
+  kHypercallStatusAccessDenied                  = 0x0006,
+  kHypercallStatusInvalidPartitionState         = 0x0007,
+  kHypercallStatusOperationDenied               = 0x0008,
+  kHypercallStatusUnknownProperty               = 0x0009,
+  kHypercallStatusPropertyValueOutOfRange       = 0x000A,
+  kHypercallStatusInsufficientMemory            = 0x000B,
+  kHypercallStatusPartitionTooDeep              = 0x000C,
+  kHypercallStatusInvalidPartitionId            = 0x000D,
+  kHypercallStatusInvalidVPIndex                = 0x000E,
+  kHypercallStatusInvalidPortId                 = 0x0011,
+  kHypercallStatusInvalidConnectionId           = 0x0012,
+  kHypercallStatusInsufficientBuffers           = 0x0013, // TLFS has this incorrectly as 0x33
+  kHypercallStatusNotAcknowledged               = 0x0014,
+  kHypercallStatusInvalidVPState                = 0x0015,
+  kHypercallStatusAcknowledged                  = 0x0016,
+  kHypercallStatusInvalidSaveRestoreState       = 0x0017,
+  kHypercallStatusInvalidSynICState             = 0x0018,
+  kHypercallStatusObjectInUse                   = 0x0019,
+  kHypercallStatusInvalidProximityDomainInfo    = 0x001A,
+  kHypercallStatusNoData                        = 0x001B,
+  kHypercallStatusInactive                      = 0x001C,
+  kHypercallStatusNoResources                   = 0x001D,
+  kHypercallStatusFeatureUnavailable            = 0x001E,
+  kHypercallStatusPartialPacket                 = 0x001F,
+  kHypercallStatusProcessorFeatureNotSupported  = 0x0020,
+  kHypercallStatusProcessorCacheLineFlushSizeIncompatible = 0x0030,
+  kHypercallStatusInsufficientBuffer            = 0x0033,
+  kHypercallStatusIncompatibleProcessor         = 0x0037,
+  kHypercallStatusInsufficientDeviceDomains     = 0x0038,
+  kHypercallStatusCPUIDFeatureValidationError   = 0x003C,
+  kHypercallStatusCPUIDXSAVEFeatureValidationError = 0x003D,
+  kHypercallStatusProcessorStartupTimeout       = 0x003E,
+  kHypercallStatusSMXEnabled                    = 0x003F,
+  kHypercallStatusInvalidLPIndex                = 0x0041,
+  kHypercallStatusInvalidRegisterValue          = 0x0050,
+  kHypercallStatusNXNotDetected                 = 0x0055,
+  kHypercallStatusInvalidDeviceId               = 0x0057,
+  kHypercallStatusInvalidDeviceState            = 0x0058,
+  kHypercallStatusPendingPageRequests           = 0x0059,
+  kHypercallStatusPageRequestInvalid            = 0x0060,
+  kHypercallStatusOperationFailed               = 0x0071,
+  kHypercallStatusStatusNotAllowedWithNestedVirtActive = 0x0072
+} HypercallStatus;
 
 #define kHypercallTypePostMessage   0x0005C // Slow hypercall, memory-based
 #define kHypercallTypeSignalEvent   0x1005D // Fast hypercall, register-based

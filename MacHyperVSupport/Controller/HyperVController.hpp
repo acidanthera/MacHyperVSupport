@@ -113,8 +113,8 @@ public:
   //
   // Hypercalls/interrupts.
   //
-  UInt32 hypercallPostMessage(UInt32 connectionId, HyperVMessageType messageType, void *data, UInt32 size);
-  bool hypercallSignalEvent(UInt32 connectionId);
+  HypercallStatus hypercallPostMessage(UInt32 connectionId, HyperVMessageType messageType, void *data, UInt32 size);
+  HypercallStatus hypercallSignalEvent(UInt32 connectionId);
   bool enableInterrupts(HyperVEventFlags *legacyEventFlags = nullptr);
   void disableInterrupts();
   void sendSynICEOM(UInt32 cpu);

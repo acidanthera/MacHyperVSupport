@@ -94,7 +94,7 @@ void HyperVController::freeHypercallPage() {
   }
 }
 
-UInt32 HyperVController::hypercallPostMessage(UInt32 connectionId, HyperVMessageType messageType, void *data, UInt32 size) {
+HypercallStatus HyperVController::hypercallPostMessage(UInt32 connectionId, HyperVMessageType messageType, void *data, UInt32 size) {
   UInt64 status;
 
   if (size > kHyperVMessageDataSize) {
@@ -106,7 +106,7 @@ UInt32 HyperVController::hypercallPostMessage(UInt32 connectionId, HyperVMessage
   // Get per-CPU hypercall post message page.
   //
   HyperVDMABuffer *postPageBuffer = &_cpuData[cpu_number()].postMessageDma;
-  
+
   HypercallPostMessage *postMessage = (HypercallPostMessage*) postPageBuffer->buffer;
   postMessage->connectionId = connectionId;
   postMessage->reserved     = 0;
@@ -127,10 +127,10 @@ UInt32 HyperVController::hypercallPostMessage(UInt32 connectionId, HyperVMessage
 #else
 #error Unsupported arch
 #endif
-  return status & kHypercallStatusMask;
+  return (HypercallStatus)(status & kHypercallStatusMask);
 }
 
-bool HyperVController::hypercallSignalEvent(UInt32 connectionId) {
+HypercallStatus HyperVController::hypercallSignalEvent(UInt32 connectionId) {
   UInt64 status;
 
   //
@@ -143,5 +143,5 @@ bool HyperVController::hypercallSignalEvent(UInt32 connectionId) {
 #else
 #error Unsupported arch
 #endif
-  return status == kHypercallStatusSuccess;
+  return (HypercallStatus)(status & kHypercallStatusMask);
 }
