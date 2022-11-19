@@ -32,9 +32,9 @@ guid_unparse(const uuid_t uu, uuid_string_t out) {
 //
 const UInt32 VMBusVersions[] = {
  // kVMBusVersionWIN10_V4_1,
-//  kVMBusVersionWIN10,
-//  kVMBusVersionWIN8_1,
- // kVMBusVersionWIN8,
+  kVMBusVersionWIN10,
+  kVMBusVersionWIN8_1,
+  kVMBusVersionWIN8,
   kVMBusVersionWIN7,
   kVMBusVersionWS2008
 };
@@ -122,7 +122,7 @@ bool HyperVVMBus::sendVMBusMessageWithSize(VMBusChannelMessage *message, UInt32 
 
 IOReturn HyperVVMBus::sendVMBusMessageGated(VMBusChannelMessage *message, UInt32 *messageSize, VMBusChannelMessageType *responseType, VMBusChannelMessage *responseMessage) {
   
-  UInt32 hvStatus = kHypercallStatusSuccess;
+  HypercallStatus hvStatus = kHypercallStatusSuccess;
   IOReturn returnStatus = kIOReturnSuccess;
   bool postCompleted = false;
   
@@ -341,6 +341,14 @@ bool HyperVVMBus::addVMBusDevice(VMBusChannelMessageChannelOffer *offerMessage) 
   HVDBGLOG("Channel %u mon id %u, monitor alloc %u, dedicated int %u, conn ID %u", channelId,
            _vmbusChannels[channelId].offerMessage.monitorId, _vmbusChannels[channelId].offerMessage.monitorAllocated,
            _vmbusChannels[channelId].offerMessage.dedicatedInterrupt, _vmbusChannels[channelId].offerMessage.connectionId);
+
+  if (_vmbusVersion > kVMBusVersionWS2008) {
+    _vmbusChannels[channelId].useDedicatedInterrupt = _vmbusChannels[channelId].offerMessage.dedicatedInterrupt != 0;
+    _vmbusChannels[channelId].connectionSignalId    = _vmbusChannels[channelId].offerMessage.connectionId;
+  } else {
+    _vmbusChannels[channelId].useDedicatedInterrupt = false;
+    _vmbusChannels[channelId].connectionSignalId    = kVMBusConnIdEvent;
+  }
 
   return true;
 }

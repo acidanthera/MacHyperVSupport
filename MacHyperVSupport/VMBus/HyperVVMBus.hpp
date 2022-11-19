@@ -41,6 +41,8 @@ typedef struct {
   uuid_string_t                   typeGuidString;
   uuid_t                          instanceId;
   VMBusChannelMessageChannelOffer offerMessage;
+  bool                            useDedicatedInterrupt;
+  UInt32                          connectionSignalId;
   
   //
   // Unique GPADL handle for this channel.

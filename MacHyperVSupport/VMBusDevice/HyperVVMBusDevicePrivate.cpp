@@ -233,25 +233,28 @@ IOReturn HyperVVMBusDevice::writeRawPacketGated(void *header, UInt32 *headerLeng
   UInt32 pktHeaderLength        = headerLength != NULL ? *headerLength : 0;
   UInt32 pktTotalLength         = pktHeaderLength + *bufferLength;
   UInt32 pktTotalLengthAligned  = HV_PACKETALIGN(pktTotalLength);
-  
+
   UInt32 writeIndexOld          = _txBuffer->writeIndex;
   UInt32 writeIndexNew          = writeIndexOld;
   UInt64 writeIndexShifted      = ((UInt64)writeIndexOld) << 32;
-  
+
   UInt32 readBytes;
   UInt32 writeBytes;
-  
+
   //
   // Ensure there is space for the packet.
   //
   // We cannot end up with read index == write index after the write, as that would indicate an empty buffer.
+  // Notify Hyper-V if the buffer is full, as we don't always notify after every write to the buffer.
   //
   getAvailableTxSpace(&readBytes, &writeBytes);
   if (writeBytes <= pktTotalLengthAligned) {
     HVSYSLOG("Packet is too large for buffer (%u bytes remaining)", writeBytes);
+    _txBuffer->guestToHostInterruptCount++;
+    _vmbusProvider->signalVMBusChannel(_channelId);
     return kIOReturnNoResources;
   }
-  
+
   //
   // Copy header, data, padding, and index to this packet.
   //
@@ -263,14 +266,16 @@ IOReturn HyperVVMBusDevice::writeRawPacketGated(void *header, UInt32 *headerLeng
   writeIndexNew = zeroPacketDataToRingBuffer(writeIndexNew, pktTotalLengthAligned - pktTotalLength);
   writeIndexNew = copyPacketDataToRingBuffer(writeIndexNew, &writeIndexShifted, sizeof (writeIndexShifted));
   HVMSGLOG("RAW TX read index 0x%X, old TX write index 0x%X", _txBuffer->readIndex, _txBuffer->writeIndex);
-  __sync_synchronize();
-  
+  HVMSGLOG("RAW TX imask 0x%X, RX imask 0x%X, channel ID %u", _txBuffer->interruptMask, _rxBuffer->interruptMask, _channelId);
+
   //
   // Update write index and notify Hyper-V if needed.
+  // Hyper-V only needs to be notified if the ring buffer is changing state from empty to having some amount of data.
+  // It does not need notification if the buffer already has some amount of data, and we are just adding more.
   //
-  HVMSGLOG("RAW TX imask 0x%X, RX imask 0x%X, channel ID %u", _txBuffer->interruptMask, _rxBuffer->interruptMask, _channelId);
   _txBuffer->writeIndex = writeIndexNew;
-  if (_txBuffer->interruptMask == 0) {
+  __sync_synchronize();
+  if (_txBuffer->interruptMask == 0 && writeIndexOld == getTxReadIndex()) {
     _txBuffer->guestToHostInterruptCount++;
     _vmbusProvider->signalVMBusChannel(_channelId);
   }
@@ -365,9 +370,9 @@ void HyperVVMBusDevice::prepareSleepThread() {
 #if DEBUG
 void HyperVVMBusDevice::handleDebugPrintTimer(IOTimerEventSource *sender) {
   if (_channelIsOpen) {
-    HVSYSLOG("TXR 0x%X TXW 0x%X RXR 0x%X RXW 0x%X interrupts %llu packets %llu",
+    HVSYSLOG("TXR 0x%X TXW 0x%X RXR 0x%X RXW 0x%X interrupts %llu (TX imask: %u) packets %llu",
              getTxReadIndex(), getTxWriteIndex(), getRxReadIndex(), getRxWriteIndex(),
-             _numInterrupts, _numPackets);
+             _numInterrupts, _txBuffer->interruptMask, _numPackets);
     
     if (_timerDebugAction != nullptr) {
       (*_timerDebugAction)(_timerDebugTarget);

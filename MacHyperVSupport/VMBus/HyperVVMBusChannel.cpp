@@ -353,13 +353,18 @@ IOReturn HyperVVMBus::freeVMBusChannelGPADL(UInt32 channelId, UInt32 gpadlHandle
 
 void HyperVVMBus::signalVMBusChannel(UInt32 channelId) {
   VMBusChannel *channel = &_vmbusChannels[channelId];
-  
+
   //
   // Signal Hyper-V the specified channel has data waiting on the TX ring.
-  // Set bit for channel if legacy event flags are being used.
+  // Set bit for channel if a dedicated interrupt is not being used.
   //
-  if (useLegacyEventFlags) {
+  if (!channel->useDedicatedInterrupt) {
     sync_set_bit(channelId, vmbusTxEventFlags->flags32);
   }
-  hvController->hypercallSignalEvent(channel->offerMessage.connectionId);
+
+  HypercallStatus status = hvController->hypercallSignalEvent(channel->connectionSignalId);
+  if (status != kHypercallStatusSuccess) {
+    HVDBGLOG("Failed to signal for channel %u using connection ID %u with status 0x%X",
+             channelId, channel->connectionSignalId, status);
+  }
 }
