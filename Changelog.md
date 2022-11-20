@@ -4,6 +4,7 @@ MacHyperVSupport Changelog
 - Created daemons for each userspace function replacing hvutil
 - Added support for host to guest file copy (Guest Services integration service)
 - Fixed very high storage latency when heaving network I/O is occurring
+- Added support for assigning channel interrupts to multiple cores
 
 #### v0.9.2
 - Fixed crash when control key is pressed under macOS 10.4
