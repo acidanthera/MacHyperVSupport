@@ -47,7 +47,7 @@ extern "C" {
 
 extern "C" void initCPUSyncIC(void *cpuData) {
   HyperVCPUData *hvCPUData = &(static_cast<HyperVCPUData*>(cpuData)[cpu_number()]);
-  
+
   //
   // Get processor ID.
   //
@@ -56,7 +56,7 @@ extern "C" void initCPUSyncIC(void *cpuData) {
   } else {
     hvCPUData->virtualCPUIndex = 0;
   }
-  
+
   //
   // Configure SynIC message and event flag buffers.
   //
@@ -66,7 +66,7 @@ extern "C" void initCPUSyncIC(void *cpuData) {
   wrmsr64(kHyperVMsrSiefp, kHyperVMsrSiefpEnable |
           (rdmsr64(kHyperVMsrSiefp) & kHyperVMsrSiefpRsvdMask) |
           ((hvCPUData->eventFlagsDma.physAddr >> PAGE_SHIFT) << kHyperVMsrSiefpPageShift));
-  
+
   //
   // Configure SynIC interrupt using the interrupt specified in ACPI for the VMBus device.
   //
@@ -76,7 +76,7 @@ extern "C" void initCPUSyncIC(void *cpuData) {
   wrmsr64(kHyperVMsrSInt0 + kVMBusInterruptTimer,
           *hvCPUData->interruptVector |
           (rdmsr64(kHyperVMsrSInt0 + kVMBusInterruptTimer) & kHyperVMsrSIntRsvdMask));
-  
+
   //
   // Enable the SynIC.
   //
@@ -87,7 +87,7 @@ extern "C" void initCPUSyncIC(void *cpuData) {
 extern "C" void doAllCpuSyncICEOM(void *cpu) {
   int currentCpuIndex  = cpu_number();
   int *desiredCpuIndex = (int*)cpu;
-  
+
   if (currentCpuIndex == *desiredCpuIndex) {
     wrmsr64(kHyperVMsrEom, 0);
   }
@@ -104,7 +104,7 @@ bool HyperVController::allocateInterruptBuffers() {
     return false;
   }
   bzero(_cpuData, sizeof (HyperVCPUData) * _cpuDataCount);
-  
+
   for (UInt32 i = 0; i < _cpuDataCount; i++) {
     if (!allocateDmaBuffer(&_cpuData[i].messageDma, PAGE_SIZE)) {
       return false;
@@ -115,7 +115,7 @@ bool HyperVController::allocateInterruptBuffers() {
     if (!allocateDmaBuffer(&_cpuData[i].postMessageDma, sizeof (HypercallPostMessage))) {
       return false;
     }
-    
+
     //
     // Setup message and event interrupts.
     //
@@ -125,14 +125,14 @@ bool HyperVController::allocateInterruptBuffers() {
     _cpuData[i].eventFlags        = (HyperVEventFlags*) _cpuData[i].eventFlagsDma.buffer;
     HVDBGLOG("Allocated data for CPU %u", i);
   }
-  
+
   return true;
 }
 
 bool HyperVController::initInterrupts() {
   bool   foundVector       = false;
   UInt32 vector            = 0;
-  
+
   //
   // Get vector for our interrupt.
   //
@@ -142,7 +142,7 @@ bool HyperVController::initInterrupts() {
     HVSYSLOG("Failed to create AppleAPICInterruptController matching dictionary");
     return false;
   }
-  
+
 #if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
   IOService *apicService = IOService::waitForService(apicMatching);
   if (apicService != nullptr) {
@@ -152,7 +152,7 @@ bool HyperVController::initInterrupts() {
   IOService *apicService = waitForMatchingService(apicMatching);
   apicMatching->release();
 #endif
-  
+
   if (apicService == nullptr) {
     HVSYSLOG("Failed to locate AppleAPICInterruptController");
     return false;
@@ -163,7 +163,7 @@ bool HyperVController::initInterrupts() {
     vector = vectorBase->unsigned32BitValue();
   }
   apicService->release();
-  
+
   auto intArray = OSDynamicCast(OSArray, getProvider()->getProperty("IOInterruptSpecifiers"));
   if (intArray != nullptr) {
     auto intData = OSDynamicCast(OSData, intArray->getObject(0));
@@ -172,14 +172,14 @@ bool HyperVController::initInterrupts() {
       foundVector = true;
     }
   }
-  
+
   if (!foundVector) {
     HVSYSLOG("Failed to get VMBus device interrupt vector");
     return false;
   }
   _interruptVector = vector;
   HVDBGLOG("VMBus device interrupt vector: 0x%X", _interruptVector);
-  
+
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_6
   //
   // Get PM callbacks.
@@ -190,7 +190,7 @@ bool HyperVController::initInterrupts() {
       pmVersion = pmVersionsSnowLeopard[getKernelMinorVersion()];
     }
   }
-  
+
   pmKextRegister(pmVersion, NULL, &_pmCallbacks);
   if (_pmCallbacks.LCPUtoProcessor == nullptr || _pmCallbacks.ThreadBind == nullptr) {
     HVSYSLOG("PM callbacks are invalid");
@@ -201,14 +201,14 @@ bool HyperVController::initInterrupts() {
     return false;
   }
 #endif
-  
+
   //
   // Allocate buffers for interrupts.
   //
   if (!allocateInterruptBuffers()) {
     return false;
   }
-  
+
   //
   // Initialize interrupt controller that incoming interrupts will be directed to.
   //
@@ -220,7 +220,7 @@ bool HyperVController::initInterrupts() {
     HVSYSLOG("Failed to initialize interrupt controller");
     return false;
   }
-  
+
   //
   // Setup direct interrupt handler.
   // Hyper-V triggers a single "hardware" interrupt for all events.
@@ -229,7 +229,7 @@ bool HyperVController::initInterrupts() {
     HVSYSLOG("Failed to setup interrupt handler");
     return false;
   }
-  
+
   //
   // Setup SynIC interrupts on all processors.
   //
@@ -247,12 +247,12 @@ void HyperVController::handleInterrupt(OSObject *target, void *refCon, IOService
   message = getPendingMessage(cpuIndex, kVMBusInterruptTimer);
   if (message->type == kHyperVMessageTypeTimerExpired) {
     message->type = kHyperVMessageTypeNone;
-    
+
     if (message->flags.messagePending) {
       wrmsr64(kHyperVMsrEom, 0);
     }
   }
-  
+
   //
   // Handle VMBus channel events.
   //
@@ -279,7 +279,7 @@ void HyperVController::handleInterrupt(OSObject *target, void *refCon, IOService
       }
     }
   }
-  
+
   //
   // Handle VMBus management messages.
   //
@@ -291,10 +291,10 @@ void HyperVController::handleInterrupt(OSObject *target, void *refCon, IOService
 
 bool HyperVController::enableInterrupts(HyperVEventFlags *legacyEventFlags) {
   disableInterrupts();
-  
+
   _vmbusRxEventFlags   = legacyEventFlags;
   _useLegacyEventFlags = _vmbusRxEventFlags != nullptr;
-  
+
   //
   // Store VMBus event information and enable interrupts.
   //
@@ -328,23 +328,23 @@ void HyperVController::sendSynICEOM(UInt32 cpu) {
       HVSYSLOG("Failed to disable preemption");
       return;
     }
-    
+
     bool intsEnabled = ml_set_interrupts_enabled(false);
-    
+
     do {
       processor_t proc = _pmCallbacks.LCPUtoProcessor(cpu);
       if (proc == nullptr) {
         break;
       }
-      
+
       _pmCallbacks.ThreadBind(proc);
     } while (false);
-    
+
     IOSimpleLockUnlock(_preemptionLock);
     ml_set_interrupts_enabled(intsEnabled);
     HVDBGLOG("Changed to cpu %u", cpu_number());
   }
-  
+
   //
   // We should now be on the correct CPU, so send EOM.
   //

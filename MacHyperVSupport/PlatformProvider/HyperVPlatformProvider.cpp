@@ -13,13 +13,14 @@
 
 #include <IOKit/IOPlatformExpert.h>
 
-HyperVPlatformProvider *HyperVPlatformProvider::instance;
+HyperVPlatformProvider *HyperVPlatformProvider::_instance;
 
 void HyperVPlatformProvider::init() {
+  HVCheckDebugArgs();
   HVDBGLOG("Initializing provider");
 
   //
-  // Lilu is used for certain functions of child devices, register patcher callback.
+  // Lilu is used for function hooking/patching, register patcher callback.
   //
   lilu.onPatcherLoadForce([](void *user, KernelPatcher &patcher) {
     static_cast<HyperVPlatformProvider *>(user)->onLiluPatcherLoad(patcher);
@@ -31,21 +32,21 @@ void HyperVPlatformProvider::init() {
   //
   KernelVersion kernelVersion = getKernelVersion();
   if (kernelVersion >= KernelVersion::SnowLeopard && kernelVersion <= KernelVersion::Sierra) {
-    setConsoleInfoAddr = OSMemberFunctionCast(mach_vm_address_t, IOService::getPlatform(), &IOPlatformExpert::setConsoleInfo);
+    _setConsoleInfoAddr = OSMemberFunctionCast(mach_vm_address_t, IOService::getPlatform(), &IOPlatformExpert::setConsoleInfo);
 
     // Save start of function.
-    lilu_os_memcpy(setConsoleInfoOrg, (void *)setConsoleInfoAddr, sizeof (setConsoleInfoOrg));
+    lilu_os_memcpy(_setConsoleInfoOrg, (void *) _setConsoleInfoAddr, sizeof (_setConsoleInfoOrg));
 
     // Patch to call wrapper.
 #if defined(__i386__)
-    uint64_t patched[2] {0x25FF | ((setConsoleInfoAddr + 8) << 16), (uint32_t)wrapSetConsoleInfo};
+    uint64_t patched[2] {0x25FF | ((_setConsoleInfoAddr + 8) << 16), (UInt32) wrapSetConsoleInfo};
 #elif defined(__x86_64__)
     uint64_t patched[2] {0x0225FF, (uintptr_t)wrapSetConsoleInfo};
 #else
 #error Unsupported arch
 #endif
     if (MachInfo::setKernelWriting(true, KernelPatcher::kernelWriteLock) == KERN_SUCCESS) {
-      lilu_os_memcpy((void *)setConsoleInfoAddr, patched, sizeof (patched));
+      lilu_os_memcpy((void *) _setConsoleInfoAddr, patched, sizeof (patched));
       MachInfo::setKernelWriting(false, KernelPatcher::kernelWriteLock);
     }
 
@@ -54,7 +55,7 @@ void HyperVPlatformProvider::init() {
 }
 
 IOReturn HyperVPlatformProvider::wrapSetConsoleInfo(IOPlatformExpert *that, PE_Video *consoleInfo, unsigned int op) {
-  instance->HVDBGLOG("op %X", op);
+  _instance->HVDBGLOG("op %X", op);
 
   // Fix arg here
   if (op == kPEBaseAddressChange && consoleInfo != nullptr) {
@@ -68,27 +69,27 @@ IOReturn HyperVPlatformProvider::wrapSetConsoleInfo(IOPlatformExpert *that, PE_V
 
   // Restore original function.
   if (MachInfo::setKernelWriting(true, KernelPatcher::kernelWriteLock) == KERN_SUCCESS) {
-    lilu_os_memcpy((void *)instance->setConsoleInfoAddr, instance->setConsoleInfoOrg, sizeof (instance->setConsoleInfoOrg));
+    lilu_os_memcpy((void *) _instance->_setConsoleInfoAddr, _instance->_setConsoleInfoOrg, sizeof (_instance->_setConsoleInfoOrg));
     MachInfo::setKernelWriting(false, KernelPatcher::kernelWriteLock);
   }
 
-  IOReturn result = FunctionCast(wrapSetConsoleInfo, instance->setConsoleInfoAddr)(that, consoleInfo, op);
+  IOReturn result = FunctionCast(wrapSetConsoleInfo, _instance->_setConsoleInfoAddr)(that, consoleInfo, op);
 
   // Patch again if kPEBaseAddressChange was not the operation.
   if (op != kPEBaseAddressChange) {
 #if defined(__i386__)
-    uint64_t patched[2] {0x25FF | ((instance->setConsoleInfoAddr + 8) << 16), (uint32_t)wrapSetConsoleInfo};
+    UInt64 patched[2] {0x25FF | ((_instance->_setConsoleInfoAddr + 8) << 16), (UInt32) wrapSetConsoleInfo};
 #elif defined(__x86_64__)
-    uint64_t patched[2] {0x0225FF, (uintptr_t)wrapSetConsoleInfo};
+    UInt64 patched[2] {0x0225FF, (uintptr_t)wrapSetConsoleInfo};
 #else
 #error Unsupported arch
 #endif
     if (MachInfo::setKernelWriting(true, KernelPatcher::kernelWriteLock) == KERN_SUCCESS) {
-      lilu_os_memcpy((void *)instance->setConsoleInfoAddr, patched, sizeof (patched));
+      lilu_os_memcpy((void *) _instance->_setConsoleInfoAddr, patched, sizeof (patched));
       MachInfo::setKernelWriting(false, KernelPatcher::kernelWriteLock);
     }
   } else {
-    instance->HVDBGLOG("kPEBaseAddressChange specified, not patching again");
+    _instance->HVDBGLOG("kPEBaseAddressChange specified, not patching again");
   }
 
   return result;

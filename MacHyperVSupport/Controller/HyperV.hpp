@@ -459,6 +459,8 @@ static inline int sync_test_and_clear_bit(long nr, volatile void *addr)
 #define kHyperVMsrReferenceTscRsvdMask          0x0FFEULL
 #define kHyperVMsrReferenceTscPageShift         PAGE_SHIFT
 
+#define kHyperVMsrEoi                           0x40000070
+
 #define kHyperVMsrSyncICControl                 0x40000080
 #define kHyperVMsrSyncICControlEnable           0x0001ULL
 #define kHyperVMsrSyncICControlRsvdMask         0xFFFFFFFFFFFFFFFEULL

@@ -20,15 +20,15 @@ private:
   //
   // Global instance.
   //
-  static HyperVPlatformProvider *instance;
+  static HyperVPlatformProvider *_instance;
 
   //
   // IOPlatformExpert::setConsoleInfo wrapping
   //
-  mach_vm_address_t setConsoleInfoAddr = 0;
-  uint64_t setConsoleInfoOrg[2] {};
-  static IOReturn wrapSetConsoleInfo(IOPlatformExpert *that, PE_Video * consoleInfo, unsigned int op);
-  
+  mach_vm_address_t _setConsoleInfoAddr = 0;
+  UInt64            _setConsoleInfoOrg[2] {};
+  static IOReturn wrapSetConsoleInfo(IOPlatformExpert *that, PE_Video *consoleInfo, unsigned int op);
+
   //
   // Initialization function.
   //
@@ -40,14 +40,14 @@ public:
   // Instance creator.
   //
   static HyperVPlatformProvider *getInstance() {
-    if (instance == nullptr) {
-      instance = new HyperVPlatformProvider;
-      if (instance != nullptr) {
-        instance->init();
+    if (_instance == nullptr) {
+      _instance = new HyperVPlatformProvider;
+      if (_instance != nullptr) {
+        _instance->init();
       }
     }
 
-    return instance;
+    return _instance;
   }
 };
 
