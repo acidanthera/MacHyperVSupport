@@ -96,7 +96,15 @@ IOReturn HyperVVMBus::openVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VM
   openMsg.ringBufferGpadlHandle           = channel->dataGpadlHandle;
   openMsg.downstreamRingBufferPageOffset  = channel->rxPageIndex;
   openMsg.targetCpu                       = 0;
-  
+
+  //
+  // Windows Server 2012 / Windows 8, and newer, support specific CPUs for interrupts.
+  //
+  if (_vmbusVersion >= kVMBusVersionWIN8 && !checkKernelArgument("-hvvmbusnocpu")) {
+    openMsg.targetCpu = channelId % real_ncpus;
+    HVDBGLOG("Channel target CPU: %u", openMsg.targetCpu);
+  }
+
   //
   // Send channel open message to Hyper-V and wait for response.
   //
