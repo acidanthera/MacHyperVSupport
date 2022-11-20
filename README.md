@@ -98,23 +98,7 @@ All Intel macOS versions are supported.
   - `qemu-img convert -f raw -O vhdx Installer.dmg Installer.vhdx`
 
 ### Boot arguments
-| Module              | Debug            | Message Debug     | Off               |
-|---------------------|------------------|-------------------|-------------------|
-| CPU disabler (10.4) | -hvcpudbg        | N/A               | N/A               |
-| Graphics bridge     | -hvgfxbdbg       | -hvgfxbmsgdbg     | -hvgfxboff        |
-| Heartbeat           | -hvheartdbg      | -hvheartmsgdbg    | -hvheartoff       |
-| Keyboard            | -hvkbddbg        | -hvkbdmsgdbg      | -hvkbdoff         |
-| Mouse               | -hvmousdbg       | -hvmousmsgdbg     | -hvmousoff        |
-| Network             | -hvnetdbg        | -hvnetmsgdbg      | -hvnetoff         |
-| PCI bridge          | -hvpcibdbg       | -hvpcibmsgdbg     | -hvpciboff        |
-| PCI module support  | -hvpcimdbg       | N/A               | N/A               |
-| PCI provider        | -hvpcipdbg       | N/A               | N/A               |
-| PCI root bridge     | -hvpcirdbg       | N/A               | N/A               |
-| Shutdown            | -hvshutdbg       | -hvshutmsgdbg     | -hvshutoff        |
-| Storage             | -hvstordbg       | -hvstormsgdbg     | -hvstoroff        |
-| Time sync           | -hvtimedbg       | -hvtimemsgdbg     | -hvtimeoff        |
-| VMBus controller    | -hvvmbusdbg      | N/A               | N/A               |
-| VMBus device nub    | -hvvmbusdevdbg   | N/A               | N/A               |
+See the [module list](Docs/modules.md) for boot arguments for each module.
 
 ### Credits
 - [Apple](https://www.apple.com) for macOS

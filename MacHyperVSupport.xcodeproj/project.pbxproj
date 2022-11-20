@@ -352,6 +352,7 @@
 		41E2EC77263F894300BBE18F /* HyperVControllerInterrupts.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVControllerInterrupts.cpp; sourceTree = "<group>"; };
 		41E5E20A28C5766700E6E84F /* HyperVController.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVController.cpp; sourceTree = "<group>"; };
 		41E5E20B28C5766700E6E84F /* HyperVController.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVController.hpp; sourceTree = "<group>"; };
+		41EFDF66292A859F0021E9A3 /* modules.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = modules.md; sourceTree = "<group>"; };
 		41F2E3D32665B42100CE26CE /* kern_config.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_config.hpp; sourceTree = "<group>"; };
 		41F2E3D42665B42100CE26CE /* hde64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hde64.h; sourceTree = "<group>"; };
 		41F2E3D52665B42100CE26CE /* kern_time.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = kern_time.hpp; sourceTree = "<group>"; };
@@ -691,6 +692,7 @@
 			isa = PBXGroup;
 			children = (
 				41C604AB28B2F87600FB77ED /* HyperV-versions.md */,
+				41EFDF66292A859F0021E9A3 /* modules.md */,
 			);
 			path = Docs;
 			sourceTree = "<group>";
