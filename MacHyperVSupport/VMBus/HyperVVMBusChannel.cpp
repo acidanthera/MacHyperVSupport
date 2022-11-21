@@ -99,11 +99,12 @@ IOReturn HyperVVMBus::openVMBusChannel(UInt32 channelId, UInt32 txBufferSize, VM
 
   //
   // Windows Server 2012 / Windows 8, and newer, support specific CPUs for interrupts.
+  // TODO: Does not work on newer versions like Monterey, interrupts on other CPUs never arrive.
   //
-  if (_vmbusVersion >= kVMBusVersionWIN8 && !checkKernelArgument("-hvvmbusnocpu")) {
+  /*if (_vmbusVersion >= kVMBusVersionWIN8 && !checkKernelArgument("-hvvmbusnocpu")) {
     openMsg.targetCpu = channelId % real_ncpus;
-    HVDBGLOG("Channel target CPU: %u", openMsg.targetCpu);
   }
+  HVDBGLOG("Channel %u target CPU: %u", channelId, openMsg.targetCpu);*/
 
   //
   // Send channel open message to Hyper-V and wait for response.

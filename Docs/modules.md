@@ -131,7 +131,6 @@ Provides root of VMBus devices and services.
 | Boot argument  | Description |
 |----------------|-------------|
 | -hvvmbusdbg    | Enables debug printing in DEBUG builds
-| -hvvmbusnocpu  | Force all channels to use CPU 0 on Windows Server 2012 / Windows 8 and newer.
 
 ## VMBus Device Nub (HyperVVMBusDevice)
 Provides connection nub for child VMBus device modules.
