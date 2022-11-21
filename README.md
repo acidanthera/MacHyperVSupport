@@ -3,6 +3,12 @@ MacHyperVSupport
 
 [![Build Status](https://github.com/acidanthera/MacHyperVSupport/workflows/CI/badge.svg?branch=master)](https://github.com/acidanthera/MacHyperVSupport/actions) [![Scan Status](https://scan.coverity.com/projects/23212/badge.svg?flat=1)](https://scan.coverity.com/projects/23212)
 
+
+![image](https://user-images.githubusercontent.com/6380530/203036768-ae906a7d-99cb-4e18-abb9-f8a96cacf0bb.png)
+
+![image](https://user-images.githubusercontent.com/6380530/203036854-c0be4d30-ba2a-42d7-a785-c58eb963f236.png)
+
+
 Hyper-V integration services for macOS. Requires a Generation 2 virtual machine on Windows Server 2012 R2 / Windows 8.1 or higher. Windows Server 2016 is currently unsupported.
 
 All Intel macOS versions are supported.
