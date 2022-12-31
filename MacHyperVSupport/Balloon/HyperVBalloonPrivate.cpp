@@ -124,16 +124,15 @@ IOReturn HyperVBalloon::sendStatusReport(void*, void*, void*) {
 }
 
 void HyperVBalloon::getPagesStatus(UInt64 *availablePages) {
-  static host_t localHost = host_self();
   static mach_msg_type_name_t vmStatSize;
 #if defined(__i386__)
   static vm_statistics_data_t vmStat;
   vmStatSize = HOST_VM_INFO_COUNT;
-  host_statistics(localHost, HOST_VM_INFO, (host_info_t) &vmStat, &vmStatSize);
+  host_statistics(host_self(), HOST_VM_INFO, (host_info_t) &vmStat, &vmStatSize);
 #elif defined(__x86_64__)
   static vm_statistics64_data_t vmStat;
   vmStatSize = HOST_VM_INFO64_COUNT;
-  host_statistics64(localHost, HOST_VM_INFO64, (host_info64_t) &vmStat, &vmStatSize);
+  host_statistics64(host_self(), HOST_VM_INFO64, (host_info64_t) &vmStat, &vmStatSize);
 #else
 #error Unsupported arch
 #endif
@@ -189,8 +188,10 @@ bool HyperVBalloon::inflationBalloon(UInt32 pageCount, bool morePages) {
     addr64_t physicalSegmentStart = chunk->getPhysicalSegment(0, &physicalSegmentSize, 0);
     
     // save (PFN, MemoryDescriptor) into map for further query
-    _pageFrameNumberToMemoryDescriptorMap->setObject(pageFrameNumberToString(physicalSegmentStart >> PAGE_SHIFT), chunk);
+    const OSSymbol *key = pageFrameNumberToString(physicalSegmentStart >> PAGE_SHIFT);
+    _pageFrameNumberToMemoryDescriptorMap->setObject(key, chunk);
     OSSafeReleaseNULL(chunk);
+    OSSafeReleaseNULL(key);
 
     response->inflationResponse.ranges[i].startPageFrameNumber = physicalSegmentStart >> PAGE_SHIFT;
     response->inflationResponse.ranges[i].pageCount = 1;
@@ -232,8 +233,10 @@ void HyperVBalloon::handleBalloonInflationRequest(HyperVDynamicMemoryMessageBall
   while (pageCount > 0) {
     if (pageCount > kHyperVDynamicMemoryBigChunkSize) {
       inflationBalloon(kHyperVDynamicMemoryBigChunkSize, true);
+      pageCount -= kHyperVDynamicMemoryBigChunkSize;
     } else {
       inflationBalloon(pageCount, false);
+      pageCount -= pageCount;
     }
   }
 }
@@ -241,14 +244,16 @@ void HyperVBalloon::handleBalloonInflationRequest(HyperVDynamicMemoryMessageBall
 void HyperVBalloon::handleBalloonDeflationRequest(HyperVDynamicMemoryMessageBalloonDeflationRequest *request) {
   for (int i = 0; i < request->rangeCount; ++i) {
     for (int j = 0; j < request->ranges[i].pageCount; ++j) {
-      IOBufferMemoryDescriptor* chunk = static_cast<IOBufferMemoryDescriptor*>( _pageFrameNumberToMemoryDescriptorMap->getObject(pageFrameNumberToString(request->ranges[i].startPageFrameNumber + j)));
+      const OSSymbol *key = pageFrameNumberToString(request->ranges[i].startPageFrameNumber + j);
+      IOBufferMemoryDescriptor* chunk = static_cast<IOBufferMemoryDescriptor*>(_pageFrameNumberToMemoryDescriptorMap->getObject(key));
       if (chunk) {
         chunk->complete();
-        OSSafeReleaseNULL(chunk);
+        _pageFrameNumberToMemoryDescriptorMap->removeObject(key);
         HVDBGLOG("Memory block %llu released", request->ranges[i].startPageFrameNumber + j);
       } else {
         HVDBGLOG("Memory block %llu not found", request->ranges[i].startPageFrameNumber + j);
       }
+      OSSafeReleaseNULL(key);
     }
   }
 
