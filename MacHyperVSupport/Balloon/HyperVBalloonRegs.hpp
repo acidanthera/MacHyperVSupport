@@ -16,7 +16,8 @@
 
 //
 // Current dynamic memory protocol is 3.0 (Windows 10).
-// We support older protocol 2.0 (Windows 8) as well, as Gen2 VM may be running on Windows 8 / Server 2012 host
+// We support older protocol 2.0 (Windows 8) and protocol 1.0 (Windows 7)
+// It's weird that Hyper-V host running Windows 11 22H2 supports 2.0 but not 3.0, maybe supported in 23H1?
 //
 typedef enum : UInt32 {
   kHyperVDynamicMemoryProtocolVersion1 = 0x10000,

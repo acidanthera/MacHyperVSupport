@@ -67,14 +67,14 @@ bool HyperVBalloon::start(IOService *provider) {
     }
 
     //
-    // Initialize work loop and command gate.
+    // Initialize work loop and timer event source.
     //
     _workLoop = IOWorkLoop::workLoop();
     if (_workLoop == nullptr) {
       HVSYSLOG("Failed to initialize work loop");
       break;
     }
-    
+
     _timerSource = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &HyperVBalloon::sendStatusReport));
     if (_timerSource == nullptr) {
       HVSYSLOG("Failed to initialize timed event source");
@@ -82,7 +82,7 @@ bool HyperVBalloon::start(IOService *provider) {
     }
     _workLoop->addEventSource(_timerSource);
     _timerSource->setTimeoutMS(kHyperVDynamicMemoryStatusReportIntervalMilliseconds);
-    
+
     HVDBGLOG("Initialized Hyper-V Dynamic Memory");
     result = true;
   } while (false);

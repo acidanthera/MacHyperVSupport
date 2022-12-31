@@ -15,7 +15,7 @@
 
 class HyperVBalloon : public IOService {
   OSDeclareDefaultStructors(HyperVBalloon);
-  HVDeclareLogFunctionsVMBusChild("balloon");
+  HVDeclareLogFunctionsVMBusChild("ball");
   typedef IOService super;
 
 private:

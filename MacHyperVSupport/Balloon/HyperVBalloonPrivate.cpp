@@ -14,9 +14,10 @@
 #include "HyperVBalloonRegs.hpp"
 
 bool HyperVBalloon::setupBalloon() {
-  // We support Protocol 3.0 and 2.0
+  // Protocol version negotiation
   if (!doProtocolNegotitation(kHyperVDynamicMemoryProtocolVersion3, false) &&
-      !doProtocolNegotitation(kHyperVDynamicMemoryProtocolVersion2, true)) {
+      !doProtocolNegotitation(kHyperVDynamicMemoryProtocolVersion2, false) &&
+      !doProtocolNegotitation(kHyperVDynamicMemoryProtocolVersion1, true)) {
     return false;
   }
   
@@ -33,7 +34,8 @@ bool HyperVBalloon::setupBalloon() {
   message.capabilitiesReport.minimumPageCount = 0; // set the same as both Windows and Linux driver
   message.capabilitiesReport.maximumPageNumber = -1;
     
-  if (_hvDevice->writeInbandPacket(&message, message.header.size, true, &protoResponse, sizeof(protoResponse)) != kIOReturnSuccess) {
+  HVDBGLOG("Posting dynamic memory capatibilities report transactionID %u", _transactionId);
+  if (_hvDevice->writeInbandPacketWithTransactionId(&message, message.header.size, _transactionId, true, &protoResponse, sizeof(protoResponse)) != kIOReturnSuccess) {
     return false;
   }
 
@@ -57,8 +59,8 @@ bool HyperVBalloon::doProtocolNegotitation(HyperVDynamicMemoryProtocolVersion ve
   message.protocolRequest.version = version;
   message.protocolRequest.isLastAttempt = isLastAttempt;
     
-  HVDBGLOG("Trying with dynamic memory protocol of %u.%u", version >> 16, version & 0xffff);
-  if (_hvDevice->writeInbandPacket(&message, message.header.size, true, &protoResponse, sizeof(protoResponse)) != kIOReturnSuccess) {
+  HVDBGLOG("Trying with dynamic memory protocol of %u.%u transactionID %u", version >> 16, version & 0xffff, _transactionId);
+  if (_hvDevice->writeInbandPacketWithTransactionId(&message, message.header.size, _transactionId, true, &protoResponse, sizeof(protoResponse)) != kIOReturnSuccess) {
     return false;
   }
 
@@ -77,13 +79,24 @@ void HyperVBalloon::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderL
   switch (balloonMessage->header.type) {
     case kDynamicMemoryMessageTypeProtocolResponse:
     case kDynamicMemoryMessageTypeCapabilitiesResponse:
-      // We handled them in HyperVBalloon::start()
+      // Pass them to HyperVBalloon::start()
+      void   *responseBuffer;
+      UInt32 responseLength;
+
+      //
+      // The protocol response packet always has a transaction ID of 0, wake using fixed transaction ID.
+      // This assumes the response length is of the correct size, set before the initial request.
+      //
+      if (_hvDevice->getPendingTransaction(_transactionId, &responseBuffer, &responseLength)) {
+        memcpy(responseBuffer, pktData, responseLength);
+        _hvDevice->wakeTransaction(_transactionId);
+      }
       break;
 
     case kDynamicMemoryMessageTypeBalloonInflationRequest:
       handleBalloonInflationRequest(&balloonMessage->inflationRequest);
       break;
-  
+
     case kDynamicMemoryMessageTypeBalloonDeflationRequest:
       handleBalloonDeflationRequest(&balloonMessage->deflationRequest);
       break;
@@ -96,7 +109,7 @@ void HyperVBalloon::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderL
       // We don't need to handle it, so intentionally break through
       
     default:
-      HVDBGLOG("Unknown message type %u, size %u", balloonMessage->header.type, balloonMessage->header.size);
+      HVDBGLOG("Unknown dynamic memory message type %u, size %u", balloonMessage->header.type, balloonMessage->header.size);
       break;
   }
 }
