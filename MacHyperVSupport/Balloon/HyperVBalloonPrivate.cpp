@@ -122,16 +122,26 @@ IOReturn HyperVBalloon::sendStatusReport(void*, void*, void*) {
   OSIncrementAtomic(&_transactionId);
   message.header.transactionId = _transactionId;
 
-  UInt64 totalMemorySize;
-  size_t totalMemorySizeSize;
-  sysctlbyname("hw.memsize", &totalMemorySize, &totalMemorySizeSize, nullptr, 0);
+  static UInt64 totalMemorySize = 0;
+  static size_t totalMemorySizeSize = sizeof(totalMemorySize);
+  if (totalMemorySize == 0) {
+    if (int ret = sysctlbyname("hw.memsize", &totalMemorySize, &totalMemorySizeSize, nullptr, 0)) {
+      HVSYSLOG("Get physical memory information failed %d", ret);
+    }
+    HVDBGLOG("total memory size: %llu", totalMemorySize);
+  }
 
   // We just post two fields below, other fields are not needed by hypervisor
-  getPagesStatus(&message.statusReport.availablePages);
+  UInt64 availablePages;
+  getPagesStatus(&availablePages);
+  message.statusReport.availablePages = availablePages;
   // macOS doesn't provide a way to calculate committed page in Windows speak, so simply
-  message.statusReport.committedPages = totalMemorySize - message.statusReport.availablePages;
-  
+  message.statusReport.committedPages = totalMemorySize / PAGE_SIZE - message.statusReport.availablePages;
+
   HVDBGLOG("Posting memory status report: available %llu, committed %llu", message.statusReport.availablePages, message.statusReport.committedPages);
+
+  // schedule next run
+  _timerSource->setTimeoutMS(kHyperVDynamicMemoryStatusReportIntervalMilliseconds);
   
   return _hvDevice->writeInbandPacket(&message, sizeof(HyperVDynamicMemoryMessageHeader) + sizeof(HyperVDynamicMemoryMessageStatusReport), false);
 }
