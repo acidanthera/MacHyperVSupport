@@ -86,9 +86,7 @@ bool HyperVBalloon::start(IOService *provider) {
   } while (false);
 
   if (!result) {
-    _hvDevice->closeVMBusChannel();
-    _hvDevice->uninstallPacketActions();
-    OSSafeReleaseNULL(_hvDevice);
+    stop(provider);
   }
 
   return result;
@@ -104,11 +102,16 @@ void HyperVBalloon::stop(IOService *provider) {
   }
 
   if (_timerSource != nullptr) {
-    _workLoop->removeEventSource(_timerSource);
     _timerSource->cancelTimeout();
     OSSafeReleaseNULL(_timerSource);
   }
-  OSSafeReleaseNULL(_workLoop);
-  
+
+  if (_workLoop != nullptr) {
+    _workLoop->removeEventSource(_timerSource);
+    OSSafeReleaseNULL(_workLoop);
+  }
+
+  OSSafeReleaseNULL(_pageFrameNumberToMemoryDescriptorMap);
+
   super::stop(provider);
 }

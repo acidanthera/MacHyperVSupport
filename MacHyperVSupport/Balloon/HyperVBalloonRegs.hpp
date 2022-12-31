@@ -11,10 +11,12 @@
 #define kHyperVDynamicMemoryBufferSize                      (16 * 1024)
 #define kHyperVDynamicMemoryResponsePacketSize              (2 * PAGE_SIZE)
 #define kHyperVDynamicMemoryStatusReportIntervalMilliseconds 1000
+#define kHyperVDynamicMemoryReservedPageCount               (512 * 1024 * 1024 / PAGE_SIZE)
+#define kHyperVDynamicMemoryBigChunkSize                    (1 * 1024 * 1024)
 
 //
 // Current dynamic memory protocol is 3.0 (Windows 10).
-// TODO: Support older protocol 2.0 (Windows 8) as well.
+// We support older protocol 2.0 (Windows 8) as well, as Gen2 VM may be running on Windows 8 / Server 2012 host
 //
 typedef enum : UInt32 {
   kHyperVDynamicMemoryProtocolVersion1 = 0x10000,
@@ -22,10 +24,13 @@ typedef enum : UInt32 {
   kHyperVDynamicMemoryProtocolVersion3 = 0x30000
 } HyperVDynamicMemoryProtocolVersion;
 
+//
+// Hyper-V Dynamic Message Protocol Message Types
+//
 typedef enum : UInt16 {
   kDynamicMemoryMessageTypeError                    = 0,
-  kDynamicMemoryMessageTypeVersionRequest           = 1,
-  kDynamicMemoryMessageTypeVersionResponse          = 2,
+  kDynamicMemoryMessageTypeProtocolRequest          = 1,
+  kDynamicMemoryMessageTypeProtocolResponse         = 2,
   kDynamicMemoryMessageTypeCapabilitiesReport       = 3,
   kDynamicMemoryMessageTypeCapabilitiesResponse     = 4,
   kDynamicMemoryMessageTypeStatusReport             = 5,
@@ -38,40 +43,68 @@ typedef enum : UInt16 {
   kDynamicMemoryMessageTypeInfoMessage              = 12
 } HyperVDynamicMemoryMessageType;
 
-typedef struct __attribute__((packed)) {
-  UInt64 supportBalloon  : 1;
-  UInt64 supportHotAdd   : 1;
-  UInt64 hotAddAlignment : 4;
-  UInt64 reserved        : 58;
-} HyperVDynamicMemoryCapabilities; 
-
+//
+// a memory range in guest RAM physical address space
+//
 typedef struct __attribute__((packed)) {
   UInt64 startPageFrameNumber : 40;
   UInt64 pageCount            : 24;
 } HyperVDynamicMemoryPageRange;
 
+//
+// Hyper-V Dynamic Message Message Header, included in every message
+//
+typedef struct __attribute__((packed)) {
+  UInt16 type;
+  UInt16 size;
+  UInt32 transactionId;
+} HyperVDynamicMemoryMessageHeader;
+
+//
+// Protocol version negotiation
+// TX
+//
 typedef struct __attribute__((packed)) {
   UInt32 version;
   UInt32 isLastAttempt : 1;
   UInt32 reserved      : 31;
-} HyperVDynamicMemoryMessageVersionRequest;
+} HyperVDynamicMemoryMessageProtocolRequest;
 
+//
+// ACK of Protocol version negotiation
+// RX
+//
 typedef struct __attribute__((packed)) {
   UInt64 isAccepted : 1;
   UInt64 reserved   : 63;
-} HyperVDynamicMemoryMessageVersionResponse;
+} HyperVDynamicMemoryMessageProtocolResponse;
 
+//
+// Guest dynamic memory capabilities report
+// TX
+//
 typedef struct __attribute__((packed)) {
-  HyperVDynamicMemoryCapabilities capabilities;
-  UInt64                          minimumPageCount;
-  UInt64                          maximumPageNumber;
+  UInt64 supportBalloon  : 1;
+  UInt64 supportHotAdd   : 1;
+  UInt64 hotAddAlignment : 4;
+  UInt64 reserved        : 58;
+  UInt64 minimumPageCount;
+  UInt64 maximumPageNumber;
 } HyperVDynamicMemoryMessageCapabilitiesReport;
 
+//
+// ACK of guest dynamic memory capabilities report
+// RX
+//
 typedef struct __attribute__((packed)) {
   UInt64 isAccepted : 1;
   UInt64 reserved   : 63;
 } HyperVDynamicMemoryMessageCapabilitiesResponse;
 
+//
+// Guest memory status report
+// TX, not excepting response
+//
 typedef struct __attribute__((packed)) {
   UInt64 availablePages;
   UInt64 committedPages;
@@ -81,11 +114,19 @@ typedef struct __attribute__((packed)) {
   UInt32 ioDifference;
 } HyperVDynamicMemoryMessageStatusReport;
 
+//
+// Balloon inflation request
+// RX
+//
 typedef struct __attribute__((packed)) {
   UInt32 pageCount;
   UInt32 reserved;
 } HyperVDynamicMemoryMessageBalloonInflationRequest;
 
+//
+// Balloon inflation response
+// TX
+//
 typedef struct __attribute__((packed)) {
   UInt32                       reserved;
   UInt32                       morePages  : 1;
@@ -93,6 +134,10 @@ typedef struct __attribute__((packed)) {
   HyperVDynamicMemoryPageRange ranges[];
 } HyperVDynamicMemoryMessageBalloonInflationResponse;
 
+//
+// Balloon deflation request
+// RX
+//
 typedef struct __attribute__((packed)) {
   UInt32                       reserved;
   UInt32                       morePages  : 1;
@@ -100,27 +145,40 @@ typedef struct __attribute__((packed)) {
   HyperVDynamicMemoryPageRange ranges[];
 } HyperVDynamicMemoryMessageBalloonDeflationRequest;
 
+//
+// Balloon deflation response
+// TX
+//
 typedef struct __attribute__((packed)) {
   // empty
 } HyperVDynamicMemoryMessageBalloonDeflationResponse;
 
+//
+// Memory hot-add request
+// RX
+//
 typedef struct __attribute__((packed)) {
-  HyperVMemoryPageRange ranges[];
+  HyperVDynamicMemoryPageRange ranges[];
 } HyperVDynamicMemoryMessageHotAddRequest;
 
+//
+// Memory hot-add response
+// TX
+//
 typedef struct __attribute__((packed)) {
   UInt32 pageCount;
   UInt32 result;
 } HyperVDynamicMemoryMessageHotAddResponse;
 
+//
+// All messages
+//
 typedef struct __attribute__((packed)) {
-  UInt16 type;
-  UInt16 size;
-  UInt32 transactionId;
+  HyperVDynamicMemoryMessageHeader header;
   
   union {
-    HyperVDynamicMemoryMessageVersionRequest           versionRequest;
-    HyperVDynamicMemoryMessageVersionResponse          versionResponse;
+    HyperVDynamicMemoryMessageProtocolRequest          protocolRequest;
+    HyperVDynamicMemoryMessageProtocolResponse         protocolResponse;
     HyperVDynamicMemoryMessageCapabilitiesReport       capabilitiesReport;
     HyperVDynamicMemoryMessageCapabilitiesResponse     capabilitiesResponse;
     HyperVDynamicMemoryMessageStatusReport             statusReport;
