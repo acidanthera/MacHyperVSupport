@@ -22,8 +22,6 @@
 	<dict>
 		<key>HyperVBalloon</key>
 		<dict>
-			<key>AbsoluteAxisBoundsRemovalPercentage</key>
-			<integer>0</integer>
 			<key>CFBundleIdentifier</key>
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>HVType</key>
