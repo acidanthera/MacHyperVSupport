@@ -8,6 +8,8 @@
 #include "HyperVBalloon.hpp"
 #include "HyperVBalloonRegs.hpp"
 
+OSDefineMetaClassAndStructors(HyperVBalloon, super);
+
 bool HyperVBalloon::start(IOService *provider) {
   bool     result = false;
   IOReturn status;
