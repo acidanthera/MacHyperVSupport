@@ -30,6 +30,7 @@ private:
   void handleBalloonInflationRequest(HyperVDynamicMemoryMessageBalloonInflationRequest *request);
   void handleBalloonDeflationRequest(HyperVDynamicMemoryMessageBalloonDeflationRequest *request);
   void handleHotAddRequest(HyperVDynamicMemoryMessageHotAddRequest *request);
+  void handleInformationMessage(HyperVDynamicMemoryMessageInformation *info);
   bool setupBalloon();
   bool doProtocolNegotitation(HyperVDynamicMemoryProtocolVersion version, bool isLastAttempt);
   IOReturn sendStatusReport(void*, void*, void*);

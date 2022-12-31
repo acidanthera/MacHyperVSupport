@@ -45,6 +45,13 @@ typedef enum : UInt16 {
 } HyperVDynamicMemoryMessageType;
 
 //
+// Information type (see HyperVDynamicMemoryMessageInformation)
+//
+typedef enum : UInt32 {
+  kHyperVDynamicMemoryInformationTypeMaximumPageCount = 0
+} HyperVDynamicMemoryInformationType;
+
+//
 // a memory range in guest RAM physical address space
 //
 typedef struct __attribute__((packed)) {
@@ -172,6 +179,21 @@ typedef struct __attribute__((packed)) {
 } HyperVDynamicMemoryMessageHotAddResponse;
 
 //
+// Information message
+// RX
+//
+typedef struct __attribute__((packed)) {
+  UInt32                             reserved;
+  UInt32                             infoSize;
+  HyperVDynamicMemoryInformationType type;
+  UInt32                             dataSize;
+  union {
+    char                             data[];
+    UInt64                           number;
+  };
+} HyperVDynamicMemoryMessageInformation;
+
+//
 // All messages
 //
 typedef struct __attribute__((packed)) {
@@ -189,6 +211,7 @@ typedef struct __attribute__((packed)) {
     HyperVDynamicMemoryMessageBalloonDeflationResponse deflationResponse;
     HyperVDynamicMemoryMessageHotAddRequest            hotAddRequest;
     HyperVDynamicMemoryMessageHotAddResponse           hotAddResponse;
+    HyperVDynamicMemoryMessageInformation              information;
   };
 } HyperVDynamicMemoryMessage;
 

@@ -106,7 +106,8 @@ void HyperVBalloon::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderL
       break;
 
     case kDynamicMemoryMessageTypeInfoMessage:
-      // We don't need to handle it, so intentionally break through
+      handleInformationMessage(&balloonMessage->information);
+      break;
       
     default:
       HVDBGLOG("Unknown dynamic memory message type %u, size %u", balloonMessage->header.type, balloonMessage->header.size);
@@ -179,7 +180,21 @@ void HyperVBalloon::handleHotAddRequest(HyperVDynamicMemoryMessageHotAddRequest 
   
   HVDBGLOG("Sending hot add response");
   if (_hvDevice->writeInbandPacket(&message, sizeof(HyperVDynamicMemoryMessageHeader) + sizeof(HyperVDynamicMemoryMessageHotAddResponse), false) != kIOReturnSuccess) {
-    HVDBGLOG("Hot add response send failed");
+    HVSYSLOG("Hot add response send failed");
+  }
+}
+
+void HyperVBalloon::handleInformationMessage(HyperVDynamicMemoryMessageInformation *info) {
+  switch (info->type) {
+    case kHyperVDynamicMemoryInformationTypeMaximumPageCount:
+      if (info->dataSize == sizeof(UInt64)) {
+        HVDBGLOG("Received information: maximum dynamic memory size is %lluMB", info->number >> (20 - PAGE_SHIFT));
+      }
+      break;
+      
+    default:
+      HVDBGLOG("Received unknown information type %u", info->type);
+      break;
   }
 }
 
@@ -242,7 +257,7 @@ void HyperVBalloon::handleBalloonInflationRequest(HyperVDynamicMemoryMessageBall
   HVDBGLOG("Received request to inflate %lu pages", pageCount);
   
   if (availablePages < pageCount + kHyperVDynamicMemoryReservedPageCount) {
-    HVDBGLOG("We don't have enough memory for balloon, filling a part of requested");
+    HVSYSLOG("We don't have enough memory for balloon, filling a part of requested");
     pageCount = pageCount > kHyperVDynamicMemoryReservedPageCount ? (pageCount - kHyperVDynamicMemoryReservedPageCount) : 0;
   }
   
@@ -274,7 +289,7 @@ void HyperVBalloon::handleBalloonDeflationRequest(HyperVDynamicMemoryMessageBall
         _pageFrameNumberToMemoryDescriptorMap->removeObject(key);
         HVDBGLOG("Memory block %llu released", request->ranges[i].startPageFrameNumber + j);
       } else {
-        HVDBGLOG("Memory block %llu not found", request->ranges[i].startPageFrameNumber + j);
+        HVSYSLOG("Memory block %llu not found", request->ranges[i].startPageFrameNumber + j);
       }
       OSSafeReleaseNULL(key);
     }
@@ -292,6 +307,6 @@ void HyperVBalloon::handleBalloonDeflationRequest(HyperVDynamicMemoryMessageBall
   
   HVDBGLOG("Sending deflation response");
   if (!_hvDevice->writeInbandPacket(&message, sizeof(HyperVDynamicMemoryMessageHeader) + sizeof(HyperVDynamicMemoryMessageBalloonDeflationResponse), false)) {
-    HVDBGLOG("Deflation response send failed");
+    HVSYSLOG("Deflation response send failed");
   }
 }
