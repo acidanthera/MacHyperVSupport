@@ -11,8 +11,14 @@
 #define kHyperVDynamicMemoryBufferSize                      (16 * 1024)
 #define kHyperVDynamicMemoryResponsePacketSize              (2 * PAGE_SIZE)
 #define kHyperVDynamicMemoryStatusReportIntervalMilliseconds 1000
-#define kHyperVDynamicMemoryReservedPageCount               (512 * 1024 * 1024 / PAGE_SIZE)
-#define kHyperVDynamicMemoryBigChunkSize                    (1 * 1024 * 1024)
+
+// Memory size that is reserved by guest regardless of memory usage
+#define kHyperVDynamicMemoryReservedMemorySize              (512 * 1024 * 1024)
+#define kHyperVDynamicMemoryReservedPageCount               (kHyperVDynamicMemoryReservedMemorySize / PAGE_SIZE)
+
+// Balloon max inflation size in one inflation response
+#define kHyperVDynamicMemoryInflationChunkSize              (2 * 1024 * 1024)
+#define kHyperVDynamicMemoryInflationChunkPageCount         (kHyperVDynamicMemoryInflationChunkSize / PAGE_SIZE)
 
 //
 // Current dynamic memory protocol is 3.0 (Windows 10).

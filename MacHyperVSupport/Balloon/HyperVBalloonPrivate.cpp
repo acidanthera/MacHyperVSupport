@@ -28,11 +28,11 @@ bool HyperVBalloon::setupBalloon() {
   message.header.size = sizeof(HyperVDynamicMemoryMessageHeader) + sizeof(HyperVDynamicMemoryMessageCapabilitiesReport);
   OSIncrementAtomic(&_transactionId);
   message.header.transactionId = _transactionId;
-  message.capabilitiesReport.supportBalloon = 1; // We support balloon only
-  message.capabilitiesReport.supportHotAdd = 0; // macOS doesn't support memory hot adding.
-  message.capabilitiesReport.hotAddAlignment = 1;
-  message.capabilitiesReport.minimumPageCount = 0; // set the same as both Windows and Linux driver
-  message.capabilitiesReport.maximumPageNumber = -1;
+  message.capabilitiesReport.supportBalloon    = 1;  // We support balloon only
+  message.capabilitiesReport.supportHotAdd     = 0;  // macOS doesn't support memory hot adding.
+  message.capabilitiesReport.hotAddAlignment   = 0;
+  message.capabilitiesReport.minimumPageCount  = 0;  // the same as
+  message.capabilitiesReport.maximumPageNumber = -1; // both Windows and Linux drivers
     
   HVDBGLOG("Posting dynamic memory capatibilities report transactionID %u", _transactionId);
   if (_hvDevice->writeInbandPacketWithTransactionId(&message, message.header.size, _transactionId, true, &protoResponse, sizeof(protoResponse)) != kIOReturnSuccess) {
@@ -44,8 +44,6 @@ bool HyperVBalloon::setupBalloon() {
     return false;
   }
 
-  _pageFrameNumberToMemoryDescriptorMap = OSDictionary::withCapacity(1024);
-  
   return true;
 }
 
@@ -219,19 +217,29 @@ const OSSymbol* HyperVBalloon::pageFrameNumberToString(UInt64 pfn) {
   return OSSymbol::withCString((const char *) buffer);
 }
 
-bool HyperVBalloon::inflationBalloon(UInt32 pageCount, bool morePages) {
-  HyperVDynamicMemoryMessage *response = reinterpret_cast<HyperVDynamicMemoryMessage *>(_balloonInflationSendBuffer);
+bool HyperVBalloon::inflateBalloon(UInt32 pageCount, bool morePages) {
   HVDBGLOG("This time inflate %lu pages and%s more", pageCount, morePages ? "" : " no");
+
+  HyperVDynamicMemoryMessage *response = reinterpret_cast<HyperVDynamicMemoryMessage *>(_balloonInflationSendBuffer);
+  memset(response, 0, kHyperVDynamicMemoryResponsePacketSize);
+
+  // we fill size and transactionId just before sending
+  response->header.type = kDynamicMemoryMessageTypeBalloonInflationResponse;
+
+  // reset to 0 per every request
+  response->inflationResponse.rangeCount = 0;
+  response->inflationResponse.morePages = morePages;
+
   // We have to do one page per allocation
-  // Hyper-V hypervisor will pass fragmented memory block to guest which macOS guest need to release
+  // Hyper-V hypervisor will pass arbitrary fragmented memory block to guest which macOS guest need to release
   // while macOS doesn't support releasing part of a memory descriptor or splitting physical memory segment to indepedently relaseable parts
-  for (int i = 0; i < kHyperVDynamicMemoryBigChunkSize / PAGE_SIZE; ++i) {
-    // alloc memory in kernel
-    IOBufferMemoryDescriptor* chunk = IOBufferMemoryDescriptor::inTaskWithOptions(kernel_task, kIODirectionInOut | kIOMemoryMapperNone | kIOMemoryPhysicallyContiguous, 1 * PAGE_SIZE, 1 * PAGE_SIZE);
-    chunk->prepare(kIODirectionInOut);
-  
+  for (int i = 0; i < pageCount; ++i) {
+    // alloc memory in kernel page by page
+    IOBufferMemoryDescriptor* chunk = IOBufferMemoryDescriptor::inTaskWithOptions(kernel_task, kIOMemoryMapperNone, PAGE_SIZE, PAGE_SIZE);
+
     IOByteCount physicalSegmentSize;
     addr64_t physicalSegmentStart = chunk->getPhysicalSegment(0, &physicalSegmentSize, 0);
+    HVDBGLOG("Allocated page: desc %p, raw %p, size %llu", chunk, physicalSegmentStart, physicalSegmentSize);
     
     // save (PFN, MemoryDescriptor) into map for further query
     const OSSymbol *key = pageFrameNumberToString(physicalSegmentStart >> PAGE_SHIFT);
@@ -243,15 +251,22 @@ bool HyperVBalloon::inflationBalloon(UInt32 pageCount, bool morePages) {
     response->inflationResponse.ranges[i].pageCount = 1;
     ++response->inflationResponse.rangeCount;
   }
-  response->inflationResponse.morePages = morePages;
+
+  UInt32 responseLength = sizeof(HyperVDynamicMemoryMessageHeader) + sizeof(HyperVDynamicMemoryMessageBalloonInflationResponse) + sizeof(HyperVDynamicMemoryPageRange) * response->inflationResponse.rangeCount;
+  response->header.size = responseLength;
   
   // size = protocol header + inflation response header + memory ranges
   IOReturn status;
   do {
     OSIncrementAtomic(&_transactionId);
     response->header.transactionId = _transactionId;
-    HVDBGLOG("Send inflation request with %lu pages", response->inflationResponse.rangeCount);
-    status = _hvDevice->writeInbandPacket(response, sizeof(HyperVDynamicMemoryMessageHeader) + sizeof(HyperVDynamicMemoryMessageBalloonInflationResponse) + sizeof(HyperVDynamicMemoryPageRange) * response->inflationResponse.rangeCount, false);
+    HVDBGLOG("Send inflation request with %lu pages, length %u, transactionId %u", response->inflationResponse.rangeCount, responseLength, _transactionId);
+
+    status = _hvDevice->writeInbandPacket(response, responseLength, false);
+    if (status != kIOReturnSuccess) {
+      HVDBGLOG("Send inflation request failed, code %d", status);
+      IOSleep(20);
+    }
   } while (status != kIOReturnSuccess);
   
   return true;
@@ -265,27 +280,21 @@ void HyperVBalloon::handleBalloonInflationRequest(HyperVDynamicMemoryMessageBall
   UInt64 availablePages = totalPages - usedPages;
   
   HVDBGLOG("Received request to inflate %lu pages", pageCount);
-  
+
   if (availablePages < pageCount + kHyperVDynamicMemoryReservedPageCount) {
     HVSYSLOG("We don't have enough memory for balloon, filling a part of requested");
     pageCount = pageCount > kHyperVDynamicMemoryReservedPageCount ? (pageCount - kHyperVDynamicMemoryReservedPageCount) : 0;
   }
-  
-  HVDBGLOG("We plan to inflate %lu pages", pageCount);
-  
-  HyperVDynamicMemoryMessage *message = reinterpret_cast<HyperVDynamicMemoryMessage *>(_balloonInflationSendBuffer);
-  memset(message, 0, sizeof(HyperVDynamicMemoryMessageHeader) + sizeof(HyperVDynamicMemoryMessageBalloonInflationResponse));
-  message->header.type = kDynamicMemoryMessageTypeBalloonInflationResponse;
-  message->header.size = sizeof(HyperVDynamicMemoryMessageHeader) + sizeof(HyperVDynamicMemoryMessageBalloonInflationResponse);
-  
+
   while (pageCount > 0) {
-    if (pageCount > kHyperVDynamicMemoryBigChunkSize) {
-      inflationBalloon(kHyperVDynamicMemoryBigChunkSize, true);
-      pageCount -= kHyperVDynamicMemoryBigChunkSize;
+    if (pageCount > kHyperVDynamicMemoryInflationChunkPageCount) {
+      inflateBalloon(kHyperVDynamicMemoryInflationChunkPageCount, true);
+      pageCount -= kHyperVDynamicMemoryInflationChunkPageCount;
     } else {
-      inflationBalloon(pageCount, false);
-      pageCount -= pageCount;
+      inflateBalloon(pageCount, false);
+      pageCount = 0;
     }
+    break;
   }
 }
 

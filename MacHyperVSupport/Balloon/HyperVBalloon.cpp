@@ -85,6 +85,13 @@ bool HyperVBalloon::start(IOService *provider) {
 
     HVDBGLOG("Initialized Hyper-V Dynamic Memory");
     result = true;
+    
+    // data structures used for ballooning
+    _pageFrameNumberToMemoryDescriptorMap = OSDictionary::withCapacity(32768);
+    _balloonInflationSendBuffer = IOMalloc(kHyperVDynamicMemoryResponsePacketSize);
+    if (_balloonInflationSendBuffer == nullptr) {
+      HVSYSLOG("Failed to allocate send buffer");
+    }
   } while (false);
 
   if (!result) {
@@ -113,6 +120,10 @@ void HyperVBalloon::stop(IOService *provider) {
     OSSafeReleaseNULL(_workLoop);
   }
 
+  if (_balloonInflationSendBuffer != nullptr) {
+    IOFree(_balloonInflationSendBuffer, kHyperVDynamicMemoryResponsePacketSize);
+  }
+  
   OSSafeReleaseNULL(_pageFrameNumberToMemoryDescriptorMap);
 
   super::stop(provider);
