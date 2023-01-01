@@ -35,7 +35,8 @@ private:
   bool doProtocolNegotitation(HyperVDynamicMemoryProtocolVersion version, bool isLastAttempt);
   IOReturn sendStatusReport(void*, void*, void*);
   bool inflationBalloon(UInt32 pageCount, bool morePages);
-  static void getPagesStatus(UInt64 *availablePages);
+  static UInt64 getPhysicalMemorySizeInPages();
+  static void getPagesStatus(UInt64 *committedPages, UInt64 *usingPages);
   static const OSSymbol *pageFrameNumberToString(UInt64 pfn);
   
 public:

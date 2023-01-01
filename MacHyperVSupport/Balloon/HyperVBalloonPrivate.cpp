@@ -115,6 +115,15 @@ void HyperVBalloon::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderL
   }
 }
 
+UInt64 HyperVBalloon::getPhysicalMemorySizeInPages() {
+  static UInt64 totalMemorySize = 0;
+  static size_t totalMemorySizeSize = sizeof(totalMemorySize);
+  if (totalMemorySize == 0) {
+    sysctlbyname("hw.memsize", &totalMemorySize, &totalMemorySizeSize, nullptr, 0);
+  }
+  return totalMemorySize / PAGE_SIZE;
+}
+
 IOReturn HyperVBalloon::sendStatusReport(void*, void*, void*) {
   HyperVDynamicMemoryMessage message;
   memset(&message, 0, sizeof(HyperVDynamicMemoryMessageHeader) + sizeof(HyperVDynamicMemoryMessageStatusReport));
@@ -123,21 +132,12 @@ IOReturn HyperVBalloon::sendStatusReport(void*, void*, void*) {
   OSIncrementAtomic(&_transactionId);
   message.header.transactionId = _transactionId;
 
-  static UInt64 totalMemorySize = 0;
-  static size_t totalMemorySizeSize = sizeof(totalMemorySize);
-  if (totalMemorySize == 0) {
-    if (int ret = sysctlbyname("hw.memsize", &totalMemorySize, &totalMemorySizeSize, nullptr, 0)) {
-      HVSYSLOG("Get physical memory information failed %d", ret);
-    }
-    HVDBGLOG("total memory size: %llu", totalMemorySize);
-  }
-
+  UInt64 totalPages = getPhysicalMemorySizeInPages();
+  UInt64 committedPages, usingPages;
+  getPagesStatus(&committedPages, &usingPages);
   // We just post two fields below, other fields are not needed by hypervisor
-  UInt64 availablePages;
-  getPagesStatus(&availablePages);
-  message.statusReport.availablePages = availablePages;
-  // macOS doesn't provide a way to calculate committed page in Windows speak, so simply
-  message.statusReport.committedPages = totalMemorySize / PAGE_SIZE - message.statusReport.availablePages;
+  message.statusReport.availablePages = totalPages - usingPages - kHyperVDynamicMemoryReservedPageCount;
+  message.statusReport.committedPages = committedPages;
 
   HVDBGLOG("Posting memory status report: available %llu, committed %llu", message.statusReport.availablePages, message.statusReport.committedPages);
 
@@ -147,7 +147,7 @@ IOReturn HyperVBalloon::sendStatusReport(void*, void*, void*) {
   return _hvDevice->writeInbandPacket(&message, sizeof(HyperVDynamicMemoryMessageHeader) + sizeof(HyperVDynamicMemoryMessageStatusReport), false);
 }
 
-void HyperVBalloon::getPagesStatus(UInt64 *availablePages) {
+void HyperVBalloon::getPagesStatus(UInt64 *committedPages, UInt64 *usingPages) {
   static mach_msg_type_name_t vmStatSize;
 #if defined(__i386__)
   static vm_statistics_data_t vmStat;
@@ -161,8 +161,16 @@ void HyperVBalloon::getPagesStatus(UInt64 *availablePages) {
 #error Unsupported arch
 #endif
 
-  // available = free + purgeable + pages that mmap-ing non-swap file
-  *availablePages = vmStat.free_count + vmStat.purgeable_count + vmStat.external_page_count;
+  // wire_count:            "Wired Memory", pages that cannot be swapped out, e.g. kernel memory
+  // internal_page_count:   "App Memory"
+  // compressor_page_count: "Compressed Memory"
+  // active_page_count:     pages that is actively used
+  if (committedPages) {
+    *committedPages = vmStat.wire_count + vmStat.internal_page_count + vmStat.compressor_page_count;
+  }
+  if (usingPages) {
+    *usingPages = vmStat.wire_count + vmStat.active_count + vmStat.compressor_page_count;
+  }
 }
 
 void HyperVBalloon::handleHotAddRequest(HyperVDynamicMemoryMessageHotAddRequest *request) {
@@ -251,8 +259,10 @@ bool HyperVBalloon::inflationBalloon(UInt32 pageCount, bool morePages) {
 
 void HyperVBalloon::handleBalloonInflationRequest(HyperVDynamicMemoryMessageBalloonInflationRequest *request) {
   UInt32 pageCount = request->pageCount;
-  UInt64 availablePages;
-  getPagesStatus(&availablePages);
+  UInt64 totalPages = getPhysicalMemorySizeInPages();
+  UInt64 usedPages;
+  getPagesStatus(nullptr, &usedPages);
+  UInt64 availablePages = totalPages - usedPages;
   
   HVDBGLOG("Received request to inflate %lu pages", pageCount);
   
