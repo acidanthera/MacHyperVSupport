@@ -153,9 +153,9 @@ typedef struct __attribute__((packed)) {
 // RX
 //
 typedef struct __attribute__((packed)) {
-  UInt32                       reserved;
   UInt32                       morePages  : 1;
-  UInt32                       rangeCount : 31;
+  UInt32                       reserved : 31;
+  UInt32                       rangeCount;
   HyperVDynamicMemoryPageRange ranges[];
 } HyperVDynamicMemoryMessageBalloonDeflationRequest;
 
