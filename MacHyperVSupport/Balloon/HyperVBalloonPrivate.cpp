@@ -164,10 +164,18 @@ void HyperVBalloon::getPagesStatus(UInt64 *committedPages, UInt64 *usingPages) {
   // compressor_page_count: "Compressed Memory"
   // active_page_count:     pages that is actively used
   if (committedPages) {
+#if defined(__i386__)
+    *committedPages = vmStat.wire_count + vmStat.active_count;
+#elif defined(__x86_64__)
     *committedPages = vmStat.wire_count + vmStat.internal_page_count + vmStat.compressor_page_count;
+#endif
   }
   if (usingPages) {
-    *usingPages = vmStat.wire_count + vmStat.active_count + vmStat.compressor_page_count;
+    *usingPages = vmStat.wire_count + vmStat.active_count
+#if defined(__x86_64__)
+    + vmStat.compressor_page_count
+#endif
+    ;
   }
 }
 
@@ -294,7 +302,6 @@ void HyperVBalloon::handleBalloonInflationRequest(HyperVDynamicMemoryMessageBall
       inflateBalloon(pageCount, false);
       pageCount = 0;
     }
-    break;
   }
 }
 
