@@ -1,5 +1,8 @@
 MacHyperVSupport Changelog
 ============================
+#### v0.9.4
+- Added constants for macOS 14 support
+
 #### v0.9.3
 - Created daemons for each userspace function replacing hvutil
 - Added support for host to guest file copy (Guest Services integration service)
