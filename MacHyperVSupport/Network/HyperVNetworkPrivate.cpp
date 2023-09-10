@@ -313,8 +313,9 @@ bool HyperVNetwork::connectNetwork() {
   readMACAddress();
   updateLinkState(NULL);
   
-  //UInt32 filter = 0x9;
-  //setRNDISOID(kHyperVNetworkRNDISOIDGeneralCurrentPacketFilter, &filter, sizeof (filter));
+  setPacketFilter (kHyperVNetworkPacketFilterDirected
+                   | kHyperVNetworkPacketFilterMulticast
+                   | kHyperVNetworkPacketFilterBroadcast);
   
   return true;
 }
@@ -345,17 +346,32 @@ void HyperVNetwork::createMediumDictionary() {
   mediumDict->release();
 }
 
-bool HyperVNetwork::readMACAddress() {
+IOReturn HyperVNetwork::readMACAddress() {
+  //
+  // MAC address stored in 802.3 OID.
+  //
   UInt32 macSize = sizeof (_ethAddress.bytes);
-  if (getRNDISOID(kHyperVNetworkRNDISOIDEthernetPermanentAddress, (void *)_ethAddress.bytes, &macSize) != kIOReturnSuccess) {
+  IOReturn status = getRNDISOID(kHyperVNetworkRNDISOIDEthernetPermanentAddress, (void *)_ethAddress.bytes, &macSize);
+  if (status != kIOReturnSuccess) {
     HVSYSLOG("Failed to get MAC address");
-    return false;
+    return status;
   }
-  
+
   HVDBGLOG("MAC address is %02X:%02X:%02X:%02X:%02X:%02X",
            _ethAddress.bytes[0], _ethAddress.bytes[1], _ethAddress.bytes[2],
            _ethAddress.bytes[3], _ethAddress.bytes[4], _ethAddress.bytes[5]);
-  return true;
+  return kIOReturnSuccess;
+}
+
+IOReturn HyperVNetwork::setPacketFilter(UInt32 filter) {
+  IOReturn status = setRNDISOID(kHyperVNetworkRNDISOIDGeneralCurrentPacketFilter, &filter, sizeof (filter));
+  if (status != kIOReturnSuccess) {
+    HVSYSLOG("Failed to set packet filter to %X", filter);
+    return status;
+  }
+  
+  HVDBGLOG("Packet filter is now %X", filter);
+  return kIOReturnSuccess;
 }
 
 void HyperVNetwork::updateLinkState(HyperVNetworkRNDISMessageIndicateStatus *indicateStatus) {
