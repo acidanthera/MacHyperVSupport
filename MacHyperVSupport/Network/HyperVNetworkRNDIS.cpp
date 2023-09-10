@@ -11,7 +11,7 @@ bool HyperVNetwork::processRNDISPacket(UInt8 *data, UInt32 dataLength) {
  // preCycle++;
   HyperVNetworkRNDISMessage *rndisPkt = (HyperVNetworkRNDISMessage*)data;
   
-  HVDBGLOG("New RNDIS packet of type 0x%X and %u bytes", rndisPkt->header.type, rndisPkt->header.length);
+  HVDATADBGLOG("New RNDIS packet of type 0x%X and %u bytes", rndisPkt->header.type, rndisPkt->header.length);
   
   HyperVNetworkRNDISRequest *reqCurr = rndisRequests;
   HyperVNetworkRNDISRequest *reqPrev = NULL;
@@ -24,7 +24,7 @@ bool HyperVNetwork::processRNDISPacket(UInt8 *data, UInt32 dataLength) {
 
       
       while (reqCurr != NULL) {
-        HVDBGLOG("checking %u", reqCurr->message.initComplete.requestId);
+        HVDATADBGLOG("checking %u", reqCurr->message.initComplete.requestId);
         if (reqCurr->message.initComplete.requestId == rndisPkt->initComplete.requestId) {
           //
           // Copy response data.

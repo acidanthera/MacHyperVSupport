@@ -49,7 +49,7 @@ void HyperVNetwork::handleRNDISRanges(VMBusPacketTransferPages *pktPages, UInt32
     HVSYSLOG("Invalid message of type 0x%X and pageset ID of 0x%X received", netMsg->messageType, pktPages->transferPagesetId);
     return;
   }
-  HVDBGLOG("Received %u RNDIS ranges, range[0] count = %u, offset = 0x%X", pktPages->rangeCount, pktPages->ranges[0].count, pktPages->ranges[0].offset);
+  HVDATADBGLOG("Received %u RNDIS ranges, range[0] count = %u, offset = 0x%X", pktPages->rangeCount, pktPages->ranges[0].count, pktPages->ranges[0].offset);
   
   //
   // Process each range which contains a packet.
@@ -58,7 +58,7 @@ void HyperVNetwork::handleRNDISRanges(VMBusPacketTransferPages *pktPages, UInt32
     UInt8 *data = ((UInt8*) _receiveBuffer.buffer) + pktPages->ranges[i].offset;
     UInt32 dataLength = pktPages->ranges[i].count;
     
-    HVDBGLOG("Got range of %u bytes at 0x%X", dataLength, pktPages->ranges[i].offset);
+    HVDATADBGLOG("Got range of %u bytes at 0x%X", dataLength, pktPages->ranges[i].offset);
     processRNDISPacket(data, dataLength);
   }
   

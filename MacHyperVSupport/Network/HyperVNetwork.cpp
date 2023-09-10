@@ -161,7 +161,7 @@ UInt32 HyperVNetwork::outputPacket(mbuf_t m, void *param) {
   netMsg.v1.sendRNDISPacket.sendBufferSectionIndex = sendIndex;
   netMsg.v1.sendRNDISPacket.sendBufferSectionSize  = rndisMsg->header.length;
 
-  HVDBGLOG("Preparing to send packet of %u bytes using send section %u/%u", rndisMsg->header.length, sendIndex, _sendSectionCount);
+  HVDATADBGLOG("Preparing to send packet of %u bytes using send section %u/%u", rndisMsg->header.length, sendIndex, _sendSectionCount);
   status = _hvDevice->writeInbandPacketWithTransactionId(&netMsg, sizeof (netMsg), sendIndex | kHyperVNetworkSendTransIdBits, true);
   if (status != kIOReturnSuccess) {
     HVSYSLOG("Failed to send packet with status 0x%X", status);
