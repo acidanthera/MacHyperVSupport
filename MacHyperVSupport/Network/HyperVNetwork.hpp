@@ -127,7 +127,8 @@ private:
   //
   void addNetworkMedium(UInt32 index, UInt32 type, UInt32 speed);
   void createMediumDictionary();
-  bool readMACAddress();
+  IOReturn readMACAddress();
+  IOReturn setPacketFilter(UInt32 filter);
   void updateLinkState(HyperVNetworkRNDISMessageIndicateStatus *indicateStatus);
   
 public:
@@ -137,6 +138,16 @@ public:
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
   void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
   
+  //
+  // IONetworkController overrides.
+  //
+  const OSString* newVendorString() const APPLE_KEXT_OVERRIDE {
+    return OSString::withCString(kHyperVNetworkVendor);
+  };
+  const OSString* newModelString() const APPLE_KEXT_OVERRIDE {
+    return OSString::withCString(kHyperVNetworkModel);
+  }
+
   //
   // IOEthernetController overrides.
   //

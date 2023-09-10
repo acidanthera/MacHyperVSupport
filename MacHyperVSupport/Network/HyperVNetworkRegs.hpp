@@ -24,6 +24,9 @@
 #define kHyperVNetworkMaximumTransId  0xFFFFFFFF
 #define kHyperVNetworkSendTransIdBits 0xFA00000000000000
 
+#define kHyperVNetworkVendor    "Microsoft"
+#define kHyperVNetworkModel     "Hyper-V Network Adapter"
+
 //
 // Protocol versions.
 //
