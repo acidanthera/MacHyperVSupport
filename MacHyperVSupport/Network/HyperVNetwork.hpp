@@ -40,6 +40,7 @@ class HyperVNetwork : public IOEthernetController {
 
 private:
   HyperVVMBusDevice *_hvDevice = nullptr;
+  IOWorkLoop        *_workLoop = nullptr;
 
   //
   // Network structures.
@@ -49,7 +50,8 @@ private:
   IOEthernetInterface          *_ethInterface    = nullptr;
   IOEthernetAddress            _ethAddress       = { };
   bool                         _isLinkUp         = false;
-  IONetworkMedium              *_networkMedium   = nullptr;
+
+  UInt32 _packetFilterAdditional = 0;
 
   //
   // Receive buffer.
@@ -77,10 +79,9 @@ private:
   UInt64 postCycle = 0;
   UInt64 stalls = 0;
   
-  IOLock                        *rndisLock = NULL;
-  UInt32                        rndisTransId = 0;
-  
-  HyperVNetworkRNDISRequest     *rndisRequests;
+  IOLock                    *_rndisLock = nullptr;
+  UInt32                    _rndisTransId = 0;
+  HyperVNetworkRNDISRequest *_rndisRequests;
   
 
   
@@ -91,7 +92,7 @@ private:
   void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
   
   
-  bool negotiateProtocol(HyperVNetworkProtocolVersion protocolVersion);
+  IOReturn negotiateProtocol(HyperVNetworkProtocolVersion protocolVersion);
   
   //
   // Send/receive buffers.
@@ -118,15 +119,15 @@ private:
   UInt32 getNextRNDISTransId();
   bool sendRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest, bool waitResponse = false);
   
-  bool initializeRNDIS();
+  IOReturn initializeRNDIS();
   IOReturn getRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 *valueSize);
   IOReturn setRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 valueSize);
   
   //
   // Private
   //
-  void addNetworkMedium(UInt32 index, UInt32 type, UInt32 speed);
-  void createMediumDictionary();
+  bool addNetworkMedium(OSDictionary* mediumDict, IOMediumType type);
+  bool createMediumDictionary();
   IOReturn readMACAddress();
   IOReturn setPacketFilter(UInt32 filter);
   void updateLinkState(HyperVNetworkRNDISMessageIndicateStatus *indicateStatus);
@@ -137,26 +138,31 @@ public:
   //
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
   void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
-  
+  IOWorkLoop* getWorkLoop() const APPLE_KEXT_OVERRIDE {
+    return _workLoop;
+  };
+
   //
   // IONetworkController overrides.
   //
+  bool createWorkLoop() APPLE_KEXT_OVERRIDE;
+  bool configureInterface(IONetworkInterface *interface) APPLE_KEXT_OVERRIDE;
   const OSString* newVendorString() const APPLE_KEXT_OVERRIDE {
     return OSString::withCString(kHyperVNetworkVendor);
   };
   const OSString* newModelString() const APPLE_KEXT_OVERRIDE {
     return OSString::withCString(kHyperVNetworkModel);
   }
+  IOReturn enable(IONetworkInterface *interface) APPLE_KEXT_OVERRIDE;
+  IOReturn disable(IONetworkInterface *interface) APPLE_KEXT_OVERRIDE;
+  IOReturn setMulticastMode(bool active) APPLE_KEXT_OVERRIDE;
+  IOReturn setPromiscuousMode(bool active) APPLE_KEXT_OVERRIDE;
 
   //
   // IOEthernetController overrides.
   //
   IOReturn getHardwareAddress(IOEthernetAddress *addrP) APPLE_KEXT_OVERRIDE;
-  
   UInt32 outputPacket(mbuf_t m, void *param) APPLE_KEXT_OVERRIDE;
-  
-  virtual IOReturn enable(IONetworkInterface *interface) APPLE_KEXT_OVERRIDE;
-  virtual IOReturn disable(IONetworkInterface *interface) APPLE_KEXT_OVERRIDE;
 };
 
 #endif

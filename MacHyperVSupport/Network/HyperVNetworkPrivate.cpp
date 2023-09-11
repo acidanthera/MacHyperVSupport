@@ -93,26 +93,35 @@ void HyperVNetwork::handleCompletion(void *pktData, UInt32 pktLength) {
     }
 }
 
-bool HyperVNetwork::negotiateProtocol(HyperVNetworkProtocolVersion protocolVersion) {
-  // Send requested version to Hyper-V.
+IOReturn HyperVNetwork::negotiateProtocol(HyperVNetworkProtocolVersion protocolVersion) {
+  IOReturn             status;
   HyperVNetworkMessage netMsg;
+
+  //
+  // Send requested network procotol version to Hyper-V.
+  //
   memset(&netMsg, 0, sizeof (netMsg));
   netMsg.messageType = kHyperVNetworkMessageTypeInit;
   netMsg.init.initVersion.maxProtocolVersion = protocolVersion;
   netMsg.init.initVersion.minProtocolVersion = protocolVersion;
 
-  if (_hvDevice->writeInbandPacket(&netMsg, sizeof (netMsg), true, &netMsg, sizeof (netMsg)) != kIOReturnSuccess) {
-    HVSYSLOG("failed to send protocol negotiation message");
-    return false;
+  status = _hvDevice->writeInbandPacket(&netMsg, sizeof (netMsg), true, &netMsg, sizeof (netMsg));
+  if (status != kIOReturnSuccess) {
+    HVSYSLOG("Failed to send protocol negotiation message with status 0x%X", status);
+    return status;
   }
 
+  //
+  // Verify desired protocol version is supported.
+  //
   if (netMsg.init.initComplete.status != kHyperVNetworkMessageStatusSuccess) {
-    HVSYSLOG("error returned from Hyper-V: 0x%X", netMsg.init.initComplete.status);
+    HVSYSLOG("Error while negotiating protocol version: 0x%X", netMsg.init.initComplete.status);
+    return kIOReturnUnsupported;
   }
 
-  HVDBGLOG("Can use protocol 0x%X, max MDL length %u",
-         netMsg.init.initComplete.negotiatedProtocolVersion, netMsg.init.initComplete.maxMdlChainLength);
-  return true;
+  HVDBGLOG("Can use protocol version 0x%X, max MDL length %u",
+           netMsg.init.initComplete.negotiatedProtocolVersion, netMsg.init.initComplete.maxMdlChainLength);
+  return kIOReturnSuccess;
 }
 
 IOReturn HyperVNetwork::initSendReceiveBuffers() {
@@ -309,41 +318,63 @@ bool HyperVNetwork::connectNetwork() {
   
   initializeRNDIS();
   
-  createMediumDictionary();
+  //
+  // Set packet filter initially to zero.
+  //
+  setPacketFilter(0);
+  
   readMACAddress();
   updateLinkState(NULL);
-  
-  setPacketFilter (kHyperVNetworkPacketFilterDirected
-                   | kHyperVNetworkPacketFilterMulticast
-                   | kHyperVNetworkPacketFilterBroadcast);
   
   return true;
 }
 
-void HyperVNetwork::createMediumDictionary() {
-  OSDictionary *mediumDict;
-  
+bool HyperVNetwork::addNetworkMedium(OSDictionary *mediumDict, IOMediumType type) {
+  bool            result = false;
+  IONetworkMedium *medium = IONetworkMedium::medium(type, 0);
+
+  //
+  // Add created medium to dictionary.
+  //
+  if (medium != nullptr) {
+    result = IONetworkMedium::addMedium(mediumDict, medium);
+    medium->release();
+  }
+
+  return result;
+}
+
+bool HyperVNetwork::createMediumDictionary() {
+  bool                result;
+  OSDictionary        *mediumDict;
+
   //
   // Create medium dictionary.
-  // Speed/duplex is irrelvant for Hyper-V, use basic auto settings.
+  // Speed/duplex is irrelvant for Hyper-V, simply create entries for automatic settings.
   //
-  mediumDict = OSDictionary::withCapacity(1);
+  mediumDict = OSDictionary::withCapacity(2);
   if (mediumDict == nullptr) {
-    return;
+    return false;
   }
-  
-  _networkMedium = IONetworkMedium::medium(kIOMediumEthernetAuto | kIOMediumOptionFullDuplex, 0);
-  if (_networkMedium == nullptr) {
-    mediumDict->release();
-    return;
-  }
-  
-  IONetworkMedium::addMedium(mediumDict, _networkMedium);
 
-  publishMediumDictionary(mediumDict);
-  setCurrentMedium(_networkMedium);
-  
+  result = true;
+  result &= addNetworkMedium(mediumDict, kIOMediumEthernetNone);
+  result &= addNetworkMedium(mediumDict, kIOMediumEthernetAuto);
+  if (!result) {
+    HVSYSLOG("Failed to add network mediums to medium dictionary");
+    mediumDict->release();
+    return false;
+  }
+
+  //
+  // Publish medium dictionary.
+  //
+  result = publishMediumDictionary(mediumDict);
   mediumDict->release();
+  if (!result) {
+    HVSYSLOG("Failed to publish medium dictionary");
+  }
+  return result;
 }
 
 IOReturn HyperVNetwork::readMACAddress() {
@@ -375,10 +406,19 @@ IOReturn HyperVNetwork::setPacketFilter(UInt32 filter) {
 }
 
 void HyperVNetwork::updateLinkState(HyperVNetworkRNDISMessageIndicateStatus *indicateStatus) {
+  const OSDictionary  *mediumDict;
+  IONetworkMedium     *medium;
+
+  mediumDict = getMediumDictionary();
+  if (mediumDict == nullptr) {
+    HVSYSLOG("Failed to get medium dictionary");
+    return;
+  }
+
   //
   // Pull initial link state from OID.
   //
-  if (indicateStatus == NULL) {
+  if (indicateStatus == nullptr) {
     HyperVNetworkRNDISLinkState linkState;
     UInt32 linkStateSize = sizeof (linkState);
     if (getRNDISOID(kHyperVNetworkRNDISOIDGeneralMediaConnectStatus, &linkState, &linkStateSize) != kIOReturnSuccess) {
@@ -389,7 +429,8 @@ void HyperVNetwork::updateLinkState(HyperVNetworkRNDISMessageIndicateStatus *ind
     HVDBGLOG("Link state is initially %s", linkState == kHyperVNetworkRNDISLinkStateConnected ? "up" : "down");
     _isLinkUp = linkState == kHyperVNetworkRNDISLinkStateConnected;
     if (_isLinkUp) {
-      setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive, _networkMedium);
+      medium = IONetworkMedium::getMediumWithType(mediumDict, kIOMediumEthernetAuto);
+      setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive, medium);
     } else {
       setLinkStatus(kIONetworkLinkValid, 0);
     }
@@ -409,7 +450,8 @@ void HyperVNetwork::updateLinkState(HyperVNetworkRNDISMessageIndicateStatus *ind
     case kHyperVNetworkRNDISStatusMediaConnect:
       if (!_isLinkUp) {
         HVDBGLOG("Link is coming up");
-        setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive, _networkMedium);
+        medium = IONetworkMedium::getMediumWithType(mediumDict, kIOMediumEthernetAuto);
+        setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive, medium);
         _isLinkUp = true;
       }
       break;
@@ -428,8 +470,9 @@ void HyperVNetwork::updateLinkState(HyperVNetworkRNDISMessageIndicateStatus *ind
         // Do a link up and down to force a refresh in the OS.
         //
         HVDBGLOG("Link has changed networks");
+        medium = IONetworkMedium::getMediumWithType(mediumDict, kIOMediumEthernetAuto);
         setLinkStatus(kIONetworkLinkValid, 0);
-        setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive, _networkMedium);
+        setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive, medium);
       }
       break;
 

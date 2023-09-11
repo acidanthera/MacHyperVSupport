@@ -13,7 +13,7 @@ bool HyperVNetwork::processRNDISPacket(UInt8 *data, UInt32 dataLength) {
   
   HVDATADBGLOG("New RNDIS packet of type 0x%X and %u bytes", rndisPkt->header.type, rndisPkt->header.length);
   
-  HyperVNetworkRNDISRequest *reqCurr = rndisRequests;
+  HyperVNetworkRNDISRequest *reqCurr = _rndisRequests;
   HyperVNetworkRNDISRequest *reqPrev = NULL;
   
   switch (rndisPkt->header.type) {
@@ -34,13 +34,13 @@ bool HyperVNetwork::processRNDISPacket(UInt8 *data, UInt32 dataLength) {
           //
           // Remove from linked list.
           //
-          IOLockLock(rndisLock);
+          IOLockLock(_rndisLock);
           if (reqPrev == NULL) {
-            rndisRequests = reqCurr->next;
+            _rndisRequests = reqCurr->next;
           } else {
             reqPrev->next = reqCurr->next;
           }
-          IOLockUnlock(rndisLock);
+          IOLockUnlock(_rndisLock);
           
           //
           // Wakeup sleeping thread.
@@ -133,10 +133,10 @@ void HyperVNetwork::freeRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest) {
 }
 
 UInt32 HyperVNetwork::getNextRNDISTransId() {
-  IOLockLock(rndisLock);
-  UInt32 value = rndisTransId;
-  rndisTransId++;
-  IOLockUnlock(rndisLock);
+  IOLockLock(_rndisLock);
+  UInt32 value = _rndisTransId;
+  _rndisTransId++;
+  IOLockUnlock(_rndisLock);
   return value;
 }
 
@@ -165,12 +165,12 @@ bool HyperVNetwork::sendRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest, bo
   //
   // Add to linked list.
   //
-  IOLockLock(rndisLock);
-  if (rndisRequests == NULL)
-    rndisRequests = rndisRequest;
+  IOLockLock(_rndisLock);
+  if (_rndisRequests == NULL)
+    _rndisRequests = rndisRequest;
   else
-    rndisRequests->next = rndisRequest;
-  IOLockUnlock(rndisLock);
+    _rndisRequests->next = rndisRequest;
+  IOLockUnlock(_rndisLock);
   
   _hvDevice->writeGPADirectSinglePagePacket(&netMsg, sizeof (netMsg), true, &pageBuffer, 1, &netMsg, sizeof (netMsg));
   
@@ -185,7 +185,13 @@ bool HyperVNetwork::sendRNDISRequest(HyperVNetworkRNDISRequest *rndisRequest, bo
   return true;
 }
 
-bool HyperVNetwork::initializeRNDIS() {
+IOReturn HyperVNetwork::initializeRNDIS() {
+  _rndisLock = IOLockAlloc();
+  if (_rndisLock == nullptr) {
+    HVSYSLOG("Failed to initialize RNDIS lock");
+    return kIOReturnNoResources;
+  }
+  
   HyperVNetworkRNDISRequest *rndisRequest = allocateRNDISRequest();
   rndisRequest->message.header.type   = kHyperVNetworkRNDISMessageTypeInit;
   rndisRequest->message.header.length = sizeof (HyperVNetworkRNDISMessageInitializeRequest) + 8;
@@ -205,7 +211,7 @@ bool HyperVNetwork::initializeRNDIS() {
   }
   
   freeRNDISRequest(rndisRequest);
-  return result;
+  return result ? kIOReturnSuccess : kIOReturnIOError;
 }
 
 IOReturn HyperVNetwork::getRNDISOID(HyperVNetworkRNDISOID oid, void *value, UInt32 *valueSize) {
