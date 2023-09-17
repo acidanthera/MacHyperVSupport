@@ -86,37 +86,50 @@ bool HyperVPCIBridge::configure(IOService *provider) {
 }
 
 UInt32 HyperVPCIBridge::configRead32(IOPCIAddressSpace space, UInt8 offset) {
-  HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
-  
+  UInt32 offset32 = offset | (space.es.registerNumExtended << 8);
+  HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset32);
+
   if (space.es.deviceNum != 0 || space.es.functionNum != 0) {
     return 0xFFFFFFFF;
   }
-  
-  return readPCIConfig(offset, sizeof (UInt32));
+
+  //
+  // Perform 32-bit extended read.
+  //
+  return readPCIConfig(offset32, sizeof (UInt32));
 }
 
 void HyperVPCIBridge::configWrite32(IOPCIAddressSpace space, UInt8 offset, UInt32 data) {
-  HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
-  
+  UInt32 offset32 = offset | (space.es.registerNumExtended << 8);
+  HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset32);
+
   if (space.es.deviceNum != 0 || space.es.functionNum != 0) {
     return;
   }
-  
-  writePCIConfig(offset, sizeof (UInt32), data);
+
+  //
+  // Perform 32-bit extended write.
+  //
+  writePCIConfig(offset32, sizeof (UInt32), data);
 }
 
 UInt16 HyperVPCIBridge::configRead16(IOPCIAddressSpace space, UInt8 offset) {
-  HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
-  
+  UInt32 offset32 = offset | (space.es.registerNumExtended << 8);
+  HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset32);
+
   if (space.es.deviceNum != 0 || space.es.functionNum != 0) {
     return 0xFFFF;
   }
-  
-  return (UInt16)readPCIConfig(offset, sizeof (UInt16));
+
+  //
+  // Perform 16-bit extended read.
+  //
+  return (UInt16)readPCIConfig(offset32, sizeof (UInt16));
 }
 
 void HyperVPCIBridge::configWrite16(IOPCIAddressSpace space, UInt8 offset, UInt16 data) {
-  HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
+  UInt32 offset32 = offset | (space.es.registerNumExtended << 8);
+  HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset32);
   
   if (space.es.deviceNum != 0 || space.es.functionNum != 0) {
     return;
@@ -126,7 +139,7 @@ void HyperVPCIBridge::configWrite16(IOPCIAddressSpace space, UInt8 offset, UInt1
   // Hook writes to MSI or MSI-X control register.
   // This is the final step in configuring interrupts by IOPCIFamily.
   //
-  if (!interruptConfigured && offset == msiCap + 0x2 && data & 0x1) {
+  if (!interruptConfigured && offset32 == msiCap + 0x2 && data & 0x1) {
     HVDBGLOG("Original value: 0x%X", data);
     
     if (isMsiX) {
@@ -163,28 +176,39 @@ void HyperVPCIBridge::configWrite16(IOPCIAddressSpace space, UInt8 offset, UInt1
       interruptConfigured = true;
     }
   } else {
-    writePCIConfig(offset, sizeof (UInt16), data);
+    //
+    // Perform 16-bit extended write.
+    //
+    writePCIConfig(offset32, sizeof (UInt16), data);
   }
 }
 
 UInt8 HyperVPCIBridge::configRead8(IOPCIAddressSpace space, UInt8 offset) {
-  HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
-  
+  UInt32 offset32 = offset | (space.es.registerNumExtended << 8);
+  HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset32);
+
   if (space.es.deviceNum != 0 || space.es.functionNum != 0) {
     return 0xFF;
   }
-  
-  return (UInt8)readPCIConfig(offset, sizeof (UInt8));
+
+  //
+  // Perform 8-bit extended read.
+  //
+  return (UInt8)readPCIConfig(offset32, sizeof (UInt8));
 }
 
 void HyperVPCIBridge::configWrite8(IOPCIAddressSpace space, UInt8 offset, UInt8 data) {
-  HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset);
-  
+  UInt32 offset32 = offset | (space.es.registerNumExtended << 8);
+  HVDBGLOG("Bus: %u, device: %u, function: %u, offset %X", space.es.busNum, space.es.deviceNum, space.es.functionNum, offset32);
+
   if (space.es.deviceNum != 0 || space.es.functionNum != 0) {
     return;
   }
-  
-  writePCIConfig(offset, sizeof (UInt8), data);
+
+  //
+  // Perform 8-bit extended write.
+  //
+  writePCIConfig(offset32, sizeof (UInt8), data);
 }
 
 bool HyperVPCIBridge::publishNub(IOPCIDevice *nub, UInt32 index) {

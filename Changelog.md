@@ -1,5 +1,8 @@
 MacHyperVSupport Changelog
 ============================
+#### v0.9.6
+- Fixed extended registers not being correctly read/written
+
 #### v0.9.5
 - Fixed no packets being received on certain older versions of Hyper-V
 - Added support for promiscuous mode
