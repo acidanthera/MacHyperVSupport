@@ -8,6 +8,7 @@
 #include "HyperVVMBus.hpp"
 
 #include "HyperVVMBusDevice.hpp"
+#include <IOKit/IODeviceTreeSupport.h>
 
 OSDefineMetaClassAndStructors(HyperVVMBus, super);
 
@@ -448,6 +449,12 @@ bool HyperVVMBus::registerVMBusDevice(VMBusChannel *channel) {
     return false;
   }
 
+  result = childDevice->attachToParent(hvController->getProvider(), gIODTPlane);
+  if (!result) {
+    HVSYSLOG("Failed to attach to IODT");
+    childDevice->release();
+    return false;
+  }
   childDevice->registerService();
   channel->deviceNub = childDevice;
 
