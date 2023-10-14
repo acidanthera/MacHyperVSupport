@@ -50,7 +50,10 @@ bool HyperVNetwork::start(IOService *provider) {
     //
     // Install packet handlers.
     //
-    status = _hvDevice->installPacketActions(this, OSMemberFunctionCast(HyperVVMBusDevice::PacketReadyAction, this, &HyperVNetwork::handlePacket), OSMemberFunctionCast(HyperVVMBusDevice::WakePacketAction, this, &HyperVNetwork::wakePacketHandler), kHyperVNetworkReceivePacketSize);
+    status = _hvDevice->installPacketActions(this,
+                                             OSMemberFunctionCast(HyperVVMBusDevice::PacketReadyAction, this, &HyperVNetwork::handlePacket),
+                                             OSMemberFunctionCast(HyperVVMBusDevice::WakePacketAction, this, &HyperVNetwork::wakePacketHandler),
+                                             kHyperVNetworkReceivePacketSize);
     if (status != kIOReturnSuccess) {
       HVSYSLOG("Failed to install packet handlers with status 0x%X", status);
       break;

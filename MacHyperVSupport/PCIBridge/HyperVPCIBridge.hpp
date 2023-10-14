@@ -12,6 +12,7 @@
 
 #include "HyperVVMBusDevice.hpp"
 #include "HyperVPCIBridgeRegs.hpp"
+#include "HyperVPCIRoot.hpp"
 
 #include "HyperVModuleDevice.hpp"
 
@@ -22,40 +23,44 @@ class HyperVPCIBridge : public HV_PCIBRIDGE_CLASS {
   
 private:
   //
-  // Parent VMBus device.
+  // Parent VMBus device and PCI state.
   //
-  HyperVVMBusDevice       *_hvDevice         = nullptr;
-  IOInterruptEventSource  *interruptSource  = nullptr;
-  IOSimpleLock      *pciLock;
+  HyperVVMBusDevice       *_hvDevice    = nullptr;
+  HyperVPCIRoot           *_hvPCIRoot   = nullptr;
+  UInt8                   _pciBusNumber = 0;
+  IOSimpleLock            *_pciLock     = nullptr;
   
   HyperVPCIBridgeProtocolVersion  currentPciVersion;
   
-  HyperVModuleDevice  *hvModuleDevice;
-  IORangeScalar       pciConfigSpace;
-  IOMemoryDescriptor  *pciConfigMemoryDescriptor;
-  IOMemoryMap         *pciConfigMemoryMap;
-  UInt32              msiCap;
-  bool                isMsiX = false;
-  bool                interruptConfigured = false;
+  //
+  // MMIO.
+  //
+  HyperVModuleDevice  *_hvModuleDevice              = nullptr;
+  IORangeScalar       _pciConfigSpace               = 0;
+  IOMemoryDescriptor  *_pciConfigMemoryDescriptor   = nullptr;
+  IOMemoryMap         *_pciConfigMemoryMap          = nullptr;
+  UInt64              _bars[kHyperVPCIBarCount]     = { };
+  UInt64              _barSizes[kHyperVPCIBarCount] = { };
 
-  
-  UInt32                        pciFunctionCount = 0;
-  HyperVPCIFunctionDescription  *pciFunctions = nullptr;
-  
-  UInt64              bars[kHyperVPCIBarCount];
-  UInt64              barSizes[kHyperVPCIBarCount];
-  
-  void handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count);
+  UInt32                        _pciFunctionsCount = 0;
+  HyperVPCIFunctionDescription  *_pciFunctions     = nullptr;
+
+  bool wakePacketHandler(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
+  void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
   void handleIncomingPCIMessage(HyperVPCIBridgeIncomingMessageHeader *pciMsgHeader, UInt32 msgSize);
-  
-  bool negotiateProtocolVersion();
-  bool queryBusRelations();
-  bool allocatePCIConfigWindow();
-  bool enterPCID0();
-  bool queryResourceRequirements();
-  bool sendResourcesAllocated(UInt32 slot);
+
+  IOReturn connectPCIBus();
+  IOReturn negotiateProtocolVersion();
+  IOReturn allocatePCIConfigWindow();
+  IOReturn queryBusRelations();
+  IOReturn enterPCID0();
+  IOReturn queryResourceRequirements();
+  IOReturn sendResourcesAssigned(UInt32 slot);
   
   inline UInt64 getBarSize(UInt64 barValue) {
+    if (barValue < UINT32_MAX) {
+      barValue |= 0xFFFFFFFF00000000;
+    }
     return roundup((1 + ~(barValue & kHyperVPCIBarMemoryMask)), PAGE_SIZE);
   }
   
@@ -66,12 +71,14 @@ public:
   //
   // IOService overrides.
   //
-  virtual bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
-  
+  bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
+  IOReturn callPlatformFunction(const OSSymbol *functionName, bool waitForFunction,
+                                void *param1, void *param2, void *param3, void *param4) APPLE_KEXT_OVERRIDE;
+
   //
   // IOPCIBridge overrides.
   //
-  virtual bool configure(IOService *provider) APPLE_KEXT_OVERRIDE;
+  bool configure(IOService *provider) APPLE_KEXT_OVERRIDE;
   IODeviceMemory *ioDeviceMemory() APPLE_KEXT_OVERRIDE { HVDBGLOG("start"); return NULL; }
   UInt32 configRead32(IOPCIAddressSpace space, UInt8 offset) APPLE_KEXT_OVERRIDE;
   void configWrite32(IOPCIAddressSpace space, UInt8 offset, UInt32 data) APPLE_KEXT_OVERRIDE;
@@ -88,15 +95,13 @@ public:
 
   UInt8 firstBusNum() APPLE_KEXT_OVERRIDE {
     HVDBGLOG("start");
-    return 0xAA;
+    return _pciBusNumber;
   }
   
   UInt8 lastBusNum() APPLE_KEXT_OVERRIDE {
     HVDBGLOG("start");
-    return 0xAA;
+    return _pciBusNumber;
   }
-  
-  virtual bool publishNub(IOPCIDevice *nub, UInt32 index) APPLE_KEXT_OVERRIDE;
 };
 
 #endif

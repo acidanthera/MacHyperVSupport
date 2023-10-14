@@ -9,6 +9,7 @@
 #define HyperVPCIBridgeRegs_h
 
 #define kHyperVPCIBridgeRingBufferSize  (4 * PAGE_SIZE)
+#define kHyperVPCIBridgeResponsePacketSize 256
 
 // First page selects the function, second page is PCI config space of selected function.
 #define kHyperVPCIBridgeWindowSize      (2 * PAGE_SIZE)
@@ -144,7 +145,6 @@ typedef struct __attribute__((packed))  {
 //
 // Message header.
 typedef struct __attribute__((packed)) {
-  VMBusPacketHeader           pktHeader;
   HyperVPCIBridgeMessageType  type;
 } HyperVPCIBridgeIncomingMessageHeader;
 

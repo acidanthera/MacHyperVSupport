@@ -15,13 +15,13 @@ class HyperVPCIProvider : public IOACPIPlatformDevice {
   OSDeclareDefaultStructors(HyperVPCIProvider);
   HVDeclareLogFunctions("pcip");
   typedef IOACPIPlatformDevice super;
-  
+
 public:
   //
   // IOService overrides.
   //
-  virtual IOService *probe(IOService *provider, SInt32 *score) APPLE_KEXT_OVERRIDE;
-  virtual bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
+  IOService *probe(IOService *provider, SInt32 *score) APPLE_KEXT_OVERRIDE;
+  bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
 };
 
 #endif

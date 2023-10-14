@@ -6,7 +6,6 @@
 //
 
 #include "HyperVPCIRoot.hpp"
-#include <architecture/i386/pio.h>
 #include <IOKit/acpi/IOACPIPlatformDevice.h>
 
 #include "AppleACPIRange.hpp"
@@ -21,46 +20,6 @@ inline bool HyperVPCIRoot::setConfigSpace(IOPCIAddressSpace space, UInt8 offset)
   outl(0xCF8, pciCycle);
   return true;
 }
-
-bool HyperVPCIRoot::registerChildPCIBridge(IOPCIBridge *pciBridge) {
-  //
-  // Locate root PCI bus instance.
-  //
-  OSDictionary *pciMatching = IOService::serviceMatching("HyperVPCIRoot");
-  if (pciMatching == NULL) {
-    //HVSYSLOG("Failed to create HyperVPCIRoot matching dictionary");
-    return false;
-  }
-  
-  OSIterator *pciIterator = IOService::getMatchingServices(pciMatching);
-  if (pciIterator == NULL) {
-    //HVSYSLOG("Failed to create HyperVPCIRoot matching iterator");
-    return false;
-  }
-  
-  pciIterator->reset();
-  HyperVPCIRoot *pciInstance = OSDynamicCast(HyperVPCIRoot, pciIterator->getNextObject());
-  pciIterator->release();
-  
-  if (pciInstance == NULL) {
-   // HVSYSLOG("Failed to locate HyperVPCIRoot instance");
-    return false;
-  }
-  
-  UInt8 busNum = pciBridge->firstBusNum();
-  if (busNum != pciBridge->lastBusNum()) {
-    return false;
-  }
-  
-  if (pciInstance->pciBridges[busNum] != NULL) {
-    return false;
-  }
-  
-  //HVDBGLOG("Bus %u registered", busNum);
-  pciInstance->pciBridges[busNum] = pciBridge;
-  return true;
-}
-
 bool HyperVPCIRoot::start(IOService *provider) {
   HVCheckDebugArgs();
   pciLock = IOSimpleLockAlloc();
@@ -217,4 +176,46 @@ void HyperVPCIRoot::configWrite8(IOPCIAddressSpace space, UInt8 offset, UInt8 da
   }
   
   IOSimpleLockUnlockEnableInterrupt(pciLock, ints);
+}
+
+HyperVPCIRoot* HyperVPCIRoot::getPCIRootInstance() {
+  //
+  // Locate root PCI bus instance.
+  //
+  OSDictionary *pciMatching = IOService::serviceMatching("HyperVPCIRoot");
+  if (pciMatching == nullptr) {
+    return nullptr;
+  }
+  OSIterator *pciIterator = IOService::getMatchingServices(pciMatching);
+  if (pciIterator == nullptr) {
+    return nullptr;
+  }
+
+  pciIterator->reset();
+  HyperVPCIRoot *pciInstance = OSDynamicCast(HyperVPCIRoot, pciIterator->getNextObject());
+  pciIterator->release();
+
+  return pciInstance;
+}
+
+IOReturn HyperVPCIRoot::registerChildPCIBridge(IOPCIBridge *pciBridge, UInt8 *busNumber) {
+  IOInterruptState ints = IOSimpleLockLockDisableInterrupt(pciLock);
+  
+  //
+  // Find free bus number.
+  //
+  for (UInt8 busIndex = 0x10; busIndex <= 0xFE; busIndex++) {
+    if (pciBridges[busIndex] == nullptr) {
+      pciBridges[busIndex] = pciBridge;
+      *busNumber = busIndex;
+
+      IOSimpleLockUnlockEnableInterrupt(pciLock, ints);
+      HVDBGLOG("PCI bus %u registered", busIndex);
+      return kIOReturnSuccess;
+    }
+  }
+  IOSimpleLockUnlockEnableInterrupt(pciLock, ints);
+
+  HVSYSLOG("No more free PCI bus numbers available");
+  return kIOReturnNoResources;
 }

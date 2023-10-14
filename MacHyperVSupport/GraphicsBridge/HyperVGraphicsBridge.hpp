@@ -11,6 +11,7 @@
 #include <IOKit/pci/IOPCIBridge.h>
 #include "HyperVVMBusDevice.hpp"
 #include "HyperVGraphicsBridgeRegs.hpp"
+#include "HyperVPCIRoot.hpp"
 
 class HyperVGraphicsBridge : public HV_PCIBRIDGE_CLASS {
   OSDeclareDefaultStructors(HyperVGraphicsBridge);
@@ -18,8 +19,10 @@ class HyperVGraphicsBridge : public HV_PCIBRIDGE_CLASS {
   typedef HV_PCIBRIDGE_CLASS super;
 
 private:
-  HyperVVMBusDevice *_hvDevice;
+  HyperVVMBusDevice *_hvDevice  = nullptr;
+  HyperVPCIRoot     *_hvPCIRoot = nullptr;
   VMBusVersion      _currentGraphicsVersion = { };
+  UInt8             _pciBusNumber = 0;
 
   //
   // Fake PCI structures.
@@ -62,12 +65,12 @@ public:
 
   UInt8 firstBusNum() APPLE_KEXT_OVERRIDE {
     HVDBGLOG("start");
-    return kHyperVPCIBusSyntheticGraphics;
+    return _pciBusNumber;
   }
 
   UInt8 lastBusNum() APPLE_KEXT_OVERRIDE {
     HVDBGLOG("start");
-    return kHyperVPCIBusSyntheticGraphics;
+    return _pciBusNumber;
   }
 };
 

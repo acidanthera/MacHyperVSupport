@@ -11,56 +11,24 @@ static HyperVPCIBridgeProtocolVersion usableVersions[] = {
   kHyperVPCIBridgeProtocolVersion1
 };
 
-void HyperVPCIBridge::handleInterrupt(OSObject *owner, IOInterruptEventSource *sender, int count) {
-  HVDBGLOG("interrupt");
-  VMBusPacketType type;
-  UInt32 headersize;
-  UInt32 totalsize;
-  
-  void *responseBuffer;
-  UInt32 responseLength;
-  
-  //HyperVNetworkMessage *pktComp;
-  
-  while (true) {
-    if (!_hvDevice->nextPacketAvailable(&type, &headersize, &totalsize)) {
-      HVDBGLOG("last one");
+bool HyperVPCIBridge::wakePacketHandler(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
+  return pktHeader->type == kVMBusPacketTypeCompletion;
+}
+
+void HyperVPCIBridge::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
+  //
+  // Handle inbound packet.
+  //
+  HVDBGLOG("Incoming packet type %u", pktHeader->type);
+  switch (pktHeader->type) {
+    case kVMBusPacketTypeDataInband:
+      handleIncomingPCIMessage((HyperVPCIBridgeIncomingMessageHeader*)pktData, pktDataLength);
+      _hvDevice->wakeTransaction(0);
       break;
-    }
-    
-    UInt8 *buf = (UInt8*)IOMalloc(totalsize);
-    _hvDevice->readRawPacket((void*)buf, totalsize);
-    HVDBGLOG("got pkt %u %u", type, totalsize);
-    
-    switch (type) {
-      case kVMBusPacketTypeDataInband:
-        handleIncomingPCIMessage((HyperVPCIBridgeIncomingMessageHeader*)buf, totalsize);
-        
-        _hvDevice->wakeTransaction(0);
-        break;
-     // case kVMBusPacketTypeDataUsingTransferPages:
-       // handleRNDISRanges((VMBusPacketTransferPages*) buf, headersize, totalsize);
-       // break;
-        
-      case kVMBusPacketTypeCompletion:
-        
-        if (_hvDevice->getPendingTransaction(((VMBusPacketHeader*)buf)->transactionId, &responseBuffer, &responseLength)) {
-          memcpy(responseBuffer, (UInt8*)buf + headersize, responseLength);
-          _hvDevice->wakeTransaction(((VMBusPacketHeader*)buf)->transactionId);
-        } else {
-          //pktComp = (HyperVNetworkMessage*) (buf + headersize);
-        //  HVDBGLOG("pkt completion status %X %X", pktComp->messageType, pktComp->v1.sendRNDISPacketComplete.status);
-          
-        ///  if (pktComp->messageType == kHyperVNetworkMessageTypeV1SendRNDISPacketComplete) {
-        //    releaseSendIndex((UInt32)(((VMBusPacketHeader*)buf)->transactionId & ~kHyperVNetworkSendTransIdBits));
-        //  }
-        }
-        break;
-      default:
-        break;
-    }
-    
-    IOFree(buf, totalsize);
+
+    default:
+      HVSYSLOG("Invalid packet type %X", pktHeader->type);
+      break;
   }
 }
 
@@ -87,26 +55,16 @@ void HyperVPCIBridge::handleIncomingPCIMessage(HyperVPCIBridgeIncomingMessageHea
       //
       // Store function list for later use.
       //
-      if (pciFunctions != nullptr) {
-        IOFree(pciFunctions, pciFunctionCount * sizeof (HyperVPCIFunctionDescription));
-        pciFunctions = nullptr;
-        pciFunctionCount = 0;
+      if (_pciFunctions != nullptr) {
+        IOFree(_pciFunctions, _pciFunctionsCount * sizeof (HyperVPCIFunctionDescription));
+        _pciFunctions = nullptr;
+        _pciFunctionsCount = 0;
       }
       
-      pciFunctionCount = busRelations->functionCount;
-      pciFunctions = (HyperVPCIFunctionDescription*) IOMalloc(pciFunctionCount * sizeof (HyperVPCIFunctionDescription));
-      for (int i = 0; i < pciFunctionCount; i++) {
-        memcpy(&pciFunctions[i], &busRelations->functions[i], sizeof (HyperVPCIFunctionDescription));
-      }
-      
-      if (debugEnabled) {
-        HVDBGLOG("Found %u functions", pciFunctionCount);
-        for (int i = 0; i < pciFunctionCount; i++) {
-          HVDBGLOG("Function %u with ID %04X:%04X:", i, pciFunctions[i].vendorId, pciFunctions[i].deviceId);
-          HVDBGLOG("  Subsystem ID %04X:%04X, Revision 0x%X", pciFunctions[i].subVendorId, pciFunctions[i].subDeviceId, pciFunctions[i].revision);
-          HVDBGLOG("  Class 0x%X, Subclass 0x%X, Prog int 0x%X", pciFunctions[i].baseClass, pciFunctions[i].subClass, pciFunctions[i].progInterface);
-          HVDBGLOG("  Slot 0x%X, Serial 0x%X", pciFunctions[i].slot.slot, pciFunctions[i].serialNumber);
-        }
+      _pciFunctionsCount = busRelations->functionCount;
+      _pciFunctions = (HyperVPCIFunctionDescription*) IOMalloc(_pciFunctionsCount * sizeof (HyperVPCIFunctionDescription));
+      for (int i = 0; i < _pciFunctionsCount; i++) {
+        memcpy(&_pciFunctions[i], &busRelations->functions[i], sizeof (HyperVPCIFunctionDescription));
       }
       break;
       
@@ -115,164 +73,270 @@ void HyperVPCIBridge::handleIncomingPCIMessage(HyperVPCIBridgeIncomingMessageHea
   }
 }
 
-bool HyperVPCIBridge::negotiateProtocolVersion() {
+IOReturn HyperVPCIBridge::connectPCIBus() {
+  IOReturn status;
+
+  status = negotiateProtocolVersion();
+  if (status != kIOReturnSuccess) {
+    return status;
+  }
+  status = allocatePCIConfigWindow();
+  if (status != kIOReturnSuccess) {
+    return status;
+  }
+  status = queryBusRelations();
+  if (status != kIOReturnSuccess) {
+    return status;
+  }
+  status = enterPCID0();
+  if (status != kIOReturnSuccess) {
+    return status;
+  }
+  status = queryResourceRequirements();
+  if (status != kIOReturnSuccess) {
+    return status;
+  }
+  status = sendResourcesAssigned(0);
+  if (status != kIOReturnSuccess) {
+    return status;
+  }
+
+  return status;
+}
+
+IOReturn HyperVPCIBridge::negotiateProtocolVersion() {
   HyperVPCIBridgeMessageProtocolVersionRequest pktVersion;
   pktVersion.header.type = kHyperVPCIBridgeMessageTypeQueryProtocolVersion;
-  
+
   // Attempt to find newest version host can support.
   for (int i = 0; i < arrsize(usableVersions); i++) {
     pktVersion.version = usableVersions[i];
     HVDBGLOG("Attempting to use version 0x%X", pktVersion.version);
-    
+
     UInt32 pciStatus;
     if (_hvDevice->writeInbandPacket(&pktVersion, sizeof (pktVersion), true, &pciStatus, sizeof (pciStatus)) != kIOReturnSuccess) {
-      return false;
+      return kIOReturnUnsupported;
     }
     HVDBGLOG("PCI return status is 0x%X", pciStatus);
     if (pciStatus == 0) {
       // Version is acceptable.
       currentPciVersion = pktVersion.version;
       HVDBGLOG("Using version 0x%X", currentPciVersion);
-      return true;
+      return kIOReturnSuccess;
     }
   }
-  
-  return false;
+
+  return kIOReturnUnsupported;
 }
 
-bool HyperVPCIBridge::queryBusRelations() {
-  // Ask host to send list of PCI functions.
-  HyperVPCIBridgeMessageHeader pktQueryRelations;
-  pktQueryRelations.type = kHyperVPCIBridgeMessageTypeQueryBusRelations;
-  if (_hvDevice->writeInbandPacket(&pktQueryRelations, sizeof (pktQueryRelations), false) != kIOReturnSuccess) {
-    return false;
-  }
-  
-  // Response is not in the form of a normal completion, we'll
-  // need to wait for an inband bus relations packet instead.
-  _hvDevice->sleepThreadZero();
-  return pciFunctionCount != 0;
-}
-
-bool HyperVPCIBridge::allocatePCIConfigWindow() {
+IOReturn HyperVPCIBridge::allocatePCIConfigWindow() {
+  //
   // Get HyperVModuleDevice instance used for allocating MMIO regions for Hyper-V.
+  //
   OSDictionary *vmodMatching = IOService::serviceMatching("HyperVModuleDevice");
-  if (vmodMatching == NULL) {
+  if (vmodMatching == nullptr) {
     HVSYSLOG("Failed to create HyperVModuleDevice matching dictionary");
-    return false;
+    return kIOReturnNotFound;
   }
-  
+
   HVDBGLOG("Waiting for HyperVModuleDevice");
 #if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
   IOService *vmodService = IOService::waitForService(vmodMatching);
-  if (vmodService != NULL) {
+  if (vmodService != nullptr) {
     vmodService->retain();
   }
 #else
   IOService *vmodService = waitForMatchingService(vmodMatching);
   vmodMatching->release();
 #endif
-  
-  if (vmodService == NULL) {
+
+  if (vmodService == nullptr) {
     HVSYSLOG("Failed to locate HyperVModuleDevice");
-    return false;
+    return kIOReturnNotFound;
   }
-  
   HVDBGLOG("Got instance of HyperVModuleDevice");
-  hvModuleDevice = OSDynamicCast(HyperVModuleDevice, vmodService);
-  
-  // Allocate PCI config window.
-  pciConfigSpace = hvModuleDevice->allocateRange(kHyperVPCIBridgeWindowSize, PAGE_SIZE, true);
-  pciConfigMemoryDescriptor = IOMemoryDescriptor::withPhysicalAddress(pciConfigSpace, kHyperVPCIBridgeWindowSize, static_cast<IODirection>(kIOMemoryDirectionInOut));
-  pciConfigMemoryMap = pciConfigMemoryDescriptor->map();
-  HVDBGLOG("PCI config window located @ phys 0x%llX", pciConfigSpace);
-  
-  return true;
+  _hvModuleDevice = OSDynamicCast(HyperVModuleDevice, vmodService);
+
+  //
+  // Allocate PCI config window. TODO: handle lack of high MMIO space.
+  //
+  _pciConfigSpace = _hvModuleDevice->allocateRange(kHyperVPCIBridgeWindowSize, PAGE_SIZE, true);
+  if (_pciConfigSpace == 0) {
+    HVSYSLOG("Could not allocate range for PCI config window");
+    return kIOReturnNoResources;
+  }
+
+  _pciConfigMemoryDescriptor = IOMemoryDescriptor::withPhysicalAddress(_pciConfigSpace, kHyperVPCIBridgeWindowSize,
+                                                                       static_cast<IODirection>(kIOMemoryDirectionInOut));
+  if (_pciConfigMemoryDescriptor == nullptr) {
+    HVSYSLOG("Could not create descriptor for PCI config window");
+    return kIOReturnNoResources;
+  }
+
+  _pciConfigMemoryMap = _pciConfigMemoryDescriptor->map();
+  if (_pciConfigMemoryMap == nullptr) {
+    HVSYSLOG("Could not map PCI config window");
+    return kIOReturnNoResources;
+  }
+
+  HVDBGLOG("PCI config window located @ phys 0x%llX", _pciConfigSpace);
+  return kIOReturnSuccess;
 }
 
-bool HyperVPCIBridge::enterPCID0() {
+IOReturn HyperVPCIBridge::queryBusRelations() {
+  IOReturn status;
+
+  //
+  // Get list of functions from Hyper-V.
+  //
+  HyperVPCIBridgeMessageHeader pktQueryRelations;
+  pktQueryRelations.type = kHyperVPCIBridgeMessageTypeQueryBusRelations;
+  status = _hvDevice->writeInbandPacket(&pktQueryRelations, sizeof (pktQueryRelations), false);
+  if (status != kIOReturnSuccess) {
+    return status;
+  }
+  
+  //
+  // Response is not in the form of a normal completion, we'll
+  // need to wait for an inband bus relations packet instead.
+  //
+  _hvDevice->sleepThreadZero();
+  if (_pciFunctionsCount == 0) {
+    HVSYSLOG("Bus does not contain any PCI functions");
+    return kIOReturnUnsupported;
+  }
+
+  if (debugEnabled) {
+    HVDBGLOG("Found %u PCI functions:", _pciFunctionsCount);
+    for (int i = 0; i < _pciFunctionsCount; i++) {
+      HVDBGLOG("Function %u with ID %04X:%04X:", i, _pciFunctions[i].vendorId, _pciFunctions[i].deviceId);
+      HVDBGLOG("Subsystem ID %04X:%04X, Revision 0x%X", _pciFunctions[i].subVendorId, _pciFunctions[i].subDeviceId, _pciFunctions[i].revision);
+      HVDBGLOG("Class 0x%X, Subclass 0x%X, Prog int 0x%X", _pciFunctions[i].baseClass, _pciFunctions[i].subClass, _pciFunctions[i].progInterface);
+      HVDBGLOG("Slot 0x%X, Serial 0x%X", _pciFunctions[i].slot.slot, _pciFunctions[i].serialNumber);
+    }
+  }
+  return kIOReturnSuccess;
+}
+
+IOReturn HyperVPCIBridge::enterPCID0() {
+  IOReturn status;
+  UInt32 pciStatus;
+
+  //
   // Instruct Hyper-V to enable the PCI bridge using the allocated PCI config window.
+  //
   HyperVPCIBridgeMessagePCIBusD0Entry pktD0;
   pktD0.header.type = kHyperVPCIBridgeMessageTypeBusD0Entry;
   pktD0.reserved    = 0;
-  pktD0.mmioBase    = pciConfigSpace;
-  
-  UInt32 pciStatus;
-  if (_hvDevice->writeInbandPacket(&pktD0, sizeof (pktD0), true, &pciStatus, sizeof (pciStatus)) != kIOReturnSuccess) {
-    return false;
+  pktD0.mmioBase    = _pciConfigSpace;
+  status = _hvDevice->writeInbandPacket(&pktD0, sizeof (pktD0), true, &pciStatus, sizeof (pciStatus));
+  if (status != kIOReturnSuccess) {
+    return status;
   }
-  
+
   if (pciStatus != 0) {
     HVSYSLOG("Enter D0 returned error status 0x%X", pciStatus);
-    return false;
+    return kIOReturnIOError;
   }
-  
-  HVDBGLOG("PCI bridge has entered D0 state using config space @ phys 0x%X", pciConfigSpace);
-  return true;
+
+  HVDBGLOG("PCI bridge has entered D0 state using config space @ phys 0x%X", _pciConfigSpace);
+  return kIOReturnSuccess;
 }
 
-bool HyperVPCIBridge::queryResourceRequirements() {
+IOReturn HyperVPCIBridge::queryResourceRequirements() {
+  IOReturn status;
+
+  //
+  // Query resource requirements from Hyper-V.
+  //
   HyperVPCIBridgeChildMessage pktChild;
   pktChild.header.type = kHyperVPCIBridgeMessageTypeQueryResourceRequirements;
   pktChild.slot.slot = 0; // TODO: Variable slots
   
   HyperVPCIBridgeQueryResourceRequirementsResponse pktReqResponse;
-  
-  if (_hvDevice->writeInbandPacket(&pktChild, sizeof (pktChild), true, &pktReqResponse, sizeof (pktReqResponse)) != kIOReturnSuccess) {
-    return false;
+  status = _hvDevice->writeInbandPacket(&pktChild, sizeof (pktChild), true, &pktReqResponse, sizeof (pktReqResponse));
+  if (status != kIOReturnSuccess) {
+    return status;
   }
-  
-  memset(bars, 0, sizeof (bars));
-  memset(barSizes, 0, sizeof (barSizes));
-  
-  HVDBGLOG("Got resource request status %u", pktReqResponse.status);
-  HVDBGLOG("BAR requirements:");
+
+  //
+  // Allocate and set BARs for PCI device.
+  //
+  memset(_bars, 0, sizeof (_bars));
+  memset(_barSizes, 0, sizeof (_barSizes));
+  status = kIOReturnSuccess;
+
+  HVDBGLOG("Got resource requirements with status %u", pktReqResponse.status);
   for (int i = 0; i < kHyperVPCIBarCount; i++) {
-    if (pktReqResponse.probedBARs[i] != 0) {
-      UInt64 barVal = pktReqResponse.probedBARs[i];
-      
-      // Is this BAR 64-bit?
-      // If so the next BAR is the high 32 bits, and this one is the low 32 bits.
-      bool isBar64Bit = barVal & kHyperVPCIBarMemoryType64Bit;
-      if (isBar64Bit) {
-        barVal |= ((UInt64)pktReqResponse.probedBARs[i+1] << 32);
-      } else {
-        barVal |= 0xFFFFFFFF00000000;
-      }
-      HVDBGLOG("BAR%u: 0x%llX", i, barVal);
-      
-      // Determine BAR size and allocate it.
-      barSizes[i] = getBarSize(barVal);
-      HVDBGLOG("%u-bit BAR requires 0x%llX bytes", isBar64Bit ? 64 : 32, barSizes[i]);
-      bars[i] = hvModuleDevice->allocateRange(barSizes[i], barSizes[i], isBar64Bit);
-      
-      // Write BAR to device.
-      writePCIConfig(kIOPCIConfigBaseAddress0 + (i * sizeof (UInt32)), sizeof (UInt32), (UInt32)bars[i]);
-      if (isBar64Bit) {
-        writePCIConfig(kIOPCIConfigBaseAddress0 + ((i + 1) * sizeof (UInt32)), sizeof (UInt32), (UInt32)(bars[i] >> 32));
-      }
-      
-      HVDBGLOG("Wrote BAR @ phys 0x%llX", bars[i]);
-      HVDBGLOG("BAR%u is now 0x%X", i, readPCIConfig(kIOPCIConfigBaseAddress0 + (i * sizeof (UInt32)), sizeof (UInt32)));
-      if (isBar64Bit) {
-        HVDBGLOG("BAR%u is now 0x%X (high 32 bits)", i + 1, readPCIConfig(kIOPCIConfigBaseAddress0 + ((i + 1) * sizeof (UInt32)), sizeof (UInt32)));
-      }
-      
-      HVDBGLOG("Old command reg %X", readPCIConfig(kIOPCIConfigCommand, sizeof (UInt16)));
-      writePCIConfig(kIOPCIConfigCommand, 2, readPCIConfig(kIOPCIConfigCommand, sizeof (UInt16)) | kIOPCICommandMemorySpace);
-      HVDBGLOG("New command reg %X", readPCIConfig(kIOPCIConfigCommand, sizeof (UInt16)));
-      
-      // 64-bit BARs take two 32-bit BAR slots, so skip over the next one.
-      if (isBar64Bit) {
-        i++;
-      }
+    UInt64 barVal = pktReqResponse.probedBARs[i];
+
+    //
+    // Skip inactive BARs.
+    //
+    if (barVal == 0) {
+      HVDBGLOG("BAR%u is zero", i);
+      continue;
+    }
+
+    //
+    // Abort on any I/O BARs found as these cannot be supported.
+    //
+    if (barVal & kHyperVPCIBarSpaceIO) {
+      HVSYSLOG("BAR%u is not MMIO, unsupported device", i);
+      status = kIOReturnUnsupported;
+      break;
+    }
+
+    //
+    // Check type of BAR (64-bit or 32-bit).
+    // If 64-bit the next BAR is the high 32 bits, and this one is the low 32 bits.
+    //
+    bool isBar64Bit = barVal & kHyperVPCIBarMemoryType64Bit;
+    if (isBar64Bit) {
+      barVal |= ((UInt64)pktReqResponse.probedBARs[i + 1] << 32);
+    }
+    HVDBGLOG("BAR%u is %u-bit with initial value 0x%llX", i, isBar64Bit ? 64 : 32, barVal);
+
+    //
+    // Determine size of BAR and allocate it. TODO: Support 64-bit BAR allocation and fix macOS.
+    //
+    _barSizes[i] = getBarSize(barVal);
+    HVDBGLOG("BAR%u requires %llu bytes", i, _barSizes[i]);
+    _bars[i] = _hvModuleDevice->allocateRange(_barSizes[i], _barSizes[i], false);
+    if (_bars[i] == 0) {
+      HVSYSLOG("BAR%u could not be allocated, no more resources", i);
+      status = kIOReturnNoResources;
+      break;
+    }
+    HVDBGLOG("BAR%u will now be located @ phys 0x%llX", i, _bars[i]);
+
+    //
+    // Write new BAR to PCI device.
+    //
+    writePCIConfig(kIOPCIConfigBaseAddress0 + (i * sizeof (UInt32)), sizeof (UInt32), (UInt32)_bars[i]);
+    if (isBar64Bit) {
+      writePCIConfig(kIOPCIConfigBaseAddress0 + ((i + 1) * sizeof (UInt32)), sizeof (UInt32), (UInt32)(_bars[i] >> 32));
+    }
+
+    //
+    // 64-bit BARs take two 32-bit BAR slots, so skip over the next one.
+    //
+    HVDBGLOG("BAR%u is now 0x%X", i, readPCIConfig(kIOPCIConfigBaseAddress0 + (i * sizeof (UInt32)), sizeof (UInt32)));
+    if (isBar64Bit) {
+      i++;
+      HVDBGLOG("BAR%u is now 0x%X (high 32 bits)", i, readPCIConfig(kIOPCIConfigBaseAddress0 + (i * sizeof (UInt32)), sizeof (UInt32)));
     }
   }
-  
-  return true;
+
+  return status;
 }
 
-bool HyperVPCIBridge::sendResourcesAllocated(UInt32 slot) {
+IOReturn HyperVPCIBridge::sendResourcesAssigned(UInt32 slot) {
+  IOReturn status;
+
+  //
+  // Notify host that all required PCI resources have been assigned to the device.
+  //
   HyperVPCIBridgeMessageResourcesAssigned pktRes;
   memset(&pktRes, 0, sizeof (pktRes));
   pktRes.header.type = kHyperVPCIBridgeMessageTypeResourcesAssigned;
@@ -280,85 +344,92 @@ bool HyperVPCIBridge::sendResourcesAllocated(UInt32 slot) {
   
   SInt32  pciStatus;
   
-  if (_hvDevice->writeInbandPacket(&pktRes, sizeof (pktRes), true, &pciStatus, sizeof (pciStatus)) != kIOReturnSuccess) {
-    return false;
+  status = _hvDevice->writeInbandPacket(&pktRes, sizeof (pktRes), true, &pciStatus, sizeof (pciStatus));
+  if (status != kIOReturnSuccess) {
+    return status;
   }
   
   HVDBGLOG("PCI status %X", pciStatus);
   
-  return true;
+  return status;
 }
-
-
 
 UInt32 HyperVPCIBridge::readPCIConfig(UInt32 offset, UInt8 size) {
   UInt32 result;
-  
+
   HVDBGLOG("Reading size %u from offset 0x%X", size, offset);
-  
+
+  //
   // Simulate special registers.
+  //
   if (offset + size <= kIOPCIConfigCommand) {
-    memcpy(&result, ((UInt8*)&pciFunctions[0].vendorId) + offset, size);
+    memcpy(&result, ((UInt8*)&_pciFunctions[0].vendorId) + offset, size);
   } else if (offset >= kIOPCIConfigRevisionID && offset + size <= kIOPCIConfigCacheLineSize) {
-    memcpy(&result, ((UInt8*)&pciFunctions[0].revision) + offset - kIOPCIConfigRevisionID, size);
+    memcpy(&result, ((UInt8*)&_pciFunctions[0].revision) + offset - kIOPCIConfigRevisionID, size);
   } else if (offset >= kIOPCIConfigSubSystemVendorID && offset + size <= kIOPCIConfigExpansionROMBase) {
-    memcpy(&result, ((UInt8*)&pciFunctions[0].subVendorId) + offset - kIOPCIConfigSubSystemVendorID, size);
+    memcpy(&result, ((UInt8*)&_pciFunctions[0].subVendorId) + offset - kIOPCIConfigSubSystemVendorID, size);
   } else if (offset >= kIOPCIConfigExpansionROMBase && offset + size <= kIOPCIConfigCapabilitiesPtr) {
+    //
     // Not implemented.
+    //
     result = 0;
   } else if (offset >= kIOPCIConfigInterruptLine && offset + size <= kIOPCIConfigInterruptPin) {
-    // Not supported.
+    //
+    // Physical interrupt lines are not supported.
+    //
     result = 0;
   } else if (offset + size <= PAGE_SIZE) {
-    volatile UInt8 *pciAddress = (UInt8*)pciConfigMemoryMap->getAddress() + kHyperVPCIConfigPageOffset + offset;
-    
-    IOInterruptState ints = IOSimpleLockLockDisableInterrupt(pciLock);
+    volatile UInt8 *pciAddress = (UInt8*)_pciConfigMemoryMap->getAddress() + kHyperVPCIConfigPageOffset + offset;
+
+    IOInterruptState ints = IOSimpleLockLockDisableInterrupt(_pciLock);
     switch (size) {
       case sizeof (UInt8):
         result = *pciAddress;
         break;
-        
+
       case sizeof (UInt16):
         result = OSReadLittleInt16(pciAddress, 0);
         break;
-        
+
       default:
         result = OSReadLittleInt32(pciAddress, 0);
         break;
     }
-    IOSimpleLockUnlockEnableInterrupt(pciLock, ints);
+    IOSimpleLockUnlockEnableInterrupt(_pciLock, ints);
   } else {
     HVDBGLOG("Attempted to read beyond PCI config space");
-    result = 0xFFFFFFFF;
+    result = -1;
   }
-  
+
   HVDBGLOG("Result = 0x%X", result);
   return result;
 }
 
 void HyperVPCIBridge::writePCIConfig(UInt32 offset, UInt8 size, UInt32 value) {
   if (offset >= kIOPCIConfigSubSystemVendorID && offset + size <= kIOPCIConfigCapabilitiesPtr) {
+    //
     // Read-only sections.
+    //
     HVDBGLOG("Attempted to write value 0x%X to read-only offset 0x%X", value, offset);
   } else if (offset >= kIOPCIConfigCommand && offset + size <= PAGE_SIZE) {
     HVDBGLOG("Writing value 0x%X of size %u to offset 0x%X", value, size, offset);
-    volatile UInt8 *pciAddress = (UInt8*)pciConfigMemoryMap->getAddress() + kHyperVPCIConfigPageOffset + offset;
-    
-    IOInterruptState ints = IOSimpleLockLockDisableInterrupt(pciLock);
+    volatile UInt8 *pciAddress = (UInt8*)_pciConfigMemoryMap->getAddress() + kHyperVPCIConfigPageOffset + offset;
+
+    IOInterruptState ints = IOSimpleLockLockDisableInterrupt(_pciLock);
     switch (size) {
       case sizeof (UInt8):
         *pciAddress = (UInt8)value;
         break;
-        
+
       case sizeof (UInt16):
         OSWriteLittleInt16(pciAddress, 0, (UInt16)value);
         break;
-        
+
       default:
         OSWriteLittleInt32(pciAddress, 0, value);
         break;
     }
-    IOSimpleLockUnlockEnableInterrupt(pciLock, ints);
+    IOSimpleLockUnlockEnableInterrupt(_pciLock, ints);
   } else {
     HVDBGLOG("Attempted to write value 0x%X to out-of-bounds offset 0x%X", value, offset);
   }

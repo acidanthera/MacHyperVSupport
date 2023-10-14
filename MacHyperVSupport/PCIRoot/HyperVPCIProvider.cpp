@@ -12,32 +12,32 @@ OSDefineMetaClassAndStructors(HyperVPCIProvider, super);
 
 IOService* HyperVPCIProvider::probe(IOService *provider, SInt32 *score) {
   IORegistryEntry *pciEntry = IORegistryEntry::fromPath("/PCI0@0", gIODTPlane);
-  if (pciEntry != NULL) {
+  if (pciEntry != nullptr) {
     HVDBGLOG("Existing PCI bus found (Gen1 VM), will not start");
-    
+
     pciEntry->release();
-    return NULL;
+    return nullptr;
   }
-  
+
   return this;
 }
 
 bool HyperVPCIProvider::start(IOService *provider) {
   HVCheckDebugArgs();
-  
+
   //
   // Required by AppleACPIPlatform.
   //
-  if (!super::init(provider, NULL, getPropertyTable())) {
+  if (!super::init(provider, nullptr, getPropertyTable())) {
     HVSYSLOG("Failed to initialize parent provider");
     return false;
   }
-  
+
   if (!super::start(provider)) {
     HVSYSLOG("Failed to start parent provider");
     return false;
   }
-  
+
   registerService();
   HVDBGLOG("Hyper-V PCI provider is now registered");
   return true;
