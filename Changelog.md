@@ -3,6 +3,7 @@ MacHyperVSupport Changelog
 #### v0.9.7
 - Fixed disks on a passed-in PCI device not being usable
 - Improved PCI interrupt handling to support both MSI and MSI-X
+- Added support for device property injection on PCI devices
 
 #### v0.9.6
 - Fixed extended registers not being correctly read/written

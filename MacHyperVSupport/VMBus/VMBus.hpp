@@ -38,6 +38,13 @@
 #define kHyperVGpadlStartHandle   0xE1E10
 
 //
+// 9B17E5A2-0891-42DD-B653-80B5C22809BA
+// GUID for VMBus EFI device path nodes.
+//
+#define VMBUS_EFI_DEVICE_PATH_GUID \
+  { 0x9B17E5A2, 0x0891, 0x42DD, { 0xB6, 0x53, 0x80, 0xB5, 0xC2, 0x28, 0x09, 0xBA } }
+
+//
 // Version structure.
 //
 typedef struct __attribute__((packed)) {

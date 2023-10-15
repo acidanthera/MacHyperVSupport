@@ -264,3 +264,14 @@ void HyperVPCIBridge::configWrite8(IOPCIAddressSpace space, UInt8 offset, UInt8 
   //
   writePCIConfig(offset32, sizeof (UInt8), data);
 }
+
+bool HyperVPCIBridge::initializeNub(IOPCIDevice *nub, OSDictionary *from) {
+  //
+  // Merge any injected properties into device tree.
+  //
+  IOReturn status = mergePropertiesFromDT(nub->getFunctionNumber(), from);
+  if (status != kIOReturnSuccess) {
+    return false;
+  }
+  return super::initializeNub(nub, from);
+}

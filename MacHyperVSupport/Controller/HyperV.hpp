@@ -32,6 +32,22 @@ typedef enum : UInt32 {
 
 #define kHyperVHypercallRetryCount  100
 
+inline void
+guid_unparse(const uuid_t uu, uuid_string_t out) {
+  snprintf(out,
+    sizeof(uuid_string_t),
+    "%02x%02x%02x%02x-"
+    "%02x%02x-"
+    "%02x%02x-"
+    "%02x%02x-"
+    "%02x%02x%02x%02x%02x%02x",
+    uu[3], uu[2], uu[1], uu[0],
+    uu[5], uu[4],
+    uu[7], uu[6],
+    uu[8], uu[9],
+    uu[10], uu[11], uu[12], uu[13], uu[14], uu[15]);
+}
+
 #if DEBUG
 //
 // Debug logging function.

@@ -45,10 +45,16 @@ private:
   UInt32                        _pciFunctionsCount = 0;
   HyperVPCIFunctionDescription  *_pciFunctions     = nullptr;
 
+  //
+  // Packet handling.
+  //
   bool wakePacketHandler(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
   void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
   void handleIncomingPCIMessage(HyperVPCIBridgeIncomingMessageHeader *pciMsgHeader, UInt32 msgSize);
 
+  //
+  // PCI bus setup.
+  //
   IOReturn connectPCIBus();
   IOReturn negotiateProtocolVersion();
   IOReturn allocatePCIConfigWindow();
@@ -56,17 +62,25 @@ private:
   IOReturn enterPCID0();
   IOReturn queryResourceRequirements();
   IOReturn sendResourcesAssigned(UInt32 slot);
-  
+
   inline UInt64 getBarSize(UInt64 barValue) {
     if (barValue < UINT32_MAX) {
       barValue |= 0xFFFFFFFF00000000;
     }
     return roundup((1 + ~(barValue & kHyperVPCIBarMemoryMask)), PAGE_SIZE);
   }
-  
+
+  //
+  // Device properties handling.
+  //
+  IOReturn mergePropertiesFromDT(UInt32 slot, OSDictionary *dict);
+
+  //
+  // PCI config space read/write.
+  //
   UInt32 readPCIConfig(UInt32 offset, UInt8 size);
   void writePCIConfig(UInt32 offset, UInt8 size, UInt32 value);
-  
+
 public:
   //
   // IOService overrides.
@@ -97,11 +111,13 @@ public:
     HVDBGLOG("start");
     return _pciBusNumber;
   }
-  
+
   UInt8 lastBusNum() APPLE_KEXT_OVERRIDE {
     HVDBGLOG("start");
     return _pciBusNumber;
   }
+
+  bool initializeNub(IOPCIDevice *nub, OSDictionary *from) APPLE_KEXT_OVERRIDE;
 };
 
 #endif

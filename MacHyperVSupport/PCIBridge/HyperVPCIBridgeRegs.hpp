@@ -21,6 +21,13 @@
 #define kHyperVPCIBarMemoryMask         ~(0x0FUL)
 
 //
+// 44C4F61D-4444-4400-9D52-802E27EDE19F
+// GUID for PCI bridge EFI device path nodes.
+//
+#define HYPERV_PCI_EFI_DEVICE_PATH_GUID \
+  { 0x44C4F61D, 0x4444, 0x4400, { 0x9D, 0x52, 0x80, 0x2E, 0x27, 0xED, 0xE1, 0x9F } }
+
+//
 // Protocol versions.
 //
 typedef enum : UInt32 {
