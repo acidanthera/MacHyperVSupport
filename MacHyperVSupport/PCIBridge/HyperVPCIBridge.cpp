@@ -271,7 +271,7 @@ bool HyperVPCIBridge::initializeNub(IOPCIDevice *nub, OSDictionary *from) {
   //
   IOReturn status = mergePropertiesFromDT(nub->getFunctionNumber(), from);
   if (status != kIOReturnSuccess) {
-    return false;
+    HVSYSLOG("Failed to merge device properties");
   }
   return super::initializeNub(nub, from);
 }
