@@ -9,8 +9,6 @@
 
 OSDefineMetaClassAndStructors(HyperVPCIBridge, super);
 
-extern const OSSymbol *gIOPlatformGetMessagedInterruptAddressKey;
-
 bool HyperVPCIBridge::start(IOService *provider) {
   bool     result = false;
   IOReturn status;
@@ -115,7 +113,7 @@ IOReturn HyperVPCIBridge::callPlatformFunction(const OSSymbol *functionName, boo
   //
   // ARGS: gIOPlatformGetMessagedInterruptAddressKey, ..., nub, NULL, vector number, (out) message address[3]
   //
-  if (functionName == gIOPlatformGetMessagedInterruptAddressKey) {
+  if (strcmp(functionName->getCStringNoCopy(), "GetMessagedInterruptAddress") == 0) {
     //
     // vector     = interrupt vector
     // message[0] = MSI addr lo
