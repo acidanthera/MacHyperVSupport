@@ -160,7 +160,7 @@ IOReturn HyperVPCIBridge::allocatePCIConfigWindow() {
   //
   // Allocate PCI config window. TODO: handle lack of high MMIO space.
   //
-  _pciConfigSpace = _hvModuleDevice->allocateRange(kHyperVPCIBridgeWindowSize, PAGE_SIZE, true);
+  _pciConfigSpace = _hvModuleDevice->allocateRange(kHyperVPCIBridgeWindowSize, PAGE_SIZE, false);
   if (_pciConfigSpace == 0) {
     HVSYSLOG("Could not allocate range for PCI config window");
     return kIOReturnNoResources;
@@ -328,6 +328,12 @@ IOReturn HyperVPCIBridge::queryResourceRequirements() {
     }
   }
 
+  //
+  // Enable memory I/O on device.
+  //
+  if (status == kIOReturnSuccess) {
+    writePCIConfig(kIOPCIConfigCommand, sizeof (UInt16), readPCIConfig(kIOPCIConfigCommand, sizeof (UInt16)) | kIOPCICommandMemorySpace);
+  }
   return status;
 }
 
