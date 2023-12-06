@@ -70,7 +70,7 @@ All Intel macOS versions are supported.
     - Count = `1`
     - Identifier = `com.apple.iokit.IOHIDFamily`
     - MaxKernel = `9.6.99`
-    - MinKernel = `9.5.0`
+    - MinKernel = `9.4.0`
     - Replace = `31C0C3`
   - Disable scaling factor for X/Y mouse movement
     - Arch = `i386`
