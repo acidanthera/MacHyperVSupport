@@ -1,5 +1,8 @@
 MacHyperVSupport Changelog
 ============================
+#### v0.9.8
+- Added constants for macOS 15 support
+
 #### v0.9.7
 - Fixed disks on a passed-in PCI device not being usable
 - Improved PCI interrupt handling to support both MSI and MSI-X
