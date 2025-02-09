@@ -319,7 +319,7 @@ bool HyperVVMBus::addVMBusDevice(VMBusChannelMessageChannelOffer *offerMessage) 
     return false;
   }
   
-  HVDBGLOG("Registered channel %u (%s)", channelId, _vmbusChannels[channelId].typeGuidString);
+  HVSYSLOG("Registering channel %u (%s)", channelId, _vmbusChannels[channelId].typeGuidString);
   HVDBGLOG("Channel %u flags 0x%X, MIMO size %u bytes, pipe mode 0x%X", channelId,
            _vmbusChannels[channelId].offerMessage.flags, _vmbusChannels[channelId].offerMessage.mmioSizeMegabytes,
            _vmbusChannels[channelId].offerMessage.pipe.mode);
@@ -345,7 +345,7 @@ void HyperVVMBus::removeVMBusDevice(VMBusChannelMessageChannelRescindOffer *resc
     return;
   }
   
-  HVDBGLOG("Removing channel %u", channelId);
+  HVSYSLOG("Removing channel %u", channelId);
   
   //
   // Notify nub to terminate.
