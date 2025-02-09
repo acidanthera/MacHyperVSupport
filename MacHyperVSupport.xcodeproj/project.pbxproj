@@ -283,6 +283,7 @@
 		41225F562644D98500574E86 /* HyperVHeartbeat.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVHeartbeat.hpp; sourceTree = "<group>"; };
 		412E109E28C589DF00B8A699 /* HyperVVMBus.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVVMBus.cpp; sourceTree = "<group>"; };
 		412E109F28C589DF00B8A699 /* HyperVVMBus.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVVMBus.hpp; sourceTree = "<group>"; };
+		4136A43D2D58278000A46455 /* HyperV-devices.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HyperV-devices.md"; sourceTree = "<group>"; };
 		414678B528C4F0E5000E8F83 /* HyperVInterruptController.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVInterruptController.cpp; sourceTree = "<group>"; };
 		414678B628C4F0E5000E8F83 /* HyperVInterruptController.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVInterruptController.hpp; sourceTree = "<group>"; };
 		4159EDD7290221C300867664 /* HyperVGraphicsBridgeRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVGraphicsBridgeRegs.hpp; sourceTree = "<group>"; };
@@ -695,6 +696,7 @@
 		41C604AA28B2F81200FB77ED /* Docs */ = {
 			isa = PBXGroup;
 			children = (
+				4136A43D2D58278000A46455 /* HyperV-devices.md */,
 				41C604AB28B2F87600FB77ED /* HyperV-versions.md */,
 				41EFDF66292A859F0021E9A3 /* modules.md */,
 			);
