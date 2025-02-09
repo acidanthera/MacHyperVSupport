@@ -70,7 +70,8 @@ Provides virtual graphics framebuffer support.
 * Support status: Handled by HyperVGraphicsBridge
 
 ### Synthetic IDE controller
-* Availability: ?
+[Provides](https://learn.microsoft.com/en-us/windows-server/administration/performance-tuning/role/hyper-v-server/storage-io-performance#ide) enhanced performance over the emulated IDE controller in a Gen1 guest. Virtual hard disks will appear on both the emulated controller and the synthetic controller, CD devices will appear only on the emulated controller.
+* Availability: Windows Server 2008 and later (Gen1 only)
 * GUID: `32412632-86cb-44a2-9b5c-50d1417354f5`
 * Support status: No
 
