@@ -101,14 +101,13 @@ IOReturn HyperVStorage::sendStorageCommand(HyperVStoragePacket *packet, bool che
   }
 
   //
-  // Check status bits if requested.
+  // Check packet status if requested.
   //
-  if (checkCompletion &&
-      packet->operation != kHyperVStoragePacketOperationCompleteIO &&
-      packet->status != 0) {
-    return kIOReturnIOError;
+  if (checkCompletion) {
+    if (packet->operation != kHyperVStoragePacketOperationCompleteIO || packet->status != 0) {
+      return kIOReturnIOError;
+    }
   }
-
   return kIOReturnSuccess;
 }
 
