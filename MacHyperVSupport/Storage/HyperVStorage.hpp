@@ -35,6 +35,9 @@ private:
   UInt32 _protocolVersion = 0;
   UInt32 _senseBufferSize = 0;
   UInt32 _packetSizeDelta = 0;
+  bool   _isIDE           = false;
+  UInt32 _maxLuns         = kHyperVStorageMaxLunsSCSI;
+  UInt8  _targetId        = 0;
   
   bool   _subChannelsSupported = false;
   UInt16 _maxSubChannels       = 0;

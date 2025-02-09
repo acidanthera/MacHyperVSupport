@@ -186,7 +186,7 @@ void HyperVStorage::setHBAInfo() {
     propString->release();
   }
 
-  propString = OSString::withCString(kHyperVStorageProduct);
+  propString = OSString::withCString(_isIDE ? kHyperVStorageProductIDE : kHyperVStorageProductSCSI);
   if (propString != nullptr) {
     SetHBAProperty(kIOPropertyProductNameKey, propString);
     propString->release();
@@ -208,6 +208,18 @@ void HyperVStorage::setHBAInfo() {
 IOReturn HyperVStorage::connectStorage() {
   IOReturn            status;
   HyperVStoragePacket storPkt;
+  
+  //
+  // Check if we are actually an IDE controller.
+  // IDE supports one device only, and requires the target to be non-zero when communicating with Hyper-V.
+  //
+  _isIDE = (strcmp(_hvDevice->getTypeIdString(), kHyperVStorageGuidIDE)) == 0;
+  if (_isIDE) {
+    UInt8 *instanceId = (UInt8*)_hvDevice->getInstanceId();
+    _maxLuns = kHyperVStorageMaxLunsIDE;
+    _targetId = (instanceId[5] << 8) | instanceId[4];
+    HVDBGLOG("Storage controller is IDE, using target ID %u", _targetId);
+  }
 
   //
   // Begin controller initialization.
@@ -285,43 +297,42 @@ IOReturn HyperVStorage::connectStorage() {
 
 bool HyperVStorage::checkSCSIDiskPresent(UInt8 diskId) {
   IOReturn            status;
-  HyperVStoragePacket packet = { };
+  HyperVStoragePacket storPkt = { };
 
   //
   // Prepare SCSI request packet and flags.
   //
-  packet.operation = kHyperVStoragePacketOperationExecuteSRB;
-  packet.flags     = kHyperVStoragePacketFlagRequestCompletion;
+  storPkt.operation = kHyperVStoragePacketOperationExecuteSRB;
 
-  packet.scsiRequest.targetID                = 0;
-  packet.scsiRequest.lun                     = diskId;
-  packet.scsiRequest.win8Extension.srbFlags |= 0x00000008;
-  packet.scsiRequest.length                  = sizeof (packet.scsiRequest);
-  packet.scsiRequest.senseInfoLength         = _senseBufferSize;
-  packet.scsiRequest.dataIn                  = kHyperVStorageSCSIRequestTypeUnknown;
+  storPkt.scsiRequest.targetID                = _targetId;
+  storPkt.scsiRequest.lun                     = diskId;
+  storPkt.scsiRequest.win8Extension.srbFlags |= 0x00000008;
+  storPkt.scsiRequest.length                  = sizeof (storPkt.scsiRequest) - _packetSizeDelta;
+  storPkt.scsiRequest.senseInfoLength         = _senseBufferSize;
+  storPkt.scsiRequest.dataIn                  = kHyperVStorageSCSIRequestTypeUnknown;
 
   //
   // Set CDB to TEST UNIT READY command.
   //
-  packet.scsiRequest.cdb[0]    = kSCSICmd_TEST_UNIT_READY;
-  packet.scsiRequest.cdb[1]    = 0x00;
-  packet.scsiRequest.cdb[2]    = 0x00;
-  packet.scsiRequest.cdb[3]    = 0x00;
-  packet.scsiRequest.cdb[4]    = 0x00;
-  packet.scsiRequest.cdb[5]    = 0x00;
-  packet.scsiRequest.cdbLength = 6;
+  storPkt.scsiRequest.cdb[0]    = kSCSICmd_TEST_UNIT_READY;
+  storPkt.scsiRequest.cdb[1]    = 0x00;
+  storPkt.scsiRequest.cdb[2]    = 0x00;
+  storPkt.scsiRequest.cdb[3]    = 0x00;
+  storPkt.scsiRequest.cdb[4]    = 0x00;
+  storPkt.scsiRequest.cdb[5]    = 0x00;
+  storPkt.scsiRequest.cdbLength = 6;
 
   //
   // Send SCSI packet and check result to see if disk is present.
   //
-  status = _hvDevice->writeInbandPacket(&packet, sizeof (packet) - _packetSizeDelta, true, &packet, sizeof (packet));
+  status = sendStorageCommand(&storPkt, false);
   if (status != kIOReturnSuccess) {
     HVDBGLOG("Failed to send TEST UNIT READY SCSI packet with status 0x%X", status);
     return false;
   }
 
-  HVDBGLOG("Disk %u status: 0x%X SRB status: 0x%X", diskId, packet.scsiRequest.scsiStatus, packet.scsiRequest.srbStatus);
-  return packet.scsiRequest.srbStatus == kHyperVSRBStatusSuccess;
+  HVDBGLOG("Disk %u status: 0x%X SRB status: 0x%X", diskId, storPkt.scsiRequest.scsiStatus, storPkt.scsiRequest.srbStatus);
+  return storPkt.scsiRequest.srbStatus == kHyperVSRBStatusSuccess;
 }
 
 void HyperVStorage::startDiskEnumeration() {
@@ -333,9 +344,9 @@ void HyperVStorage::startDiskEnumeration() {
 }
 
 void HyperVStorage::scanSCSIDisks() {
-  HVDBGLOG("Starting disk scan of %u disks", kHyperVStorageMaxTargets);
+  HVDBGLOG("Starting disk scan of %u disks", _maxLuns);
 
-  for (UInt32 lun = 0; lun < kHyperVStorageMaxTargets; lun++) {
+  for (UInt32 lun = 0; lun < _maxLuns; lun++) {
     if (checkSCSIDiskPresent(lun)) {
       if (GetTargetForID(lun) == nullptr) {
         HVDBGLOG("Disk %u is newly added", lun);

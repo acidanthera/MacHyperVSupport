@@ -168,6 +168,7 @@ public:
   IOReturn freeGPADLBuffer(UInt32 gpadlHandle);
   UInt32 getChannelId() { return _channelId; }
   uuid_t* getInstanceId() { return &_instanceId; }
+  char* getTypeIdString() { return _typeId; }
 
   //
   // Ring buffer.

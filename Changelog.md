@@ -2,6 +2,8 @@ MacHyperVSupport Changelog
 ============================
 #### v0.9.8
 - Added constants for macOS 15 support
+- Fixed completion flag not being added for storage commands
+- Added support for the synthetic IDE controller on Gen1 VMs
 
 #### v0.9.7
 - Fixed disks on a passed-in PCI device not being usable

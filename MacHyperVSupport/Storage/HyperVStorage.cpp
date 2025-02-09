@@ -145,9 +145,9 @@ bool HyperVStorage::DoesHBASupportSCSIParallelFeature(SCSIParallelFeature theFea
 
 bool HyperVStorage::InitializeTargetForID(SCSITargetIdentifier targetID) {
   //
-  // Ensure target ID is under maximum.
+  // Ensure target ID is under maximum LUN count.
   //
-  return (targetID < kHyperVStorageMaxTargets);
+  return (targetID < _maxLuns);
 }
 
 void HyperVStorage::HandleInterruptRequest() {
@@ -161,11 +161,12 @@ void HyperVStorage::HandleInterruptRequest() {
 }
 
 SCSIInitiatorIdentifier HyperVStorage::ReportInitiatorIdentifier() {
-  return kHyperVStorageMaxTargets;
+  return _maxLuns;
 }
 
 SCSIDeviceIdentifier HyperVStorage::ReportHighestSupportedDeviceID() {
-  return kHyperVStorageMaxTargets - 1;
+  // Each Hyper-V LUN is treated as a separate target under macOS.
+  return _maxLuns - 1;
 }
 
 UInt32 HyperVStorage::ReportMaximumTaskCount() {
@@ -202,7 +203,8 @@ bool HyperVStorage::InitializeDMASpecification(IODMACommand *command) {
 }
 
 SCSILogicalUnitNumber HyperVStorage::ReportHBAHighestLogicalUnitNumber() {
-  return kHyperVStorageMaxLuns - 1;
+  // Report max LUN of 0 to macOS.
+  return 0;
 }
 
 SCSIServiceResponse HyperVStorage::AbortTaskRequest(SCSITargetIdentifier theT, SCSILogicalUnitNumber theL, SCSITaggedTaskIdentifier theQ) {
@@ -249,21 +251,22 @@ SCSIServiceResponse HyperVStorage::ProcessParallelTask(SCSIParallelTaskIdentifie
   }
 
   if (GetLogicalUnitNumber(parallelRequest) != 0) {
-    HVDBGLOG("LUN is non-zero");
+    HVSYSLOG("LUN is non-zero");
     return kSCSIServiceResponse_FUNCTION_REJECTED;
   }
 
   //
   // Create SCSI command execution packet.
+  // Each LUN is represented in macOS as a separate target, use that target ID for the LUN here.
   //
   packet.operation = kHyperVStoragePacketOperationExecuteSRB;
   packet.flags     = kHyperVStoragePacketFlagRequestCompletion;
 
-  packet.scsiRequest.targetID        = 0;
-  packet.scsiRequest.lun             = GetTargetIdentifier(parallelRequest);
-  packet.scsiRequest.senseInfoLength = _senseBufferSize;
+  packet.scsiRequest.targetID                = _targetId;
+  packet.scsiRequest.lun                     = GetTargetIdentifier(parallelRequest);
   packet.scsiRequest.win8Extension.srbFlags |= 0x00000008;
-  packet.scsiRequest.length = sizeof (packet.scsiRequest); // TODO
+  packet.scsiRequest.length                  = sizeof (packet.scsiRequest) - _packetSizeDelta;
+  packet.scsiRequest.senseInfoLength         = _senseBufferSize;
 
   //
   // Determine data direction flags.
@@ -285,7 +288,7 @@ SCSIServiceResponse HyperVStorage::ProcessParallelTask(SCSIParallelTaskIdentifie
       break;
 
     default:
-      HVDBGLOG("Bad data direction 0x%X", dataDirection);
+      HVSYSLOG("Bad data direction 0x%X", dataDirection);
       return kSCSIServiceResponse_FUNCTION_REJECTED;
   }
   HVDATADBGLOG("Sending command to LUN %u (direction %X) with request %p", packet.scsiRequest.lun,
@@ -309,7 +312,7 @@ SCSIServiceResponse HyperVStorage::ProcessParallelTask(SCSIParallelTaskIdentifie
   if (dataDirection != kSCSIDataTransfer_NoDataTransfer) {
     status = prepareDataTransfer(parallelRequest, &pagePacket, &pagePacketLength);
     if (status != kIOReturnSuccess) {
-      HVDBGLOG("Failed to prepare data transfer with status 0x%X", status);
+      HVSYSLOG("Failed to prepare data transfer with status 0x%X", status);
       return kSCSIServiceResponse_SERVICE_DELIVERY_OR_TARGET_FAILURE;
     }
 
@@ -318,13 +321,13 @@ SCSIServiceResponse HyperVStorage::ProcessParallelTask(SCSIParallelTaskIdentifie
                                                       pagePacket, pagePacketLength, nullptr, 0,
                                                       (UInt64)parallelRequest);
     if (status != kIOReturnSuccess) {
-      HVDBGLOG("Failed to send data SCSI packet with status 0x%X", status);
+      HVSYSLOG("Failed to send data SCSI packet with status 0x%X", status);
       return kSCSIServiceResponse_SERVICE_DELIVERY_OR_TARGET_FAILURE;
     }
   } else {
     status = _hvDevice->writeInbandPacketWithTransactionId(&packet, sizeof (packet) - _packetSizeDelta, (UInt64)parallelRequest, true);
     if (status != kIOReturnSuccess) {
-      HVDBGLOG("Failed to send non-data SCSI packet with status 0x%X", status);
+      HVSYSLOG("Failed to send non-data SCSI packet with status 0x%X", status);
       return kSCSIServiceResponse_SERVICE_DELIVERY_OR_TARGET_FAILURE;
     }
   }

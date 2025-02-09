@@ -195,7 +195,25 @@
 			<key>IOUserClientClass</key>
 			<string>HyperVShutdownUserClient</string>
 		</dict>
-		<key>HyperVStorage</key>
+		<key>HyperVStorageIDE</key>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>HVType</key>
+			<string>32412632-86cb-44a2-9b5c-50d1417354f5</string>
+			<key>IOClass</key>
+			<string>HyperVStorage</string>
+			<key>IOProviderClass</key>
+			<string>HyperVVMBusDevice</string>
+			<key>Protocol Characteristics</key>
+			<dict>
+				<key>Physical Interconnect</key>
+				<string>ATA</string>
+				<key>Physical Interconnect Location</key>
+				<string>Internal</string>
+			</dict>
+		</dict>
+		<key>HyperVStorageSCSI</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>

@@ -18,10 +18,13 @@
 #define kHyperVStorageMaxBufferLengthPadding  0x14
 
 #define kHyperVStorageVendor                  "Microsoft"
-#define kHyperVStorageProduct                 "Hyper-V SCSI Controller"
+#define kHyperVStorageProductSCSI             "Hyper-V SCSI Controller"
+#define kHyperVStorageProductIDE              "Hyper-V IDE Controller"
+#define kHyperVStorageGuidSCSI                "ba6163d9-04a1-4d29-b605-72e2ffb1dc7f"
+#define kHyperVStorageGuidIDE                 "32412632-86cb-44a2-9b5c-50d1417354f5"
 
-#define kHyperVStorageMaxTargets              64
-#define kHyperVStorageMaxLuns                 1
+#define kHyperVStorageMaxLunsSCSI             64
+#define kHyperVStorageMaxLunsIDE              1
 
 #define kHyperVStorageSegmentSize             PAGE_SIZE
 #define kHyperVStorageSegmentAlignment        0xFFFFFFFFFFFFF000ULL
