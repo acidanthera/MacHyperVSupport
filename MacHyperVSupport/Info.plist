@@ -208,7 +208,7 @@
 			<key>Protocol Characteristics</key>
 			<dict>
 				<key>Physical Interconnect</key>
-				<string>ATA</string>
+				<string>SCSI Parallel Interface</string>
 				<key>Physical Interconnect Location</key>
 				<string>Internal</string>
 			</dict>
