@@ -27,7 +27,14 @@ private:
   //
   // Userspace external methods.
   //
-  static IOReturn methodReportShutdownAbility(HyperVShutdownUserClient *target, void *ref, IOExternalMethodArguments *args);
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_5
+  static IOReturn sMethodReportShutdownAbility(HyperVShutdownUserClient *target, void *ref, IOExternalMethodArguments *args);
+#endif
+#if (defined(__i386__) && defined(__clang__))
+  static IOReturn reportShutdownAbility(HyperVShutdownUserClient* that, UInt32 arg);
+#else
+  IOReturn reportShutdownAbility(UInt32 arg);
+#endif
 
 public:
   //
@@ -43,6 +50,8 @@ public:
   IOReturn externalMethod(uint32_t selector, IOExternalMethodArguments *arguments,
                           IOExternalMethodDispatch *dispatch, OSObject *target,
                           void *reference) APPLE_KEXT_OVERRIDE;
+#else
+  IOExternalMethod *getTargetAndMethodForIndex(IOService **target, UInt32 index) APPLE_KEXT_OVERRIDE;
 #endif
 
   bool canShutdown();

@@ -14,7 +14,26 @@
 
 HVDeclareLogFunctionsUser("hvshutdownd");
 
-static void hvShutdownDoShutdown(bool restart) {
+void hvShutdownDoShutdownCheck(io_connect_t connection) {
+#if !defined(__x86_64__)
+  if (IOConnectCallScalarMethod != NULL) {
+#endif
+    //
+    // Call into user client with standard API.
+    //
+    UInt64 input64 = kHyperVShutdownMagic;
+    IOConnectCallScalarMethod(connection, kHyperVShutdownUserClientMethodReportShutdownAbility, &input64, 1, NULL, NULL);
+#if !defined(__x86_64__)
+  } else {
+    //
+    // Call into user client with legacy API.
+    //
+    IOConnectMethodScalarIScalarO(connection, kHyperVShutdownUserClientMethodReportShutdownAbility, 1, 0, kHyperVShutdownMagic);
+  }
+#endif
+}
+
+void hvShutdownDoShutdown(bool restart) {
   HVSYSLOG(stdout, "Shutdown request received, performing shutdown (restart %u)", restart);
 
   //
@@ -39,7 +58,6 @@ static void hvShutdownDoShutdown(bool restart) {
 
 void hvIOKitNotificationHandler(io_connect_t connection, CFMachPortRef port, void *msg, CFIndex size, void *info) {
   HyperVShutdownUserClientNotificationMessage *shutdownMsg = (HyperVShutdownUserClientNotificationMessage *) msg;
-  UInt64 input[1];
 
   if (size < __offsetof(HyperVShutdownUserClientNotificationMessage, type)) {
     HVSYSLOG(stderr, "Invalid message size %u received, should be at least %u",
@@ -49,9 +67,11 @@ void hvIOKitNotificationHandler(io_connect_t connection, CFMachPortRef port, voi
 
   HVDBGLOG(stdout, "Received notification of type 0x%X", shutdownMsg->type);
   switch (shutdownMsg->type) {
+    //
+    // Always returns magic value, means daemon is alive and can handle a shutdown request.
+    //
     case kHyperVShutdownUserClientNotificationTypeCheck:
-      input[0] = true;
-      IOConnectCallScalarMethod(connection, kHyperVShutdownUserClientMethodReportShutdownAbility, input, 1, NULL, NULL);
+      hvShutdownDoShutdownCheck(connection);
       break;
 
     case kHyperVShutdownUserClientNotificationTypePerformShutdown:

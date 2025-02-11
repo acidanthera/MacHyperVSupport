@@ -11,6 +11,8 @@
 #include <libkern/OSTypes.h>
 #include <mach/message.h>
 
+#define kHyperVShutdownMagic  0x66697368
+
 typedef enum : UInt32 {
   kHyperVShutdownUserClientMethodReportShutdownAbility,
 
