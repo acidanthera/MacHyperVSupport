@@ -29,9 +29,12 @@ jobs:
       - name: Lilu Bootstrap
         run: |
           src=$(/usr/bin/curl -Lfs https://raw.githubusercontent.com/acidanthera/Lilu/master/Lilu/Scripts/bootstrap.sh) && eval "$src" || exit 1
+      - name: macOS 10.13 SDK Bootstrap
+        run: |
+          src=$(/usr/bin/curl -Lfs https://raw.githubusercontent.com/acidanthera/MacHyperVSupport/master/macosx10.13-sdk-bootstrap.sh) && eval "$src" || exit 1
 
-      - run: xcodebuild -jobs 1 -target Package -configuration Debug -arch ACID32 -arch x86_64
-      - run: xcodebuild -jobs 1 -target Package -configuration Release -arch ACID32 -arch x86_64
+      - run: xcodebuild -jobs 1 -target Package-CI -configuration Debug -arch ACID32 -arch x86_64
+      - run: xcodebuild -jobs 1 -target Package-CI -configuration Release -arch ACID32 -arch x86_64
 
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v4
