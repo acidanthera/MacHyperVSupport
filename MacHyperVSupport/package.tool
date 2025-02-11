@@ -32,6 +32,7 @@ fi
 
 cp ../hvfilecopyd Tools/ || exit 1
 cp ../hvshutdownd Tools/ || exit 1
+cp ../hvshutdownd-i386 Tools/ || exit 1
 cp ../hvtimesyncd Tools/ || exit 1
 
 for kext in ../*.kext; do
