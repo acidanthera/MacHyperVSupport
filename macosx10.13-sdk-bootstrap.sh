@@ -12,8 +12,8 @@ OSX_PLAT=`xcrun --sdk macosx --show-sdk-platform-path`
 sudo plutil -replace MinimumSDKVersion -string 10.6 "$OSX_PLAT"/Info.plist
 
 # Grab macOS 10.13 SDK and extract
-cd /tmp
-wget https://github.com/acidanthera/ocbuild/releases/download/macos13-sdk/Xcode1013SDK.tar.gz
-sudo tar -xf Xcode1013SDK.tar.gz -C "$OSX_PLAT"
+wget -P /tmp https://github.com/acidanthera/ocbuild/releases/download/macos13-sdk/Xcode1013SDK.tar.gz
+sudo tar -xf /tmp/Xcode1013SDK.tar.gz -C "$OSX_PLAT"/Developer
+rm /tmp/Xcode1013SDK.tar.gz
 
-xcodebuild -sdk -version
+xcrun --sdk macosx10.13 --show-sdk-path
