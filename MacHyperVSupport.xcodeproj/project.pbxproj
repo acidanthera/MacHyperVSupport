@@ -229,6 +229,27 @@
 			remoteGlobalIDString = 4191F6FD28F504FD00809232;
 			remoteInfo = hvfilecopyd;
 		};
+		41A98AFC2D5C190C00A1931C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4191F6D428F326F900809232;
+			remoteInfo = hvshutdownd;
+		};
+		41A98AFE2D5C190F00A1931C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41E814602D59809600AAA93E;
+			remoteInfo = "hvshutdownd-i386";
+		};
+		41A98B012D5C1C4700A1931C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41A98AF82D5C18F900A1931C;
+			remoteInfo = "hvshutdownd-universal";
+		};
 		41AE1D0428974D8B001A7B42 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
@@ -264,26 +285,12 @@
 			remoteGlobalIDString = 4191F6FD28F504FD00809232;
 			remoteInfo = hvfilecopyd;
 		};
-		41E814722D5B08B700AAA93E /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 4191F6D428F326F900809232;
-			remoteInfo = hvshutdownd;
-		};
 		41E814742D5B08B700AAA93E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 4191F6E628F4E55F00809232;
 			remoteInfo = hvtimesyncd;
-		};
-		41E814782D5B08C800AAA93E /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 41E814602D59809600AAA93E;
-			remoteInfo = "hvshutdownd-i386";
 		};
 /* End PBXContainerItemProxy section */
 
@@ -390,6 +397,7 @@
 		419B88C1263F0169005A9977 /* HyperVControllerHypercalls.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVControllerHypercalls.cpp; sourceTree = "<group>"; };
 		41A71CA6289EB5A400CAE2FF /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		41A71CA7289EB5A400CAE2FF /* Changelog.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Changelog.md; sourceTree = "<group>"; };
+		41A98B002D5C1A2900A1931C /* build-universal.tool */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-universal.tool"; sourceTree = "<group>"; };
 		41AE1CFF28974C7E001A7B42 /* package.tool */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = package.tool; sourceTree = "<group>"; };
 		41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVCPU.cpp; sourceTree = "<group>"; };
 		41AE1D0D289C95A9001A7B42 /* HyperVCPU.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVCPU.hpp; sourceTree = "<group>"; };
@@ -571,9 +579,10 @@
 		417C978C289217CA00CFE0B2 /* Tools */ = {
 			isa = PBXGroup;
 			children = (
+				41A98B002D5C1A2900A1931C /* build-universal.tool */,
 				41B371732896CD5F00D348B5 /* hvdebug.h */,
-				4191F6E028F32E5200809232 /* hviokit.h */,
 				4191F6E128F32E5200809232 /* hviokit.c */,
+				4191F6E028F32E5200809232 /* hviokit.h */,
 				4191F6FA28F504B000809232 /* hvfilecopyd */,
 				415D990728F3261D0078FA71 /* hvshutdownd */,
 				4191F6E328F4E52500809232 /* hvtimesyncd */,
@@ -1055,6 +1064,22 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXLegacyTarget section */
+		41A98AF82D5C18F900A1931C /* hvshutdownd-universal */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "hvshutdownd hvshutdownd-i386 hvshutdownd-universal";
+			buildConfigurationList = 41A98AFB2D5C18FA00A1931C /* Build configuration list for PBXLegacyTarget "hvshutdownd-universal" */;
+			buildPhases = (
+			);
+			buildToolPath = "${SRCROOT}/Tools/build-universal.tool";
+			buildWorkingDirectory = "";
+			dependencies = (
+				41A98AFD2D5C190C00A1931C /* PBXTargetDependency */,
+				41A98AFF2D5C190F00A1931C /* PBXTargetDependency */,
+			);
+			name = "hvshutdownd-universal";
+			passBuildSettingsInEnvironment = 1;
+			productName = "hvshutdownd-universal";
+		};
 		41AE1D0028974D81001A7B42 /* Package */ = {
 			isa = PBXLegacyTarget;
 			buildArgumentsString = "$(ACTION)";
@@ -1074,23 +1099,22 @@
 			passBuildSettingsInEnvironment = 1;
 			productName = Package;
 		};
-		41E8146A2D5B08B700AAA93E /* Package-CI */ = {
+		41E8146A2D5B08B700AAA93E /* Package Universal */ = {
 			isa = PBXLegacyTarget;
 			buildArgumentsString = "$(ACTION)";
-			buildConfigurationList = 41E814752D5B08B700AAA93E /* Build configuration list for PBXLegacyTarget "Package-CI" */;
+			buildConfigurationList = 41E814752D5B08B700AAA93E /* Build configuration list for PBXLegacyTarget "Package Universal" */;
 			buildPhases = (
 			);
 			buildToolPath = "${SRCROOT}/MacHyperVSupport/package.tool";
 			buildWorkingDirectory = "";
 			dependencies = (
-				41E814792D5B08C800AAA93E /* PBXTargetDependency */,
 				41E8146B2D5B08B700AAA93E /* PBXTargetDependency */,
 				41E8146D2D5B08B700AAA93E /* PBXTargetDependency */,
 				41E8146F2D5B08B700AAA93E /* PBXTargetDependency */,
-				41E814712D5B08B700AAA93E /* PBXTargetDependency */,
+				41A98B022D5C1C4700A1931C /* PBXTargetDependency */,
 				41E814732D5B08B700AAA93E /* PBXTargetDependency */,
 			);
-			name = "Package-CI";
+			name = "Package Universal";
 			passBuildSettingsInEnvironment = 1;
 			productName = Package;
 		};
@@ -1209,6 +1233,9 @@
 			attributes = {
 				LastUpgradeCheck = 1240;
 				TargetAttributes = {
+					41A98AF82D5C18F900A1931C = {
+						CreatedOnToolsVersion = 14.2;
+					};
 					41AE1D0028974D81001A7B42 = {
 						CreatedOnToolsVersion = 13.4.1;
 					};
@@ -1231,12 +1258,13 @@
 			projectRoot = "";
 			targets = (
 				41AE1D0028974D81001A7B42 /* Package */,
-				41E8146A2D5B08B700AAA93E /* Package-CI */,
+				41E8146A2D5B08B700AAA93E /* Package Universal */,
 				41BE4103263EDE370018C52B /* MacHyperVSupport */,
 				41BF45D6288CDF1200813670 /* MacHyperVSupportMonterey */,
 				4191F6FD28F504FD00809232 /* hvfilecopyd */,
 				4191F6D428F326F900809232 /* hvshutdownd */,
 				41E814602D59809600AAA93E /* hvshutdownd-i386 */,
+				41A98AF82D5C18F900A1931C /* hvshutdownd-universal */,
 				4191F6E628F4E55F00809232 /* hvtimesyncd */,
 			);
 		};
@@ -1428,6 +1456,21 @@
 			target = 4191F6FD28F504FD00809232 /* hvfilecopyd */;
 			targetProxy = 4191F70828F5052200809232 /* PBXContainerItemProxy */;
 		};
+		41A98AFD2D5C190C00A1931C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4191F6D428F326F900809232 /* hvshutdownd */;
+			targetProxy = 41A98AFC2D5C190C00A1931C /* PBXContainerItemProxy */;
+		};
+		41A98AFF2D5C190F00A1931C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41E814602D59809600AAA93E /* hvshutdownd-i386 */;
+			targetProxy = 41A98AFE2D5C190F00A1931C /* PBXContainerItemProxy */;
+		};
+		41A98B022D5C1C4700A1931C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41A98AF82D5C18F900A1931C /* hvshutdownd-universal */;
+			targetProxy = 41A98B012D5C1C4700A1931C /* PBXContainerItemProxy */;
+		};
 		41AE1D0528974D8B001A7B42 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 41BE4103263EDE370018C52B /* MacHyperVSupport */;
@@ -1453,20 +1496,10 @@
 			target = 4191F6FD28F504FD00809232 /* hvfilecopyd */;
 			targetProxy = 41E814702D5B08B700AAA93E /* PBXContainerItemProxy */;
 		};
-		41E814712D5B08B700AAA93E /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 4191F6D428F326F900809232 /* hvshutdownd */;
-			targetProxy = 41E814722D5B08B700AAA93E /* PBXContainerItemProxy */;
-		};
 		41E814732D5B08B700AAA93E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 4191F6E628F4E55F00809232 /* hvtimesyncd */;
 			targetProxy = 41E814742D5B08B700AAA93E /* PBXContainerItemProxy */;
-		};
-		41E814792D5B08C800AAA93E /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 41E814602D59809600AAA93E /* hvshutdownd-i386 */;
-			targetProxy = 41E814782D5B08C800AAA93E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1589,39 +1622,27 @@
 			};
 			name = Release;
 		};
+		41A98AF92D5C18FA00A1931C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		41A98AFA2D5C18FA00A1931C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Release;
+		};
 		41AE1D0228974D81001A7B42 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
-				DEBUGGING_SYMBOLS = YES;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
 		};
 		41AE1D0328974D81001A7B42 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
@@ -2062,36 +2083,12 @@
 		41E814762D5B08B700AAA93E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
-				DEBUGGING_SYMBOLS = YES;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
 		};
 		41E814772D5B08B700AAA93E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
@@ -2121,6 +2118,15 @@
 			buildConfigurations = (
 				4191F70428F504FD00809232 /* Debug */,
 				4191F70528F504FD00809232 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		41A98AFB2D5C18FA00A1931C /* Build configuration list for PBXLegacyTarget "hvshutdownd-universal" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41A98AF92D5C18FA00A1931C /* Debug */,
+				41A98AFA2D5C18FA00A1931C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -2170,7 +2176,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		41E814752D5B08B700AAA93E /* Build configuration list for PBXLegacyTarget "Package-CI" */ = {
+		41E814752D5B08B700AAA93E /* Build configuration list for PBXLegacyTarget "Package Universal" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				41E814762D5B08B700AAA93E /* Debug */,

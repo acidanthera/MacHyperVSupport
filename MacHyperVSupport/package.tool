@@ -31,8 +31,11 @@ if [ ! -f ../libaistat.dylib ]; then
 fi
 
 cp ../hvfilecopyd Tools/ || exit 1
-cp ../hvshutdownd Tools/ || exit 1
-cp ../hvshutdownd-i386 Tools/ || exit 1
+if [[ -f "../hvshutdownd-universal" ]]; then
+  cp ../hvshutdownd-universal Tools/hvshutdownd || exit 1
+else
+  cp ../hvshutdownd Tools/hvshutdownd || exit 1
+fi
 cp ../hvtimesyncd Tools/ || exit 1
 
 for kext in ../*.kext; do
