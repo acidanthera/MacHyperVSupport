@@ -31,7 +31,7 @@ if [ ! -f ../libaistat.dylib ]; then
 fi
 
 cp ../hvfilecopyd Tools/ || exit 1
-if [[ -f "../hvshutdownd-universal" ]]; then
+if [[ -f "../hvshutdownd-universal" ]] && [[ "../hvshutdownd-universal" -nt "../hvshutdownd" ]]; then
   cp ../hvshutdownd-universal Tools/hvshutdownd || exit 1
 else
   cp ../hvshutdownd Tools/hvshutdownd || exit 1
