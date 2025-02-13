@@ -32,7 +32,7 @@ IOReturn HyperVShutdownUserClient::externalMethod(uint32_t selector, IOExternalM
                                                   OSObject *target, void *reference) {
   static const IOExternalMethodDispatch methods[kHyperVShutdownUserClientMethodNumberOfMethods] = {
     { // kHyperVShutdownUserClientMethodReportShutdownAbility
-      reinterpret_cast<IOExternalMethodAction>(&HyperVShutdownUserClient::sMethodReportShutdownAbility),  // Method pointer
+      reinterpret_cast<IOExternalMethodAction>(&HyperVShutdownUserClient::sDispatchMethodReportShutdownAbility),  // Method pointer
       1,  // Num of scalar input values
       0,  // Size of struct input
       0,  // Num of scalar output values
@@ -54,17 +54,17 @@ IOReturn HyperVShutdownUserClient::externalMethod(uint32_t selector, IOExternalM
 IOExternalMethod* HyperVShutdownUserClient::getTargetAndMethodForIndex(IOService **target, UInt32 index) {
   static const IOExternalMethod methods[kHyperVShutdownUserClientMethodNumberOfMethods] = {
     { // kHyperVShutdownUserClientMethodReportShutdownAbility
-      NULL,                                                               // Target pointer
+      NULL,                 // Target pointer
 #if (defined(__i386__) && defined(__clang__))
       // Required to match GCC behavior on 32-bit when building with clang
       kIOExternalMethodACID32Padding,
-      (IOMethodACID32) &HyperVShutdownUserClient::sReportShutdownAbility, // Static method pointer
+      reinterpret_cast<IOMethodACID32>(&HyperVShutdownUserClient::sMethodReportShutdownAbility),  // Static method pointer
 #else
-      (IOMethod) &HyperVShutdownUserClient::reportShutdownAbility,        // Instance method pointer
+      reinterpret_cast<IOMethod>(&HyperVShutdownUserClient::methodReportShutdownAbility),         // Instance method pointer
 #endif
-      kIOUCScalarIScalarO,                                                // Method type
-      1,                                                                  // Num of scalar input values or size of struct input
-      0                                                                   // Num of scalar output values or size of struct output
+      kIOUCScalarIScalarO,  // Method type
+      1,                    // Num of scalar input values or size of struct input
+      0                     // Num of scalar output values or size of struct output
     }
   };
 

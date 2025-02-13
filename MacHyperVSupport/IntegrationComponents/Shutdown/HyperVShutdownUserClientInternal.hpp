@@ -24,10 +24,12 @@ private:
   IOReturn reportShutdownAbility(UInt32 arg);
 
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_5
-  static IOReturn sMethodReportShutdownAbility(HyperVShutdownUserClient *target, void *ref, IOExternalMethodArguments *args);
+  static IOReturn sDispatchMethodReportShutdownAbility(HyperVShutdownUserClient *target, void *ref, IOExternalMethodArguments *args);
 #else
 #if (defined(__i386__) && defined(__clang__))
-  static IOReturn sReportShutdownAbility(HyperVShutdownUserClient* that, UInt32 arg);
+  static IOReturn sMethodReportShutdownAbility(HyperVShutdownUserClient* that, UInt32 arg);
+#else
+  IOReturn methodReportShutdownAbility(UInt32 arg);
 #endif
 #endif
 

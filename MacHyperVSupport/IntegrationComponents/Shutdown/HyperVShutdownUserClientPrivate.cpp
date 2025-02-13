@@ -33,14 +33,18 @@ IOReturn HyperVShutdownUserClient::reportShutdownAbility(UInt32 arg) {
 }
 
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_5
-IOReturn HyperVShutdownUserClient::sMethodReportShutdownAbility(HyperVShutdownUserClient *target, void *ref, IOExternalMethodArguments *args) {
+IOReturn HyperVShutdownUserClient::sDispatchMethodReportShutdownAbility(HyperVShutdownUserClient *target, void *ref, IOExternalMethodArguments *args) {
   return target->reportShutdownAbility((UInt32)args->scalarInput[0]);
 }
 #else
 #if (defined(__i386__) && defined(__clang__))
-IOReturn HyperVShutdownUserClient::sReportShutdownAbility(HyperVShutdownUserClient* that, UInt32 arg) {
+IOReturn HyperVShutdownUserClient::sMethodReportShutdownAbility(HyperVShutdownUserClient* that, UInt32 arg) {
   that->wakeThread((arg == kHyperVShutdownMagic) ? kIOReturnSuccess : kIOReturnUnsupported);
   return that->reportShutdownAbility(arg);
+}
+#else
+IOReturn HyperVShutdownUserClient::methodReportShutdownAbility(UInt32 arg) {
+  return reportShutdownAbility(arg);
 }
 #endif
 #endif
