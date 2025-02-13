@@ -1768,7 +1768,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -1778,7 +1777,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -1787,7 +1785,6 @@
 		4191F6ED28F4E55F00809232 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -1796,7 +1793,6 @@
 		4191F6EE28F4E55F00809232 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -1805,52 +1801,16 @@
 		4191F70428F504FD00809232 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					x86_64,
-					ACID32,
-				);
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				"OTHER_CFLAGS[arch=ACID32]" = (
-					"-fallow-unsupported",
-					"-target",
-					"i386-apple-macos10.4",
-				);
-				"OTHER_LDFLAGS[arch=ACID32]" = (
-					"-target",
-					"i386-apple-macos10.4",
-				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				VALID_ARCHS = x86_64;
 			};
 			name = Debug;
 		};
 		4191F70528F504FD00809232 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
-				"OTHER_CFLAGS[arch=ACID32]" = (
-					"-fallow-unsupported",
-					"-target",
-					"i386-apple-macos10.4",
-				);
-				"OTHER_LDFLAGS[arch=ACID32]" = (
-					"-target",
-					"i386-apple-macos10.4",
-				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				VALID_ARCHS = x86_64;
 			};
 			name = Release;
 		};
@@ -1871,7 +1831,6 @@
 			buildSettings = {
 				ARCHS = ACID32;
 				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_CFLAGS = (
 					"-fallow-unsupported",
@@ -1894,7 +1853,6 @@
 			buildSettings = {
 				ARCHS = ACID32;
 				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_CFLAGS = (
 					"-fallow-unsupported",
@@ -1916,7 +1874,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = ACID32;
-				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_CFLAGS = (
 					"-fallow-unsupported",
@@ -1938,7 +1895,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = ACID32;
-				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_CFLAGS = (
 					"-fallow-unsupported",
@@ -1974,7 +1930,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = ACID32;
-				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_CFLAGS = (
 					"-fallow-unsupported",
@@ -1996,7 +1951,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = ACID32;
-				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_CFLAGS = (
 					"-fallow-unsupported",
@@ -2417,7 +2371,6 @@
 			buildSettings = {
 				ARCHS = ACID32;
 				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_CFLAGS = (
 					"-fallow-unsupported",
@@ -2440,7 +2393,6 @@
 			buildSettings = {
 				ARCHS = ACID32;
 				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_CFLAGS = (
 					"-fallow-unsupported",
