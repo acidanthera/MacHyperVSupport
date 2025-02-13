@@ -71,6 +71,8 @@
 		41A98B1B2D5D72DE00A1931C /* hvtimesyncd.c in Sources */ = {isa = PBXBuildFile; fileRef = 4191F6E528F4E55800809232 /* hvtimesyncd.c */; };
 		41A98B3E2D5D745E00A1931C /* hviokit.c in Sources */ = {isa = PBXBuildFile; fileRef = 4191F6E128F32E5200809232 /* hviokit.c */; };
 		41A98B3F2D5D745E00A1931C /* hvtimesyncd.c in Sources */ = {isa = PBXBuildFile; fileRef = 4191F6E528F4E55800809232 /* hvtimesyncd.c */; };
+		41A98B4E2D5D8B0900A1931C /* HyperVShutdownUserClientPrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41A98B4A2D5D8A6400A1931C /* HyperVShutdownUserClientPrivate.cpp */; };
+		41A98B4F2D5D8B0900A1931C /* HyperVShutdownUserClientPrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41A98B4A2D5D8A6400A1931C /* HyperVShutdownUserClientPrivate.cpp */; };
 		41AE1D0E289C95A9001A7B42 /* HyperVCPU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */; };
 		41AE1D0F289C95A9001A7B42 /* HyperVCPU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */; };
 		41AE1D10289C95A9001A7B42 /* HyperVCPU.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41AE1D0D289C95A9001A7B42 /* HyperVCPU.hpp */; };
@@ -490,6 +492,7 @@
 		41A98B112D5C535400A1931C /* hvshutdownd-tiger */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "hvshutdownd-tiger"; sourceTree = BUILT_PRODUCTS_DIR; };
 		41A98B212D5D72DE00A1931C /* hvtimesyncd-i386 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "hvtimesyncd-i386"; sourceTree = BUILT_PRODUCTS_DIR; };
 		41A98B452D5D745E00A1931C /* hvtimesyncd-tiger */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "hvtimesyncd-tiger"; sourceTree = BUILT_PRODUCTS_DIR; };
+		41A98B4A2D5D8A6400A1931C /* HyperVShutdownUserClientPrivate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVShutdownUserClientPrivate.cpp; sourceTree = "<group>"; };
 		41AE1CFF28974C7E001A7B42 /* package.tool */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = package.tool; sourceTree = "<group>"; };
 		41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVCPU.cpp; sourceTree = "<group>"; };
 		41AE1D0D289C95A9001A7B42 /* HyperVCPU.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVCPU.hpp; sourceTree = "<group>"; };
@@ -799,8 +802,9 @@
 				418F052B2648451200E1D14C /* HyperVShutdown.hpp */,
 				41863F6128CEDB0200F9B817 /* HyperVShutdownRegs.hpp */,
 				415D990028F324860078FA71 /* HyperVShutdownUserClient.cpp */,
-				415D990128F324860078FA71 /* HyperVShutdownUserClientInternal.hpp */,
 				415D990628F325700078FA71 /* HyperVShutdownUserClient.h */,
+				415D990128F324860078FA71 /* HyperVShutdownUserClientInternal.hpp */,
+				41A98B4A2D5D8A6400A1931C /* HyperVShutdownUserClientPrivate.cpp */,
 			);
 			path = Shutdown;
 			sourceTree = "<group>";
@@ -1600,6 +1604,7 @@
 				41B41BDD26C74B4C00926A0D /* HyperVNetwork.cpp in Sources */,
 				41B41BE726CDC42D00926A0D /* HyperVNetworkRNDIS.cpp in Sources */,
 				41F9B8F02849792200E0DCB2 /* HyperVPCIBridge.cpp in Sources */,
+				41A98B4E2D5D8B0900A1931C /* HyperVShutdownUserClientPrivate.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1646,6 +1651,7 @@
 				41BF4621288CDF1200813670 /* HyperVNetwork.cpp in Sources */,
 				41BF4622288CDF1200813670 /* HyperVNetworkRNDIS.cpp in Sources */,
 				41BF4623288CDF1200813670 /* HyperVPCIBridge.cpp in Sources */,
+				41A98B4F2D5D8B0900A1931C /* HyperVShutdownUserClientPrivate.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
