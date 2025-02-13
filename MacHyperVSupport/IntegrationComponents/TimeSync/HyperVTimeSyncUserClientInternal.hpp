@@ -2,7 +2,7 @@
 //  HyperVTimeSyncUserClientInternal.hpp
 //  Hyper-V time synchronization user client
 //
-//  Copyright © 2022 Goldfish64. All rights reserved.
+//  Copyright © 2022-2025 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperVTimeSyncUserClient_hpp
@@ -23,6 +23,9 @@ public:
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
   void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
 
+  //
+  // User client methods.
+  //
   IOReturn doTimeSync(UInt64 seconds, UInt32 microseconds);
 };
 
