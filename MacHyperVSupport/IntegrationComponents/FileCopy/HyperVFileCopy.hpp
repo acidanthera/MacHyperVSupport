@@ -2,7 +2,7 @@
 //  HyperVFileCopy.hpp
 //  Hyper-V file copy driver
 //
-//  Copyright © 2022 flagers. All rights reserved.
+//  Copyright © 2022-2025 flagers. All rights reserved.
 //
 
 #ifndef HyperVFileCopy_hpp
@@ -24,7 +24,6 @@ protected:
 
 private:
   HyperVFileCopyUserClient *_userClientInstance = nullptr;
-
 
 public:
   //

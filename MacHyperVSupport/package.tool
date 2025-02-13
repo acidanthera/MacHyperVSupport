@@ -30,7 +30,14 @@ if [ ! -f ../libaistat.dylib ]; then
   sleep 5
 fi
 
-cp ../hvfilecopyd Tools/ || exit 1
+if [[ -f "../hvfilecopyd-universal" ]] && [[ "../hvfilecopyd-universal" -nt "../hvfilecopyd" ]]; then
+  cp ../hvfilecopyd-universal Tools/hvfilecopyd || exit 1
+else
+  cp ../hvfilecopyd Tools/hvfilecopyd || exit 1
+fi
+if [[ -f "../hvfilecopyd-tiger" ]]; then
+  cp ../hvfilecopyd-tiger Tools/ || exit 1
+fi
 if [[ -f "../hvshutdownd-universal" ]] && [[ "../hvshutdownd-universal" -nt "../hvshutdownd" ]]; then
   cp ../hvshutdownd-universal Tools/hvshutdownd || exit 1
 else

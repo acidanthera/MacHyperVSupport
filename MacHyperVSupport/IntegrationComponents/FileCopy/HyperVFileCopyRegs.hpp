@@ -13,6 +13,12 @@
 
 #define kHyperVFileCopyBufferSize   (8 * PAGE_SIZE)
 
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_5
+#define kHyperVFileCopyMaxDataSize  kHyperVFileCopyFragmentSize
+#else
+#define kHyperVFileCopyMaxDataSize  sizeof(io_struct_inband_t)
+#endif
+
 //
 // File copy versions.
 //

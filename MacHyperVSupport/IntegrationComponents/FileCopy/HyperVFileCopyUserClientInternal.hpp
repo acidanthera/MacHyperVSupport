@@ -2,7 +2,7 @@
 //  HyperVFileCopyUserClientInternal.hpp
 //  Hyper-V file copy user client
 //
-//  Copyright © 2022 flagers, Goldfish64. All rights reserved.
+//  Copyright © 2022-2025 flagers, Goldfish64. All rights reserved.
 //
 
 #ifndef HyperVFileCopyUserClient_hpp
@@ -22,20 +22,30 @@ private:
   UInt8 _currentFilePath[PATH_MAX];
   UInt8 *_currentFileData = nullptr;
 
-#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_5
-  static const IOExternalMethodDispatch sFileCopyMethods[kHyperVFileCopyUserClientMethodNumberOfMethods];
-#else
-#endif
-
+  //
+  // Userspace communication methods.
+  //
   bool convertUnicodePath(UInt16 *inputStr, UInt8 *outputStr, size_t outputStrSize);
-  IOReturn notifyClientApplication(HyperVFileCopyUserClientNotificationMessage *notificationMsg);
+  IOReturn notifyFileCopyClientApplication(HyperVFileCopyUserClientNotificationMessage *notificationMsg);
+  IOReturn getFilePath(void *output, UInt32 *outputSize);
+  IOReturn getNextDataFragment(IOMemoryDescriptor *memoryDesc, void *output, UInt32 *outputSize);
+  IOReturn completeIO(IOReturn status);
 
-  //
-  // Userspace external methods.
-  //
-  static IOReturn methodGetFilePath(HyperVFileCopyUserClient *target, void *ref, IOExternalMethodArguments *args);
-  static IOReturn methodGetNextDataFragment(HyperVFileCopyUserClient *target, void *ref, IOExternalMethodArguments *args);
-  static IOReturn methodCompleteIO(HyperVFileCopyUserClient *target, void *ref, IOExternalMethodArguments *args);
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_5
+  static IOReturn sDispatchMethodGetFilePath(HyperVFileCopyUserClient *target, void *ref, IOExternalMethodArguments *args);
+  static IOReturn sDispatchMethodGetNextDataFragment(HyperVFileCopyUserClient *target, void *ref, IOExternalMethodArguments *args);
+  static IOReturn sDispatchMethodCompleteIO(HyperVFileCopyUserClient *target, void *ref, IOExternalMethodArguments *args);
+#else
+#if (defined(__i386__) && defined(__clang__))
+  static IOReturn sMethodGetFilePath(HyperVFileCopyUserClient *that, void *output, UInt32 *outputSize);
+  static IOReturn sMethodGetNextDataFragment(HyperVFileCopyUserClient *that, void *output, UInt32 *outputSize);
+  static IOReturn sMethodCompleteIO(HyperVFileCopyUserClient *that, UInt32 status);
+#else
+  IOReturn methodGetFilePath(void *output, UInt32 *outputSize);
+  IOReturn methodGetNextDataFragment(void *output, UInt32 *outputSize);
+  IOReturn methodCompleteIO(UInt32 status);
+#endif
+#endif
 
 public:
   //
@@ -51,8 +61,13 @@ public:
   IOReturn externalMethod(uint32_t selector, IOExternalMethodArguments *arguments,
                           IOExternalMethodDispatch *dispatch, OSObject *target,
                           void *reference) APPLE_KEXT_OVERRIDE;
+#else
+  IOExternalMethod *getTargetAndMethodForIndex(IOService **target, UInt32 index) APPLE_KEXT_OVERRIDE;
 #endif
-  
+
+  //
+  // User client methods.
+  //
   IOReturn startFileCopy(UInt16 *fileName, UInt16 *filePath, HyperVFileCopyMessageFlags flags, UInt64 fileSize);
   IOReturn writeFileFragment(UInt64 offset, UInt8 *data, UInt32 dataSize);
   IOReturn completeFileCopy();

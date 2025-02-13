@@ -2,42 +2,12 @@
 //  HyperVFileCopyUserClient.cpp
 //  Hyper-V file copy user client
 //
-//  Copyright © 2022 flagers, Goldfish64. All rights reserved.
+//  Copyright © 2022-2025 flagers, Goldfish64. All rights reserved.
 //
 
 #include "HyperVFileCopyUserClientInternal.hpp"
 
-#include <sys/syslimits.h>
-#include <sys/utfconv.h>
-
 OSDefineMetaClassAndStructors(HyperVFileCopyUserClient, super);
-
-#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_5
-const IOExternalMethodDispatch HyperVFileCopyUserClient::sFileCopyMethods[kHyperVFileCopyUserClientMethodNumberOfMethods] = {
-  { // kHyperVFileCopyUserClientMethodGetFilePath
-    reinterpret_cast<IOExternalMethodAction>(&HyperVFileCopyUserClient::methodGetFilePath),         // Method pointer
-    0,                                                    // Num of scalar input values
-    0,                                                    // Size of struct input
-    0,                                                    // Num of scalar output values
-    sizeof (HyperVFileCopyUserClientStartCopyData)        // Size of struct output
-  },
-  { // kHyperVFileCopyUserClientMethodGetNextDataFragment
-    reinterpret_cast<IOExternalMethodAction>(&HyperVFileCopyUserClient::methodGetNextDataFragment), // Method pointer
-    0,                                                    // Num of scalar input values
-    0,                                                    // Size of struct input
-    0,                                                    // Num of scalar output values
-    kHyperVFileCopyFragmentSize                           // Size of struct output
-  },
-  { // kHyperVFileCopyUserClientMethodCompleteIO
-    reinterpret_cast<IOExternalMethodAction>(&HyperVFileCopyUserClient::methodCompleteIO),          // Method pointer
-    1,                                                    // Num of scalar input values
-    0,                                                    // Size of struct input
-    0,                                                    // Num of scalar output values
-    0                                                     // Size of struct output
-  }
-};
-#else
-#endif
 
 bool HyperVFileCopyUserClient::start(IOService *provider) {
   if (!super::start(provider)) {
@@ -60,10 +30,34 @@ void HyperVFileCopyUserClient::stop(IOService *provider) {
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_5
 IOReturn HyperVFileCopyUserClient::externalMethod(uint32_t selector, IOExternalMethodArguments *arguments, IOExternalMethodDispatch *dispatch,
                                                   OSObject *target, void *reference) {
+  static const IOExternalMethodDispatch methods[kHyperVFileCopyUserClientMethodNumberOfMethods] = {
+    { // kHyperVFileCopyUserClientMethodGetFilePath
+      reinterpret_cast<IOExternalMethodAction>(&HyperVFileCopyUserClient::sDispatchMethodGetFilePath),          // Method pointer
+      0,                                              // Num of scalar input values
+      0,                                              // Size of struct input
+      0,                                              // Num of scalar output values
+      sizeof (HyperVFileCopyUserClientStartCopyData)  // Size of struct output
+    },
+    { // kHyperVFileCopyUserClientMethodGetNextDataFragment
+      reinterpret_cast<IOExternalMethodAction>(&HyperVFileCopyUserClient::sDispatchMethodGetNextDataFragment),  // Method pointer
+      0,                                              // Num of scalar input values
+      0,                                              // Size of struct input
+      0,                                              // Num of scalar output values
+      kHyperVFileCopyMaxDataSize                      // Size of struct output
+    },
+    { // kHyperVFileCopyUserClientMethodCompleteIO
+      reinterpret_cast<IOExternalMethodAction>(&HyperVFileCopyUserClient::sDispatchMethodCompleteIO),           // Method pointer
+      1,                                              // Num of scalar input values
+      0,                                              // Size of struct input
+      0,                                              // Num of scalar output values
+      0                                               // Size of struct output
+    }
+  };
+
   if (selector >= kHyperVFileCopyUserClientMethodNumberOfMethods) {
     return kIOReturnUnsupported;
   }
-  dispatch = const_cast<IOExternalMethodDispatch*>(&sFileCopyMethods[selector]);
+  dispatch = const_cast<IOExternalMethodDispatch*>(&methods[selector]);
 
   target = this;
   reference = nullptr;
@@ -71,108 +65,57 @@ IOReturn HyperVFileCopyUserClient::externalMethod(uint32_t selector, IOExternalM
   return super::externalMethod(selector, arguments, dispatch, target, reference);
 }
 #else
+IOExternalMethod* HyperVFileCopyUserClient::getTargetAndMethodForIndex(IOService **target, UInt32 index) {
+  static const IOExternalMethod methods[kHyperVFileCopyUserClientMethodNumberOfMethods] = {
+    { // kHyperVFileCopyUserClientMethodGetFilePath
+      NULL,                                             // Target pointer
+#if (defined(__i386__) && defined(__clang__))
+      // Required to match GCC behavior on 32-bit when building with clang
+      kIOExternalMethodACID32Padding,
+      reinterpret_cast<IOMethodACID32>(&HyperVFileCopyUserClient::sMethodGetFilePath),          // Static method pointer
+#else
+      reinterpret_cast<IOMethod>(&HyperVFileCopyUserClient::methodGetFilePath),                 // Instance method pointer
 #endif
-
-bool HyperVFileCopyUserClient::convertUnicodePath(UInt16 *inputStr, UInt8 *outputStr, size_t outputStrSize) {
-  int result;
-  UInt8 unicodeNul[3] = { 0xE2, 0x90, 0x80 };
-  void *unicodeNulLoc;
-  size_t nlen;
-
-  bzero(outputStr, outputStrSize);
-  result = utf8_encodestr(inputStr, kHyperVFileCopyMaxPath * sizeof (UInt16), outputStr, &nlen, outputStrSize, '/', UTF_LITTLE_ENDIAN);
-  if (result != 0) {
-    HVDBGLOG("Failed to encode UTF8 string with result %d", result);
-    return false;
-  }
-  
-  unicodeNulLoc = lilu_os_memmem(outputStr, outputStrSize, &unicodeNul, sizeof (unicodeNul));
-  if (!unicodeNulLoc) {
-    return false;
-  }
-  *(char *)unicodeNulLoc = 0x00;
-
-  return true;
-}
-
-IOReturn HyperVFileCopyUserClient::notifyClientApplication(HyperVFileCopyUserClientNotificationMessage *notificationMsg) {
-  if (_notificationPort == MACH_PORT_NULL) {
-    HVDBGLOG("Notification port is not open");
-    return kIOReturnNotFound;
-  }
-
-  HVDBGLOG("Sending file copy notification type %u", notificationMsg->type);
-
-  notificationMsg->header.msgh_bits        = MACH_MSGH_BITS(MACH_MSG_TYPE_COPY_SEND, 0);
-  notificationMsg->header.msgh_size        = sizeof (*notificationMsg);
-  notificationMsg->header.msgh_remote_port = _notificationPort;
-  notificationMsg->header.msgh_local_port  = MACH_PORT_NULL;
-  notificationMsg->header.msgh_reserved    = 0;
-  notificationMsg->header.msgh_id          = 0;
-
-  return mach_msg_send_from_kernel(&notificationMsg->header, notificationMsg->header.msgh_size);
-}
-
-IOReturn HyperVFileCopyUserClient::methodGetFilePath(HyperVFileCopyUserClient *target, void *ref, IOExternalMethodArguments *args) {
-  HyperVFileCopyUserClientStartCopyData *startCopyData;
-
-  target->HVDBGLOG("File name and path requested by userspace daemon");
-  if (args->structureOutput == nullptr || args->structureOutputSize != sizeof (*startCopyData)) {
-    target->HVDBGLOG("Invalid struct %u size %u bytes", args->structureOutput == nullptr, args->structureOutputSize);
-    return kIOReturnBadArgument;
-  }
-  startCopyData = (HyperVFileCopyUserClientStartCopyData *) args->structureOutput;
-
-  //
-  // Copy filename and file path to userspace.
-  //
-  memcpy(startCopyData->fileName, target->_currentFileName, sizeof (startCopyData->fileName));
-  memcpy(startCopyData->filePath, target->_currentFilePath, sizeof (startCopyData->filePath));
-  return kIOReturnSuccess;
-}
-
-IOReturn HyperVFileCopyUserClient::methodGetNextDataFragment(HyperVFileCopyUserClient *target, void *ref, IOExternalMethodArguments *args) {
-  IOReturn    status;
-  IOByteCount bytesWritten;
-
-  //
-  // Structures larger than 4KB are passed in with an IOMemoryDescriptor that must be mapped instead.
-  //
-  target->HVDBGLOG("File data requested by userspace daemon");
-  if (args->structureOutputDescriptor != nullptr) {
-    status = args->structureOutputDescriptor->prepare();
-    if (status != kIOReturnSuccess) {
-      target->HVDBGLOG("Failed to prepare data descriptor with status 0x%X", status);
-      return status;
+      kIOUCScalarIStructO,                              // Method type
+      0,                                                // Num of scalar input values or size of struct input
+      sizeof (HyperVFileCopyUserClientStartCopyData)    // Num of scalar output values or size of struct output
+    },
+    { // kHyperVFileCopyUserClientMethodGetNextDataFragment
+      NULL,                                             // Target pointer
+#if (defined(__i386__) && defined(__clang__))
+      // Required to match GCC behavior on 32-bit when building with clang
+      kIOExternalMethodACID32Padding,
+      reinterpret_cast<IOMethodACID32>(&HyperVFileCopyUserClient::sMethodGetNextDataFragment),  // Static method pointer
+#else
+      reinterpret_cast<IOMethod>(&HyperVFileCopyUserClient::methodGetNextDataFragment),         // Instance method pointer
+#endif
+      kIOUCScalarIStructO,                              // Method type
+      0,                                                // Num of scalar input values or size of struct input
+      kHyperVFileCopyMaxDataSize                        // Num of scalar output values or size of struct output
+    },
+    { // kHyperVFileCopyUserClientMethodCompleteIO
+      NULL,                                             // Target pointer
+#if (defined(__i386__) && defined(__clang__))
+      // Required to match GCC behavior on 32-bit when building with clang
+      kIOExternalMethodACID32Padding,
+      reinterpret_cast<IOMethodACID32>(&HyperVFileCopyUserClient::sMethodCompleteIO),           // Static method pointer
+#else
+      reinterpret_cast<IOMethod>(&HyperVFileCopyUserClient::methodCompleteIO),                  // Instance method pointer
+#endif
+      kIOUCScalarIScalarO,                              // Method type
+      1,                                                // Num of scalar input values or size of struct input
+      0                                                 // Num of scalar output values or size of struct output
     }
+  };
 
-    bytesWritten = args->structureOutputDescriptor->writeBytes(0, target->_currentFileData, kHyperVFileCopyFragmentSize);
-    args->structureOutputDescriptor->complete();
-
-    if (bytesWritten != kHyperVFileCopyFragmentSize) {
-      target->HVDBGLOG("Failed to write all bytes to descriptor, only wrote %u bytes", bytesWritten);
-      return kIOReturnIOError;
-    }
-  } else {
-    if (args->structureOutput == nullptr || args->structureOutputSize != kHyperVFileCopyFragmentSize) {
-      target->HVDBGLOG("Invalid struct %u size %u bytes", args->structureOutput == nullptr, args->structureOutputSize);
-      return kIOReturnBadArgument;
-    }
-
-    //
-    // Copy file data to userspace.
-    //
-    memcpy(args->structureOutput, target->_currentFileData, kHyperVFileCopyFragmentSize);
+  if (index >= kHyperVFileCopyUserClientMethodNumberOfMethods) {
+    return nullptr;
   }
 
-  return kIOReturnSuccess;
+  *target = this;
+  return const_cast<IOExternalMethod*>(&methods[index]);
 }
-
-IOReturn HyperVFileCopyUserClient::methodCompleteIO(HyperVFileCopyUserClient *target, void *ref, IOExternalMethodArguments *args) {
-  target->HVDBGLOG("Completing I/O with status 0x%X", static_cast<IOReturn>(args->scalarInput[0]));
-  target->wakeThread(static_cast<IOReturn>(args->scalarInput[0]));
-  return kIOReturnSuccess;
-}
+#endif
 
 IOReturn HyperVFileCopyUserClient::startFileCopy(UInt16 *fileName, UInt16 *filePath, HyperVFileCopyMessageFlags flags, UInt64 fileSize) {
   IOReturn                                    status;
@@ -193,12 +136,13 @@ IOReturn HyperVFileCopyUserClient::startFileCopy(UInt16 *fileName, UInt16 *fileP
   //
   // Notify userspace daemon that a file copy operation is starting.
   //
-  notificationMsg.type               = kHyperVFileCopyMessageTypeStartCopy;
-  notificationMsg.startCopy.flags    = flags;
-  notificationMsg.startCopy.fileSize = fileSize;
+  notificationMsg.type                      = kHyperVFileCopyMessageTypeStartCopy;
+  notificationMsg.startCopy.flags           = flags;
+  notificationMsg.startCopy.fileSize        = fileSize;
+  notificationMsg.startCopy.maxFragmentSize = kHyperVFileCopyMaxDataSize;
 
   _isSleeping = true;
-  status = notifyClientApplication(&notificationMsg);
+  status = notifyFileCopyClientApplication(&notificationMsg);
   if (status != kIOReturnSuccess) {
     HVDBGLOG("Failed to send start copy message to daemon with status 0x%X", status);
     return status;
@@ -231,11 +175,11 @@ IOReturn HyperVFileCopyUserClient::writeFileFragment(UInt64 offset, UInt8 *data,
   //
   notificationMsg.type                = kHyperVFileCopyMessageTypeWriteToFile;
   notificationMsg.dataFragment.offset = offset;
-  notificationMsg.dataFragment.size   = dataSize;
+  notificationMsg.dataFragment.size   = (kHyperVFileCopyMaxDataSize > dataSize) ? kHyperVFileCopyMaxDataSize : dataSize;
   _currentFileData                    = data;
 
   _isSleeping = true;
-  status = notifyClientApplication(&notificationMsg);
+  status = notifyFileCopyClientApplication(&notificationMsg);
   if (status != kIOReturnSuccess) {
     HVDBGLOG("Failed to send next data fragment message to daemon with status 0x%X", status);
     return status;
@@ -254,6 +198,41 @@ IOReturn HyperVFileCopyUserClient::writeFileFragment(UInt64 offset, UInt8 *data,
     return status;
   }
   HVDBGLOG("Userspace daemon acknowledged next data fragment");
+
+  //
+  // To maintain compatibility with macOS 10.4, the legacy APIs are used for userspace communication.
+  // This limits the maximum transfer size to 4KB.
+  //
+  if (dataSize > kHyperVFileCopyMaxDataSize) {
+    //
+    // Notify userspace daemon that the next data fragment is available.
+    //
+    notificationMsg.type                = kHyperVFileCopyMessageTypeWriteToFile;
+    notificationMsg.dataFragment.offset = offset + kHyperVFileCopyMaxDataSize;
+    notificationMsg.dataFragment.size   = dataSize - kHyperVFileCopyMaxDataSize;
+    _currentFileData                   += kHyperVFileCopyMaxDataSize;
+
+    _isSleeping = true;
+    status = notifyFileCopyClientApplication(&notificationMsg);
+    if (status != kIOReturnSuccess) {
+      HVDBGLOG("Failed to send next data fragment (second portion) message to daemon with status 0x%X", status);
+      return status;
+    }
+
+    //
+    // Wait for userspace daemon to complete.
+    //
+    // Userspace daemon needs to call the external method GetNextDataFragment() followed by
+    // CompleteIO() to continue.
+    //
+    HVDBGLOG("Waiting for userspace daemon to complete");
+    status = sleepThread();
+    if (status != kIOReturnSuccess) {
+      HVDBGLOG("Received failure response or timed out with status 0x%X", status);
+      return status;
+    }
+    HVDBGLOG("Userspace daemon acknowledged next data fragment (second portion)");
+  }
   return kIOReturnSuccess;
 }
 
@@ -268,7 +247,7 @@ IOReturn HyperVFileCopyUserClient::completeFileCopy() {
   //
   notificationMsg.type = kHyperVFileCopyMessageTypeCompleteCopy;
   _isSleeping = true;
-  status = notifyClientApplication(&notificationMsg);
+  status = notifyFileCopyClientApplication(&notificationMsg);
   if (status != kIOReturnSuccess) {
     HVDBGLOG("Failed to send copy complete to daemon with status 0x%X", status);
     return status;
@@ -300,7 +279,7 @@ IOReturn HyperVFileCopyUserClient::cancelFileCopy() {
   //
   notificationMsg.type = kHyperVFileCopyMessageTypeCancelCopy;
   _isSleeping = true;
-  status = notifyClientApplication(&notificationMsg);
+  status = notifyFileCopyClientApplication(&notificationMsg);
   if (status != kIOReturnSuccess) {
     HVDBGLOG("Failed to send copy cancellation message to daemon with status 0x%X", status);
     return status;

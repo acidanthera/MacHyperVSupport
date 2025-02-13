@@ -30,6 +30,7 @@ typedef struct {
 typedef struct {
   HyperVFileCopyMessageFlags flags;
   UInt64                     fileSize;
+  UInt32                     maxFragmentSize;
 } HyperVFileCopyUserClientNotificationMessageStartCopy;
 
 typedef struct {

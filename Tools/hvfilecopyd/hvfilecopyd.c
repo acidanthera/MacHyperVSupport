@@ -18,12 +18,13 @@ HVDeclareLogFunctionsUser("hvfilecopyd");
 static char _currentFilePath[PATH_MAX];
 static int _currentFileDesc;
 static UInt8 _fragmentData[kHyperVFileCopyFragmentSize];
+static UInt32 _maxFragmentDataSize;
 
-static IOReturn hvFileCopyStartCopy(io_connect_t connection, HyperVFileCopyMessageFlags flags, UInt64 fileSize) {
+static IOReturn hvFileCopyStartCopy(io_connect_t connection, HyperVFileCopyMessageFlags flags, UInt64 fileSize, UInt32 maxFragmentSize) {
   IOReturn                              status;
   HyperVFileCopyUserClientStartCopyData startCopyData     = { };
   size_t                                startCopyDataSize = sizeof (startCopyData);
-  
+
   struct stat pathStat;
   char *pathPtr;
   char *charPtr;
@@ -31,8 +32,19 @@ static IOReturn hvFileCopyStartCopy(io_connect_t connection, HyperVFileCopyMessa
   //
   // Get file name and file path from userclient.
   //
-  HVDBGLOG(stdout, "Starting file copy of %llu bytes (flags 0x%X)", fileSize, flags);
+  HVDBGLOG(stdout, "Starting file copy of %llu bytes (flags 0x%X, max fragment size %u bytes)", fileSize, flags, maxFragmentSize);
+  _maxFragmentDataSize = maxFragmentSize;
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_5
+  //
+  // Call into user client with standard API.
+  //
   status = IOConnectCallStructMethod(connection, kHyperVFileCopyUserClientMethodGetFilePath, NULL, 0, &startCopyData, &startCopyDataSize);
+#else
+  //
+  // Call into user client with legacy API.
+  //
+  status = IOConnectMethodScalarIStructureO(connection, kHyperVFileCopyUserClientMethodGetFilePath, 0, &startCopyDataSize, &startCopyData);
+#endif
   if (status != kIOReturnSuccess) {
     HVSYSLOG(stderr, "Failed to call GetFilePath() with status 0x%X", status);
     return status;
@@ -106,13 +118,23 @@ static IOReturn hvFileCopyStartCopy(io_connect_t connection, HyperVFileCopyMessa
 
 static IOReturn hvFileCopyWriteDataFragment(io_connect_t connection, UInt64 offset, UInt32 size) {
   IOReturn status;
-  size_t   fragmentDataSize = sizeof (_fragmentData);
+  size_t   fragmentDataSize = _maxFragmentDataSize;
   size_t   fileBytesWritten;
 
   //
   // Get file data.
   //
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_5
+  //
+  // Call into user client with standard API.
+  //
   status = IOConnectCallStructMethod(connection, kHyperVFileCopyUserClientMethodGetNextDataFragment, NULL, 0, _fragmentData, &fragmentDataSize);
+#else
+  //
+  // Call into user client with legacy API.
+  //
+  status = IOConnectMethodScalarIStructureO(connection, kHyperVFileCopyUserClientMethodGetNextDataFragment, 0, &fragmentDataSize, _fragmentData);
+#endif
   if (status != kIOReturnSuccess) {
     HVSYSLOG(stderr, "Failed to call GetNextDataFragment() with status 0x%X", status);
     return status;
@@ -169,8 +191,18 @@ static IOReturn hvFileCopyCancel() {
 }
 
 static void hvFileCopyCompleteIO(io_connect_t connection, IOReturn status) {
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_5
+  //
+  // Call into user client with standard API.
+  //
   UInt64 status64 = (UInt64) status;
   IOReturn completeStatus = IOConnectCallScalarMethod(connection, kHyperVFileCopyUserClientMethodCompleteIO, &status64, 1, NULL, NULL);
+#else
+  //
+  // Call into user client with legacy API.
+  //
+  IOReturn completeStatus = IOConnectMethodScalarIScalarO(connection, kHyperVFileCopyUserClientMethodCompleteIO, 1, 0, status);
+#endif
   if (completeStatus != kIOReturnSuccess) {
     HVSYSLOG(stdout, "Failed to call CompleteIO() with status 0x%X", completeStatus);
   }
@@ -189,7 +221,8 @@ void hvIOKitNotificationHandler(io_connect_t connection, CFMachPortRef port, voi
   HVDBGLOG(stdout, "Received notification of type 0x%X", fileCopyMsg->type);
   switch (fileCopyMsg->type) {
     case kHyperVFileCopyMessageTypeStartCopy:
-      status = hvFileCopyStartCopy(connection, fileCopyMsg->startCopy.flags, fileCopyMsg->startCopy.fileSize);
+      status = hvFileCopyStartCopy(connection, fileCopyMsg->startCopy.flags,
+                                   fileCopyMsg->startCopy.fileSize, fileCopyMsg->startCopy.maxFragmentSize);
       break;
 
     case kHyperVFileCopyMessageTypeWriteToFile:
