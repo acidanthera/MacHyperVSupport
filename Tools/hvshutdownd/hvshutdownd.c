@@ -2,7 +2,7 @@
 //  hvshutdownd.c
 //  Hyper-V guest shutdown userspace daemon
 //
-//  Copyright © 2022 Goldfish64. All rights reserved.
+//  Copyright © 2022-2025 Goldfish64. All rights reserved.
 //
 
 #include "HyperVShutdownUserClient.h"

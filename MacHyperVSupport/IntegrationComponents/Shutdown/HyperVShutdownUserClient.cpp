@@ -2,7 +2,7 @@
 //  HyperVShutdownUserClient.cpp
 //  Hyper-V guest shutdown user client
 //
-//  Copyright © 2022 Goldfish64. All rights reserved.
+//  Copyright © 2022-2025 Goldfish64. All rights reserved.
 //
 
 #include "HyperVShutdownUserClientInternal.hpp"
@@ -78,7 +78,7 @@ void HyperVShutdownUserClient::stop(IOService *provider) {
   super::stop(provider);
 }
 
-IOReturn HyperVShutdownUserClient::notifyClientApplication(HyperVShutdownUserClientNotificationType type) {
+IOReturn HyperVShutdownUserClient::notifyShutdownClient(HyperVShutdownUserClientNotificationType type) {
   HyperVShutdownUserClientNotificationMessage notificationMsg = { };
 
   if (_notificationPort == MACH_PORT_NULL) {
@@ -124,7 +124,7 @@ bool HyperVShutdownUserClient::canShutdown() {
   // Check if userspace daemon is running and responsive.
   //
   _isSleeping = true;
-  status = notifyClientApplication(kHyperVShutdownUserClientNotificationTypeCheck);
+  status = notifyShutdownClient(kHyperVShutdownUserClientNotificationTypeCheck);
   if (status != kIOReturnSuccess) {
     HVSYSLOG("Failed to notify shutdown daemon with status 0x%X", status);
     return false;
@@ -140,9 +140,9 @@ bool HyperVShutdownUserClient::canShutdown() {
 }
 
 void HyperVShutdownUserClient::doShutdown(bool restart) {
-  IOReturn status = notifyClientApplication(restart ?
-                                            kHyperVShutdownUserClientNotificationTypePerformRestart :
-                                            kHyperVShutdownUserClientNotificationTypePerformShutdown);
+  IOReturn status = notifyShutdownClient(restart ?
+                                         kHyperVShutdownUserClientNotificationTypePerformRestart :
+                                         kHyperVShutdownUserClientNotificationTypePerformShutdown);
   if (status != kIOReturnSuccess) {
     HVSYSLOG("Failed to notify shutdown daemon with status 0x%X", status);
   }

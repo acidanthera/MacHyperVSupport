@@ -2,7 +2,7 @@
 //  HyperVShutdownUserClientInternal.hpp
 //  Hyper-V guest shutdown user client
 //
-//  Copyright © 2022 Goldfish64. All rights reserved.
+//  Copyright © 2022-2025 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperVShutdownUserClientInternal_hpp
@@ -20,7 +20,7 @@ private:
   //
   // Userspace communication methods.
   //
-  IOReturn notifyClientApplication(HyperVShutdownUserClientNotificationType type);
+  IOReturn notifyShutdownClient(HyperVShutdownUserClientNotificationType type);
   IOReturn reportShutdownAbility(UInt32 arg);
 
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_5
@@ -49,6 +49,9 @@ public:
   IOExternalMethod *getTargetAndMethodForIndex(IOService **target, UInt32 index) APPLE_KEXT_OVERRIDE;
 #endif
 
+  //
+  // User client methods.
+  //
   bool canShutdown();
   void doShutdown(bool restart);
 };
