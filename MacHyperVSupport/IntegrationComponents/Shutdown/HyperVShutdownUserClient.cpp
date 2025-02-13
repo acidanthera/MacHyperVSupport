@@ -50,7 +50,6 @@ IOReturn HyperVShutdownUserClient::externalMethod(uint32_t selector, IOExternalM
 
   return super::externalMethod(selector, arguments, dispatch, target, reference);
 }
-
 #else
 IOExternalMethod* HyperVShutdownUserClient::getTargetAndMethodForIndex(IOService **target, UInt32 index) {
   static const IOExternalMethod methods[kHyperVShutdownUserClientMethodNumberOfMethods] = {
