@@ -33,10 +33,10 @@ IOReturn HyperVShutdownUserClient::externalMethod(uint32_t selector, IOExternalM
   static const IOExternalMethodDispatch methods[kHyperVShutdownUserClientMethodNumberOfMethods] = {
     { // kHyperVShutdownUserClientMethodReportShutdownAbility
       reinterpret_cast<IOExternalMethodAction>(&HyperVShutdownUserClient::sMethodReportShutdownAbility),  // Method pointer
-      1,                                                                                                  // Num of scalar input values
-      0,                                                                                                  // Size of struct input
-      0,                                                                                                  // Num of scalar output values
-      0                                                                                                   // Size of struct output
+      1,  // Num of scalar input values
+      0,  // Size of struct input
+      0,  // Num of scalar output values
+      0   // Size of struct output
     }
   };
   
