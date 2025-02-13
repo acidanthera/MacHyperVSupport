@@ -39,7 +39,14 @@ fi
 if [[ -f "../hvshutdownd-tiger" ]]; then
   cp ../hvshutdownd-tiger Tools/ || exit 1
 fi
-cp ../hvtimesyncd Tools/ || exit 1
+if [[ -f "../hvtimesyncd-universal" ]] && [[ "../hvtimesyncd-universal" -nt "../hvtimesyncd" ]]; then
+  cp ../hvtimesyncd-universal Tools/hvtimesyncd || exit 1
+else
+  cp ../hvtimesyncd Tools/hvtimesyncd || exit 1
+fi
+if [[ -f "../hvtimesyncd-tiger" ]]; then
+  cp ../hvtimesyncd-tiger Tools/ || exit 1
+fi
 
 for kext in ../*.kext; do
   echo "$kext"

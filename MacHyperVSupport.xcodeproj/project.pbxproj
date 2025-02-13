@@ -67,6 +67,10 @@
 		419B88C2263F0169005A9977 /* HyperVControllerHypercalls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 419B88C1263F0169005A9977 /* HyperVControllerHypercalls.cpp */; };
 		41A98B0A2D5C535400A1931C /* hviokit.c in Sources */ = {isa = PBXBuildFile; fileRef = 4191F6E128F32E5200809232 /* hviokit.c */; };
 		41A98B0B2D5C535400A1931C /* hvshutdownd.c in Sources */ = {isa = PBXBuildFile; fileRef = 4191F6D328F326DF00809232 /* hvshutdownd.c */; };
+		41A98B1A2D5D72DE00A1931C /* hviokit.c in Sources */ = {isa = PBXBuildFile; fileRef = 4191F6E128F32E5200809232 /* hviokit.c */; };
+		41A98B1B2D5D72DE00A1931C /* hvtimesyncd.c in Sources */ = {isa = PBXBuildFile; fileRef = 4191F6E528F4E55800809232 /* hvtimesyncd.c */; };
+		41A98B3E2D5D745E00A1931C /* hviokit.c in Sources */ = {isa = PBXBuildFile; fileRef = 4191F6E128F32E5200809232 /* hviokit.c */; };
+		41A98B3F2D5D745E00A1931C /* hvtimesyncd.c in Sources */ = {isa = PBXBuildFile; fileRef = 4191F6E528F4E55800809232 /* hvtimesyncd.c */; };
 		41AE1D0E289C95A9001A7B42 /* HyperVCPU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */; };
 		41AE1D0F289C95A9001A7B42 /* HyperVCPU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */; };
 		41AE1D10289C95A9001A7B42 /* HyperVCPU.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41AE1D0D289C95A9001A7B42 /* HyperVCPU.hpp */; };
@@ -273,6 +277,41 @@
 			remoteGlobalIDString = 41A98B082D5C535400A1931C;
 			remoteInfo = "hvshutdownd-tiger";
 		};
+		41A98B342D5D73DE00A1931C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4191F6E628F4E55F00809232;
+			remoteInfo = hvtimesyncd;
+		};
+		41A98B362D5D73DE00A1931C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41A98B182D5D72DE00A1931C;
+			remoteInfo = "hvtimesyncd-i386";
+		};
+		41A98B382D5D745300A1931C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41A98B182D5D72DE00A1931C;
+			remoteInfo = "hvtimesyncd-i386";
+		};
+		41A98B3A2D5D745300A1931C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41A98B2C2D5D72EC00A1931C;
+			remoteInfo = "hvtimesyncd-universal";
+		};
+		41A98B462D5D74B200A1931C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41A98B3C2D5D745E00A1931C;
+			remoteInfo = "hvtimesyncd-tiger";
+		};
 		41AE1D0428974D8B001A7B42 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
@@ -346,6 +385,24 @@
 			runOnlyForDeploymentPostprocessing = 1;
 		};
 		41A98B0D2D5C535400A1931C /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		41A98B1D2D5D72DE00A1931C /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		41A98B412D5D745E00A1931C /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -431,6 +488,8 @@
 		41A71CA7289EB5A400CAE2FF /* Changelog.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Changelog.md; sourceTree = "<group>"; };
 		41A98B002D5C1A2900A1931C /* build-universal.tool */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-universal.tool"; sourceTree = "<group>"; };
 		41A98B112D5C535400A1931C /* hvshutdownd-tiger */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "hvshutdownd-tiger"; sourceTree = BUILT_PRODUCTS_DIR; };
+		41A98B212D5D72DE00A1931C /* hvtimesyncd-i386 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "hvtimesyncd-i386"; sourceTree = BUILT_PRODUCTS_DIR; };
+		41A98B452D5D745E00A1931C /* hvtimesyncd-tiger */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "hvtimesyncd-tiger"; sourceTree = BUILT_PRODUCTS_DIR; };
 		41AE1CFF28974C7E001A7B42 /* package.tool */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = package.tool; sourceTree = "<group>"; };
 		41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVCPU.cpp; sourceTree = "<group>"; };
 		41AE1D0D289C95A9001A7B42 /* HyperVCPU.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVCPU.hpp; sourceTree = "<group>"; };
@@ -535,6 +594,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		41A98B0C2D5C535400A1931C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		41A98B1C2D5D72DE00A1931C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		41A98B402D5D745E00A1931C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -768,6 +841,8 @@
 				4191F70628F504FD00809232 /* hvfilecopyd */,
 				41E814692D59809600AAA93E /* hvshutdownd-i386 */,
 				41A98B112D5C535400A1931C /* hvshutdownd-tiger */,
+				41A98B212D5D72DE00A1931C /* hvtimesyncd-i386 */,
+				41A98B452D5D745E00A1931C /* hvtimesyncd-tiger */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1107,7 +1182,7 @@
 /* Begin PBXLegacyTarget section */
 		41A98AF82D5C18F900A1931C /* hvshutdownd-universal */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "hvshutdownd hvshutdownd-i386 hvshutdownd-universal";
+			buildArgumentsString = "hvshutdownd hvshutdownd-i386 $(TARGET_NAME)";
 			buildConfigurationList = 41A98AFB2D5C18FA00A1931C /* Build configuration list for PBXLegacyTarget "hvshutdownd-universal" */;
 			buildPhases = (
 			);
@@ -1118,6 +1193,22 @@
 				41A98AFF2D5C190F00A1931C /* PBXTargetDependency */,
 			);
 			name = "hvshutdownd-universal";
+			passBuildSettingsInEnvironment = 1;
+			productName = "hvshutdownd-universal";
+		};
+		41A98B2C2D5D72EC00A1931C /* hvtimesyncd-universal */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "hvtimesyncd hvtimesyncd-i386 $(TARGET_NAME)";
+			buildConfigurationList = 41A98B312D5D72EC00A1931C /* Build configuration list for PBXLegacyTarget "hvtimesyncd-universal" */;
+			buildPhases = (
+			);
+			buildToolPath = "${SRCROOT}/Tools/build-universal.tool";
+			buildWorkingDirectory = "";
+			dependencies = (
+				41A98B352D5D73DE00A1931C /* PBXTargetDependency */,
+				41A98B372D5D73DE00A1931C /* PBXTargetDependency */,
+			);
+			name = "hvtimesyncd-universal";
 			passBuildSettingsInEnvironment = 1;
 			productName = "hvshutdownd-universal";
 		};
@@ -1155,8 +1246,11 @@
 				41A98B042D5C250E00A1931C /* PBXTargetDependency */,
 				41A98B062D5C250E00A1931C /* PBXTargetDependency */,
 				41A98B132D5C53A400A1931C /* PBXTargetDependency */,
-				41E814732D5B08B700AAA93E /* PBXTargetDependency */,
 				41A98B022D5C1C4700A1931C /* PBXTargetDependency */,
+				41E814732D5B08B700AAA93E /* PBXTargetDependency */,
+				41A98B392D5D745300A1931C /* PBXTargetDependency */,
+				41A98B472D5D74B200A1931C /* PBXTargetDependency */,
+				41A98B3B2D5D745300A1931C /* PBXTargetDependency */,
 			);
 			name = "Package Universal";
 			passBuildSettingsInEnvironment = 1;
@@ -1231,6 +1325,40 @@
 			name = "hvshutdownd-tiger";
 			productName = hvshutdown;
 			productReference = 41A98B112D5C535400A1931C /* hvshutdownd-tiger */;
+			productType = "com.apple.product-type.tool";
+		};
+		41A98B182D5D72DE00A1931C /* hvtimesyncd-i386 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 41A98B1E2D5D72DE00A1931C /* Build configuration list for PBXNativeTarget "hvtimesyncd-i386" */;
+			buildPhases = (
+				41A98B192D5D72DE00A1931C /* Sources */,
+				41A98B1C2D5D72DE00A1931C /* Frameworks */,
+				41A98B1D2D5D72DE00A1931C /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "hvtimesyncd-i386";
+			productName = hvshutdown;
+			productReference = 41A98B212D5D72DE00A1931C /* hvtimesyncd-i386 */;
+			productType = "com.apple.product-type.tool";
+		};
+		41A98B3C2D5D745E00A1931C /* hvtimesyncd-tiger */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 41A98B422D5D745E00A1931C /* Build configuration list for PBXNativeTarget "hvtimesyncd-tiger" */;
+			buildPhases = (
+				41A98B3D2D5D745E00A1931C /* Sources */,
+				41A98B402D5D745E00A1931C /* Frameworks */,
+				41A98B412D5D745E00A1931C /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "hvtimesyncd-tiger";
+			productName = hvshutdown;
+			productReference = 41A98B452D5D745E00A1931C /* hvtimesyncd-tiger */;
 			productType = "com.apple.product-type.tool";
 		};
 		41BE4103263EDE370018C52B /* MacHyperVSupport */ = {
@@ -1328,6 +1456,9 @@
 				41A98B082D5C535400A1931C /* hvshutdownd-tiger */,
 				41A98AF82D5C18F900A1931C /* hvshutdownd-universal */,
 				4191F6E628F4E55F00809232 /* hvtimesyncd */,
+				41A98B182D5D72DE00A1931C /* hvtimesyncd-i386 */,
+				41A98B3C2D5D745E00A1931C /* hvtimesyncd-tiger */,
+				41A98B2C2D5D72EC00A1931C /* hvtimesyncd-universal */,
 			);
 		};
 /* End PBXProject section */
@@ -1405,6 +1536,24 @@
 			files = (
 				41A98B0A2D5C535400A1931C /* hviokit.c in Sources */,
 				41A98B0B2D5C535400A1931C /* hvshutdownd.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		41A98B192D5D72DE00A1931C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				41A98B1A2D5D72DE00A1931C /* hviokit.c in Sources */,
+				41A98B1B2D5D72DE00A1931C /* hvtimesyncd.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		41A98B3D2D5D745E00A1931C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				41A98B3E2D5D745E00A1931C /* hviokit.c in Sources */,
+				41A98B3F2D5D745E00A1931C /* hvtimesyncd.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1557,6 +1706,31 @@
 			target = 41A98B082D5C535400A1931C /* hvshutdownd-tiger */;
 			targetProxy = 41A98B122D5C53A400A1931C /* PBXContainerItemProxy */;
 		};
+		41A98B352D5D73DE00A1931C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4191F6E628F4E55F00809232 /* hvtimesyncd */;
+			targetProxy = 41A98B342D5D73DE00A1931C /* PBXContainerItemProxy */;
+		};
+		41A98B372D5D73DE00A1931C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41A98B182D5D72DE00A1931C /* hvtimesyncd-i386 */;
+			targetProxy = 41A98B362D5D73DE00A1931C /* PBXContainerItemProxy */;
+		};
+		41A98B392D5D745300A1931C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41A98B182D5D72DE00A1931C /* hvtimesyncd-i386 */;
+			targetProxy = 41A98B382D5D745300A1931C /* PBXContainerItemProxy */;
+		};
+		41A98B3B2D5D745300A1931C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41A98B2C2D5D72EC00A1931C /* hvtimesyncd-universal */;
+			targetProxy = 41A98B3A2D5D745300A1931C /* PBXContainerItemProxy */;
+		};
+		41A98B472D5D74B200A1931C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41A98B3C2D5D745E00A1931C /* hvtimesyncd-tiger */;
+			targetProxy = 41A98B462D5D74B200A1931C /* PBXContainerItemProxy */;
+		};
 		41AE1D0528974D8B001A7B42 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 41BE4103263EDE370018C52B /* MacHyperVSupport */;
@@ -1593,7 +1767,6 @@
 		4191F6DA28F326F900809232 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
@@ -1604,7 +1777,6 @@
 		4191F6DB28F326F900809232 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
@@ -1615,54 +1787,28 @@
 		4191F6ED28F4E55F00809232 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				"OTHER_CFLAGS[arch=ACID32]" = (
-					"-fallow-unsupported",
-					"-target",
-					"i386-apple-macos10.4",
-				);
-				"OTHER_LDFLAGS[arch=ACID32]" = (
-					"-target",
-					"i386-apple-macos10.4",
-				);
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				VALID_ARCHS = x86_64;
 			};
 			name = Debug;
 		};
 		4191F6EE28F4E55F00809232 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
-				"OTHER_CFLAGS[arch=ACID32]" = (
-					"-fallow-unsupported",
-					"-target",
-					"i386-apple-macos10.4",
-				);
-				"OTHER_LDFLAGS[arch=ACID32]" = (
-					"-target",
-					"i386-apple-macos10.4",
-				);
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				VALID_ARCHS = x86_64;
 			};
 			name = Release;
 		};
 		4191F70428F504FD00809232 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = (
+					x86_64,
+					ACID32,
+				);
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
@@ -1724,7 +1870,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = ACID32;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
@@ -1748,8 +1893,109 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = ACID32;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				OTHER_CFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				OTHER_LDFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx10.13;
+				VALID_ARCHS = ACID32;
+			};
+			name = Release;
+		};
+		41A98B1F2D5D72DE00A1931C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = ACID32;
+				COPY_PHASE_STRIP = NO;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				OTHER_CFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.5",
+				);
+				OTHER_LDFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.5",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx10.13;
+				VALID_ARCHS = ACID32;
+			};
+			name = Debug;
+		};
+		41A98B202D5D72DE00A1931C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = ACID32;
+				COPY_PHASE_STRIP = NO;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				OTHER_CFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.5",
+				);
+				OTHER_LDFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.5",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx10.13;
+				VALID_ARCHS = ACID32;
+			};
+			name = Release;
+		};
+		41A98B322D5D72EC00A1931C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		41A98B332D5D72EC00A1931C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		41A98B432D5D745E00A1931C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = ACID32;
+				COPY_PHASE_STRIP = NO;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				OTHER_CFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				OTHER_LDFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx10.13;
+				VALID_ARCHS = ACID32;
+			};
+			name = Debug;
+		};
+		41A98B442D5D745E00A1931C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = ACID32;
 				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_CFLAGS = (
@@ -2170,7 +2416,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = ACID32;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
@@ -2194,7 +2439,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = ACID32;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
@@ -2270,6 +2514,33 @@
 			buildConfigurations = (
 				41A98B0F2D5C535400A1931C /* Debug */,
 				41A98B102D5C535400A1931C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		41A98B1E2D5D72DE00A1931C /* Build configuration list for PBXNativeTarget "hvtimesyncd-i386" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41A98B1F2D5D72DE00A1931C /* Debug */,
+				41A98B202D5D72DE00A1931C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		41A98B312D5D72EC00A1931C /* Build configuration list for PBXLegacyTarget "hvtimesyncd-universal" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41A98B322D5D72EC00A1931C /* Debug */,
+				41A98B332D5D72EC00A1931C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		41A98B422D5D745E00A1931C /* Build configuration list for PBXNativeTarget "hvtimesyncd-tiger" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41A98B432D5D745E00A1931C /* Debug */,
+				41A98B442D5D745E00A1931C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
