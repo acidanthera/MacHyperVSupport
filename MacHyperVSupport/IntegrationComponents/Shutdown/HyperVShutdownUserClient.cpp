@@ -41,7 +41,7 @@ IOExternalMethod* HyperVShutdownUserClient::getTargetAndMethodForIndex(IOService
 #if (defined(__i386__) && defined(__clang__))
       // Required to match GCC behavior on 32-bit when building with clang
       kIOExternalMethodACID32Padding,
-      (IOMethodACID32) &HyperVShutdownUserClient::reportShutdownAbility,
+      (IOMethodACID32) &HyperVShutdownUserClient::sReportShutdownAbility,
 #else
       (IOMethod) &HyperVShutdownUserClient::reportShutdownAbility,
 #endif
@@ -102,15 +102,18 @@ IOReturn HyperVShutdownUserClient::notifyClientApplication(HyperVShutdownUserCli
 IOReturn HyperVShutdownUserClient::sMethodReportShutdownAbility(HyperVShutdownUserClient *target, void *ref, IOExternalMethodArguments *args) {
   return target->reportShutdownAbility((UInt32)args->scalarInput[0]);
 }
+
+#else
+#if (defined(__i386__) && defined(__clang__))
+IOReturn HyperVShutdownUserClient::sReportShutdownAbility(HyperVShutdownUserClient* that, UInt32 arg) {
+  that->wakeThread((arg == kHyperVShutdownMagic) ? kIOReturnSuccess : kIOReturnUnsupported);
+  return that->reportShutdownAbility(arg);
+}
+#endif
 #endif
 
-#if (defined(__i386__) && defined(__clang__))
-IOReturn HyperVShutdownUserClient::reportShutdownAbility(HyperVShutdownUserClient* that, UInt32 arg) {
-  that->wakeThread((arg == kHyperVShutdownMagic) ? kIOReturnSuccess : kIOReturnUnsupported);
-#else
 IOReturn HyperVShutdownUserClient::reportShutdownAbility(UInt32 arg) {
   wakeThread((arg == kHyperVShutdownMagic) ? kIOReturnSuccess : kIOReturnUnsupported);
-#endif
   return kIOReturnSuccess;
 }
 

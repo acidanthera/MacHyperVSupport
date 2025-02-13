@@ -36,6 +36,9 @@ if [[ -f "../hvshutdownd-universal" ]] && [[ "../hvshutdownd-universal" -nt "../
 else
   cp ../hvshutdownd Tools/hvshutdownd || exit 1
 fi
+if [[ -f "../hvshutdownd-tiger" ]]; then
+  cp ../hvshutdownd-tiger Tools/ || exit 1
+fi
 cp ../hvtimesyncd Tools/ || exit 1
 
 for kext in ../*.kext; do

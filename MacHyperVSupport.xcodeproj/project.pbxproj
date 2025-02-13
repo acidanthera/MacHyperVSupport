@@ -65,6 +65,8 @@
 		4191F70E28F5057F00809232 /* HyperVFileCopyUserClientInternal.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4191F70B28F5057F00809232 /* HyperVFileCopyUserClientInternal.hpp */; };
 		4191F70F28F5057F00809232 /* HyperVFileCopyUserClientInternal.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4191F70B28F5057F00809232 /* HyperVFileCopyUserClientInternal.hpp */; };
 		419B88C2263F0169005A9977 /* HyperVControllerHypercalls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 419B88C1263F0169005A9977 /* HyperVControllerHypercalls.cpp */; };
+		41A98B0A2D5C535400A1931C /* hviokit.c in Sources */ = {isa = PBXBuildFile; fileRef = 4191F6E128F32E5200809232 /* hviokit.c */; };
+		41A98B0B2D5C535400A1931C /* hvshutdownd.c in Sources */ = {isa = PBXBuildFile; fileRef = 4191F6D328F326DF00809232 /* hvshutdownd.c */; };
 		41AE1D0E289C95A9001A7B42 /* HyperVCPU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */; };
 		41AE1D0F289C95A9001A7B42 /* HyperVCPU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */; };
 		41AE1D10289C95A9001A7B42 /* HyperVCPU.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41AE1D0D289C95A9001A7B42 /* HyperVCPU.hpp */; };
@@ -264,6 +266,13 @@
 			remoteGlobalIDString = 41E814602D59809600AAA93E;
 			remoteInfo = "hvshutdownd-i386";
 		};
+		41A98B122D5C53A400A1931C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41A98B082D5C535400A1931C;
+			remoteInfo = "hvshutdownd-tiger";
+		};
 		41AE1D0428974D8B001A7B42 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
@@ -328,6 +337,15 @@
 			runOnlyForDeploymentPostprocessing = 1;
 		};
 		4191F70228F504FD00809232 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		41A98B0D2D5C535400A1931C /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -412,6 +430,7 @@
 		41A71CA6289EB5A400CAE2FF /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		41A71CA7289EB5A400CAE2FF /* Changelog.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Changelog.md; sourceTree = "<group>"; };
 		41A98B002D5C1A2900A1931C /* build-universal.tool */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-universal.tool"; sourceTree = "<group>"; };
+		41A98B112D5C535400A1931C /* hvshutdownd-tiger */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "hvshutdownd-tiger"; sourceTree = BUILT_PRODUCTS_DIR; };
 		41AE1CFF28974C7E001A7B42 /* package.tool */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = package.tool; sourceTree = "<group>"; };
 		41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVCPU.cpp; sourceTree = "<group>"; };
 		41AE1D0D289C95A9001A7B42 /* HyperVCPU.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVCPU.hpp; sourceTree = "<group>"; };
@@ -509,6 +528,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		4191F70128F504FD00809232 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		41A98B0C2D5C535400A1931C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -741,6 +767,7 @@
 				4191F6EF28F4E55F00809232 /* hvtimesyncd */,
 				4191F70628F504FD00809232 /* hvfilecopyd */,
 				41E814692D59809600AAA93E /* hvshutdownd-i386 */,
+				41A98B112D5C535400A1931C /* hvshutdownd-tiger */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1127,6 +1154,7 @@
 				41E8146F2D5B08B700AAA93E /* PBXTargetDependency */,
 				41A98B042D5C250E00A1931C /* PBXTargetDependency */,
 				41A98B062D5C250E00A1931C /* PBXTargetDependency */,
+				41A98B132D5C53A400A1931C /* PBXTargetDependency */,
 				41E814732D5B08B700AAA93E /* PBXTargetDependency */,
 				41A98B022D5C1C4700A1931C /* PBXTargetDependency */,
 			);
@@ -1186,6 +1214,23 @@
 			name = hvfilecopyd;
 			productName = hvshutdown;
 			productReference = 4191F70628F504FD00809232 /* hvfilecopyd */;
+			productType = "com.apple.product-type.tool";
+		};
+		41A98B082D5C535400A1931C /* hvshutdownd-tiger */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 41A98B0E2D5C535400A1931C /* Build configuration list for PBXNativeTarget "hvshutdownd-tiger" */;
+			buildPhases = (
+				41A98B092D5C535400A1931C /* Sources */,
+				41A98B0C2D5C535400A1931C /* Frameworks */,
+				41A98B0D2D5C535400A1931C /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "hvshutdownd-tiger";
+			productName = hvshutdown;
+			productReference = 41A98B112D5C535400A1931C /* hvshutdownd-tiger */;
 			productType = "com.apple.product-type.tool";
 		};
 		41BE4103263EDE370018C52B /* MacHyperVSupport */ = {
@@ -1280,6 +1325,7 @@
 				4191F6FD28F504FD00809232 /* hvfilecopyd */,
 				4191F6D428F326F900809232 /* hvshutdownd */,
 				41E814602D59809600AAA93E /* hvshutdownd-i386 */,
+				41A98B082D5C535400A1931C /* hvshutdownd-tiger */,
 				41A98AF82D5C18F900A1931C /* hvshutdownd-universal */,
 				4191F6E628F4E55F00809232 /* hvtimesyncd */,
 			);
@@ -1350,6 +1396,15 @@
 			files = (
 				4191F70028F504FD00809232 /* hviokit.c in Sources */,
 				4191F70728F5051300809232 /* hvfilecopyd.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		41A98B092D5C535400A1931C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				41A98B0A2D5C535400A1931C /* hviokit.c in Sources */,
+				41A98B0B2D5C535400A1931C /* hvshutdownd.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1497,6 +1552,11 @@
 			target = 41E814602D59809600AAA93E /* hvshutdownd-i386 */;
 			targetProxy = 41A98B052D5C250E00A1931C /* PBXContainerItemProxy */;
 		};
+		41A98B132D5C53A400A1931C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41A98B082D5C535400A1931C /* hvshutdownd-tiger */;
+			targetProxy = 41A98B122D5C53A400A1931C /* PBXContainerItemProxy */;
+		};
 		41AE1D0528974D8B001A7B42 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 41BE4103263EDE370018C52B /* MacHyperVSupport */;
@@ -1536,7 +1596,7 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1547,7 +1607,7 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -1657,6 +1717,54 @@
 		41A98AFA2D5C18FA00A1931C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+			};
+			name = Release;
+		};
+		41A98B0F2D5C535400A1931C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = ACID32;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				OTHER_CFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				OTHER_LDFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx10.13;
+				VALID_ARCHS = ACID32;
+			};
+			name = Debug;
+		};
+		41A98B102D5C535400A1931C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = ACID32;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				OTHER_CFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				OTHER_LDFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx10.13;
+				VALID_ARCHS = ACID32;
 			};
 			name = Release;
 		};
@@ -2065,16 +2173,16 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_CFLAGS = (
 					"-fallow-unsupported",
 					"-target",
-					"i386-apple-macos10.4",
+					"i386-apple-macos10.5",
 				);
 				OTHER_LDFLAGS = (
 					"-fallow-unsupported",
 					"-target",
-					"i386-apple-macos10.4",
+					"i386-apple-macos10.5",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx10.13;
@@ -2089,16 +2197,16 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_CFLAGS = (
 					"-fallow-unsupported",
 					"-target",
-					"i386-apple-macos10.4",
+					"i386-apple-macos10.5",
 				);
 				OTHER_LDFLAGS = (
 					"-fallow-unsupported",
 					"-target",
-					"i386-apple-macos10.4",
+					"i386-apple-macos10.5",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx10.13;
@@ -2153,6 +2261,15 @@
 			buildConfigurations = (
 				41A98AF92D5C18FA00A1931C /* Debug */,
 				41A98AFA2D5C18FA00A1931C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		41A98B0E2D5C535400A1931C /* Build configuration list for PBXNativeTarget "hvshutdownd-tiger" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41A98B0F2D5C535400A1931C /* Debug */,
+				41A98B102D5C535400A1931C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

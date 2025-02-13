@@ -15,21 +15,17 @@
 HVDeclareLogFunctionsUser("hvshutdownd");
 
 void hvShutdownDoShutdownCheck(io_connect_t connection) {
-#if !defined(__x86_64__)
-  if (IOConnectCallScalarMethod != NULL) {
-#endif
-    //
-    // Call into user client with standard API.
-    //
-    UInt64 input64 = kHyperVShutdownMagic;
-    IOConnectCallScalarMethod(connection, kHyperVShutdownUserClientMethodReportShutdownAbility, &input64, 1, NULL, NULL);
-#if !defined(__x86_64__)
-  } else {
-    //
-    // Call into user client with legacy API.
-    //
-    IOConnectMethodScalarIScalarO(connection, kHyperVShutdownUserClientMethodReportShutdownAbility, 1, 0, kHyperVShutdownMagic);
-  }
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_5
+  //
+  // Call into user client with standard API.
+  //
+  UInt64 input64 = kHyperVShutdownMagic;
+  IOConnectCallScalarMethod(connection, kHyperVShutdownUserClientMethodReportShutdownAbility, &input64, 1, NULL, NULL);
+#else
+  //
+  // Call into user client with legacy API.
+  //
+  IOConnectMethodScalarIScalarO(connection, kHyperVShutdownUserClientMethodReportShutdownAbility, 1, 0, kHyperVShutdownMagic);
 #endif
 }
 

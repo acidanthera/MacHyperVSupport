@@ -17,23 +17,18 @@ class HyperVShutdownUserClient : public HyperVICUserClient {
   typedef HyperVICUserClient super;
 
 private:
-#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_5
-  static const IOExternalMethodDispatch sShutdownMethods[kHyperVShutdownUserClientMethodNumberOfMethods];
-#else
-#endif
-
+  //
+  // Userspace communication methods.
+  //
   IOReturn notifyClientApplication(HyperVShutdownUserClientNotificationType type);
+  IOReturn reportShutdownAbility(UInt32 arg);
 
-  //
-  // Userspace external methods.
-  //
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_5
   static IOReturn sMethodReportShutdownAbility(HyperVShutdownUserClient *target, void *ref, IOExternalMethodArguments *args);
-#endif
-#if (defined(__i386__) && defined(__clang__))
-  static IOReturn reportShutdownAbility(HyperVShutdownUserClient* that, UInt32 arg);
 #else
-  IOReturn reportShutdownAbility(UInt32 arg);
+#if (defined(__i386__) && defined(__clang__))
+  static IOReturn sReportShutdownAbility(HyperVShutdownUserClient* that, UInt32 arg);
+#endif
 #endif
 
 public:
