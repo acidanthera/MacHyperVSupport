@@ -33,10 +33,10 @@ IOReturn HyperVShutdownUserClient::externalMethod(uint32_t selector, IOExternalM
   static const IOExternalMethodDispatch methods[kHyperVShutdownUserClientMethodNumberOfMethods] = {
     { // kHyperVShutdownUserClientMethodReportShutdownAbility
       reinterpret_cast<IOExternalMethodAction>(&HyperVShutdownUserClient::sMethodReportShutdownAbility),  // Method pointer
-      1,                                        // Num of scalar input values
-      0,                                        // Size of struct input
-      0,                                        // Num of scalar output values
-      0                                         // Size of struct output
+      1,                                                                                                  // Num of scalar input values
+      0,                                                                                                  // Size of struct input
+      0,                                                                                                  // Num of scalar output values
+      0                                                                                                   // Size of struct output
     }
   };
   
@@ -54,17 +54,17 @@ IOReturn HyperVShutdownUserClient::externalMethod(uint32_t selector, IOExternalM
 IOExternalMethod* HyperVShutdownUserClient::getTargetAndMethodForIndex(IOService **target, UInt32 index) {
   static const IOExternalMethod methods[kHyperVShutdownUserClientMethodNumberOfMethods] = {
     { // kHyperVShutdownUserClientMethodReportShutdownAbility
-      NULL,
+      NULL,                                                               // Target pointer
 #if (defined(__i386__) && defined(__clang__))
       // Required to match GCC behavior on 32-bit when building with clang
       kIOExternalMethodACID32Padding,
-      (IOMethodACID32) &HyperVShutdownUserClient::sReportShutdownAbility,
+      (IOMethodACID32) &HyperVShutdownUserClient::sReportShutdownAbility, // Static method pointer
 #else
-      (IOMethod) &HyperVShutdownUserClient::reportShutdownAbility,
+      (IOMethod) &HyperVShutdownUserClient::reportShutdownAbility,        // Instance method pointer
 #endif
-      kIOUCScalarIScalarO,
-      1,
-      0
+      kIOUCScalarIScalarO,                                                // Method type
+      1,                                                                  // Num of scalar input values or size of struct input
+      0                                                                   // Num of scalar output values or size of struct output
     }
   };
 
