@@ -22,7 +22,6 @@ private:
   IOACPIPlatformDevice    *_acpiDevice = nullptr;
   IOWorkLoop              *_workLoop = nullptr;
   IOInterruptEventSource  *_intEventSource = nullptr;
-  bool                    _keystrokeE0 = false;
 
   void interruptOccurred(OSObject *owner, IOInterruptEventSource *sender, int count);
   IOReturn connectPS2Keyboard();

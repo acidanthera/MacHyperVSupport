@@ -99,7 +99,7 @@ void HyperVPS2Keyboard::interruptOccurred(OSObject *owner, IOInterruptEventSourc
   UInt8 data;
   UInt64 time;
   bool isBreak;
-  bool isE0;
+  static bool isE0 = false;
 
   //
   // Read inbound keycode.
@@ -109,14 +109,9 @@ void HyperVPS2Keyboard::interruptOccurred(OSObject *owner, IOInterruptEventSourc
   //
   // Check if E0, read second keycode of keystroke.
   //
-  isE0 = _keystrokeE0;
-  if (_keystrokeE0) {
-    _keystrokeE0 = false;
-  } else {
-    _keystrokeE0 = data == kHyperVPS2KeyboardE0;
-    if (_keystrokeE0) {
-      return;
-    }
+  if (!isE0 && (data == kHyperVPS2KeyboardE0)) {
+    isE0 = true;
+    return;
   }
 
   //
@@ -126,12 +121,14 @@ void HyperVPS2Keyboard::interruptOccurred(OSObject *owner, IOInterruptEventSourc
   if (isBreak) {
     data &= ~(kHyperVPS2KeyboardScancodeBreak);
   }
+  HVDBGLOG("Got make code 0x%X (E0: %u, break: %u)", data, isE0, isBreak);
 
   //
   // Dispatch to HID system.
   //
   clock_get_uptime(&time);
   dispatchKeyboardEvent(getKeyCode(data, isE0), !isBreak, *(AbsoluteTime*)&time);
+  isE0 = false;
 }
 
 IOReturn HyperVPS2Keyboard::connectPS2Keyboard() {
