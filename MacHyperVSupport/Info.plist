@@ -182,6 +182,17 @@
 			<key>IOProviderClass</key>
 			<string>HyperVPCIProvider</string>
 		</dict>
+		<key>HyperVPS2Keyboard</key>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>IOClass</key>
+			<string>HyperVPS2Keyboard</string>
+			<key>IONameMatch</key>
+			<string>PNP0303</string>
+			<key>IOProviderClass</key>
+			<string>IOACPIPlatformDevice</string>
+		</dict>
 		<key>HyperVShutdown</key>
 		<dict>
 			<key>CFBundleIdentifier</key>

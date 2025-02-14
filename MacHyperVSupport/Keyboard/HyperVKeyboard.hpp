@@ -10,13 +10,14 @@
 
 #include <IOKit/hidsystem/IOHIKeyboard.h>
 
+#include "HyperVKeyboardBase.hpp"
 #include "HyperVVMBusDevice.hpp"
 #include "HyperVKeyboardRegs.hpp"
 
-class HyperVKeyboard : public IOHIKeyboard {
+class HyperVKeyboard : public HyperVKeyboardBase {
   OSDeclareDefaultStructors(HyperVKeyboard);
   HVDeclareLogFunctionsVMBusChild("kbd");
-  typedef IOHIKeyboard super;
+  typedef HyperVKeyboardBase super;
 
 private:
   HyperVVMBusDevice *_hvDevice = nullptr;
@@ -25,25 +26,12 @@ private:
   IOReturn connectKeyboard();
   void dispatchUnicodeKeyboardEvent(UInt16 unicodeChar, bool isBreak);
 
-protected:
-  //
-  // IOHIKeyboard overrides.
-  //
-  const unsigned char * defaultKeymapOfLength(UInt32 * length) APPLE_KEXT_OVERRIDE;
-  UInt32 maxKeyCodes() APPLE_KEXT_OVERRIDE;
-
 public:
   //
   // IOService overrides.
   //
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
   void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
-
-  //
-  // IOHIKeyboard overrides.
-  //
-  UInt32 deviceType() APPLE_KEXT_OVERRIDE;
-  UInt32 interfaceID() APPLE_KEXT_OVERRIDE;
 };
 
 #endif
