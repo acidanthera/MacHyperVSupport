@@ -1,12 +1,12 @@
 //
-//  HyperVGraphicsBridgeRegs.hpp
-//  Hyper-V synthetic graphics bridge
+//  HyperVGraphicsRegs.hpp
+//  Hyper-V synthetic graphics driver
 //
-//  Copyright © 2022 Goldfish64. All rights reserved.
+//  Copyright © 2022-2025 Goldfish64. All rights reserved.
 //
 
-#ifndef HyperVGraphicsBridgeRegs_hpp
-#define HyperVGraphicsBridgeRegs_hpp
+#ifndef HyperVGraphicsRegs_hpp
+#define HyperVGraphicsRegs_hpp
 
 #define kHyperVPCIVendorMicrosoft   0x1414
 #define kHyperVPCIDeviceHyperVVideo 0x5353
