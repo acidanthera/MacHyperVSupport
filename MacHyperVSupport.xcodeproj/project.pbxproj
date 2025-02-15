@@ -87,6 +87,8 @@
 		41A98B852D5EF8E600A1931C /* HyperVKeyboardBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41A98B822D5EF8E600A1931C /* HyperVKeyboardBase.cpp */; };
 		41A98B862D5EF8E600A1931C /* HyperVKeyboardBase.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41A98B832D5EF8E600A1931C /* HyperVKeyboardBase.hpp */; };
 		41A98B872D5EF8E600A1931C /* HyperVKeyboardBase.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41A98B832D5EF8E600A1931C /* HyperVKeyboardBase.hpp */; };
+		41A98C012D603EA900A1931C /* HyperVGraphicsFramebuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41A98BFF2D603EA900A1931C /* HyperVGraphicsFramebuffer.cpp */; };
+		41A98C022D603EA900A1931C /* HyperVGraphicsFramebuffer.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41A98C002D603EA900A1931C /* HyperVGraphicsFramebuffer.hpp */; };
 		41AE1D0E289C95A9001A7B42 /* HyperVCPU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */; };
 		41AE1D0F289C95A9001A7B42 /* HyperVCPU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */; };
 		41AE1D10289C95A9001A7B42 /* HyperVCPU.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41AE1D0D289C95A9001A7B42 /* HyperVCPU.hpp */; };
@@ -363,6 +365,20 @@
 			remoteGlobalIDString = 41A98B662D5D9BD800A1931C;
 			remoteInfo = "hvfilecopyd-universal";
 		};
+		41A98BFA2D603D7100A1931C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41A98B8B2D603CC900A1931C;
+			remoteInfo = MacHyperVFramebuffer;
+		};
+		41A98BFC2D603D7600A1931C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41A98B8B2D603CC900A1931C;
+			remoteInfo = MacHyperVFramebuffer;
+		};
 		41AE1D0428974D8B001A7B42 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
@@ -568,6 +584,10 @@
 		41A98B812D5EC3C500A1931C /* HyperVPS2KeyboardRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVPS2KeyboardRegs.hpp; sourceTree = "<group>"; };
 		41A98B822D5EF8E600A1931C /* HyperVKeyboardBase.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVKeyboardBase.cpp; sourceTree = "<group>"; };
 		41A98B832D5EF8E600A1931C /* HyperVKeyboardBase.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVKeyboardBase.hpp; sourceTree = "<group>"; };
+		41A98BF82D603CC900A1931C /* MacHyperVFramebuffer.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacHyperVFramebuffer.kext; sourceTree = BUILT_PRODUCTS_DIR; };
+		41A98BFE2D603D9600A1931C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		41A98BFF2D603EA900A1931C /* HyperVGraphicsFramebuffer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVGraphicsFramebuffer.cpp; sourceTree = "<group>"; };
+		41A98C002D603EA900A1931C /* HyperVGraphicsFramebuffer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVGraphicsFramebuffer.hpp; sourceTree = "<group>"; };
 		41AE1CFF28974C7E001A7B42 /* package.tool */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = package.tool; sourceTree = "<group>"; };
 		41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVCPU.cpp; sourceTree = "<group>"; };
 		41AE1D0D289C95A9001A7B42 /* HyperVCPU.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVCPU.hpp; sourceTree = "<group>"; };
@@ -700,6 +720,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		41A98B602D5D9BB500A1931C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		41A98BF32D603CC900A1931C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -880,6 +907,16 @@
 			path = hvfilecopyd;
 			sourceTree = "<group>";
 		};
+		41A98B892D603C3900A1931C /* MacHyperVFramebuffer */ = {
+			isa = PBXGroup;
+			children = (
+				41A98BFE2D603D9600A1931C /* Info.plist */,
+				41A98BFF2D603EA900A1931C /* HyperVGraphicsFramebuffer.cpp */,
+				41A98C002D603EA900A1931C /* HyperVGraphicsFramebuffer.hpp */,
+			);
+			path = MacHyperVFramebuffer;
+			sourceTree = "<group>";
+		};
 		41AE1D0B289C9595001A7B42 /* CPU */ = {
 			isa = PBXGroup;
 			children = (
@@ -921,6 +958,7 @@
 				41C604AA28B2F81200FB77ED /* Docs */,
 				41BE4112263EDEA10018C52B /* Frameworks */,
 				41F2E3D12665B41200CE26CE /* LiluSDK */,
+				41A98B892D603C3900A1931C /* MacHyperVFramebuffer */,
 				41BE4106263EDE380018C52B /* MacHyperVSupport */,
 				41BE4105263EDE380018C52B /* Products */,
 				417C978C289217CA00CFE0B2 /* Tools */,
@@ -943,6 +981,7 @@
 				41A98B452D5D745E00A1931C /* hvtimesyncd-tiger */,
 				41A98B5B2D5D9B6D00A1931C /* hvfilecopyd-i386 */,
 				41A98B652D5D9BB500A1931C /* hvfilecopyd-tiger */,
+				41A98BF82D603CC900A1931C /* MacHyperVFramebuffer.kext */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1152,6 +1191,14 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
+		41A98B8C2D603CC900A1931C /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				41A98C022D603EA900A1931C /* HyperVGraphicsFramebuffer.hpp in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		41BE40FF263EDE370018C52B /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -1342,6 +1389,7 @@
 			buildToolPath = "${SRCROOT}/MacHyperVSupport/package.tool";
 			buildWorkingDirectory = "";
 			dependencies = (
+				41A98BFD2D603D7600A1931C /* PBXTargetDependency */,
 				41AE1D0528974D8B001A7B42 /* PBXTargetDependency */,
 				41AE1D0728974D8B001A7B42 /* PBXTargetDependency */,
 				4191F70928F5052200809232 /* PBXTargetDependency */,
@@ -1361,6 +1409,7 @@
 			buildToolPath = "${SRCROOT}/MacHyperVSupport/package.tool";
 			buildWorkingDirectory = "";
 			dependencies = (
+				41A98BFB2D603D7100A1931C /* PBXTargetDependency */,
 				41E8146B2D5B08B700AAA93E /* PBXTargetDependency */,
 				41E8146D2D5B08B700AAA93E /* PBXTargetDependency */,
 				41E8146F2D5B08B700AAA93E /* PBXTargetDependency */,
@@ -1519,6 +1568,24 @@
 			productReference = 41A98B652D5D9BB500A1931C /* hvfilecopyd-tiger */;
 			productType = "com.apple.product-type.tool";
 		};
+		41A98B8B2D603CC900A1931C /* MacHyperVFramebuffer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 41A98BF52D603CC900A1931C /* Build configuration list for PBXNativeTarget "MacHyperVFramebuffer" */;
+			buildPhases = (
+				41A98B8C2D603CC900A1931C /* Headers */,
+				41A98BC72D603CC900A1931C /* Sources */,
+				41A98BF32D603CC900A1931C /* Frameworks */,
+				41A98BF42D603CC900A1931C /* Archive */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MacHyperVFramebuffer;
+			productName = MacHyperVSupport;
+			productReference = 41A98BF82D603CC900A1931C /* MacHyperVFramebuffer.kext */;
+			productType = "com.apple.product-type.kernel-extension";
+		};
 		41BE4103263EDE370018C52B /* MacHyperVSupport */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 41BE410E263EDE380018C52B /* Build configuration list for PBXNativeTarget "MacHyperVSupport" */;
@@ -1606,6 +1673,7 @@
 			targets = (
 				41AE1D0028974D81001A7B42 /* Package */,
 				41E8146A2D5B08B700AAA93E /* Package Universal */,
+				41A98B8B2D603CC900A1931C /* MacHyperVFramebuffer */,
 				41BE4103263EDE370018C52B /* MacHyperVSupport */,
 				41BF45D6288CDF1200813670 /* MacHyperVSupportMonterey */,
 				4191F6FD28F504FD00809232 /* hvfilecopyd */,
@@ -1625,6 +1693,24 @@
 /* End PBXProject section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		41A98BF42D603CC900A1931C /* Archive */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = Archive;
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cd \"${TARGET_BUILD_DIR}\"\n\nstrip -S \"${EXECUTABLE_PATH}\"\nif [ \"$CONFIGURATION\" == \"Release\" ]; then\n  strip -x -T \"${EXECUTABLE_PATH}\" &>/dev/null || strip -x \"${EXECUTABLE_PATH}\"\nfi\n\nif [ -z \"${OVERRIDE_PYTHON3}\" ]; then\n  # Use whatever is in PATH\n  OVERRIDE_PYTHON3=python3\nfi\n\nif [[ \"$ARCHS\" == *\"ACID32\"* ]]; then\n  \"${OVERRIDE_PYTHON3}\" ${SRCROOT}/clang32/fix-macho32 \"${EXECUTABLE_PATH}\" || exit 1\nfi\n";
+		};
 		41BF462C288CE0F800813670 /* Post-process Binary */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -1733,6 +1819,14 @@
 			files = (
 				41A98B5E2D5D9BB500A1931C /* hviokit.c in Sources */,
 				41A98B5F2D5D9BB500A1931C /* hvfilecopyd.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		41A98BC72D603CC900A1931C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				41A98C012D603EA900A1931C /* HyperVGraphicsFramebuffer.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1942,6 +2036,16 @@
 			isa = PBXTargetDependency;
 			target = 41A98B662D5D9BD800A1931C /* hvfilecopyd-universal */;
 			targetProxy = 41A98B762D5D9C0000A1931C /* PBXContainerItemProxy */;
+		};
+		41A98BFB2D603D7100A1931C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41A98B8B2D603CC900A1931C /* MacHyperVFramebuffer */;
+			targetProxy = 41A98BFA2D603D7100A1931C /* PBXContainerItemProxy */;
+		};
+		41A98BFD2D603D7600A1931C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41A98B8B2D603CC900A1931C /* MacHyperVFramebuffer */;
+			targetProxy = 41A98BFC2D603D7600A1931C /* PBXContainerItemProxy */;
 		};
 		41AE1D0528974D8B001A7B42 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -2275,6 +2379,168 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		41A98BF62D603CC900A1931C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CC = "$(inherited)";
+				"CC[arch=ACID32]" = "$(PROJECT_DIR)/clang32/clang-12";
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = "$(MODULE_VERSION)";
+				CXX = "$(inherited)";
+				"CXX[arch=ACID32]" = "$(PROJECT_DIR)/clang32/clang-12";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"MODULE_VERSION=$(MODULE_VERSION)",
+					"PRODUCT_NAME=$(PRODUCT_NAME)",
+				);
+				INFOPLIST_FILE = MacHyperVFramebuffer/Info.plist;
+				LDPLUSPLUS = "$(inherited)";
+				"LDPLUSPLUS[arch=ACID32]" = "$(PROJECT_DIR)/clang32/clang-12";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/MacKernelSDK/Library/universal",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				"MACOSX_DEPLOYMENT_TARGET[arch=ACID32]" = 10.4;
+				MARKETING_VERSION = "$(MODULE_VERSION)";
+				MODULE_NAME = fish.goldfish64.MacHyperVFramebuffer;
+				OTHER_CFLAGS = (
+					"-mmmx",
+					"-msse",
+					"-msse2",
+					"-msse3",
+					"-mfpmath=sse",
+					"-mssse3",
+					"-ftree-vectorize",
+					"-fno-non-call-exceptions",
+					"-fno-builtin",
+					"-fno-asynchronous-unwind-tables",
+					"-Wno-unknown-warning-option",
+					"-Wno-ossharedptr-misuse",
+					"-Wno-vla",
+					"-Wno-stdlibcxx-not-found",
+				);
+				"OTHER_CFLAGS[arch=ACID32]" = (
+					"-mmmx",
+					"-msse",
+					"-msse2",
+					"-mfpmath=sse",
+					"-ftree-vectorize",
+					"-fno-non-call-exceptions",
+					"-fno-builtin",
+					"-fno-asynchronous-unwind-tables",
+					"-Wno-unknown-warning-option",
+					"-Wno-ossharedptr-misuse",
+					"-Wno-vla",
+					"-Wno-stdlibcxx-not-found",
+					"-static",
+					"-fallow-unsupported",
+					"-fno-jump-tables",
+					"-fno-stack-protector",
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				OTHER_LDFLAGS = "-static";
+				"OTHER_LDFLAGS[arch=ACID32]" = (
+					"-static",
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = fish.goldfish64.MacHyperVFramebuffer;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				RUN_CLANG_STATIC_ANALYZER = YES;
+				VALID_ARCHS = "x86_64 ACID32";
+				WRAPPER_EXTENSION = kext;
+			};
+			name = Debug;
+		};
+		41A98BF72D603CC900A1931C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CC = "$(inherited)";
+				"CC[arch=ACID32]" = "$(PROJECT_DIR)/clang32/clang-12";
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = "$(MODULE_VERSION)";
+				CXX = "$(inherited)";
+				"CXX[arch=ACID32]" = "$(PROJECT_DIR)/clang32/clang-12";
+				DEAD_CODE_STRIPPING = YES;
+				"DEAD_CODE_STRIPPING[arch=ACID32]" = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"MODULE_VERSION=$(MODULE_VERSION)",
+					"PRODUCT_NAME=$(PRODUCT_NAME)",
+				);
+				INFOPLIST_FILE = MacHyperVFramebuffer/Info.plist;
+				LDPLUSPLUS = "$(inherited)";
+				"LDPLUSPLUS[arch=ACID32]" = "$(PROJECT_DIR)/clang32/clang-12";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/MacKernelSDK/Library/universal",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				"MACOSX_DEPLOYMENT_TARGET[arch=ACID32]" = 10.4;
+				MARKETING_VERSION = "$(MODULE_VERSION)";
+				MODULE_NAME = fish.goldfish64.MacHyperVFramebuffer;
+				OTHER_CFLAGS = (
+					"-mmmx",
+					"-msse",
+					"-msse2",
+					"-msse3",
+					"-mfpmath=sse",
+					"-mssse3",
+					"-ftree-vectorize",
+					"-fno-non-call-exceptions",
+					"-fno-builtin",
+					"-fno-asynchronous-unwind-tables",
+					"-Wno-unknown-warning-option",
+					"-Wno-ossharedptr-misuse",
+					"-Wno-vla",
+					"-Wno-stdlibcxx-not-found",
+				);
+				"OTHER_CFLAGS[arch=ACID32]" = (
+					"-mmmx",
+					"-msse",
+					"-msse2",
+					"-mfpmath=sse",
+					"-ftree-vectorize",
+					"-fno-non-call-exceptions",
+					"-fno-builtin",
+					"-fno-asynchronous-unwind-tables",
+					"-Wno-unknown-warning-option",
+					"-Wno-ossharedptr-misuse",
+					"-Wno-vla",
+					"-Wno-stdlibcxx-not-found",
+					"-static",
+					"-fallow-unsupported",
+					"-fno-jump-tables",
+					"-fno-stack-protector",
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				OTHER_LDFLAGS = "-static";
+				"OTHER_LDFLAGS[arch=ACID32]" = (
+					"-static",
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = fish.goldfish64.MacHyperVFramebuffer;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				RUN_CLANG_STATIC_ANALYZER = YES;
+				STRIP_STYLE = "non-global";
+				VALID_ARCHS = "x86_64 ACID32";
+				WRAPPER_EXTENSION = kext;
 			};
 			name = Release;
 		};
@@ -2830,6 +3096,15 @@
 			buildConfigurations = (
 				41A98B6C2D5D9BD800A1931C /* Debug */,
 				41A98B6D2D5D9BD800A1931C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		41A98BF52D603CC900A1931C /* Build configuration list for PBXNativeTarget "MacHyperVFramebuffer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41A98BF62D603CC900A1931C /* Debug */,
+				41A98BF72D603CC900A1931C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
