@@ -9,7 +9,7 @@ This page describes the different services and devices exposed to a virtual mach
 
 ### Backup (volume snapshot)
 [Provides](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/reference/integration-services#hyper-v-volume-shadow-copy-requestor) Volume Shadow Copy support to guests. 
-* Availability: Windows Server 2008 and later
+* Availability: Windows Server 2008 SP2 and later
 * GUID: `35fa2e29-ea23-4236-96ae-3a6ebacba440`
 * Support status: No
 
@@ -21,7 +21,7 @@ This page describes the different services and devices exposed to a virtual mach
 
 ### Dynamic memory
 [Provides](https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/hh831766(v=ws.11)) overprovisioning of memory in guests. 
-* Availability: Windows Server 2008 R2 and later
+* Availability: Windows Server 2008 R2 SP1 and later
 * GUID: `525074dc-8985-46e2-8057-a307dc18a502`
 * Support status: No
 
