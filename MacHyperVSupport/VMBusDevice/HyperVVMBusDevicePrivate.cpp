@@ -70,6 +70,10 @@ void HyperVVMBusDevice::handleInterrupt(IOInterruptEventSource *sender, int coun
       //
       if (_wakePacketAction != nullptr && (*_wakePacketAction)(_packetActionTarget, pktHeader, pktHeaderLength, pktData, pktDataLength)) {
         if (getPendingTransaction(pktHeader->transactionId, &responseBuffer, &responseLength)) {
+          if (pktDataLength < responseLength) {
+            responseLength = pktDataLength;
+            HVMSGLOG("Truncated incoming packet data length to %u bytes", responseLength);
+          }
           memcpy(responseBuffer, pktData, responseLength);
           wakeTransaction(pktHeader->transactionId);
           continue;
