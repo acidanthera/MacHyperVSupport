@@ -68,6 +68,17 @@
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
 		</dict>
+		<key>HyperVGraphicsBridge</key>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>IOClass</key>
+			<string>HyperVGraphicsBridge</string>
+			<key>IOProbeScore</key>
+			<integer>1000</integer>
+			<key>IOProviderClass</key>
+			<string>HyperVGraphics</string>
+		</dict>
 		<key>HyperVHeartbeat</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
