@@ -597,6 +597,7 @@
 		41A98C042D604B3100A1931C /* HyperVGraphics.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVGraphics.cpp; sourceTree = "<group>"; };
 		41A98C052D604B3100A1931C /* HyperVGraphics.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVGraphics.hpp; sourceTree = "<group>"; };
 		41A98C0A2D604EE500A1931C /* HyperVGraphicsPrivate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVGraphicsPrivate.cpp; sourceTree = "<group>"; };
+		41A98C0D2D60FCD500A1931C /* HyperVGraphicsPlatformFunctions.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVGraphicsPlatformFunctions.hpp; sourceTree = "<group>"; };
 		41AE1CFF28974C7E001A7B42 /* package.tool */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = package.tool; sourceTree = "<group>"; };
 		41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVCPU.cpp; sourceTree = "<group>"; };
 		41AE1D0D289C95A9001A7B42 /* HyperVCPU.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVCPU.hpp; sourceTree = "<group>"; };
@@ -930,8 +931,9 @@
 			children = (
 				41A98C042D604B3100A1931C /* HyperVGraphics.cpp */,
 				41A98C052D604B3100A1931C /* HyperVGraphics.hpp */,
-				4159EDD7290221C300867664 /* HyperVGraphicsRegs.hpp */,
+				41A98C0D2D60FCD500A1931C /* HyperVGraphicsPlatformFunctions.hpp */,
 				41A98C0A2D604EE500A1931C /* HyperVGraphicsPrivate.cpp */,
+				4159EDD7290221C300867664 /* HyperVGraphicsRegs.hpp */,
 			);
 			path = Graphics;
 			sourceTree = "<group>";

@@ -15,11 +15,10 @@
 
 class HyperVGraphicsBridge : public HV_PCIBRIDGE_CLASS {
   OSDeclareDefaultStructors(HyperVGraphicsBridge);
-  HVDeclareLogFunctionsVMBusChild("gfxb");
+  HVDeclareLogFunctions("gfxb");
   typedef HV_PCIBRIDGE_CLASS super;
 
 private:
-  HyperVVMBusDevice *_hvDevice  = nullptr;
   HyperVPCIRoot     *_hvPCIRoot = nullptr;
   VMBusVersion      _currentGraphicsVersion = { };
   UInt8             _pciBusNumber = 0;
@@ -32,11 +31,6 @@ private:
   PE_Video          _consoleInfo = { };
 
   void fillFakePCIDeviceSpace();
-
-  void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
-  IOReturn sendGraphicsMessage(HyperVGraphicsMessage *gfxMessage, HyperVGraphicsMessage *gfxMessageResponse = nullptr, UInt32 gfxMessageResponseSize = 0);
-  IOReturn negotiateVersion(VMBusVersion version);
-  IOReturn connectGraphics();
 
 public:
   //

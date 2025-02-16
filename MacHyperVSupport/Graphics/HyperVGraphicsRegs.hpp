@@ -16,6 +16,9 @@
 #define kHyperVGraphicsMinWidth       640
 #define kHyperVGraphicsMinHeight      480
 
+#define kHyperVGraphicsMaxWidth       1600
+#define kHyperVGraphicsMaxHeight      1200
+
 #define kHyperVGraphicsRingBufferSize (64 * PAGE_SIZE)
 #define kHyperVGraphicsMaxPacketSize  (4 * PAGE_SIZE)
 
@@ -29,7 +32,9 @@
 // Fixed transaction IDs for request/response due to transaction IDs
 // not being respected by graphics system.
 //
-#define kHyperVGraphicsVersionRequestTransactionID 0xCAFECAFE
+#define kHyperVGraphicsRequestTransactionBaseID 0x46495348
+
+#define kHyperVGraphicsDIRTRefreshRateMS      10
 
 //
 // Graphics messages.
@@ -50,8 +55,8 @@ typedef enum : UInt32 {
   kHyperVGraphicsMessageTypeVersionResponse     = 0x2,
   kHyperVGraphicsMessageTypeVRAMLocation        = 0x3,
   kHyperVGraphicsMessageTypeVRAMAck             = 0x4,
-  kHyperVGraphicsMessageTypeSituationUpdate     = 0x5,
-  kHyperVGraphicsMessageTypeSituationUpdateAck  = 0x6,
+  kHyperVGraphicsMessageTypeResolutionUpdate    = 0x5,
+  kHyperVGraphicsMessageTypeResolutionUpdateAck = 0x6,
   kHyperVGraphicsMessageTypePointerPosition     = 0x7,
   kHyperVGraphicsMessageTypePointerShape        = 0x8,
   kHyperVGraphicsMessageTypeFeatureChange       = 0x9,
@@ -94,17 +99,17 @@ typedef struct __attribute__((packed)) {
   UInt32 width;
   UInt32 height;
   UInt32 pitch;
-} HyperVGraphicsVideoOutputSituation;
+} HyperVGraphicsVideoOutputResolution;
 
 typedef struct __attribute__((packed)) {
-  UInt64                             context;
-  UInt8                              videoOutputCount;
-  HyperVGraphicsVideoOutputSituation videoOutputs[];
-} HyperVGraphicsMessageSituationUpdate;
+  UInt64                              context;
+  UInt8                               videoOutputCount;
+  HyperVGraphicsVideoOutputResolution videoOutputs[1];
+} HyperVGraphicsMessageResolutionUpdate;
 
 typedef struct __attribute__((packed)) {
   UInt64 context;
-} HyperVGraphicsMessageSituationAck;
+} HyperVGraphicsMessageResolutionUpdateAck;
 
 typedef struct __attribute__((packed)) {
   UInt8  isVisible;
@@ -133,7 +138,7 @@ typedef struct __attribute__((packed)) {
   UInt8 isDIRTNeeded;
   UInt8 isPointerPositionNeeded;
   UInt8 isPointerShapeNeeded;
-  UInt8 isSituationNeeded;
+  UInt8 isResolutionUpdateNeeded;
 } HyperVGraphicsMessageFeatureUpdate;
 
 typedef struct __attribute__((packed)) {
@@ -144,7 +149,7 @@ typedef struct __attribute__((packed)) {
 typedef struct __attribute__((packed)) {
   UInt8                       videoOutput;
   UInt8                       dirtCount;
-  HyperVGraphicsDIRTRectangle dirtRects[];
+  HyperVGraphicsDIRTRectangle dirtRects[1];
 } HyperVGraphicsMessageDIRT;
 
 typedef struct __attribute__((packed)) {
@@ -152,16 +157,16 @@ typedef struct __attribute__((packed)) {
   HyperVGraphicsMessageHeader     gfxHeader;
 
   union {
-    HyperVGraphicsMessageVersionRequest  versionRequest;
-    HyperVGraphicsMessageVersionResponse versionResponse;
-    HyperVGraphicsMessageVRAMLocation    vramLocation;
-    HyperVGraphicsMessageVRAMAck         vramAck;
-    HyperVGraphicsMessageSituationUpdate situationUpdate;
-    HyperVGraphicsMessageSituationAck    situationAck;
-    HyperVGraphicsMessagePointerPosition pointerPosition;
-    HyperVGraphicsMessagePointerShape    pointerShape;
-    HyperVGraphicsMessageFeatureUpdate   featureUpdate;
-    HyperVGraphicsMessageDIRT            dirt;
+    HyperVGraphicsMessageVersionRequest       versionRequest;
+    HyperVGraphicsMessageVersionResponse      versionResponse;
+    HyperVGraphicsMessageVRAMLocation         vramLocation;
+    HyperVGraphicsMessageVRAMAck              vramAck;
+    HyperVGraphicsMessageResolutionUpdate     resolutionUpdate;
+    HyperVGraphicsMessageResolutionUpdateAck  resolutionAck;
+    HyperVGraphicsMessagePointerPosition      pointerPosition;
+    HyperVGraphicsMessagePointerShape         pointerShape;
+    HyperVGraphicsMessageFeatureUpdate        featureUpdate;
+    HyperVGraphicsMessageDIRT                 dirt;
   };
 } HyperVGraphicsMessage;
 

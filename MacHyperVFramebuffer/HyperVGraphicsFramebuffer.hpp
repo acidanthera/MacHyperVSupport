@@ -18,7 +18,8 @@ class HyperVGraphicsFramebuffer : public IOFramebuffer {
   typedef IOFramebuffer super;
 
 private:
-  IOService *_hvGfxProvider = nullptr;
+  IOService       *_hvGfxProvider = nullptr;
+  IODisplayModeID _currentDisplayMode = 4;
 
 public:
   //

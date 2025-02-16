@@ -16,23 +16,17 @@ OSDefineMetaClassAndStructors(HyperVGraphicsBridge, super);
 bool HyperVGraphicsBridge::start(IOService *provider) {
   bool     result = false;
   IOReturn status;
-
+  
   //
-  // Get parent VMBus device object.
+  // Stop for now.
   //
-  _hvDevice = OSDynamicCast(HyperVVMBusDevice, provider);
-  if (_hvDevice == nullptr) {
-    HVSYSLOG("Provider is not HyperVVMBusDevice");
-    return false;
-  }
-  _hvDevice->retain();
+  return false;
 
   HVCheckDebugArgs();
   HVDBGLOG("Initializing Hyper-V Synthetic Graphics Bridge");
 
   if (HVCheckOffArg()) {
     HVSYSLOG("Disabling Hyper-V Synthetic Graphics Bridge due to boot arg");
-    OSSafeReleaseNULL(_hvDevice);
     return false;
   }
 
@@ -44,7 +38,6 @@ bool HyperVGraphicsBridge::start(IOService *provider) {
     HVDBGLOG("Existing PCI bus found (Gen1 VM), will not start");
 
     OSSafeReleaseNULL(pciEntry);
-    OSSafeReleaseNULL(_hvDevice);
     return false;
   }
 
@@ -53,13 +46,11 @@ bool HyperVGraphicsBridge::start(IOService *provider) {
   //
   _hvPCIRoot = HyperVPCIRoot::getPCIRootInstance();
   if (_hvPCIRoot == nullptr) {
-    _hvDevice->release();
     return false;
   }
 
   if (_hvPCIRoot->registerChildPCIBridge(this, &_pciBusNumber) != kIOReturnSuccess) {
     HVSYSLOG("Failed to register with root PCI bus instance");
-    OSSafeReleaseNULL(_hvDevice);
     return false;
   }
 
@@ -69,7 +60,6 @@ bool HyperVGraphicsBridge::start(IOService *provider) {
   //
   if (getPlatform()->getConsoleInfo(&_consoleInfo) != kIOReturnSuccess) {
     HVSYSLOG("Failed to get console info");
-    OSSafeReleaseNULL(_hvDevice);
     return false;
   }
   HVDBGLOG("Console is at 0x%X (%ux%u, bpp: %u, bytes/row: %u)",
@@ -80,7 +70,6 @@ bool HyperVGraphicsBridge::start(IOService *provider) {
 
   if (!super::start(provider)) {
     HVSYSLOG("super::start() returned false");
-    OSSafeReleaseNULL(_hvDevice);
     return false;
   }
 
@@ -101,30 +90,7 @@ bool HyperVGraphicsBridge::start(IOService *provider) {
   }
 
   do {
-    //
-    // Install packet handler.
-    //
-    status = _hvDevice->installPacketActions(this, OSMemberFunctionCast(HyperVVMBusDevice::PacketReadyAction, this, &HyperVGraphicsBridge::handlePacket),
-                                             nullptr, kHyperVGraphicsMaxPacketSize);
-    if (status != kIOReturnSuccess) {
-      HVSYSLOG("Failed to install packet handler with status 0x%X", status);
-      break;
-    }
 
-    //
-    // Open VMBus channel and connect to graphics system.
-    //
-    status = _hvDevice->openVMBusChannel(kHyperVGraphicsRingBufferSize, kHyperVGraphicsRingBufferSize);
-    if (status != kIOReturnSuccess) {
-      HVSYSLOG("Failed to open VMBus channel with status 0x%X", status);
-      break;
-    }
-
-    status = connectGraphics();
-    if (status != kIOReturnSuccess) {
-      HVSYSLOG("Failed to connect to graphics device with status 0x%X", status);
-      break;
-    }
 
     HVDBGLOG("Initialized Hyper-V Synthetic Graphics Bridge");
     result = true;
@@ -138,12 +104,6 @@ bool HyperVGraphicsBridge::start(IOService *provider) {
 
 void HyperVGraphicsBridge::stop(IOService *provider) {
   HVDBGLOG("Hyper-V Synthetic Graphics Bridge is stopping");
-
-  if (_hvDevice != nullptr) {
-    _hvDevice->closeVMBusChannel();
-    _hvDevice->uninstallPacketActions();
-    OSSafeReleaseNULL(_hvDevice);
-  }
 
   super::stop(provider);
 }

@@ -8,6 +8,7 @@
 #ifndef HyperVGraphics_hpp
 #define HyperVGraphics_hpp
 
+#include <IOKit/IORangeAllocator.h>
 #include <IOKit/IOService.h>
 
 #include "HyperVVMBusDevice.hpp"
@@ -19,13 +20,30 @@ class HyperVGraphics : public IOService {
   typedef IOService super;
 
 private:
-  HyperVVMBusDevice *_hvDevice  = nullptr;
-  VMBusVersion      _currentGraphicsVersion = { };
+  HyperVVMBusDevice  *_hvDevice              = nullptr;
+  VMBusVersion       _currentGraphicsVersion = { };
+  IOTimerEventSource *_timerEventSource      = nullptr;
 
+  IORangeScalar _gfxMmioBase    = 0;
+  IORangeScalar _gfxMmioLength  = 0;
+  IORangeScalar _fbBaseAddress   = 0;
+  IORangeScalar _fbTotalLength   = 0;
+  IORangeScalar _fbInitialLength = 0;
+  UInt32        _screenWidth    = 0;
+  UInt32        _screenHeight   = 0;
+  bool          _fbReady        = false;
+
+  //bool wakePacketHandler(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
+  void handleRefreshTimer(IOTimerEventSource *sender);
   void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
-  IOReturn sendGraphicsMessage(HyperVGraphicsMessage *gfxMessage, HyperVGraphicsMessage *gfxMessageResponse = nullptr, UInt32 gfxMessageResponseSize = 0);
+  IOReturn sendGraphicsMessage(HyperVGraphicsMessage *gfxMessage, HyperVGraphicsMessageType responseType = kHyperVGraphicsMessageTypeError,
+                               HyperVGraphicsMessage *gfxMessageResponse = nullptr);
   IOReturn negotiateVersion(VMBusVersion version);
   IOReturn connectGraphics();
+  IOReturn allocateGraphicsMemory();
+  IOReturn updateGraphicsMemoryLocation();
+  IOReturn updatePointer();
+  IOReturn updateScreenResolution(UInt32 width, UInt32 height, bool isBoot);
 
 public:
   //
@@ -33,6 +51,8 @@ public:
   //
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
   void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
+  IOReturn callPlatformFunction(const OSSymbol *functionName, bool waitForFunction,
+                                void *param1, void *param2, void *param3, void *param4) APPLE_KEXT_OVERRIDE;
 };
 
 #endif
