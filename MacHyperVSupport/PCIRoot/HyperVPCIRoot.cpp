@@ -7,8 +7,7 @@
 
 #include "HyperVPCIRoot.hpp"
 #include <IOKit/acpi/IOACPIPlatformDevice.h>
-
-#include "AppleACPIRange.hpp"
+#include <IOKit/acpi/IOACPITypes.h>
 
 OSDefineMetaClassAndStructors(HyperVPCIRoot, super);
 
@@ -23,18 +22,19 @@ inline bool HyperVPCIRoot::setConfigSpace(IOPCIAddressSpace space, UInt8 offset)
 bool HyperVPCIRoot::start(IOService *provider) {
   HVCheckDebugArgs();
   pciLock = IOSimpleLockAlloc();
-  
+  HVDBGLOG("Initializing Hyper-V Root PCI Bridge");
+
   //
   // First bridge represents ourselves and will be NULL.
   //
   memset(pciBridges, 0, sizeof (pciBridges));
-  
+
   if (!super::start(provider)) {
-    HVSYSLOG("Dummy PCI bridge failed to initialize");
+    HVSYSLOG("super::start() returned false");
     return false;
   }
-  
-  HVDBGLOG("Dummy PCI bridge initialized");
+
+  HVDBGLOG("Initialized Hyper-V Root PCI Bridge");
   return true;
 }
 
@@ -43,20 +43,22 @@ bool HyperVPCIRoot::configure(IOService *provider) {
   // Add memory ranges from ACPI.
   //
   OSData *acpiAddressSpaces = OSDynamicCast(OSData, provider->getProperty("acpi-address-spaces"));
-  if (acpiAddressSpaces != NULL) {
-    AppleACPIRange *acpiRanges = (AppleACPIRange*) acpiAddressSpaces->getBytesNoCopy();
-    UInt32 acpiRangeCount = acpiAddressSpaces->getLength() / sizeof (AppleACPIRange);
-    
+  if (acpiAddressSpaces != nullptr) {
+    IOACPIAddressSpaceDescriptor *acpiRanges = (IOACPIAddressSpaceDescriptor*) acpiAddressSpaces->getBytesNoCopy();
+    UInt32 acpiRangeCount = acpiAddressSpaces->getLength() / sizeof (*acpiRanges);
+
+    HVDBGLOG("Got %u ACPI ranges", acpiRangeCount);
     for (int i = 0; i < acpiRangeCount; i++) {
-      HVDBGLOG("type %u, min %llX, max %llX, len %llX", acpiRanges[i].type, acpiRanges[i].min, acpiRanges[i].max, acpiRanges[i].length);
-      if (acpiRanges[i].type == 1) {
-        addBridgeIORange(acpiRanges[i].min, acpiRanges[i].length);
-      } else if (acpiRanges[i].type == 0) {
-        addBridgeMemoryRange(acpiRanges[i].min, acpiRanges[i].length, true);
+      HVDBGLOG("ACPI range type %u: minimum 0x%llX, maximum 0x%llX, length 0x%llX", acpiRanges[i].resourceType,
+               acpiRanges[i].minAddressRange, acpiRanges[i].maxAddressRange, acpiRanges[i].addressLength);
+      if (acpiRanges[i].resourceType == kIOACPIIORange) {
+        addBridgeIORange(acpiRanges[i].minAddressRange, acpiRanges[i].addressLength);
+      } else if (acpiRanges[i].resourceType == kIOACPIMemoryRange) {
+        addBridgeMemoryRange(acpiRanges[i].minAddressRange, acpiRanges[i].addressLength, true);
       }
     }
   }
-  
+
   return super::configure(provider);
 }
 

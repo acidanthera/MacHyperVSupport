@@ -6,19 +6,18 @@
 //
 
 #include "HyperVModuleDevice.hpp"
-#include "AppleACPIRange.hpp"
+#include <IOKit/acpi/IOACPITypes.h>
 
 OSDefineMetaClassAndStructors(HyperVModuleDevice, super);
 
 bool HyperVModuleDevice::start(IOService *provider) {
-  AppleACPIRange *acpiRanges;
-  UInt32         acpiRangeCount;
-  
-  OSArray        *deviceMemoryArray;
-  IODeviceMemory *deviceMemory;
-  
-  HVCheckDebugArgs();
+  IOACPIAddressSpaceDescriptor  *acpiRanges;
+  UInt32                        acpiRangeCount;
+  OSArray                       *deviceMemoryArray;
+  IODeviceMemory                *deviceMemory;
 
+  HVCheckDebugArgs();
+  HVDBGLOG("Initializing Hyper-V Module Device");
   if (!super::start(provider)) {
     HVSYSLOG("super::start() returned false");
     return false;
@@ -34,8 +33,8 @@ bool HyperVModuleDevice::start(IOService *provider) {
     return false;
   }
 
-  acpiRanges     = (AppleACPIRange*) acpiAddressSpaces->getBytesNoCopy();
-  acpiRangeCount = acpiAddressSpaces->getLength() / sizeof (AppleACPIRange);
+  acpiRanges     = (IOACPIAddressSpaceDescriptor*) acpiAddressSpaces->getBytesNoCopy();
+  acpiRangeCount = acpiAddressSpaces->getLength() / sizeof (*acpiRanges);
 
   deviceMemoryArray   = OSArray::withCapacity(acpiRangeCount);
   _rangeAllocatorLow  = IORangeAllocator::withRange(0);
@@ -48,27 +47,40 @@ bool HyperVModuleDevice::start(IOService *provider) {
     return false;
   }
 
+  HVDBGLOG("Got %u ACPI ranges", acpiRangeCount);
   for (int i = 0; i < acpiRangeCount; i++) {
-    HVDBGLOG("Range type %u, min 0x%llX, max 0x%llX, len 0x%llX, high %u", acpiRanges[i].type, acpiRanges[i].min,
-             acpiRanges[i].max, acpiRanges[i].length, acpiRanges[i].min > UINT32_MAX);
+    HVDBGLOG("ACPI range type %u: minimum 0x%llX, maximum 0x%llX, length 0x%llX, high %u", acpiRanges[i].resourceType,
+             acpiRanges[i].minAddressRange, acpiRanges[i].maxAddressRange, acpiRanges[i].addressLength,
+             acpiRanges[i].minAddressRange > UINT32_MAX);
 
-    deviceMemory = IODeviceMemory::withRange(static_cast<IOPhysicalAddress>(acpiRanges[i].min), static_cast<IOPhysicalLength>(acpiRanges[i].length));
+    //
+    // Skip any non-memory ranges (should not occur normally).
+    //
+    if (acpiRanges[i].resourceType != kIOACPIMemoryRange) {
+      continue;
+    }
+
+    //
+    // Create device memory range.
+    // Add to device memory array and appropriate range allocator.
+    //
+    deviceMemory = IODeviceMemory::withRange(static_cast<IOPhysicalAddress>(acpiRanges[i].minAddressRange),
+                                             static_cast<IOPhysicalLength>(acpiRanges[i].addressLength));
     if (deviceMemory == nullptr) {
-      HVSYSLOG("Unable to allocate device memory for range 0x%llX", acpiRanges[i].min);
+      HVSYSLOG("Unable to allocate device memory for range 0x%llX", acpiRanges[i].minAddressRange);
       OSSafeReleaseNULL(deviceMemoryArray);
       stop(provider);
       return false;
     }
 
-    //
-    // Add to device memory array and appropriate range allocator.
-    //
     deviceMemoryArray->setObject(deviceMemory);
     deviceMemory->release();
-    if (acpiRanges[i].min > UINT32_MAX) {
-      _rangeAllocatorHigh->deallocate(static_cast<IOPhysicalAddress>(acpiRanges[i].min), static_cast<IOPhysicalLength>(acpiRanges[i].length));
+    if (acpiRanges[i].minAddressRange > UINT32_MAX) {
+      _rangeAllocatorHigh->deallocate(static_cast<IOPhysicalAddress>(acpiRanges[i].minAddressRange),
+                                      static_cast<IOPhysicalLength>(acpiRanges[i].addressLength));
     } else {
-      _rangeAllocatorLow->deallocate(static_cast<IOPhysicalAddress>(acpiRanges[i].min), static_cast<IOPhysicalLength>(acpiRanges[i].length));
+      _rangeAllocatorLow->deallocate(static_cast<IOPhysicalAddress>(acpiRanges[i].minAddressRange),
+                                     static_cast<IOPhysicalLength>(acpiRanges[i].addressLength));
     }
   }
 
@@ -84,15 +96,19 @@ bool HyperVModuleDevice::start(IOService *provider) {
   //
   _rangeAllocatorLow->allocateRange(0x40000000, 0x4000000);
 
-  HVDBGLOG("Hyper-V Module Device initialized with free size: %u bytes (low) %u bytes (high)",
+  HVDBGLOG("Initialized Hyper-V Module Device with free size: %u bytes (low) %u bytes (high)",
            _rangeAllocatorLow->getFreeCount(), _rangeAllocatorHigh->getFreeCount());
   registerService();
   return true;
 }
 
 void HyperVModuleDevice::stop(IOService *provider) {
+  HVDBGLOG("Hyper-V Module Device is stopping");
+
   OSSafeReleaseNULL(_rangeAllocatorLow);
   OSSafeReleaseNULL(_rangeAllocatorHigh);
+
+  super::stop(provider);
 }
 
 IORangeScalar HyperVModuleDevice::allocateRange(IORangeScalar size, IORangeScalar alignment, bool highMemory) {
@@ -104,8 +120,8 @@ IORangeScalar HyperVModuleDevice::allocateRange(IORangeScalar size, IORangeScala
   } else {
     result = _rangeAllocatorLow->allocate(size, &range, alignment);
   }
-  HVDBGLOG("Allocation result for size 0x%llX (high: %u) - %u", size, highMemory, result);
-  HVDBGLOG("Range result: 0x%llX", result ? range : 0);
+  HVDBGLOG("Allocation result for length %p (high: %u) - %u", size, highMemory, result);
+  HVDBGLOG("Range base: %p", result ? range : 0);
 
   return result ? range : 0;
 }
@@ -116,4 +132,5 @@ void HyperVModuleDevice::freeRange(IORangeScalar start, IORangeScalar size) {
   } else {
     _rangeAllocatorLow->deallocate(start, size);
   }
+  HVDBGLOG("Freed range base %p length %p", start, size);
 }

@@ -672,7 +672,6 @@
 		41F9B8FA2849846700E0DCB2 /* HyperVPCIBridgeRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVPCIBridgeRegs.hpp; sourceTree = "<group>"; };
 		41F9B8FD284BA20700E0DCB2 /* HyperVModuleDevice.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVModuleDevice.cpp; sourceTree = "<group>"; };
 		41F9B8FE284BA20700E0DCB2 /* HyperVModuleDevice.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVModuleDevice.hpp; sourceTree = "<group>"; };
-		41F9B903284BA4AB00E0DCB2 /* AppleACPIRange.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = AppleACPIRange.hpp; sourceTree = "<group>"; };
 		817C3CB428EB754C002EA298 /* HyperVFileCopyRegs.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = HyperVFileCopyRegs.hpp; sourceTree = "<group>"; };
 		817C3CB528EB754C002EA298 /* HyperVFileCopy.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVFileCopy.cpp; sourceTree = "<group>"; };
 		817C3CB628EB754C002EA298 /* HyperVFileCopy.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = HyperVFileCopy.hpp; sourceTree = "<group>"; };
@@ -1162,7 +1161,6 @@
 		41F2E45926683AF900CE26CE /* PCIRoot */ = {
 			isa = PBXGroup;
 			children = (
-				41F9B903284BA4AB00E0DCB2 /* AppleACPIRange.hpp */,
 				41F2E4492666F37B00CE26CE /* HyperVPCIProvider.cpp */,
 				41F2E44A2666F37B00CE26CE /* HyperVPCIProvider.hpp */,
 				41F2E45A26683B2B00CE26CE /* HyperVPCIRoot.cpp */,
