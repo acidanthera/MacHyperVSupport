@@ -44,11 +44,19 @@ typedef enum : UInt32 {
   kHyperVGraphicsPipeMessageTypeData    = 0x1
 } HyperVGraphicsPipeMessageType;
 
+//
+// Message pipe header.
+//
 typedef struct __attribute__((packed)) {
+  // Message type.
   HyperVGraphicsPipeMessageType type;
+  // Size of message body.
   UInt32                        size;
 } HyperVGraphicsPipeMessageHeader;
 
+//
+// Graphics message types.
+//
 typedef enum : UInt32 {
   kHyperVGraphicsMessageTypeError               = 0x0,
   kHyperVGraphicsMessageTypeVersionRequest      = 0x1,
@@ -65,56 +73,111 @@ typedef enum : UInt32 {
 
 //
 // Message header.
-// Size includes this header and payload.
 //
 typedef struct __attribute__((packed)) {
+  // Message type.
   HyperVGraphicsMessageType type;
+  // Size of this header and entire message body.
   UInt32                    size;
 } HyperVGraphicsMessageHeader;
 
+//
+// Version request message.
+// Indicates the client version to the Hyper-V host.
+//
 typedef struct __attribute__((packed)) {
+  // Version of client.
   VMBusVersion version;
 } HyperVGraphicsMessageVersionRequest;
 
+//
+// Version request message response.
+// Contains the server version from the Hyper-V host.
+//
 typedef struct __attribute__((packed)) {
+  // Version of host.
   VMBusVersion version;
+  // Client version was accepted by host.
   UInt8        accepted;
+  // Maximum number of video outputs supported (seems to be always one).
   UInt8        maxVideoOutputs;
 } HyperVGraphicsMessageVersionResponse;
 
+//
+// VRAM location message.
+// Specifies to Hyper-V where the graphics memory is located.
+//
 typedef struct __attribute__((packed)) {
+  // Driver-specified context.
   UInt64 context;
+  // Always 1, indicates a memory location is specified.
   UInt8  isVRAMGPASpecified;
+  // Physical memory location to use as graphics memory.
   UInt64 vramGPA;
 } HyperVGraphicsMessageVRAMLocation;
 
+//
+// VRAM location message acknowledgement.
+// Response from Hyper-V after graphics memory message is processed.
+//
 typedef struct __attribute__((packed)) {
+  // Driver-specified context.
   UInt64 context;
 } HyperVGraphicsMessageVRAMAck;
 
+//
+// Resolution change information for an video output.
+// Specifies new resolution to Hyper-V.
+//
 typedef struct __attribute__((packed)) {
+  // Video output is active?
   UInt8  active;
+  // Offset into VRAM?
   UInt32 vramOffset;
+  // Screen depth in bits.
   UInt8  depth;
+  // Screen width in pixels.
   UInt32 width;
+  // Screen height in pixels.
   UInt32 height;
+  // Screen pitch in bytes.
   UInt32 pitch;
 } HyperVGraphicsVideoOutputResolution;
 
+//
+// Resolution change message.
+// Specifies new resolution to Hyper-V.
+//
 typedef struct __attribute__((packed)) {
+  // Driver-specified context.
   UInt64                              context;
+  // Number of outputs (always one for this driver).
   UInt8                               videoOutputCount;
+  // Array of outputs (always contains one output for this driver).
   HyperVGraphicsVideoOutputResolution videoOutputs[1];
 } HyperVGraphicsMessageResolutionUpdate;
 
+//
+// Resolution change message acknowledgement.
+// Response from Hyper-V after new resolution change is processed.
+//
 typedef struct __attribute__((packed)) {
+  // Driver-specified context.
   UInt64 context;
 } HyperVGraphicsMessageResolutionUpdateAck;
 
+//
+// Cursor position change message.
+// Specifies new cursor position or visibility to Hyper-V.
+//
 typedef struct __attribute__((packed)) {
+  // 1 = cursor is visible.
   UInt8  isVisible;
+  // Video output index (always zero for this driver).
   UInt8  videoOutput;
+  // Cursor X coordinate.
   SInt32 x;
+  // Cursor Y coordinate.
   SInt32 y;
 } HyperVGraphicsMessageCursorPosition;
 
@@ -124,20 +187,38 @@ typedef struct __attribute__((packed)) {
 #define kHyperVGraphicsCursorMaxSize            (kHyperVGraphicsCursorMaxWidth * kHyperVGraphicsCursorMaxHeight * kHyperVGraphicsCursorARGBPixelSize)
 #define kHyperVGraphicsCursorPartIndexComplete  (-1)
 
+//
+// Cursor shape change message.
+// Specifies new cursor shape image to Hyper-V.
+//
 typedef struct __attribute__((packed)) {
+  // Unknown
   UInt8  partIndex;
+  // 1 = ARGB format.
   UInt8  isARGB;
+  // Width of cursor in pixels.
   UInt32 width;
+  // Height of cursor in pixels.
   UInt32 height;
+  // Hotpoint in pixels for X coordinate.
   UInt32 hotX;
+  // Hotpoint in pixels for Y coordinate.
   UInt32 hotY;
+  // Cursor bitmap data.
   UInt8  data[];
 } HyperVGraphicsMessageCursorShape;
 
+//
+// Feature request message from Hyper-V.
+//
 typedef struct __attribute__((packed)) {
+  // Screen data needs to be updated.
   UInt8 isDIRTNeeded;
+  // Cursor position needs to be reported.
   UInt8 isCursorPositionNeeded;
+  // Cursor shape needs to be reported.
   UInt8 isCursorShapeNeeded;
+  // Screen resolution needs to be reported.
   UInt8 isResolutionUpdateNeeded;
 } HyperVGraphicsMessageFeatureUpdate;
 
@@ -152,6 +233,10 @@ typedef struct __attribute__((packed)) {
   HyperVGraphicsDIRTRectangle dirtRects[1];
 } HyperVGraphicsMessageDIRT;
 
+//
+// Graphics message union.
+// Encapsulates all graphics messages to/from Hyper-V.
+//
 typedef struct __attribute__((packed)) {
   HyperVGraphicsPipeMessageHeader pipeHeader;
   HyperVGraphicsMessageHeader     gfxHeader;
