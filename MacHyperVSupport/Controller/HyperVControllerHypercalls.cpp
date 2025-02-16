@@ -46,7 +46,7 @@ bool HyperVController::initHypercalls() {
   //
   hvHypercall = rdmsr64(kHyperVMsrHypercall);
   HVDBGLOG("Hypercall MSR current value: 0x%llX", hvHypercall);
-  HVDBGLOG("Allocated hypercall page to phys 0x%llX", hypercallPhysAddr);
+  HVDBGLOG("Allocated hypercall page to phys 0x%llX (virt %p)", hypercallPhysAddr, hypercallPage);
 
   hvHypercall = ((hypercallPhysAddr << PAGE_SHIFT) >> kHyperVMsrHypercallPageShift)
                 | (hvHypercall & kHyperVMsrHypercallRsvdMask) | kHyperVMsrHypercallEnable;
