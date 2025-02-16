@@ -273,11 +273,9 @@ IOReturn HyperVGraphicsFramebuffer::setCursorImage(void *cursorImage) {
   bzero(&cursorDescriptor, sizeof (cursorDescriptor));
   cursorDescriptor.majorVersion = kHardwareCursorDescriptorMajorVersion;
   cursorDescriptor.minorVersion = kHardwareCursorDescriptorMinorVersion;
-  cursorDescriptor.width        = 96;
-  cursorDescriptor.height       = 96;
+  cursorDescriptor.width        = 32;
+  cursorDescriptor.height       = 32;
   cursorDescriptor.bitDepth     = 32U;
-  cursorDescriptor.supportedSpecialEncodings            = kInvertingEncodedPixel;
-  cursorDescriptor.specialEncodings[kInvertingEncoding] = 0xFF000000;
 
   bzero(&cursorInfo, sizeof (cursorInfo));
   cursorInfo.majorVersion       = kHardwareCursorInfoMajorVersion;
@@ -304,6 +302,6 @@ IOReturn HyperVGraphicsFramebuffer::setCursorImage(void *cursorImage) {
 }
 
 IOReturn HyperVGraphicsFramebuffer::setCursorState(SInt32 x, SInt32 y, bool visible) {
-  HVDBGLOG("Setting hardware cursor state (X: %d, Y: %d, visible: %u)", x, y, visible);
-  return kIOReturnUnsupported;
+ // HVDBGLOG("Setting hardware cursor state (X: %d, Y: %d, visible: %u)", x, y, visible);
+  return kIOReturnSuccess;
 }

@@ -305,6 +305,7 @@ IOReturn HyperVGraphics::updateCursorShape(const UInt8 *cursorData, UInt32 width
   }
 
   IOFree(gfxMsg, gfxMsgLength);
+  HVDBGLOG("Updated cursor data successfully");
   return kIOReturnSuccess;
 }
 
