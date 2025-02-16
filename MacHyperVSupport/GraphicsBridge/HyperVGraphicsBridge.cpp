@@ -9,18 +9,12 @@
 #include "HyperVPCIRoot.hpp"
 
 #include <IOKit/IOPlatformExpert.h>
-#include <IOKit/IODeviceTreeSupport.h>
 
 OSDefineMetaClassAndStructors(HyperVGraphicsBridge, super);
 
 bool HyperVGraphicsBridge::start(IOService *provider) {
   bool     result = false;
   IOReturn status;
-  
-  //
-  // Stop for now.
-  //
-  return false;
 
   HVCheckDebugArgs();
   HVDBGLOG("Initializing Hyper-V Synthetic Graphics Bridge");
@@ -31,24 +25,24 @@ bool HyperVGraphicsBridge::start(IOService *provider) {
   }
 
   //
-  // Do not start on Gen1 VMs.
-  //
-  IORegistryEntry *pciEntry = IORegistryEntry::fromPath("/PCI0@0", gIODTPlane);
-  if (pciEntry != nullptr) {
-    HVDBGLOG("Existing PCI bus found (Gen1 VM), will not start");
-
-    OSSafeReleaseNULL(pciEntry);
-    return false;
-  }
-
-  //
-  // Locate root PCI bus instance and register ourselves.
+  // Locate root PCI bus instance.
   //
   _hvPCIRoot = HyperVPCIRoot::getPCIRootInstance();
   if (_hvPCIRoot == nullptr) {
     return false;
   }
 
+  //
+  // Do not start on Gen1 VMs.
+  //
+  if (!_hvPCIRoot->isHyperVGen2()) {
+    HVDBGLOG("Not starting on Hyper-V Gen1 VM");
+    return false;
+  }
+
+  //
+  // Register with root PCI bridge.
+  //
   if (_hvPCIRoot->registerChildPCIBridge(this, &_pciBusNumber) != kIOReturnSuccess) {
     HVSYSLOG("Failed to register with root PCI bus instance");
     return false;

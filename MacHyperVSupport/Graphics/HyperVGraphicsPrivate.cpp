@@ -6,7 +6,6 @@
 //
 
 #include "HyperVGraphics.hpp"
-#include "HyperVModuleDevice.hpp"
 #include "HyperVPCIRoot.hpp"
 #include "HyperVPlatformProvider.hpp"
 

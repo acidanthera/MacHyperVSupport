@@ -103,7 +103,6 @@
 		41B41BDE26C74B4C00926A0D /* HyperVNetwork.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41B41BDC26C74B4C00926A0D /* HyperVNetwork.hpp */; };
 		41B41BE426C84A9F00926A0D /* HyperVNetworkPrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41B41BE326C84A9F00926A0D /* HyperVNetworkPrivate.cpp */; };
 		41B41BE726CDC42D00926A0D /* HyperVNetworkRNDIS.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41B41BE626CDC42D00926A0D /* HyperVNetworkRNDIS.cpp */; };
-		41BF45D8288CDF1200813670 /* HyperVModuleDevice.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F9B8FE284BA20700E0DCB2 /* HyperVModuleDevice.hpp */; };
 		41BF45D9288CDF1200813670 /* kern_compat.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3F12665B42200CE26CE /* kern_compat.hpp */; };
 		41BF45DA288CDF1200813670 /* arm.h in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3EA2665B42200CE26CE /* arm.h */; };
 		41BF45DB288CDF1200813670 /* HyperVPlatformProvider.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E42C2665B64D00CE26CE /* HyperVPlatformProvider.hpp */; };
@@ -123,7 +122,6 @@
 		41BF45E9288CDF1200813670 /* kern_policy.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3DA2665B42100CE26CE /* kern_policy.hpp */; };
 		41BF45EB288CDF1200813670 /* kern_iokit.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3DD2665B42100CE26CE /* kern_iokit.hpp */; };
 		41BF45EC288CDF1200813670 /* kern_patcher.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3F02665B42200CE26CE /* kern_patcher.hpp */; };
-		41BF45ED288CDF1200813670 /* HyperVPCIProvider.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E44A2666F37B00CE26CE /* HyperVPCIProvider.hpp */; };
 		41BF45EE288CDF1200813670 /* x86.h in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3EB2665B42200CE26CE /* x86.h */; };
 		41BF45EF288CDF1200813670 /* plugin_start.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3DC2665B42100CE26CE /* plugin_start.hpp */; };
 		41BF45F0288CDF1200813670 /* capstone.h in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E3E62665B42200CE26CE /* capstone.h */; };
@@ -164,8 +162,6 @@
 		41BF4618288CDF1200813670 /* HyperVGraphicsBridge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E43A2666E6A100CE26CE /* HyperVGraphicsBridge.cpp */; };
 		41BF4619288CDF1200813670 /* HyperVControllerInterrupts.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41E2EC77263F894300BBE18F /* HyperVControllerInterrupts.cpp */; };
 		41BF461A288CDF1200813670 /* HyperVVMBusDevicePrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 416E429C265751CC006DED6D /* HyperVVMBusDevicePrivate.cpp */; };
-		41BF461B288CDF1200813670 /* HyperVPCIProvider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E4492666F37B00CE26CE /* HyperVPCIProvider.cpp */; };
-		41BF461C288CDF1200813670 /* HyperVModuleDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F9B8FD284BA20700E0DCB2 /* HyperVModuleDevice.cpp */; };
 		41BF461D288CDF1200813670 /* HyperVStorage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 418F843B2648BA38003F8520 /* HyperVStorage.cpp */; };
 		41BF461E288CDF1200813670 /* HyperVPlatformProvider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E42B2665B64D00CE26CE /* HyperVPlatformProvider.cpp */; };
 		41BF461F288CDF1200813670 /* HyperVNetworkPrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41B41BE326C84A9F00926A0D /* HyperVNetworkPrivate.cpp */; };
@@ -220,8 +216,6 @@
 		41F2E42E2665B64D00CE26CE /* HyperVPlatformProvider.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E42C2665B64D00CE26CE /* HyperVPlatformProvider.hpp */; };
 		41F2E43C2666E6A100CE26CE /* HyperVGraphicsBridge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E43A2666E6A100CE26CE /* HyperVGraphicsBridge.cpp */; };
 		41F2E43D2666E6A100CE26CE /* HyperVGraphicsBridge.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E43B2666E6A100CE26CE /* HyperVGraphicsBridge.hpp */; };
-		41F2E44B2666F37B00CE26CE /* HyperVPCIProvider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E4492666F37B00CE26CE /* HyperVPCIProvider.cpp */; };
-		41F2E44C2666F37B00CE26CE /* HyperVPCIProvider.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E44A2666F37B00CE26CE /* HyperVPCIProvider.hpp */; };
 		41F2E45C26683B2C00CE26CE /* HyperVPCIRoot.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F2E45A26683B2B00CE26CE /* HyperVPCIRoot.cpp */; };
 		41F2E45D26683B2C00CE26CE /* HyperVPCIRoot.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F2E45B26683B2C00CE26CE /* HyperVPCIRoot.hpp */; };
 		41F47BE9290EC06E00C0E3C5 /* HyperVGraphicsBridgePrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F47BE8290EC06E00C0E3C5 /* HyperVGraphicsBridgePrivate.cpp */; };
@@ -229,8 +223,6 @@
 		41F9B8F02849792200E0DCB2 /* HyperVPCIBridge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F9B8EE2849792200E0DCB2 /* HyperVPCIBridge.cpp */; };
 		41F9B8F12849792200E0DCB2 /* HyperVPCIBridge.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F9B8EF2849792200E0DCB2 /* HyperVPCIBridge.hpp */; };
 		41F9B8F8284983FF00E0DCB2 /* HyperVPCIBridgePrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F9B8F7284983FF00E0DCB2 /* HyperVPCIBridgePrivate.cpp */; };
-		41F9B8FF284BA20700E0DCB2 /* HyperVModuleDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F9B8FD284BA20700E0DCB2 /* HyperVModuleDevice.cpp */; };
-		41F9B900284BA20700E0DCB2 /* HyperVModuleDevice.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41F9B8FE284BA20700E0DCB2 /* HyperVModuleDevice.hpp */; };
 		817C3CB828EB754C002EA298 /* HyperVFileCopy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 817C3CB528EB754C002EA298 /* HyperVFileCopy.cpp */; };
 		817C3CB928EB754C002EA298 /* HyperVFileCopy.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 817C3CB628EB754C002EA298 /* HyperVFileCopy.hpp */; };
 		817C3CBA28EB755E002EA298 /* HyperVFileCopy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 817C3CB528EB754C002EA298 /* HyperVFileCopy.cpp */; };
@@ -662,8 +654,6 @@
 		41F2E42C2665B64D00CE26CE /* HyperVPlatformProvider.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVPlatformProvider.hpp; sourceTree = "<group>"; };
 		41F2E43A2666E6A100CE26CE /* HyperVGraphicsBridge.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVGraphicsBridge.cpp; sourceTree = "<group>"; };
 		41F2E43B2666E6A100CE26CE /* HyperVGraphicsBridge.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVGraphicsBridge.hpp; sourceTree = "<group>"; };
-		41F2E4492666F37B00CE26CE /* HyperVPCIProvider.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVPCIProvider.cpp; sourceTree = "<group>"; };
-		41F2E44A2666F37B00CE26CE /* HyperVPCIProvider.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVPCIProvider.hpp; sourceTree = "<group>"; };
 		41F2E45A26683B2B00CE26CE /* HyperVPCIRoot.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVPCIRoot.cpp; sourceTree = "<group>"; };
 		41F2E45B26683B2C00CE26CE /* HyperVPCIRoot.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVPCIRoot.hpp; sourceTree = "<group>"; };
 		41F47BE8290EC06E00C0E3C5 /* HyperVGraphicsBridgePrivate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVGraphicsBridgePrivate.cpp; sourceTree = "<group>"; };
@@ -671,8 +661,6 @@
 		41F9B8EF2849792200E0DCB2 /* HyperVPCIBridge.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVPCIBridge.hpp; sourceTree = "<group>"; };
 		41F9B8F7284983FF00E0DCB2 /* HyperVPCIBridgePrivate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVPCIBridgePrivate.cpp; sourceTree = "<group>"; };
 		41F9B8FA2849846700E0DCB2 /* HyperVPCIBridgeRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVPCIBridgeRegs.hpp; sourceTree = "<group>"; };
-		41F9B8FD284BA20700E0DCB2 /* HyperVModuleDevice.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVModuleDevice.cpp; sourceTree = "<group>"; };
-		41F9B8FE284BA20700E0DCB2 /* HyperVModuleDevice.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVModuleDevice.hpp; sourceTree = "<group>"; };
 		817C3CB428EB754C002EA298 /* HyperVFileCopyRegs.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = HyperVFileCopyRegs.hpp; sourceTree = "<group>"; };
 		817C3CB528EB754C002EA298 /* HyperVFileCopy.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVFileCopy.cpp; sourceTree = "<group>"; };
 		817C3CB628EB754C002EA298 /* HyperVFileCopy.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = HyperVFileCopy.hpp; sourceTree = "<group>"; };
@@ -1020,7 +1008,6 @@
 				418F051F26483C3C00E1D14C /* IntegrationComponents */,
 				414678B428C4F091000E8F83 /* InterruptController */,
 				418219632648605D00619C15 /* Keyboard */,
-				41F9B8FC284BA1D900E0DCB2 /* ModuleDevice */,
 				418F84312648B06E003F8520 /* Mouse */,
 				41B41BDA26C74B2700926A0D /* Network */,
 				41F9B8ED284978EF00E0DCB2 /* PCIBridge */,
@@ -1163,8 +1150,6 @@
 		41F2E45926683AF900CE26CE /* PCIRoot */ = {
 			isa = PBXGroup;
 			children = (
-				41F2E4492666F37B00CE26CE /* HyperVPCIProvider.cpp */,
-				41F2E44A2666F37B00CE26CE /* HyperVPCIProvider.hpp */,
 				41F2E45A26683B2B00CE26CE /* HyperVPCIRoot.cpp */,
 				41F2E45B26683B2C00CE26CE /* HyperVPCIRoot.hpp */,
 			);
@@ -1182,15 +1167,6 @@
 				41F9B8FA2849846700E0DCB2 /* HyperVPCIBridgeRegs.hpp */,
 			);
 			path = PCIBridge;
-			sourceTree = "<group>";
-		};
-		41F9B8FC284BA1D900E0DCB2 /* ModuleDevice */ = {
-			isa = PBXGroup;
-			children = (
-				41F9B8FD284BA20700E0DCB2 /* HyperVModuleDevice.cpp */,
-				41F9B8FE284BA20700E0DCB2 /* HyperVModuleDevice.hpp */,
-			);
-			path = ModuleDevice;
 			sourceTree = "<group>";
 		};
 		817C3CB328EB754C002EA298 /* FileCopy */ = {
@@ -1223,7 +1199,6 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				41F9B900284BA20700E0DCB2 /* HyperVModuleDevice.hpp in Headers */,
 				41A98B7C2D5EBA6A00A1931C /* HyperVPS2Keyboard.hpp in Headers */,
 				41F2E4112665B42200CE26CE /* kern_compat.hpp in Headers */,
 				41F2E40A2665B42200CE26CE /* arm.h in Headers */,
@@ -1247,7 +1222,6 @@
 				41F2E3FE2665B42200CE26CE /* kern_iokit.hpp in Headers */,
 				817C3CB928EB754C002EA298 /* HyperVFileCopy.hpp in Headers */,
 				41F2E4102665B42200CE26CE /* kern_patcher.hpp in Headers */,
-				41F2E44C2666F37B00CE26CE /* HyperVPCIProvider.hpp in Headers */,
 				417CEDED28F31FF300D0F6A8 /* HyperVICUserClient.hpp in Headers */,
 				41F2E40B2665B42200CE26CE /* x86.h in Headers */,
 				417CEDD628E22C5400D0F6A8 /* HyperVTimeSync.hpp in Headers */,
@@ -1289,7 +1263,6 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				41BF45D8288CDF1200813670 /* HyperVModuleDevice.hpp in Headers */,
 				41A98B7D2D5EBA6A00A1931C /* HyperVPS2Keyboard.hpp in Headers */,
 				41BF45D9288CDF1200813670 /* kern_compat.hpp in Headers */,
 				41BF45DA288CDF1200813670 /* arm.h in Headers */,
@@ -1313,7 +1286,6 @@
 				41BF45E9288CDF1200813670 /* kern_policy.hpp in Headers */,
 				41BF45EB288CDF1200813670 /* kern_iokit.hpp in Headers */,
 				41BF45EC288CDF1200813670 /* kern_patcher.hpp in Headers */,
-				41BF45ED288CDF1200813670 /* HyperVPCIProvider.hpp in Headers */,
 				417CEDEE28F31FF300D0F6A8 /* HyperVICUserClient.hpp in Headers */,
 				41BF45EE288CDF1200813670 /* x86.h in Headers */,
 				417CEDD728E22C5400D0F6A8 /* HyperVTimeSync.hpp in Headers */,
@@ -1889,8 +1861,6 @@
 				417CEDD428E22C5400D0F6A8 /* HyperVTimeSync.cpp in Sources */,
 				41E2EC78263F894300BBE18F /* HyperVControllerInterrupts.cpp in Sources */,
 				416E429D265751CC006DED6D /* HyperVVMBusDevicePrivate.cpp in Sources */,
-				41F2E44B2666F37B00CE26CE /* HyperVPCIProvider.cpp in Sources */,
-				41F9B8FF284BA20700E0DCB2 /* HyperVModuleDevice.cpp in Sources */,
 				41CF8A6F2ADB89A9002AC7A4 /* HyperVPCIBridgeDevProps.cpp in Sources */,
 				4191F6F528F4E71A00809232 /* HyperVTimeSyncUserClient.cpp in Sources */,
 				418F843D2648BA38003F8520 /* HyperVStorage.cpp in Sources */,
@@ -1941,8 +1911,6 @@
 				417CEDD528E22C5400D0F6A8 /* HyperVTimeSync.cpp in Sources */,
 				41BF4619288CDF1200813670 /* HyperVControllerInterrupts.cpp in Sources */,
 				41BF461A288CDF1200813670 /* HyperVVMBusDevicePrivate.cpp in Sources */,
-				41BF461B288CDF1200813670 /* HyperVPCIProvider.cpp in Sources */,
-				41BF461C288CDF1200813670 /* HyperVModuleDevice.cpp in Sources */,
 				41CF8A702ADB89A9002AC7A4 /* HyperVPCIBridgeDevProps.cpp in Sources */,
 				4191F6F628F4E71A00809232 /* HyperVTimeSyncUserClient.cpp in Sources */,
 				41BF461D288CDF1200813670 /* HyperVStorage.cpp in Sources */,

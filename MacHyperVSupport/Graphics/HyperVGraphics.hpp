@@ -12,6 +12,7 @@
 #include <IOKit/IOService.h>
 
 #include "HyperVVMBusDevice.hpp"
+#include "HyperVGraphicsPlatformFunctions.hpp"
 #include "HyperVGraphicsRegs.hpp"
 
 class HyperVGraphics : public IOService {

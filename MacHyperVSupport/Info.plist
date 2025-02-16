@@ -101,17 +101,6 @@
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
 		</dict>
-		<key>HyperVModuleDevice</key>
-		<dict>
-			<key>CFBundleIdentifier</key>
-			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-			<key>IOClass</key>
-			<string>HyperVModuleDevice</string>
-			<key>IONameMatch</key>
-			<string>VMOD</string>
-			<key>IOProviderClass</key>
-			<string>IOACPIPlatformDevice</string>
-		</dict>
 		<key>HyperVMouse</key>
 		<dict>
 			<key>AbsoluteAxisBoundsRemovalPercentage</key>
@@ -162,15 +151,6 @@
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
 		</dict>
-		<key>HyperVPCIProviderGen2</key>
-		<dict>
-			<key>CFBundleIdentifier</key>
-			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-			<key>IOClass</key>
-			<string>HyperVPCIProvider</string>
-			<key>IOProviderClass</key>
-			<string>AppleACPIPlatformExpert</string>
-		</dict>
 		<key>HyperVPCIRootGen1</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
@@ -190,8 +170,10 @@
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>IOClass</key>
 			<string>HyperVPCIRoot</string>
+			<key>IONameMatch</key>
+			<string>VMOD</string>
 			<key>IOProviderClass</key>
-			<string>HyperVPCIProvider</string>
+			<string>IOACPIPlatformDevice</string>
 		</dict>
 		<key>HyperVPS2Keyboard</key>
 		<dict>
