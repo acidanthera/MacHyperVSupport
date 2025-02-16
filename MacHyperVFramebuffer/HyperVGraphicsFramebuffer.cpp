@@ -13,6 +13,11 @@ OSDefineMetaClassAndStructors(HyperVGraphicsFramebuffer, super);
 static char const pixelFormatString16[] = IO16BitDirectPixels "\0";
 static char const pixelFormatString32[] = IO32BitDirectPixels "\0";
 
+//
+// Hotspot was silently added in macOS 10.5.6, no struct version changes.
+//
+#define kHyperVCursorHotspotMinimumMinor  6
+
 typedef struct {
   UInt32 width;
   UInt32 height;
@@ -43,6 +48,18 @@ bool HyperVGraphicsFramebuffer::start(IOService *provider) {
     return false;
   }
 
+  //
+  // Check OS version to determine if hotspot is supported.
+  // Hotspot was silently added in macOS 10.5.6.
+  //
+  if (getKernelVersion() < KernelVersion::Leopard) {
+    _hasCursorHotspot = false;
+  } else if ((getKernelVersion() == KernelVersion::Leopard) && (getKernelMinorVersion() < kHyperVCursorHotspotMinimumMinor)) {
+    _hasCursorHotspot = false;
+  } else {
+    _hasCursorHotspot = true;
+  }
+
   if (!super::start(provider)) {
     HVSYSLOG("super::start() returned false");
     return false;
@@ -55,14 +72,16 @@ bool HyperVGraphicsFramebuffer::start(IOService *provider) {
 void HyperVGraphicsFramebuffer::stop(IOService *provider) {
   HVDBGLOG("Stopping Hyper-V Synthetic Framebuffer");
 
+  if (_cursorData != nullptr) {
+    IOFree(_cursorData, _cursorDataSize);
+    _cursorData = nullptr;
+  }
+
   OSSafeReleaseNULL(_hvGfxProvider);
   super::stop(provider);
 }
 
 IOReturn HyperVGraphicsFramebuffer::enableController() {
-  IODeviceMemory  *deviceMemory;
-  IOReturn        status;
-
   //
   // Get instance of graphics service.
   // This cannot link against the main kext due to macOS requirements, as this kext
@@ -187,9 +206,9 @@ IOReturn HyperVGraphicsFramebuffer::getPixelInformation(IODisplayModeID displayM
   pixelInfo->activeHeight         = graphicsModes[displayMode - 1].height;
 
   //if (videoDepth == 32) {
-    strlcpy(&pixelInfo->pixelFormat[0], &pixelFormatString32[0], sizeof (IOPixelEncoding));
+    memcpy(&pixelInfo->pixelFormat[0], &pixelFormatString32[0], sizeof (IOPixelEncoding));
  // } else if (videoDepth == 16) {
- //   strlcpy(&pixelInfo->pixelFormat[0], &pixelFormatString16[0], sizeof (IOPixelEncoding));
+ //   memcpy(&pixelInfo->pixelFormat[0], &pixelFormatString16[0], sizeof (IOPixelEncoding));
  // }
 
   return kIOReturnSuccess;
@@ -219,4 +238,72 @@ IOReturn HyperVGraphicsFramebuffer::setDisplayMode(IODisplayModeID displayMode, 
   //
   return _hvGfxProvider->callPlatformFunction(kHyperVGraphicsFunctionSetResolution, true,
                                               &width, &height, nullptr, nullptr);
+}
+
+IOReturn HyperVGraphicsFramebuffer::getAttribute(IOSelect attribute, uintptr_t *value) {
+  if (attribute == kIOHardwareCursorAttribute) {
+    if (value != nullptr) {
+      *value = 1;
+    }
+    HVDBGLOG("Hardware cursor supported");
+    return kIOReturnSuccess;
+  }
+
+  return super::getAttribute(attribute, value);
+}
+
+IOReturn HyperVGraphicsFramebuffer::setCursorImage(void *cursorImage) {
+  IOHardwareCursorDescriptor  cursorDescriptor;
+  IOHardwareCursorInfo        cursorInfo;
+
+  //
+  // Allocate cursor data if needed.
+  //
+  if (_cursorData == nullptr) {
+    _cursorData = static_cast<UInt8*>(IOMalloc(_cursorDataSize));
+    if (_cursorData == nullptr) {
+      HVSYSLOG("Failed to allocate memory for hardware cursor");
+      return kIOReturnUnsupported;
+    }
+  }
+
+  //
+  // Setup cursor descriptor / info structures and convert the cursor image.
+  //
+  bzero(&cursorDescriptor, sizeof (cursorDescriptor));
+  cursorDescriptor.majorVersion = kHardwareCursorDescriptorMajorVersion;
+  cursorDescriptor.minorVersion = kHardwareCursorDescriptorMinorVersion;
+  cursorDescriptor.width        = 96;
+  cursorDescriptor.height       = 96;
+  cursorDescriptor.bitDepth     = 32U;
+  cursorDescriptor.supportedSpecialEncodings            = kInvertingEncodedPixel;
+  cursorDescriptor.specialEncodings[kInvertingEncoding] = 0xFF000000;
+
+  bzero(&cursorInfo, sizeof (cursorInfo));
+  cursorInfo.majorVersion       = kHardwareCursorInfoMajorVersion;
+  cursorInfo.minorVersion       = kHardwareCursorInfoMinorVersion;
+  cursorInfo.hardwareCursorData = _cursorData;
+
+  if (!convertCursorImage(cursorImage, &cursorDescriptor, &cursorInfo)) {
+    HVSYSLOG("Failed to convert hardware cursor image");
+    return kIOReturnUnsupported;
+  }
+  if ((cursorInfo.cursorWidth == 0) || (cursorInfo.cursorHeight == 0)) {
+    HVSYSLOG("Converted hardware cursor image is invalid size");
+    return kIOReturnUnsupported;
+  }
+  HVDBGLOG("Converted hardware cursor image at %p (%ux%u)", _cursorData, cursorInfo.cursorWidth, cursorInfo.cursorHeight);
+
+  HyperVGraphicsFunctionSetCursorParams cursorParams = { };
+  cursorParams.cursorData = _cursorData;
+  cursorParams.width      = cursorInfo.cursorWidth;
+  cursorParams.height     = cursorInfo.cursorHeight;
+  cursorParams.hotX       = _hasCursorHotspot ? cursorInfo.cursorHotSpotX : 0;
+  cursorParams.hotY       = _hasCursorHotspot ? cursorInfo.cursorHotSpotY : 0;
+  return _hvGfxProvider->callPlatformFunction(kHyperVGraphicsFunctionSetCursor, true, &cursorParams, nullptr, nullptr, nullptr);
+}
+
+IOReturn HyperVGraphicsFramebuffer::setCursorState(SInt32 x, SInt32 y, bool visible) {
+  HVDBGLOG("Setting hardware cursor state (X: %d, Y: %d, visible: %u)", x, y, visible);
+  return kIOReturnUnsupported;
 }

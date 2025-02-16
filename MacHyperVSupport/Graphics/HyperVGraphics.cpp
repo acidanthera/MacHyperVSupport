@@ -121,6 +121,13 @@ IOReturn HyperVGraphics::callPlatformFunction(const OSSymbol *functionName, bool
 
   if (functionName->isEqualTo(kHyperVGraphicsFunctionSetResolution)) {
     return updateScreenResolution(*((UInt32*)param1), *((UInt32*)param2), false);
+  } else if (functionName->isEqualTo(kHyperVGraphicsFunctionSetCursor)) {
+    HyperVGraphicsFunctionSetCursorParams *cursorParams = static_cast<HyperVGraphicsFunctionSetCursorParams*>(param1);
+    if (cursorParams == nullptr) {
+      return kIOReturnBadArgument;
+    }
+    return updateCursorShape(cursorParams->cursorData, cursorParams->width, cursorParams->height,
+                             cursorParams->hotX, cursorParams->hotY);
   } else {
     return kIOReturnUnsupported;
   }

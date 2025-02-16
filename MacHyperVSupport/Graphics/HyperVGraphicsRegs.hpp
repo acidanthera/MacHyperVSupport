@@ -57,8 +57,8 @@ typedef enum : UInt32 {
   kHyperVGraphicsMessageTypeVRAMAck             = 0x4,
   kHyperVGraphicsMessageTypeResolutionUpdate    = 0x5,
   kHyperVGraphicsMessageTypeResolutionUpdateAck = 0x6,
-  kHyperVGraphicsMessageTypePointerPosition     = 0x7,
-  kHyperVGraphicsMessageTypePointerShape        = 0x8,
+  kHyperVGraphicsMessageTypeCursorPosition      = 0x7,
+  kHyperVGraphicsMessageTypeCursorShape         = 0x8,
   kHyperVGraphicsMessageTypeFeatureChange       = 0x9,
   kHyperVGraphicsMessageTypeDIRT                = 0xA
 } HyperVGraphicsMessageType;
@@ -116,13 +116,13 @@ typedef struct __attribute__((packed)) {
   UInt8  videoOutput;
   SInt32 x;
   SInt32 y;
-} HyperVGraphicsMessagePointerPosition;
+} HyperVGraphicsMessageCursorPosition;
 
-#define kHyperVGraphicsPointerMaxWidth      96
-#define kHyperVGraphicsPointerMaxHeight     96
-#define kHyperVGraphicsPointerARGBPixelSize 4
-#define kHyperVGraphicsPointerMaxSize       (kHyperVGraphicsPointerMaxWidth * kHyperVGraphicsPointerMaxHeight * kHyperVGraphicsPointerARGBPixelSize)
-#define kHyperVGraphicsPointerComplete      (-1)
+#define kHyperVGraphicsCursorMaxWidth           96
+#define kHyperVGraphicsCursorMaxHeight          96
+#define kHyperVGraphicsCursorARGBPixelSize      4
+#define kHyperVGraphicsCursorMaxSize            (kHyperVGraphicsCursorMaxWidth * kHyperVGraphicsCursorMaxHeight * kHyperVGraphicsCursorARGBPixelSize)
+#define kHyperVGraphicsCursorPartIndexComplete  (-1)
 
 typedef struct __attribute__((packed)) {
   UInt8  partIndex;
@@ -131,13 +131,13 @@ typedef struct __attribute__((packed)) {
   UInt32 height;
   UInt32 hotX;
   UInt32 hotY;
-  UInt8  data[4];
-} HyperVGraphicsMessagePointerShape;
+  UInt8  data[];
+} HyperVGraphicsMessageCursorShape;
 
 typedef struct __attribute__((packed)) {
   UInt8 isDIRTNeeded;
-  UInt8 isPointerPositionNeeded;
-  UInt8 isPointerShapeNeeded;
+  UInt8 isCursorPositionNeeded;
+  UInt8 isCursorShapeNeeded;
   UInt8 isResolutionUpdateNeeded;
 } HyperVGraphicsMessageFeatureUpdate;
 
@@ -163,8 +163,8 @@ typedef struct __attribute__((packed)) {
     HyperVGraphicsMessageVRAMAck              vramAck;
     HyperVGraphicsMessageResolutionUpdate     resolutionUpdate;
     HyperVGraphicsMessageResolutionUpdateAck  resolutionAck;
-    HyperVGraphicsMessagePointerPosition      pointerPosition;
-    HyperVGraphicsMessagePointerShape         pointerShape;
+    HyperVGraphicsMessageCursorPosition       cursorPosition;
+    HyperVGraphicsMessageCursorShape          cursorShape;
     HyperVGraphicsMessageFeatureUpdate        featureUpdate;
     HyperVGraphicsMessageDIRT                 dirt;
   };

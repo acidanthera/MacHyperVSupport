@@ -42,7 +42,7 @@ private:
   IOReturn connectGraphics();
   IOReturn allocateGraphicsMemory();
   IOReturn updateGraphicsMemoryLocation();
-  IOReturn updatePointer();
+  IOReturn updateCursorShape(const UInt8 *cursorData, UInt32 width, UInt32 height, UInt32 hotX, UInt32 hotY);
   IOReturn updateScreenResolution(UInt32 width, UInt32 height, bool isBoot);
 
 public:

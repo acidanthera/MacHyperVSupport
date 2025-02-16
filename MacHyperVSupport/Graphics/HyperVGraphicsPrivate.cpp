@@ -230,45 +230,81 @@ IOReturn HyperVGraphics::updateGraphicsMemoryLocation() {
   return kIOReturnSuccess;
 }
 
-IOReturn HyperVGraphics::updatePointer() {
+IOReturn HyperVGraphics::updateCursorShape(const UInt8 *cursorData, UInt32 width, UInt32 height, UInt32 hotX, UInt32 hotY) {
   IOReturn              status;
-  HyperVGraphicsMessage gfxMsg = { };
-  
-  gfxMsg.gfxHeader.type = kHyperVGraphicsMessageTypePointerPosition;
-  gfxMsg.gfxHeader.size = sizeof (gfxMsg.gfxHeader) + sizeof (gfxMsg.pointerPosition);
-  
-  gfxMsg.pointerPosition.isVisible = 1;
-  gfxMsg.pointerPosition.videoOutput = 0;
-  gfxMsg.pointerPosition.x = 0;
-  gfxMsg.pointerPosition.y = 0;
-  
-  status = sendGraphicsMessage(&gfxMsg);
+  UInt32                cursorSize;
+  HyperVGraphicsMessage *gfxMsg;
+  size_t                gfxMsgLength;
+
+  //
+  // Check that cursor is valid.
+  //
+  if ((cursorData == nullptr)
+      || (width > kHyperVGraphicsCursorMaxWidth) || (height > kHyperVGraphicsCursorMaxHeight)
+      || (hotX > width) || (hotY > height)) {
+    HVSYSLOG("Invalid cursor image passed");
+    return kIOReturnUnsupported;
+  }
+  cursorSize = (width * height * kHyperVGraphicsCursorARGBPixelSize);
+  HVDBGLOG("Cursor data at %p size %ux%u hot %ux%u length %u bytes", cursorData, width, height, hotX, hotY, cursorSize);
+
+  //
+  // Allocate message.
+  //
+  gfxMsgLength = sizeof (*gfxMsg) + cursorSize;
+  gfxMsg = static_cast<HyperVGraphicsMessage*>(IOMalloc(gfxMsgLength));
+  if (gfxMsg == nullptr) {
+    HVSYSLOG("Failed to allocate cursor graphics message");
+    return kIOReturnNoResources;
+  }
+
+  //
+  // Send cursor image.
+  // Cursor format is ARGB if alpha is enabled, RGB otherwise.
+  //
+  gfxMsg->gfxHeader.type = kHyperVGraphicsMessageTypeCursorShape;
+  gfxMsg->gfxHeader.size = sizeof (gfxMsg->gfxHeader) + sizeof (gfxMsg->cursorShape) + cursorSize;
+
+  gfxMsg->cursorShape.partIndex = kHyperVGraphicsCursorPartIndexComplete;
+  gfxMsg->cursorShape.isARGB    = 1;
+  gfxMsg->cursorShape.width     = width;
+  gfxMsg->cursorShape.height    = height;
+  gfxMsg->cursorShape.hotX      = hotX;
+  gfxMsg->cursorShape.hotY      = hotY;
+
+  //
+  // Copy cursor data.
+  // macOS provides cursor image inverted heightwise, flip here during the copy.
+  //
+  UInt32 stride = width * kHyperVGraphicsCursorARGBPixelSize;
+  for (UInt32 dstY = 0, srcY = (height - 1); dstY < height; dstY++, srcY--) {
+    memcpy(&gfxMsg->cursorShape.data[dstY * stride], &cursorData[srcY * stride], stride);
+  }
+
+  status = sendGraphicsMessage(gfxMsg);
   if (status != kIOReturnSuccess) {
-    HVSYSLOG("Failed to send pointer position with status 0x%X", status);
+    HVSYSLOG("Failed to send cursor shape with status 0x%X", status);
+    IOFree(gfxMsg, gfxMsgLength);
     return status;
   }
+
+  bzero(gfxMsg, gfxMsgLength);
+  gfxMsg->gfxHeader.type = kHyperVGraphicsMessageTypeCursorPosition;
+  gfxMsg->gfxHeader.size = sizeof (gfxMsg->gfxHeader) + sizeof (gfxMsg->cursorPosition);
   
-  bzero(&gfxMsg, sizeof (gfxMsg));
-  gfxMsg.gfxHeader.type = kHyperVGraphicsMessageTypePointerShape;
-  gfxMsg.gfxHeader.size = sizeof (gfxMsg.gfxHeader) + sizeof (gfxMsg.pointerShape);
+  gfxMsg->cursorPosition.isVisible = 1;
+  gfxMsg->cursorPosition.videoOutput = 0;
+  gfxMsg->cursorPosition.x = 128;
+  gfxMsg->cursorPosition.y = 128;
   
-  gfxMsg.pointerShape.partIndex = -1;
-  gfxMsg.pointerShape.isARGB = 1;
-  gfxMsg.pointerShape.width = 1;
-  gfxMsg.pointerShape.height = 1;
-  gfxMsg.pointerShape.hotX = 0;
-  gfxMsg.pointerShape.hotY = 0;
-  gfxMsg.pointerShape.data[0] = 0;
-  gfxMsg.pointerShape.data[1] = 1;
-  gfxMsg.pointerShape.data[2] = 1;
-  gfxMsg.pointerShape.data[3] = 1;
-  
-  status = sendGraphicsMessage(&gfxMsg);
+  status = sendGraphicsMessage(gfxMsg);
   if (status != kIOReturnSuccess) {
-    HVSYSLOG("Failed to send pointer shape with status 0x%X", status);
+    HVSYSLOG("Failed to send cursor position with status 0x%X", status);
+    IOFree(gfxMsg, gfxMsgLength);
     return status;
   }
-  
+
+  IOFree(gfxMsg, gfxMsgLength);
   return kIOReturnSuccess;
 }
 

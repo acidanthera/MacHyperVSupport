@@ -20,6 +20,9 @@ class HyperVGraphicsFramebuffer : public IOFramebuffer {
 private:
   IOService       *_hvGfxProvider = nullptr;
   IODisplayModeID _currentDisplayMode = 4;
+  UInt8           *_cursorData = nullptr;
+  size_t          _cursorDataSize = 16834;
+  bool            _hasCursorHotspot = false;
 
 public:
   //
@@ -43,6 +46,9 @@ public:
                                IOPixelAperture aperture, IOPixelInformation *pixelInfo) APPLE_KEXT_OVERRIDE;
   IOReturn getCurrentDisplayMode(IODisplayModeID *displayMode, IOIndex *depth) APPLE_KEXT_OVERRIDE;
   IOReturn setDisplayMode(IODisplayModeID displayMode, IOIndex depth) APPLE_KEXT_OVERRIDE;
+  IOReturn getAttribute(IOSelect attribute, uintptr_t *value) APPLE_KEXT_OVERRIDE;
+  IOReturn setCursorImage(void *cursorImage) APPLE_KEXT_OVERRIDE;
+  IOReturn setCursorState(SInt32 x, SInt32 y, bool visible) APPLE_KEXT_OVERRIDE;
 };
 
 #endif

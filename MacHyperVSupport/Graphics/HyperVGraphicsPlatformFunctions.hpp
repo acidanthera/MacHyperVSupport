@@ -11,6 +11,19 @@
 //
 // Platform function names.
 //
-#define kHyperVGraphicsFunctionSetResolution  "HyperVGraphicsFunctionSetResolution"
+#define kHyperVGraphicsFunctionSetResolution    "HyperVGraphicsFunctionSetResolution"
+#define kHyperVGraphicsFunctionSetCursor        "HyperVGraphicsFunctionSetCursor"
+#define kHyperVGraphicsFunctionSetCusorPosition "HyperVGraphicsFunctionSetCusorPosition"
+
+//
+// HyperVGraphicsFunctionSetCursor parameters
+//
+typedef struct {
+  UInt8   *cursorData;
+  UInt32  width;
+  UInt32  height;
+  UInt32  hotX;
+  UInt32  hotY;
+} HyperVGraphicsFunctionSetCursorParams;
 
 #endif
