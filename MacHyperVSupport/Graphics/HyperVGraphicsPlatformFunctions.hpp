@@ -9,6 +9,12 @@
 #define HyperVGraphicsPlatformFunctions_hpp
 
 //
+// Max cursor size.
+//
+#define kHyperVGraphicsCursorMaxWidth           32
+#define kHyperVGraphicsCursorMaxHeight          32
+
+//
 // Platform function names.
 //
 #define kHyperVGraphicsFunctionSetResolution    "HyperVGraphicsFunctionSetResolution"

@@ -273,8 +273,8 @@ IOReturn HyperVGraphicsFramebuffer::setCursorImage(void *cursorImage) {
   bzero(&cursorDescriptor, sizeof (cursorDescriptor));
   cursorDescriptor.majorVersion = kHardwareCursorDescriptorMajorVersion;
   cursorDescriptor.minorVersion = kHardwareCursorDescriptorMinorVersion;
-  cursorDescriptor.width        = 32;
-  cursorDescriptor.height       = 32;
+  cursorDescriptor.width        = kHyperVGraphicsCursorMaxWidth;
+  cursorDescriptor.height       = kHyperVGraphicsCursorMaxHeight;
   cursorDescriptor.bitDepth     = 32U;
 
   bzero(&cursorInfo, sizeof (cursorInfo));

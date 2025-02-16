@@ -6,7 +6,6 @@
 //
 
 #include "HyperVGraphics.hpp"
-#include "HyperVGraphicsPlatformFunctions.hpp"
 
 OSDefineMetaClassAndStructors(HyperVGraphics, super);
 

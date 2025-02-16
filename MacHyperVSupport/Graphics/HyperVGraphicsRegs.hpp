@@ -181,8 +181,6 @@ typedef struct __attribute__((packed)) {
   SInt32 y;
 } HyperVGraphicsMessageCursorPosition;
 
-#define kHyperVGraphicsCursorMaxWidth           96
-#define kHyperVGraphicsCursorMaxHeight          96
 #define kHyperVGraphicsCursorARGBPixelSize      4
 #define kHyperVGraphicsCursorMaxSize            (kHyperVGraphicsCursorMaxWidth * kHyperVGraphicsCursorMaxHeight * kHyperVGraphicsCursorARGBPixelSize)
 #define kHyperVGraphicsCursorPartIndexComplete  (-1)
