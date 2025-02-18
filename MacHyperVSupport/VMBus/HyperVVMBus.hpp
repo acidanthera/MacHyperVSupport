@@ -159,7 +159,8 @@ public:
   // Misc functions.
   //
   inline HyperVController *getHvController() { return hvController; }
-  
+  inline UInt32 getVersion() { return _vmbusVersion; }
+
   //
   // VMBus channel management.
   //

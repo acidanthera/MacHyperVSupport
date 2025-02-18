@@ -197,6 +197,7 @@ public:
   //
   inline void setDebugMessagePrinting(bool enabled) { debugPackets = enabled; }
   inline HyperVController *getHvController() { return _vmbusProvider->getHvController(); }
+  inline UInt32 getVMBusVersion() { return _vmbusProvider->getVersion(); }
 
   //
   // Messages.

@@ -9,27 +9,6 @@
 #include "HyperVPCIRoot.hpp"
 #include "HyperVPlatformProvider.hpp"
 
-static const VMBusVersion graphicsVersions[] = {
-  kHyperVGraphicsVersionV3_2,
-  kHyperVGraphicsVersionV3_0
-};
-
-/*bool HyperVGraphics::wakePacketHandler(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
-  HyperVGraphicsMessage *gfxMsg = (HyperVGraphicsMessage*) pktData;
-  HVDBGLOG("Received packet type 0x%X (%u bytes)", gfxMsg->gfxHeader.type, gfxMsg->gfxHeader.size);
-  switch (gfxMsg->gfxHeader.type) {
-    case kHyperVGraphicsMessageTypeVersionResponse:
-    case kHyperVGraphicsMessageTypeVRAMAck:
-    case kHyperVGraphicsMessageTypeResolutionUpdateAck:
-      return true;
-
-    default:
-      break;
-  }
-  
-  return false;
-}*/
-
 void HyperVGraphics::handleRefreshTimer(IOTimerEventSource *sender) {
   HyperVGraphicsMessage gfxMsg = { };
 
@@ -122,13 +101,29 @@ IOReturn HyperVGraphics::connectGraphics() {
   //
   // Negotiate graphics system version.
   //
-  for (UInt32 i = 0; i < arrsize(graphicsVersions); i++) {
-    status = negotiateVersion(graphicsVersions[i]);
-    if (status == kIOReturnSuccess) {
-      foundVersion = true;
-      _currentGraphicsVersion = graphicsVersions[i];
+  VMBusVersion graphicsVersion;
+  switch (_hvDevice->getVMBusVersion()) {
+    case kVMBusVersionWIN8:
+    case kVMBusVersionWIN8_1:
+    case kVMBusVersionWIN10:
+    case kVMBusVersionWIN10_V4_1: // TODO: Check if this is correct.
+      graphicsVersion = kHyperVGraphicsVersionV3_2;
       break;
-    }
+
+    case kVMBusVersionWIN7:
+    case kVMBusVersionWS2008:
+      graphicsVersion = kHyperVGraphicsVersionV3_0;
+      break;
+
+    default:
+      graphicsVersion = kHyperVGraphicsVersionV3_5;
+      break;
+  }
+
+  status = negotiateVersion(graphicsVersion);
+  if (status == kIOReturnSuccess) {
+    foundVersion = true;
+    _currentGraphicsVersion = graphicsVersion;
   }
 
   if (!foundVersion) {
@@ -154,9 +149,6 @@ IOReturn HyperVGraphics::connectGraphics() {
     HVSYSLOG("Failed to send graphics memory location with status 0x%X", status);
     return status;
   }
-  
- // updatePointer();
- // updateScreenResolution(1024, 768, false);
 
   return kIOReturnSuccess;
 }
