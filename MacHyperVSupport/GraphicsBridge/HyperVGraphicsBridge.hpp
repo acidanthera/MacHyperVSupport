@@ -11,8 +11,6 @@
 #include <IOKit/pci/IOPCIBridge.h>
 
 #include "HyperVVMBusDevice.hpp"
-#include "HyperVGraphics.hpp"
-#include "HyperVPCIRoot.hpp"
 
 class HyperVGraphicsBridge : public HV_PCIBRIDGE_CLASS {
   OSDeclareDefaultStructors(HyperVGraphicsBridge);
@@ -41,7 +39,7 @@ public:
   // IOPCIBridge overrides.
   //
   bool configure(IOService *provider) APPLE_KEXT_OVERRIDE;
-  IODeviceMemory *ioDeviceMemory() APPLE_KEXT_OVERRIDE { HVDBGLOG("start"); return nullptr; }
+  IODeviceMemory *ioDeviceMemory() APPLE_KEXT_OVERRIDE { return nullptr; }
   UInt32 configRead32(IOPCIAddressSpace space, UInt8 offset) APPLE_KEXT_OVERRIDE;
   void configWrite32(IOPCIAddressSpace space, UInt8 offset, UInt32 data) APPLE_KEXT_OVERRIDE;
   UInt16 configRead16(IOPCIAddressSpace space, UInt8 offset) APPLE_KEXT_OVERRIDE;
@@ -50,18 +48,15 @@ public:
   void configWrite8(IOPCIAddressSpace space, UInt8 offset, UInt8 data) APPLE_KEXT_OVERRIDE;
 
   IOPCIAddressSpace getBridgeSpace() APPLE_KEXT_OVERRIDE {
-    HVDBGLOG("start");
     IOPCIAddressSpace space = { 0 };
     return space;
   }
 
   UInt8 firstBusNum() APPLE_KEXT_OVERRIDE {
-    HVDBGLOG("start");
     return _pciBusNumber;
   }
 
   UInt8 lastBusNum() APPLE_KEXT_OVERRIDE {
-    HVDBGLOG("start");
     return _pciBusNumber;
   }
 };

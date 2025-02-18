@@ -6,6 +6,7 @@
 //
 
 #include "HyperVGraphicsBridge.hpp"
+#include "HyperVGraphics.hpp"
 #include "HyperVPCIRoot.hpp"
 
 OSDefineMetaClassAndStructors(HyperVGraphicsBridge, super);
