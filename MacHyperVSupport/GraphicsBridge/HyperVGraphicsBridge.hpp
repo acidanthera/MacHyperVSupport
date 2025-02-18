@@ -51,14 +51,8 @@ public:
     IOPCIAddressSpace space = { 0 };
     return space;
   }
-
-  UInt8 firstBusNum() APPLE_KEXT_OVERRIDE {
-    return _pciBusNumber;
-  }
-
-  UInt8 lastBusNum() APPLE_KEXT_OVERRIDE {
-    return _pciBusNumber;
-  }
+  UInt8 firstBusNum() APPLE_KEXT_OVERRIDE { return _pciBusNumber; }
+  UInt8 lastBusNum() APPLE_KEXT_OVERRIDE { return _pciBusNumber; }
 };
 
 #endif
