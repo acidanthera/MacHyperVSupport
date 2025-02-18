@@ -17,9 +17,18 @@
 //
 // Platform function names.
 //
+#define kHyperVGraphicsFunctionGetMemory        "HyperVGraphicsFunctionGetMemory"
 #define kHyperVGraphicsFunctionSetResolution    "HyperVGraphicsFunctionSetResolution"
 #define kHyperVGraphicsFunctionSetCursor        "HyperVGraphicsFunctionSetCursor"
 #define kHyperVGraphicsFunctionSetCusorPosition "HyperVGraphicsFunctionSetCusorPosition"
+
+//
+// HyperVGraphicsFunctionGetMemory results.
+//
+typedef struct {
+  IOPhysicalAddress base;
+  UInt32            length;
+} HyperVGraphicsFunctionGetMemoryResults;
 
 //
 // HyperVGraphicsFunctionSetCursor parameters

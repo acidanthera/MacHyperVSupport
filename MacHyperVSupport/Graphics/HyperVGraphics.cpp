@@ -78,7 +78,6 @@ bool HyperVGraphics::start(IOService *provider) {
       HVSYSLOG("Failed to connect to graphics device with status 0x%X", status);
       break;
     }
-    registerService();
 
     //
     // Start refresh timer sending screen updates.
@@ -87,6 +86,7 @@ bool HyperVGraphics::start(IOService *provider) {
     _timerEventSource->setTimeoutMS(kHyperVGraphicsDIRTRefreshRateMS);
     _fbReady = true;
 
+    registerService();
     HVDBGLOG("Initialized Hyper-V Synthetic Graphics");
     result = true;
   } while (false);
@@ -116,10 +116,23 @@ void HyperVGraphics::stop(IOService *provider) {
 
 IOReturn HyperVGraphics::callPlatformFunction(const OSSymbol *functionName, bool waitForFunction,
                                               void *param1, void *param2, void *param3, void *param4) {
-  HVDBGLOG("Attempting to call function '%s'", functionName->getCStringNoCopy());
+  HVDBGLOG("Attempting to call platform function '%s'", functionName->getCStringNoCopy());
 
-  if (functionName->isEqualTo(kHyperVGraphicsFunctionSetResolution)) {
+  // Get graphics memory.
+  if (functionName->isEqualTo(kHyperVGraphicsFunctionGetMemory)) {
+    if (param1 == nullptr) {
+      return kIOReturnBadArgument;
+    }
+    HyperVGraphicsFunctionGetMemoryResults *memResults = static_cast<HyperVGraphicsFunctionGetMemoryResults*>(param1);
+    memResults->base = _gfxBase;
+    memResults->length = _gfxLength;
+    return kIOReturnSuccess;
+
+  // Set resolution.
+  } else if (functionName->isEqualTo(kHyperVGraphicsFunctionSetResolution)) {
     return updateScreenResolution(*((UInt32*)param1), *((UInt32*)param2), false);
+
+  // Set hardware cursor.
   } else if (functionName->isEqualTo(kHyperVGraphicsFunctionSetCursor)) {
     HyperVGraphicsFunctionSetCursorParams *cursorParams = static_cast<HyperVGraphicsFunctionSetCursorParams*>(param1);
     if (cursorParams == nullptr) {
@@ -127,6 +140,7 @@ IOReturn HyperVGraphics::callPlatformFunction(const OSSymbol *functionName, bool
     }
     return updateCursorShape(cursorParams->cursorData, cursorParams->width, cursorParams->height,
                              cursorParams->hotX, cursorParams->hotY);
+
   } else {
     return kIOReturnUnsupported;
   }

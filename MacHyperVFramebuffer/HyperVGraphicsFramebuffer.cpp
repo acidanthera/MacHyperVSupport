@@ -5,6 +5,8 @@
 //  Copyright © 2025 Goldfish64. All rights reserved.
 //
 
+#include <IOKit/pci/IOPCIDevice.h>
+
 #include "HyperVGraphicsFramebuffer.hpp"
 #include "HyperVGraphicsPlatformFunctions.hpp"
 
@@ -40,11 +42,22 @@ static const HyperVGraphicsMode graphicsModes[] = {
 };
 
 bool HyperVGraphicsFramebuffer::start(IOService *provider) {
+  IOPCIDevice *pciDevice;
+
   HVCheckDebugArgs();
   HVDBGLOG("Initializing Hyper-V Synthetic Framebuffer");
 
   if (HVCheckOffArg()) {
     HVSYSLOG("Disabling Hyper-V Synthetic Framebuffer due to boot arg");
+    return false;
+  }
+
+  //
+  // Get parent PCI device.
+  //
+  pciDevice = OSDynamicCast(IOPCIDevice, provider);
+  if (pciDevice == nullptr) {
+    HVSYSLOG("Provider is not IOPCIDevice");
     return false;
   }
 
@@ -60,28 +73,6 @@ bool HyperVGraphicsFramebuffer::start(IOService *provider) {
     _hasCursorHotspot = true;
   }
 
-  if (!super::start(provider)) {
-    HVSYSLOG("super::start() returned false");
-    return false;
-  }
-
-  HVDBGLOG("Initialized Hyper-V Synthetic Framebuffer");
-  return true;
-}
-
-void HyperVGraphicsFramebuffer::stop(IOService *provider) {
-  HVDBGLOG("Stopping Hyper-V Synthetic Framebuffer");
-
-  if (_cursorData != nullptr) {
-    IOFree(_cursorData, _cursorDataSize);
-    _cursorData = nullptr;
-  }
-
-  OSSafeReleaseNULL(_hvGfxProvider);
-  super::stop(provider);
-}
-
-IOReturn HyperVGraphicsFramebuffer::enableController() {
   //
   // Get instance of graphics service.
   // This cannot link against the main kext due to macOS requirements, as this kext
@@ -90,7 +81,7 @@ IOReturn HyperVGraphicsFramebuffer::enableController() {
   OSDictionary *gfxProvMatching = IOService::serviceMatching("HyperVGraphics");
   if (gfxProvMatching == nullptr) {
     HVSYSLOG("Failed to create HyperVGraphics matching dictionary");
-    return kIOReturnIOError;
+    return false;
   }
 
   HVDBGLOG("Waiting for HyperVGraphics");
@@ -106,10 +97,38 @@ IOReturn HyperVGraphicsFramebuffer::enableController() {
 
   if (_hvGfxProvider == nullptr) {
     HVSYSLOG("Failed to locate HyperVGraphics");
-    return kIOReturnIOError;
+    return false;
   }
   HVDBGLOG("Got instance of HyperVGraphics");
 
+  if (!super::start(provider)) {
+    HVSYSLOG("super::start() returned false");
+    return false;
+  }
+
+  //
+  // Add model to PCI device.
+  //
+  pciDevice->setProperty("model", "Hyper-V Graphics");
+
+  HVDBGLOG("Initialized Hyper-V Synthetic Framebuffer");
+  return true;
+}
+
+void HyperVGraphicsFramebuffer::stop(IOService *provider) {
+  HVDBGLOG("Stopping Hyper-V Synthetic Framebuffer");
+
+  if (_cursorData != nullptr) {
+    IOFree(_cursorData, _cursorDataSize);
+    _cursorData = nullptr;
+  }
+  OSSafeReleaseNULL(_hvGfxProvider);
+
+  super::stop(provider);
+}
+
+IOReturn HyperVGraphicsFramebuffer::enableController() {
+  HVDBGLOG("start");
   return kIOReturnSuccess;
 }
 
@@ -119,19 +138,26 @@ bool HyperVGraphicsFramebuffer::isConsoleDevice() {
 }
 
 IODeviceMemory* HyperVGraphicsFramebuffer::getApertureRange(IOPixelAperture aperture) {
-  IODeviceMemory *deviceMemory;
+  HyperVGraphicsFunctionGetMemoryResults memResults;
+  IOReturn       status;
 
   HVDBGLOG("Getting aperature for type 0x%X", aperture);
   if (aperture != kIOFBSystemAperture) {
     return nullptr;
   }
 
-  deviceMemory = getProvider()->getDeviceMemoryWithIndex(0);
-  if (deviceMemory != nullptr) {
-    deviceMemory->retain();
-    HVDBGLOG("Got device memory at %p (%u bytes)", deviceMemory->getPhysicalAddress(), deviceMemory->getLength());
+  //
+  // Get memory from graphics service.
+  //
+  status = _hvGfxProvider->callPlatformFunction(kHyperVGraphicsFunctionGetMemory, true,
+                                                &memResults, nullptr, nullptr, nullptr);
+  if (status != kIOReturnSuccess) {
+    HVSYSLOG("Failed to get graphics memory");
+    return nullptr;
   }
-  return deviceMemory;
+  HVSYSLOG("Graphics memory located at %p length 0x%X", memResults.base, memResults.length);
+
+  return IODeviceMemory::withRange(memResults.base, memResults.length);
 }
 
 const char* HyperVGraphicsFramebuffer::getPixelFormats() {

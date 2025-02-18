@@ -25,8 +25,8 @@ private:
   VMBusVersion       _currentGraphicsVersion = { };
   IOTimerEventSource *_timerEventSource      = nullptr;
 
-  IORangeScalar _gfxMmioBase    = 0;
-  IORangeScalar _gfxMmioLength  = 0;
+  IOPhysicalAddress        _gfxBase    = 0;
+  UInt32                   _gfxLength  = 0;
   IORangeScalar _fbBaseAddress   = 0;
   IORangeScalar _fbTotalLength   = 0;
   IORangeScalar _fbInitialLength = 0;
@@ -43,6 +43,10 @@ private:
   IOReturn connectGraphics();
   IOReturn allocateGraphicsMemory();
   IOReturn updateGraphicsMemoryLocation();
+  
+  //
+  // Platform functions.
+  //
   IOReturn updateCursorShape(const UInt8 *cursorData, UInt32 width, UInt32 height, UInt32 hotX, UInt32 hotY);
   IOReturn updateScreenResolution(UInt32 width, UInt32 height, bool isBoot);
 

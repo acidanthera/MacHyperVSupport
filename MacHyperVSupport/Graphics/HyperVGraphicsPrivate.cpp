@@ -184,12 +184,12 @@ IOReturn HyperVGraphics::allocateGraphicsMemory() {
     HVSYSLOG("Failed to get MMIO byte count");
     return kIOReturnNoResources;
   }
-  _fbTotalLength = mmioBytesNumber->unsigned64BitValue();
-  HVDBGLOG("Framebuffer MMIO size: %p bytes", _fbTotalLength);
+  _fbTotalLength = _gfxLength = static_cast<UInt32>(mmioBytesNumber->unsigned64BitValue());
+  HVDBGLOG("Framebuffer MMIO size: %p bytes", _gfxLength);
   _fbInitialLength = consoleInfo.v_height * consoleInfo.v_rowBytes;
 
   
-  _gfxMmioBase = 0xFFB00000; // TODO: Fix for Gen2
+  _gfxBase = 0xF8000000;//0xFFB00000; // TODO: Fix for Gen2
 
   return kIOReturnSuccess;
 }
@@ -199,12 +199,12 @@ IOReturn HyperVGraphics::updateGraphicsMemoryLocation() {
   HyperVGraphicsMessage gfxMsg = { };
 
   //
-  // Send location of graphics memory (VRAM).
+  // Send location of graphics memory (VRAM)._gfxMmioLength
   //
-  HVDBGLOG("Graphics memory located at %p (length %p)", _gfxMmioBase, _gfxMmioLength);
+  HVDBGLOG("Graphics memory located at %p length 0x%X", _gfxBase, _gfxLength);
   gfxMsg.gfxHeader.type = kHyperVGraphicsMessageTypeVRAMLocation;
   gfxMsg.gfxHeader.size = sizeof (gfxMsg.gfxHeader) + sizeof (gfxMsg.vramLocation);
-  gfxMsg.vramLocation.context = gfxMsg.vramLocation.vramGPA = _gfxMmioBase;
+  gfxMsg.vramLocation.context = gfxMsg.vramLocation.vramGPA = _gfxBase;
   gfxMsg.vramLocation.isVRAMGPASpecified = 1;
 
   status = sendGraphicsMessage(&gfxMsg, kHyperVGraphicsMessageTypeVRAMAck, &gfxMsg);
@@ -212,8 +212,8 @@ IOReturn HyperVGraphics::updateGraphicsMemoryLocation() {
     HVSYSLOG("Failed to send graphics memory location with status 0x%X", status);
     return status;
   }
-  if (gfxMsg.vramAck.context != _gfxMmioBase) {
-    HVSYSLOG("Returned context 0x%llX is incorrect, should be %p", gfxMsg.vramAck.context, _gfxMmioBase);
+  if (gfxMsg.vramAck.context != _gfxBase) {
+    HVSYSLOG("Returned context 0x%llX is incorrect, should be %p", gfxMsg.vramAck.context, _gfxBase);
     return kIOReturnIOError;
   }
 
