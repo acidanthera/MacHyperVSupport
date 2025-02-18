@@ -2,15 +2,16 @@
 //  HyperVGraphicsBridge.hpp
 //  Hyper-V synthetic graphics bridge
 //
-//  Copyright © 2021-2022 Goldfish64. All rights reserved.
+//  Copyright © 2021-2025 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperVGraphicsBridge_hpp
 #define HyperVGraphicsBridge_hpp
 
 #include <IOKit/pci/IOPCIBridge.h>
+
 #include "HyperVVMBusDevice.hpp"
-#include "HyperVGraphicsRegs.hpp"
+#include "HyperVGraphics.hpp"
 #include "HyperVPCIRoot.hpp"
 
 class HyperVGraphicsBridge : public HV_PCIBRIDGE_CLASS {
@@ -19,18 +20,15 @@ class HyperVGraphicsBridge : public HV_PCIBRIDGE_CLASS {
   typedef HV_PCIBRIDGE_CLASS super;
 
 private:
-  HyperVPCIRoot     *_hvPCIRoot = nullptr;
-  VMBusVersion      _currentGraphicsVersion = { };
   UInt8             _pciBusNumber = 0;
 
   //
   // Fake PCI structures.
   //
-  IOSimpleLock      *_pciLock    = nullptr;
+  IOSimpleLock      *_pciLock   = nullptr;
   UInt8             _fakePCIDeviceSpace[256];
-  PE_Video          _consoleInfo = { };
-
-  void fillFakePCIDeviceSpace();
+  UInt32            _fbInitialBase    = 0;
+  UInt32            _fbInitialLength  = 0;
 
 public:
   //
