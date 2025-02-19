@@ -123,14 +123,14 @@ IOReturn HyperVGraphics::connectGraphics() {
   status = negotiateVersion(graphicsVersion);
   if (status == kIOReturnSuccess) {
     foundVersion = true;
-    _currentGraphicsVersion = graphicsVersion;
+    _gfxVersion = graphicsVersion;
   }
 
   if (!foundVersion) {
     HVSYSLOG("Could not negotiate graphics version");
     return kIOReturnUnsupported;
   }
-  HVDBGLOG("Using graphics version %u.%u", _currentGraphicsVersion.major, _currentGraphicsVersion.minor);
+  HVDBGLOG("Using graphics version %u.%u", _gfxVersion.major, _gfxVersion.minor);
 
   //
   // Allocate graphics memory.
@@ -309,7 +309,13 @@ IOReturn HyperVGraphics::updateScreenResolution(UInt32 width, UInt32 height, boo
   //
   // Check bounds.
   //
-  if (width > kHyperVGraphicsMaxWidth || height > kHyperVGraphicsMaxHeight) {
+  if (_gfxVersion.value == kHyperVGraphicsVersionV3_0) {
+    if ((width > kHyperVGraphicsMaxWidth2008) || (height > kHyperVGraphicsMaxHeight2008)) {
+      HVSYSLOG("Invalid screen resolution %ux%u", width, height);
+      return kIOReturnBadArgument;
+    }
+  }
+  if ((width * height * (_bitDepth / 8)) > _gfxLength) {
     HVSYSLOG("Invalid screen resolution %ux%u", width, height);
     return kIOReturnBadArgument;
   }

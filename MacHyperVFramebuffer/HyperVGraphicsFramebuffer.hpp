@@ -11,6 +11,13 @@
 #include <IOKit/graphics/IOFramebuffer.h>
 
 #include "HyperV.hpp"
+#include "HyperVGraphicsPlatformFunctions.hpp"
+#include "HyperVGraphicsRegs.hpp"
+
+typedef struct {
+  UInt32 width;
+  UInt32 height;
+} HyperVGraphicsMode;
 
 class HyperVGraphicsFramebuffer : public IOFramebuffer {
   OSDeclareDefaultStructors(HyperVGraphicsFramebuffer);
@@ -18,11 +25,22 @@ class HyperVGraphicsFramebuffer : public IOFramebuffer {
   typedef IOFramebuffer super;
 
 private:
-  IOService       *_hvGfxProvider = nullptr;
+  IOService           *_hvGfxProvider = nullptr;
+  IOPhysicalAddress   _gfxBase        = 0;
+  UInt32              _gfxLength      = 0;
+  HyperVGraphicsMode  *_gfxModes      = nullptr;
+  IOItemCount         _gfxModesCount  = 0;
+  VMBusVersion        _gfxVersion     = { };
+  UInt32              _bitDepth       = 32; // TODO: Make dynamic
   IODisplayModeID _currentDisplayMode = 4;
   UInt8           *_cursorData = nullptr;
   size_t          _cursorDataSize = 16834;
   bool            _hasCursorHotspot = false;
+
+  IOReturn getGraphicsServiceVersion();
+  IOReturn getGraphicsServiceMemory();
+  IOReturn buildGraphicsModes();
+  IOReturn buildFallbackMode();
 
 public:
   //

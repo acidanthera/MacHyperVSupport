@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		410906452D6560B9002E4400 /* HyperVGraphicsFramebufferPrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 410906442D6560B9002E4400 /* HyperVGraphicsFramebufferPrivate.cpp */; };
 		410F5CC828C58D1800EBB105 /* HyperVVMBusPrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 410F5CC728C58D1800EBB105 /* HyperVVMBusPrivate.cpp */; };
 		410F5CC928C58D1800EBB105 /* HyperVVMBusPrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 410F5CC728C58D1800EBB105 /* HyperVVMBusPrivate.cpp */; };
 		41225F512644C34300574E86 /* HyperVVMBusDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41225F4F2644C34300574E86 /* HyperVVMBusDevice.cpp */; };
@@ -504,6 +505,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		410906442D6560B9002E4400 /* HyperVGraphicsFramebufferPrivate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVGraphicsFramebufferPrivate.cpp; sourceTree = "<group>"; };
 		410F5CC728C58D1800EBB105 /* HyperVVMBusPrivate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVVMBusPrivate.cpp; sourceTree = "<group>"; };
 		41225F4226422D1600574E86 /* VMBus.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = VMBus.hpp; sourceTree = "<group>"; };
 		41225F4D2643993400574E86 /* HyperV.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperV.hpp; sourceTree = "<group>"; };
@@ -907,6 +909,7 @@
 				41A98BFE2D603D9600A1931C /* Info.plist */,
 				41A98BFF2D603EA900A1931C /* HyperVGraphicsFramebuffer.cpp */,
 				41A98C002D603EA900A1931C /* HyperVGraphicsFramebuffer.hpp */,
+				410906442D6560B9002E4400 /* HyperVGraphicsFramebufferPrivate.cpp */,
 			);
 			path = MacHyperVFramebuffer;
 			sourceTree = "<group>";
@@ -1816,6 +1819,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				410906452D6560B9002E4400 /* HyperVGraphicsFramebufferPrivate.cpp in Sources */,
 				41A98C012D603EA900A1931C /* HyperVGraphicsFramebuffer.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

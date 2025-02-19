@@ -21,12 +21,12 @@ class HyperVGraphics : public IOService {
   typedef IOService super;
 
 private:
-  HyperVVMBusDevice  *_hvDevice              = nullptr;
-  VMBusVersion       _currentGraphicsVersion = { };
-  IOTimerEventSource *_timerEventSource      = nullptr;
-
-  IOPhysicalAddress        _gfxBase    = 0;
-  UInt32                   _gfxLength  = 0;
+  HyperVVMBusDevice  *_hvDevice           = nullptr;
+  IOTimerEventSource *_timerEventSource   = nullptr;
+  VMBusVersion       _gfxVersion          = { };
+  UInt32             _bitDepth            = 32; // TODO: Not all version support 32-bit
+  IOPhysicalAddress  _gfxBase             = 0;
+  UInt32             _gfxLength           = 0;
   IORangeScalar _fbBaseAddress   = 0;
   IORangeScalar _fbTotalLength   = 0;
   IORangeScalar _fbInitialLength = 0;

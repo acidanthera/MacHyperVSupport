@@ -118,8 +118,16 @@ IOReturn HyperVGraphics::callPlatformFunction(const OSSymbol *functionName, bool
                                               void *param1, void *param2, void *param3, void *param4) {
   HVDBGLOG("Attempting to call platform function '%s'", functionName->getCStringNoCopy());
 
+  // Get graphics version.
+  if (functionName->isEqualTo(kHyperVGraphicsFunctionGetVersion)) {
+    if (param1 == nullptr) {
+      return kIOReturnBadArgument;
+    }
+    memcpy(param1, &_gfxVersion, sizeof (_gfxVersion));
+    return kIOReturnSuccess;
+
   // Get graphics memory.
-  if (functionName->isEqualTo(kHyperVGraphicsFunctionGetMemory)) {
+  } else if (functionName->isEqualTo(kHyperVGraphicsFunctionGetMemory)) {
     if (param1 == nullptr) {
       return kIOReturnBadArgument;
     }

@@ -8,7 +8,6 @@
 #include <IOKit/pci/IOPCIDevice.h>
 
 #include "HyperVGraphicsFramebuffer.hpp"
-#include "HyperVGraphicsPlatformFunctions.hpp"
 
 OSDefineMetaClassAndStructors(HyperVGraphicsFramebuffer, super);
 
@@ -20,29 +19,9 @@ static char const pixelFormatString32[] = IO32BitDirectPixels "\0";
 //
 #define kHyperVCursorHotspotMinimumMinor  6
 
-typedef struct {
-  UInt32 width;
-  UInt32 height;
-} HyperVGraphicsMode;
-
-//
-// List of all default graphics modes.
-// TODO: Hyper-V on Windows 10 and newer can directly specify what modes are supported.
-//
-static const HyperVGraphicsMode graphicsModes[] = {
-  { 640,  480  },
-  { 800,  600  },
-  { 1024, 768  },
-  { 1152, 864  },
-  { 1280, 720  },
-  { 1280, 1024 },
-  { 1440, 900  },
-  { 1600, 900  },
-  { 1600, 1200 },
-};
-
 bool HyperVGraphicsFramebuffer::start(IOService *provider) {
   IOPCIDevice *pciDevice;
+  IOReturn    status;
 
   HVCheckDebugArgs();
   HVDBGLOG("Initializing Hyper-V Synthetic Framebuffer");
@@ -99,10 +78,39 @@ bool HyperVGraphicsFramebuffer::start(IOService *provider) {
     HVSYSLOG("Failed to locate HyperVGraphics");
     return false;
   }
+  _hvGfxProvider->retain();
   HVDBGLOG("Got instance of HyperVGraphics");
+
+  //
+  // Get version and memory.
+  //
+  status = getGraphicsServiceVersion();
+  if (status != kIOReturnSuccess) {
+    HVSYSLOG("Failed to get graphics service version");
+    OSSafeReleaseNULL(_hvGfxProvider);
+    return false;
+  }
+  status = getGraphicsServiceMemory();
+  if (status != kIOReturnSuccess) {
+    HVSYSLOG("Failed to get graphics service memory");
+    OSSafeReleaseNULL(_hvGfxProvider);
+    return false;
+  }
+
+  //
+  // Get modes.
+  //
+  status = buildGraphicsModes();
+  if (status != kIOReturnSuccess) {
+    HVSYSLOG("Failed to build graphics modes");
+    OSSafeReleaseNULL(_hvGfxProvider);
+    return false;
+  }
 
   if (!super::start(provider)) {
     HVSYSLOG("super::start() returned false");
+    IOFree(_gfxModes, sizeof (*_gfxModes) * _gfxModesCount);
+    OSSafeReleaseNULL(_hvGfxProvider);
     return false;
   }
 
@@ -122,6 +130,10 @@ void HyperVGraphicsFramebuffer::stop(IOService *provider) {
     IOFree(_cursorData, _cursorDataSize);
     _cursorData = nullptr;
   }
+  if (_gfxModes != nullptr) {
+    IOFree(_gfxModes, sizeof (*_gfxModes) * _gfxModesCount);
+    _gfxModes = nullptr;
+  }
   OSSafeReleaseNULL(_hvGfxProvider);
 
   super::stop(provider);
@@ -138,26 +150,11 @@ bool HyperVGraphicsFramebuffer::isConsoleDevice() {
 }
 
 IODeviceMemory* HyperVGraphicsFramebuffer::getApertureRange(IOPixelAperture aperture) {
-  HyperVGraphicsFunctionGetMemoryResults memResults;
-  IOReturn       status;
-
   HVDBGLOG("Getting aperature for type 0x%X", aperture);
   if (aperture != kIOFBSystemAperture) {
     return nullptr;
   }
-
-  //
-  // Get memory from graphics service.
-  //
-  status = _hvGfxProvider->callPlatformFunction(kHyperVGraphicsFunctionGetMemory, true,
-                                                &memResults, nullptr, nullptr, nullptr);
-  if (status != kIOReturnSuccess) {
-    HVSYSLOG("Failed to get graphics memory");
-    return nullptr;
-  }
-  HVSYSLOG("Graphics memory located at %p length 0x%X", memResults.base, memResults.length);
-
-  return IODeviceMemory::withRange(memResults.base, memResults.length);
+  return IODeviceMemory::withRange(_gfxBase, _gfxLength);
 }
 
 const char* HyperVGraphicsFramebuffer::getPixelFormats() {
@@ -165,21 +162,21 @@ const char* HyperVGraphicsFramebuffer::getPixelFormats() {
 }
 
 IOItemCount HyperVGraphicsFramebuffer::getDisplayModeCount() {
-  return arrsize(graphicsModes);
+  return _gfxModesCount;
 }
 
 IOReturn HyperVGraphicsFramebuffer::getDisplayModes(IODisplayModeID *allDisplayModes) {
   //
   // Display mode IDs are just array index+1.
   //
-  for (int i = 0; i < arrsize(graphicsModes); i++) {
+  for (int i = 0; i < _gfxModesCount; i++) {
     allDisplayModes[i] = i + 1;
   }
   return kIOReturnSuccess;
 }
 
 IOReturn HyperVGraphicsFramebuffer::getInformationForDisplayMode(IODisplayModeID displayMode, IODisplayModeInformation *info) {
-  if (displayMode == 0 || displayMode >= arrsize(graphicsModes)) {
+  if ((displayMode == 0) || (displayMode > _gfxModesCount)) {
     return kIOReturnBadArgument;
   }
 
@@ -188,10 +185,10 @@ IOReturn HyperVGraphicsFramebuffer::getInformationForDisplayMode(IODisplayModeID
   // All modes are always 60 Hz and 32 bits.
   //
   HVDBGLOG("Got information for mode ID %u %ux%u", displayMode,
-           graphicsModes[displayMode - 1].width, graphicsModes[displayMode - 1].height);
+           _gfxModes[displayMode - 1].width, _gfxModes[displayMode - 1].height);
   bzero(info, sizeof (*info));
-  info->nominalWidth  = graphicsModes[displayMode - 1].width;
-  info->nominalHeight = graphicsModes[displayMode - 1].height;;
+  info->nominalWidth  = _gfxModes[displayMode - 1].width;
+  info->nominalHeight = _gfxModes[displayMode - 1].height;;
   info->refreshRate   = 60 << 16;
   info->maxDepthIndex = 0;
 
@@ -206,7 +203,7 @@ UInt64 HyperVGraphicsFramebuffer::getPixelFormatsForDisplayMode(IODisplayModeID 
 }
 
 IOReturn HyperVGraphicsFramebuffer::getPixelInformation(IODisplayModeID displayMode, IOIndex depth, IOPixelAperture aperture, IOPixelInformation *pixelInfo) {
-  if (displayMode == 0 || displayMode >= arrsize(graphicsModes) || depth != 0) {
+  if ((displayMode == 0) || (displayMode > _gfxModesCount) || (depth != 0)) {
     return kIOReturnBadArgument;
   }
   if (aperture != kIOFBSystemAperture) {
@@ -217,19 +214,19 @@ IOReturn HyperVGraphicsFramebuffer::getPixelInformation(IODisplayModeID displayM
   // Return pixel information on display mode.
   //
   HVDBGLOG("Got pixel information for mode ID %u %ux%u", displayMode,
-           graphicsModes[displayMode - 1].width, graphicsModes[displayMode - 1].height);
+           _gfxModes[displayMode - 1].width, _gfxModes[displayMode - 1].height);
   bzero(pixelInfo, sizeof (*pixelInfo));
 
-  pixelInfo->bytesPerRow          = graphicsModes[displayMode - 1].width * (32 / 8);
-  pixelInfo->bitsPerPixel         = 32;
+  pixelInfo->bytesPerRow          = _gfxModes[displayMode - 1].width * (_bitDepth / 8);
+  pixelInfo->bitsPerPixel         = _bitDepth;
   pixelInfo->pixelType            = kIORGBDirectPixels;
   pixelInfo->bitsPerComponent     = 8;
   pixelInfo->componentCount       = 3;
   pixelInfo->componentMasks[0]    = 0xFF0000;
   pixelInfo->componentMasks[1]    = 0x00FF00;
   pixelInfo->componentMasks[2]    = 0x0000FF;
-  pixelInfo->activeWidth          = graphicsModes[displayMode - 1].width;
-  pixelInfo->activeHeight         = graphicsModes[displayMode - 1].height;
+  pixelInfo->activeWidth          = _gfxModes[displayMode - 1].width;
+  pixelInfo->activeHeight         = _gfxModes[displayMode - 1].height;
 
   //if (videoDepth == 32) {
     memcpy(&pixelInfo->pixelFormat[0], &pixelFormatString32[0], sizeof (IOPixelEncoding));
@@ -249,12 +246,12 @@ IOReturn HyperVGraphicsFramebuffer::getCurrentDisplayMode(IODisplayModeID *displ
 }
 
 IOReturn HyperVGraphicsFramebuffer::setDisplayMode(IODisplayModeID displayMode, IOIndex depth) {
-  if (displayMode >= arrsize(graphicsModes)) {
+  if ((displayMode == 0) || (displayMode > _gfxModesCount)) {
     return kIOReturnBadArgument;
   }
 
-  UInt32 width = graphicsModes[displayMode - 1].width;
-  UInt32 height = graphicsModes[displayMode - 1].height;
+  UInt32 width = _gfxModes[displayMode - 1].width;
+  UInt32 height = _gfxModes[displayMode - 1].height;
 
   HVDBGLOG("Setting display mode to ID %u (%ux%u)", displayMode, width, height);
   _currentDisplayMode = displayMode;

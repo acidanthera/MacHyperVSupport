@@ -34,6 +34,45 @@
 			<integer>50000</integer>
 			<key>IOProviderClass</key>
 			<string>IOPCIDevice</string>
+			<key>SupportedResolutions</key>
+			<array>
+				<dict>
+					<key>Height</key>
+					<integer>480</integer>
+					<key>Width</key>
+					<integer>640</integer>
+				</dict>
+				<dict>
+					<key>Height</key>
+					<integer>600</integer>
+					<key>Width</key>
+					<integer>800</integer>
+				</dict>
+				<dict>
+					<key>Height</key>
+					<integer>768</integer>
+					<key>Width</key>
+					<integer>1024</integer>
+				</dict>
+				<dict>
+					<key>Height</key>
+					<integer>864</integer>
+					<key>Width</key>
+					<integer>1152</integer>
+				</dict>
+				<dict>
+					<key>Height</key>
+					<integer>720</integer>
+					<key>Width</key>
+					<integer>1280</integer>
+				</dict>
+				<dict>
+					<key>Height</key>
+					<integer>1024</integer>
+					<key>Width</key>
+					<integer>1280</integer>
+				</dict>
+			</array>
 		</dict>
 	</dict>
 	<key>NSHumanReadableCopyright</key>
