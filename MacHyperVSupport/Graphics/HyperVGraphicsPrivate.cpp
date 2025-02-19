@@ -107,16 +107,16 @@ IOReturn HyperVGraphics::connectGraphics() {
     case kVMBusVersionWIN8_1:
     case kVMBusVersionWIN10:
     case kVMBusVersionWIN10_V4_1: // TODO: Check if this is correct.
-      graphicsVersion = kHyperVGraphicsVersionV3_2;
+      graphicsVersion.value = kHyperVGraphicsVersionV3_2;
       break;
 
     case kVMBusVersionWIN7:
     case kVMBusVersionWS2008:
-      graphicsVersion = kHyperVGraphicsVersionV3_0;
+      graphicsVersion.value = kHyperVGraphicsVersionV3_0;
       break;
 
     default:
-      graphicsVersion = kHyperVGraphicsVersionV3_5;
+      graphicsVersion.value = kHyperVGraphicsVersionV3_5;
       break;
   }
 

@@ -10,8 +10,8 @@
 OSDefineMetaClassAndStructors(HyperVHeartbeat, super);
 
 static const VMBusVersion heartbeatVersions[] = {
-  kHyperVHeartbeatVersionV3,
-  kHyperVHeartbeatVersionV1
+  { kHyperVHeartbeatVersionV3 },
+  { kHyperVHeartbeatVersionV1 }
 };
 
 bool HyperVHeartbeat::start(IOService *provider) {

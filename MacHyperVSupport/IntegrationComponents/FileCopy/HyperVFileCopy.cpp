@@ -10,7 +10,7 @@
 OSDefineMetaClassAndStructors(HyperVFileCopy, super);
 
 static const VMBusVersion fileCopyVersions[] = {
-  kHyperVFileCopyVersionV1_1
+  { kHyperVFileCopyVersionV1_1 }
 };
 
 bool HyperVFileCopy::start(IOService *provider) {

@@ -13,8 +13,8 @@
 //
 // Heartbeat versions.
 //
-#define kHyperVHeartbeatVersionV1 { 1, 0 }
-#define kHyperVHeartbeatVersionV3 { 3, 0 }
+#define kHyperVHeartbeatVersionV1 VMBUS_VERSION(1, 0)
+#define kHyperVHeartbeatVersionV3 VMBUS_VERSION(3, 0)
 
 //
 // Heartbeat messages.

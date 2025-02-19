@@ -10,10 +10,10 @@
 OSDefineMetaClassAndStructors(HyperVShutdown, super);
 
 static const VMBusVersion shutdownVersions[] = {
-  kHyperVShutdownVersionV3_2,
-  kHyperVShutdownVersionV3_1,
-  kHyperVShutdownVersionV3_0,
-  kHyperVShutdownVersionV1_0
+  { kHyperVShutdownVersionV3_2 },
+  { kHyperVShutdownVersionV3_1 },
+  { kHyperVShutdownVersionV3_0 },
+  { kHyperVShutdownVersionV1_0 }
 };
 
 bool HyperVShutdown::start(IOService *provider) {

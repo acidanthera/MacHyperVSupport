@@ -47,9 +47,15 @@
 //
 // Version structure.
 //
+#define VMBUS_VERSION(major, minor) ((minor) << 16 | (major))
 typedef struct __attribute__((packed)) {
-  UInt16 major;
-  UInt16 minor;
+  union {
+    UInt32 value;
+    struct {
+      UInt16 major;
+      UInt16 minor;
+    };
+  };
 } VMBusVersion;
 
 //
