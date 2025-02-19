@@ -95,6 +95,7 @@ IOReturn HyperVGraphics::negotiateVersion(VMBusVersion version) {
 }
 
 IOReturn HyperVGraphics::connectGraphics() {
+  PE_Video consoleInfo = { };
   bool foundVersion = false;
   IOReturn status;
 
@@ -147,6 +148,21 @@ IOReturn HyperVGraphics::connectGraphics() {
   status = updateGraphicsMemoryLocation();
   if (status != kIOReturnSuccess) {
     HVSYSLOG("Failed to send graphics memory location with status 0x%X", status);
+    return status;
+  }
+
+  //
+  // Pull console info and set resolution.
+  //
+  if (getPlatform()->getConsoleInfo(&consoleInfo) != kIOReturnSuccess) {
+    HVSYSLOG("Failed to get console info");
+    return false;
+  }
+  HVDBGLOG("Console is at 0x%X (%ux%u, bpp: %u, bytes/row: %u)",
+         consoleInfo.v_baseAddr, consoleInfo.v_width, consoleInfo.v_height, consoleInfo.v_depth, consoleInfo.v_rowBytes);
+  status = updateScreenResolution(static_cast<UInt32>(consoleInfo.v_width), static_cast<UInt32>(consoleInfo.v_height), false);
+  if (status != kIOReturnSuccess) {
+    HVSYSLOG("Failed to update screen resolution with status 0x%X", status);
     return status;
   }
 
