@@ -32,7 +32,7 @@ bool HyperVGraphicsBridge::start(IOService *provider) {
     return false;
   }
   HVDBGLOG("Console is at 0x%X (%ux%u, bpp: %u, bytes/row: %u)",
-         consoleInfo.v_baseAddr, consoleInfo.v_height, consoleInfo.v_width, consoleInfo.v_depth, consoleInfo.v_rowBytes);
+         consoleInfo.v_baseAddr, consoleInfo.v_width, consoleInfo.v_height, consoleInfo.v_depth, consoleInfo.v_rowBytes);
   _fbInitialBase   = (UInt32)consoleInfo.v_baseAddr;
   _fbInitialLength = (UInt32)(consoleInfo.v_height * consoleInfo.v_rowBytes);
 
