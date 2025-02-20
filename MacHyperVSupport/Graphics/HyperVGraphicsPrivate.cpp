@@ -44,17 +44,21 @@ void HyperVGraphics::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
       //
       HVDBGLOG("Got feature change: img %u pos %u shape %u res %u", gfxMsg->featureUpdate.isImageUpdateNeeded, gfxMsg->featureUpdate.isCursorPositionNeeded,
                gfxMsg->featureUpdate.isCursorShapeNeeded, gfxMsg->featureUpdate.isResolutionUpdateNeeded);
-      if (gfxMsg->featureUpdate.isResolutionUpdateNeeded) {
-        updateScreenResolution(0, 0, true);
-      }
-      if (gfxMsg->featureUpdate.isImageUpdateNeeded) {
-        updateFramebufferImage();
-      }
-      if (gfxMsg->featureUpdate.isCursorShapeNeeded) {
-        updateCursorShape(nullptr, 0, 0, 0, 0, true);
-      }
-      if (gfxMsg->featureUpdate.isCursorPositionNeeded) {
-        updateCursorPosition(0, 0, false, true);
+      if (_fbReady) {
+        if (gfxMsg->featureUpdate.isResolutionUpdateNeeded) {
+          updateScreenResolution(0, 0, true);
+        }
+        if (gfxMsg->featureUpdate.isImageUpdateNeeded) {
+          updateFramebufferImage();
+        }
+        if (gfxMsg->featureUpdate.isCursorShapeNeeded) {
+          updateCursorShape(nullptr, 0, 0, 0, 0, true);
+        }
+        if (gfxMsg->featureUpdate.isCursorPositionNeeded) {
+          updateCursorPosition(0, 0, false, true);
+        }
+      } else {
+        HVDBGLOG("Ignoring feature change, not ready");
       }
       break;
 
@@ -428,7 +432,8 @@ IOReturn HyperVGraphics::updateScreenResolution(UInt32 width, UInt32 height, boo
   // Check bounds.
   //
   if (_gfxVersion.value == kHyperVGraphicsVersionV3_0) {
-    if ((width > kHyperVGraphicsMaxWidth2008) || (height > kHyperVGraphicsMaxHeight2008)) {
+    if ((width > kHyperVGraphicsMaxWidth2008) || (height > kHyperVGraphicsMaxHeight2008)
+        || (width < kHyperVGraphicsMinWidth) || (height < kHyperVGraphicsMinHeight)) {
       HVSYSLOG("Invalid screen resolution %ux%u", width, height);
       return kIOReturnBadArgument;
     }
