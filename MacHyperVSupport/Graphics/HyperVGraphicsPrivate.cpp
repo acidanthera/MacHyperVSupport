@@ -44,6 +44,9 @@ void HyperVGraphics::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
       //
       HVDBGLOG("Got feature change: img %u pos %u shape %u res %u", gfxMsg->featureUpdate.isImageUpdateNeeded, gfxMsg->featureUpdate.isCursorPositionNeeded,
                gfxMsg->featureUpdate.isCursorShapeNeeded, gfxMsg->featureUpdate.isResolutionUpdateNeeded);
+      if (gfxMsg->featureUpdate.isResolutionUpdateNeeded) {
+        updateScreenResolution(0, 0, true);
+      }
       if (gfxMsg->featureUpdate.isImageUpdateNeeded) {
         updateFramebufferImage();
       }
@@ -408,11 +411,18 @@ IOReturn HyperVGraphics::updateCursorPosition(SInt32 x, SInt32 y, bool isVisible
   return status;
 }
 
-IOReturn HyperVGraphics::updateScreenResolution(UInt32 width, UInt32 height, bool isBoot) {
+IOReturn HyperVGraphics::updateScreenResolution(UInt32 width, UInt32 height, bool featureChange) {
   IOReturn              status;
   PE_Video              consoleInfo;
   HyperVGraphicsMessage gfxMsg = { };
-  UInt8                 pixelDepth;
+
+  //
+  // If a feature change was triggered, just resend the last sent packet.
+  //
+  if (featureChange) {
+    width  = _screenWidth;
+    height = _screenHeight;
+  }
 
   //
   // Check bounds.
@@ -435,8 +445,7 @@ IOReturn HyperVGraphics::updateScreenResolution(UInt32 width, UInt32 height, boo
   if (status != kIOReturnSuccess) {
     return status;
   }
-  pixelDepth = consoleInfo.v_depth;
-  HVDBGLOG("Desired screen resolution %ux%u (%u bpp)", width, height, pixelDepth);
+  HVDBGLOG("Desired screen resolution %ux%u (%u bpp)", width, height, _bitDepth);
 
   //
   // Send screen resolution and pixel depth information.
@@ -448,44 +457,16 @@ IOReturn HyperVGraphics::updateScreenResolution(UInt32 width, UInt32 height, boo
   gfxMsg.resolutionUpdate.videoOutputCount = 1;
   gfxMsg.resolutionUpdate.videoOutputs[0].active = 1;
   gfxMsg.resolutionUpdate.videoOutputs[0].vramOffset = 0;
-  gfxMsg.resolutionUpdate.videoOutputs[0].depth = pixelDepth;
+  gfxMsg.resolutionUpdate.videoOutputs[0].depth = _bitDepth;
   gfxMsg.resolutionUpdate.videoOutputs[0].width = width;
   gfxMsg.resolutionUpdate.videoOutputs[0].height = height;
-  gfxMsg.resolutionUpdate.videoOutputs[0].pitch = width * (pixelDepth / 8);
+  gfxMsg.resolutionUpdate.videoOutputs[0].pitch = width * (_bitDepth / 8);
 
   status = sendGraphicsMessage(&gfxMsg, kHyperVGraphicsMessageTypeResolutionUpdateAck, &gfxMsg);
   if (status != kIOReturnSuccess) {
     HVSYSLOG("Failed to send screen resolution with status 0x%X", status);
     return status;
   }
-
-  //
-  // If still booting and pre-userspace, update console and boot logo.
-  //
-  /*if (isBoot) {
-    //
-    // Send new framebuffer physical address.
-    //
-    consoleInfo.v_offset   = 0;
-    consoleInfo.v_baseAddr = _gfxMmioBase | 1;
-    getPlatform()->setConsoleInfo(0, kPEDisableScreen);
-    getPlatform()->setConsoleInfo(&consoleInfo, kPEBaseAddressChange);
-    
-    //
-    // Change framebuffer screen resolution.
-    //
-    getPlatform()->getConsoleInfo(&consoleInfo);
-    consoleInfo.v_width = width;
-    consoleInfo.v_height = height;
-    consoleInfo.v_rowBytes = width * (pixelDepth / 8);
-    getPlatform()->setConsoleInfo(&consoleInfo, kPEEnableScreen);
-    
-    //
-    // Redraw boot logo and progress bar.
-    //
-    drawBootLogo();
-    HyperVPlatformProvider::getInstance()->resetProgressBar();
-  }*/
 
   _screenWidth  = width;
   _screenHeight = height;

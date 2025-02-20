@@ -153,7 +153,7 @@ IOReturn HyperVGraphics::callPlatformFunction(const OSSymbol *functionName, bool
 
   // Set resolution.
   } else if (functionName->isEqualTo(kHyperVGraphicsFunctionSetResolution)) {
-    return updateScreenResolution(*((UInt32*)param1), *((UInt32*)param2), false);
+    return updateScreenResolution(*((UInt32*)param1), *((UInt32*)param2));
 
   // Set hardware cursor.
   } else if (functionName->isEqualTo(kHyperVGraphicsFunctionSetCursor)) {

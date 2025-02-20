@@ -54,7 +54,7 @@ private:
   IOReturn updateFramebufferImage();
   IOReturn updateCursorShape(const UInt8 *cursorData, UInt32 width, UInt32 height, UInt32 hotX, UInt32 hotY, bool featureChange = false);
   IOReturn updateCursorPosition(SInt32 x, SInt32 y, bool isVisible, bool featureChange = false);
-  IOReturn updateScreenResolution(UInt32 width, UInt32 height, bool isBoot);
+  IOReturn updateScreenResolution(UInt32 width, UInt32 height, bool featureChange = false);
 
 public:
   //
