@@ -10,23 +10,8 @@
 #include "HyperVPlatformProvider.hpp"
 
 void HyperVGraphics::handleRefreshTimer(IOTimerEventSource *sender) {
-  HyperVGraphicsMessage gfxMsg = { };
-
   if (_fbReady) {
-    //
-    // Send screen image update to Hyper-V.
-    //
-    gfxMsg.gfxHeader.type = kHyperVGraphicsMessageTypeDIRT;
-    gfxMsg.gfxHeader.size = sizeof (gfxMsg.gfxHeader) + sizeof (gfxMsg.dirt);
-
-    gfxMsg.dirt.videoOutput     = 0;
-    gfxMsg.dirt.dirtCount       = 1;
-    gfxMsg.dirt.dirtRects[0].x1 = 0;
-    gfxMsg.dirt.dirtRects[0].y1 = 0;
-    gfxMsg.dirt.dirtRects[0].x2 = _screenWidth;
-    gfxMsg.dirt.dirtRects[0].y2 = _screenHeight;
-
-    sendGraphicsMessage(&gfxMsg);
+    updateFramebufferImage();
     _timerEventSource->setTimeoutMS(kHyperVGraphicsDIRTRefreshRateMS);
   }
 }
@@ -54,7 +39,20 @@ void HyperVGraphics::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
       break;
       
     case kHyperVGraphicsMessageTypeFeatureChange:
-      HVDBGLOG("Got feature change res %u dirt %u ", gfxMsg->featureUpdate.isResolutionUpdateNeeded, gfxMsg->featureUpdate.isDIRTNeeded);
+      //
+      // Refresh display states on a feature change.
+      //
+      HVDBGLOG("Got feature change: img %u pos %u shape %u res %u", gfxMsg->featureUpdate.isImageUpdateNeeded, gfxMsg->featureUpdate.isCursorPositionNeeded,
+               gfxMsg->featureUpdate.isCursorShapeNeeded, gfxMsg->featureUpdate.isResolutionUpdateNeeded);
+      if (gfxMsg->featureUpdate.isImageUpdateNeeded) {
+        updateFramebufferImage();
+      }
+      if (gfxMsg->featureUpdate.isCursorShapeNeeded) {
+        updateCursorShape(nullptr, 0, 0, 0, 0, true);
+      }
+      if (gfxMsg->featureUpdate.isCursorPositionNeeded) {
+        updateCursorPosition(0, 0, false, true);
+      }
       break;
 
     default:
@@ -210,6 +208,30 @@ IOReturn HyperVGraphics::allocateGraphicsMemory() {
   return kIOReturnSuccess;
 }
 
+IOReturn HyperVGraphics::updateFramebufferImage() {
+  HyperVGraphicsMessage gfxMsg = { };
+  IOReturn              status;
+
+  //
+  // Send screen image update to Hyper-V.
+  //
+  gfxMsg.gfxHeader.type = kHyperVGraphicsMessageTypeImageUpdate;
+  gfxMsg.gfxHeader.size = sizeof (gfxMsg.gfxHeader) + sizeof (gfxMsg.imageUpdate);
+
+  gfxMsg.imageUpdate.videoOutput = 0;
+  gfxMsg.imageUpdate.count       = 1;
+  gfxMsg.imageUpdate.rects[0].x1 = 0;
+  gfxMsg.imageUpdate.rects[0].y1 = 0;
+  gfxMsg.imageUpdate.rects[0].x2 = _screenWidth;
+  gfxMsg.imageUpdate.rects[0].y2 = _screenHeight;
+
+  status = sendGraphicsMessage(&gfxMsg);
+  if (status != kIOReturnSuccess) {
+    HVSYSLOG("Failed to send image update with status 0x%X", status);
+  }
+  return status;
+}
+
 IOReturn HyperVGraphics::updateGraphicsMemoryLocation() {
   IOReturn status;
   HyperVGraphicsMessage gfxMsg = { };
@@ -237,35 +259,45 @@ IOReturn HyperVGraphics::updateGraphicsMemoryLocation() {
   return kIOReturnSuccess;
 }
 
-IOReturn HyperVGraphics::updateCursorShape(const UInt8 *cursorData, UInt32 width, UInt32 height, UInt32 hotX, UInt32 hotY) {
+IOReturn HyperVGraphics::updateCursorShape(const UInt8 *cursorData, UInt32 width, UInt32 height, UInt32 hotX, UInt32 hotY, bool featureChange) {
   IOReturn              status;
-  UInt32                cursorSize;
+  UInt32                cursorSize = 0;
 
-  if (cursorData != nullptr) {
-    //
-    // Check that cursor is valid.
-    //
-    if ((width > kHyperVGraphicsCursorMaxWidth) || (height > kHyperVGraphicsCursorMaxHeight)
-        || (hotX > width) || (hotY > height)) {
-      HVSYSLOG("Invalid cursor image passed");
-      return kIOReturnUnsupported;
+  if (!featureChange) {
+    if (cursorData != nullptr) {
+      //
+      // Check that cursor is valid.
+      //
+      if ((width > kHyperVGraphicsCursorMaxWidth) || (height > kHyperVGraphicsCursorMaxHeight)
+          || (hotX > width) || (hotY > height)) {
+        HVSYSLOG("Invalid cursor image passed");
+        return kIOReturnUnsupported;
+      }
+      cursorSize = (width * height * kHyperVGraphicsCursorARGBPixelSize);
+      if (cursorSize > kHyperVGraphicsCursorMaxSize) {
+        HVSYSLOG("Invalid cursor image passed");
+        return kIOReturnUnsupported;
+      }
+      HVDBGLOG("Cursor data at %p size %ux%u hot %ux%u length %u bytes", cursorData, width, height, hotX, hotY, cursorSize);
+    } else {
+      cursorSize = (1 * 1 * kHyperVGraphicsCursorARGBPixelSize);
+      width = 1;
+      height = 1;
+      hotX = 0;
+      hotY = 0;
+      HVDBGLOG("No cursor data passed, setting to no cursor");
     }
-    cursorSize = (width * height * kHyperVGraphicsCursorARGBPixelSize);
-    if (cursorSize > kHyperVGraphicsCursorMaxSize) {
-      HVSYSLOG("Invalid cursor image passed");
-      return kIOReturnUnsupported;
-    }
-    HVDBGLOG("Cursor data at %p size %ux%u hot %ux%u length %u bytes", cursorData, width, height, hotX, hotY, cursorSize);
-  } else {
-    cursorSize = (1 * 1 * kHyperVGraphicsCursorARGBPixelSize);
-    width = 1;
-    height = 1;
-    hotX = 0;
-    hotY = 0;
-    HVDBGLOG("No cursor data passed, setting to no cursor");
   }
 
   IOSimpleLockLock(_gfxMsgCursorShapeLock);
+
+  //
+  // Skip cursor update if we have yet to update the cursor.
+  //
+  if (featureChange && (_gfxMsgCursorShape == nullptr)) {
+    IOSimpleLockUnlock(_gfxMsgCursorShapeLock);
+    return kIOReturnUnsupported;
+  }
 
   //
   // Allocate message if not already allocated.
@@ -281,37 +313,42 @@ IOReturn HyperVGraphics::updateCursorShape(const UInt8 *cursorData, UInt32 width
   }
 
   //
-  // Send cursor image.
-  // Cursor format is ARGB if alpha is enabled, RGB otherwise.
+  // If a feature change was triggered, just resend the last sent packet.
   //
-  bzero(_gfxMsgCursorShape, _gfxMsgCursorShapeSize);
-  _gfxMsgCursorShape->gfxHeader.type = kHyperVGraphicsMessageTypeCursorShape;
-  _gfxMsgCursorShape->gfxHeader.size = sizeof (_gfxMsgCursorShape->gfxHeader) + sizeof (_gfxMsgCursorShape->cursorShape) + cursorSize;
-
-  _gfxMsgCursorShape->cursorShape.partIndex = kHyperVGraphicsCursorPartIndexComplete;
-  _gfxMsgCursorShape->cursorShape.isARGB    = 1;
-  _gfxMsgCursorShape->cursorShape.width     = width;
-  _gfxMsgCursorShape->cursorShape.height    = height;
-  _gfxMsgCursorShape->cursorShape.hotX      = hotX;
-  _gfxMsgCursorShape->cursorShape.hotY      = hotY;
-
-  if (cursorData != nullptr) {
+  if (!featureChange) {
     //
-    // Copy cursor data.
-    // macOS provides cursor image inverted heightwise, flip here during the copy.
+    // Send cursor image.
+    // Cursor format is ARGB if alpha is enabled, RGB otherwise.
     //
-    UInt32 stride = width * kHyperVGraphicsCursorARGBPixelSize;
-    for (UInt32 dstY = 0, srcY = (height - 1); dstY < height; dstY++, srcY--) {
-      memcpy(&_gfxMsgCursorShape->cursorShape.data[dstY * stride], &cursorData[srcY * stride], stride);
+    bzero(_gfxMsgCursorShape, _gfxMsgCursorShapeSize);
+    _gfxMsgCursorShape->gfxHeader.type = kHyperVGraphicsMessageTypeCursorShape;
+    _gfxMsgCursorShape->gfxHeader.size = sizeof (_gfxMsgCursorShape->gfxHeader) + sizeof (_gfxMsgCursorShape->cursorShape) + cursorSize;
+
+    _gfxMsgCursorShape->cursorShape.partIndex = kHyperVGraphicsCursorPartIndexComplete;
+    _gfxMsgCursorShape->cursorShape.isARGB    = 1;
+    _gfxMsgCursorShape->cursorShape.width     = width;
+    _gfxMsgCursorShape->cursorShape.height    = height;
+    _gfxMsgCursorShape->cursorShape.hotX      = hotX;
+    _gfxMsgCursorShape->cursorShape.hotY      = hotY;
+
+    if (cursorData != nullptr) {
+      //
+      // Copy cursor data.
+      // macOS provides cursor image inverted heightwise, flip here during the copy.
+      //
+      UInt32 stride = width * kHyperVGraphicsCursorARGBPixelSize;
+      for (UInt32 dstY = 0, srcY = (height - 1); dstY < height; dstY++, srcY--) {
+        memcpy(&_gfxMsgCursorShape->cursorShape.data[dstY * stride], &cursorData[srcY * stride], stride);
+      }
+    } else {
+      //
+      // For no cursor use 1x1 transparent square.
+      //
+      _gfxMsgCursorShape->cursorShape.data[0] = 0;
+      _gfxMsgCursorShape->cursorShape.data[1] = 1;
+      _gfxMsgCursorShape->cursorShape.data[2] = 1;
+      _gfxMsgCursorShape->cursorShape.data[3] = 1;
     }
-  } else {
-    //
-    // For no cursor use 1x1 transparent square.
-    //
-    _gfxMsgCursorShape->cursorShape.data[0] = 0;
-    _gfxMsgCursorShape->cursorShape.data[1] = 1;
-    _gfxMsgCursorShape->cursorShape.data[2] = 1;
-    _gfxMsgCursorShape->cursorShape.data[3] = 1;
   }
 
   status = sendGraphicsMessage(_gfxMsgCursorShape);
@@ -326,9 +363,30 @@ IOReturn HyperVGraphics::updateCursorShape(const UInt8 *cursorData, UInt32 width
   return kIOReturnSuccess;
 }
 
-IOReturn HyperVGraphics::updateCursorPosition(SInt32 x, SInt32 y, bool isVisible) {
+IOReturn HyperVGraphics::updateCursorPosition(SInt32 x, SInt32 y, bool isVisible, bool featureChange) {
   HyperVGraphicsMessage gfxMsg = { };
   IOReturn              status;
+
+  static bool cursorPositionSent = false;
+  static SInt32 lastX         = 0;
+  static SInt32 lastY         = 0;
+  static bool   lastIsVisible = true;
+
+  //
+  // If a cursor position was never sent, do not send on a feature change.
+  //
+  if (featureChange && cursorPositionSent) {
+    return kIOReturnUnsupported;
+  }
+
+  //
+  // If a feature change was triggered, just resend the last sent packet.
+  //
+  if (!featureChange) {
+    lastX = x;
+    lastY = y;
+    lastIsVisible = isVisible;
+  }
 
   //
   // Send cursor position and visibility.
@@ -336,17 +394,18 @@ IOReturn HyperVGraphics::updateCursorPosition(SInt32 x, SInt32 y, bool isVisible
   gfxMsg.gfxHeader.type = kHyperVGraphicsMessageTypeCursorPosition;
   gfxMsg.gfxHeader.size = sizeof (gfxMsg.gfxHeader) + sizeof (gfxMsg.cursorPosition);
 
-  gfxMsg.cursorPosition.isVisible = isVisible;
+  gfxMsg.cursorPosition.isVisible = lastIsVisible;
   gfxMsg.cursorPosition.videoOutput = 0;
-  gfxMsg.cursorPosition.x = x;
-  gfxMsg.cursorPosition.y = y;
+  gfxMsg.cursorPosition.x = lastX;
+  gfxMsg.cursorPosition.y = lastY;
 
   status = sendGraphicsMessage(&gfxMsg);
   if (status != kIOReturnSuccess) {
     HVSYSLOG("Failed to send cursor position with status 0x%X", status);
-    return status;
+  } else {
+    cursorPositionSent = true;
   }
-  return kIOReturnSuccess;
+  return status;
 }
 
 IOReturn HyperVGraphics::updateScreenResolution(UInt32 width, UInt32 height, bool isBoot) {

@@ -84,7 +84,7 @@ typedef enum : UInt32 {
   kHyperVGraphicsMessageTypeCursorPosition      = 0x7,
   kHyperVGraphicsMessageTypeCursorShape         = 0x8,
   kHyperVGraphicsMessageTypeFeatureChange       = 0x9,
-  kHyperVGraphicsMessageTypeDIRT                = 0xA
+  kHyperVGraphicsMessageTypeImageUpdate         = 0xA
 } HyperVGraphicsMessageType;
 
 //
@@ -227,7 +227,7 @@ typedef struct __attribute__((packed)) {
 //
 typedef struct __attribute__((packed)) {
   // Screen data needs to be updated.
-  UInt8 isDIRTNeeded;
+  UInt8 isImageUpdateNeeded;
   // Cursor position needs to be reported.
   UInt8 isCursorPositionNeeded;
   // Cursor shape needs to be reported.
@@ -239,13 +239,16 @@ typedef struct __attribute__((packed)) {
 typedef struct __attribute__((packed)) {
   SInt32 x1, y1; // Top left corner.
   SInt32 x2, y2; // Bottom right corner.
-} HyperVGraphicsDIRTRectangle;
+} HyperVGraphicsImageUpdateRectangle;
 
+//
+// Image update of screen to Hyper-V.
+//
 typedef struct __attribute__((packed)) {
-  UInt8                       videoOutput;
-  UInt8                       dirtCount;
-  HyperVGraphicsDIRTRectangle dirtRects[1];
-} HyperVGraphicsMessageDIRT;
+  UInt8                               videoOutput;
+  UInt8                               count;
+  HyperVGraphicsImageUpdateRectangle  rects[1];
+} HyperVGraphicsMessageImageUpdate;
 
 //
 // Graphics message union.
@@ -265,7 +268,7 @@ typedef struct __attribute__((packed)) {
     HyperVGraphicsMessageCursorPosition       cursorPosition;
     HyperVGraphicsMessageCursorShape          cursorShape;
     HyperVGraphicsMessageFeatureUpdate        featureUpdate;
-    HyperVGraphicsMessageDIRT                 dirt;
+    HyperVGraphicsMessageImageUpdate          imageUpdate;
   };
 } HyperVGraphicsMessage;
 
