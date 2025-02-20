@@ -33,6 +33,10 @@ private:
   UInt32        _screenWidth    = 0;
   UInt32        _screenHeight   = 0;
   bool          _fbReady        = false;
+  
+  IOSimpleLock              *_gfxMsgCursorShapeLock = nullptr;
+  HyperVGraphicsMessage     *_gfxMsgCursorShape     = nullptr;
+  size_t                    _gfxMsgCursorShapeSize  = 0;
 
   //bool wakePacketHandler(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength);
   void handleRefreshTimer(IOTimerEventSource *sender);
@@ -48,6 +52,7 @@ private:
   // Platform functions.
   //
   IOReturn updateCursorShape(const UInt8 *cursorData, UInt32 width, UInt32 height, UInt32 hotX, UInt32 hotY);
+  IOReturn updateCursorPosition(SInt32 x, SInt32 y, bool isVisible);
   IOReturn updateScreenResolution(UInt32 width, UInt32 height, bool isBoot);
 
 public:

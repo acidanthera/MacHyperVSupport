@@ -31,8 +31,8 @@
 //
 // Max cursor size.
 //
-#define kHyperVGraphicsCursorMaxWidth           32
-#define kHyperVGraphicsCursorMaxHeight          32
+#define kHyperVGraphicsCursorMaxWidth     32
+#define kHyperVGraphicsCursorMaxHeight    32
 
 #define kHyperVGraphicsRingBufferSize (64 * PAGE_SIZE)
 #define kHyperVGraphicsMaxPacketSize  (4 * PAGE_SIZE)

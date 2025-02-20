@@ -228,11 +228,11 @@ IOReturn HyperVGraphicsFramebuffer::getPixelInformation(IODisplayModeID displayM
   pixelInfo->activeWidth          = _gfxModes[displayMode - 1].width;
   pixelInfo->activeHeight         = _gfxModes[displayMode - 1].height;
 
-  //if (videoDepth == 32) {
+  if (_bitDepth == 32) {
     memcpy(&pixelInfo->pixelFormat[0], &pixelFormatString32[0], sizeof (IOPixelEncoding));
- // } else if (videoDepth == 16) {
- //   memcpy(&pixelInfo->pixelFormat[0], &pixelFormatString16[0], sizeof (IOPixelEncoding));
- // }
+  } else if (_bitDepth == 16) {
+    memcpy(&pixelInfo->pixelFormat[0], &pixelFormatString16[0], sizeof (IOPixelEncoding));
+  }
 
   return kIOReturnSuccess;
 }
@@ -325,6 +325,12 @@ IOReturn HyperVGraphicsFramebuffer::setCursorImage(void *cursorImage) {
 }
 
 IOReturn HyperVGraphicsFramebuffer::setCursorState(SInt32 x, SInt32 y, bool visible) {
- // HVDBGLOG("Setting hardware cursor state (X: %d, Y: %d, visible: %u)", x, y, visible);
-  return kIOReturnSuccess;
+  HVDBGLOG("New cursor state: x %d y %d visible %u", x, y, visible);
+  return _hvGfxProvider->callPlatformFunction(kHyperVGraphicsFunctionSetCusorPosition, true, &x, &y, &visible, nullptr);
+}
+
+void HyperVGraphicsFramebuffer::flushCursor() {
+  HyperVGraphicsFunctionSetCursorParams cursorParams = { };
+  cursorParams.cursorData = nullptr;
+  _hvGfxProvider->callPlatformFunction(kHyperVGraphicsFunctionSetCursor, true, &cursorParams, nullptr, nullptr, nullptr);
 }

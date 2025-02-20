@@ -32,10 +32,12 @@ private:
   IOItemCount         _gfxModesCount  = 0;
   VMBusVersion        _gfxVersion     = { };
   UInt32              _bitDepth       = 32; // TODO: Make dynamic
+
+  UInt8               *_cursorData      = nullptr;
+  size_t              _cursorDataSize   = kHyperVGraphicsCursorMaxSize;
+  bool                _hasCursorHotspot = false;
+  
   IODisplayModeID _currentDisplayMode = 4;
-  UInt8           *_cursorData = nullptr;
-  size_t          _cursorDataSize = 16834;
-  bool            _hasCursorHotspot = false;
 
   IOReturn getGraphicsServiceVersion();
   IOReturn getGraphicsServiceMemory();
@@ -67,6 +69,7 @@ public:
   IOReturn getAttribute(IOSelect attribute, uintptr_t *value) APPLE_KEXT_OVERRIDE;
   IOReturn setCursorImage(void *cursorImage) APPLE_KEXT_OVERRIDE;
   IOReturn setCursorState(SInt32 x, SInt32 y, bool visible) APPLE_KEXT_OVERRIDE;
+  void flushCursor() APPLE_KEXT_OVERRIDE;
 };
 
 #endif

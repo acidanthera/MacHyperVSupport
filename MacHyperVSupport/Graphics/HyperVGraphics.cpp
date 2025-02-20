@@ -54,6 +54,12 @@ bool HyperVGraphics::start(IOService *provider) {
       break;
     }
 
+    _gfxMsgCursorShapeLock = IOSimpleLockAlloc();
+    if (_gfxMsgCursorShapeLock == nullptr) {
+      HVSYSLOG("Failed to allocate cursor shape lock");
+      break;
+    }
+
     //
     // Install packet handler.
     //
@@ -105,6 +111,15 @@ void HyperVGraphics::stop(IOService *provider) {
     OSSafeReleaseNULL(_timerEventSource);
   }
 
+  if (_gfxMsgCursorShape != nullptr) {
+    IOFree(_gfxMsgCursorShape, _gfxMsgCursorShapeSize);
+    _gfxMsgCursorShape = nullptr;
+  }
+  if (_gfxMsgCursorShapeLock != nullptr) {
+    IOSimpleLockFree(_gfxMsgCursorShapeLock);
+    _gfxMsgCursorShapeLock = nullptr;
+  }
+
   if (_hvDevice != nullptr) {
     _hvDevice->closeVMBusChannel();
     _hvDevice->uninstallPacketActions();
@@ -149,6 +164,8 @@ IOReturn HyperVGraphics::callPlatformFunction(const OSSymbol *functionName, bool
     return updateCursorShape(cursorParams->cursorData, cursorParams->width, cursorParams->height,
                              cursorParams->hotX, cursorParams->hotY);
 
+  } else if (functionName->isEqualTo(kHyperVGraphicsFunctionSetCusorPosition)) {
+    return updateCursorPosition(*((SInt32*)param1), *((SInt32*)param2), *((bool*)param3));
   } else {
     return kIOReturnUnsupported;
   }

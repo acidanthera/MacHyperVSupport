@@ -240,79 +240,112 @@ IOReturn HyperVGraphics::updateGraphicsMemoryLocation() {
 IOReturn HyperVGraphics::updateCursorShape(const UInt8 *cursorData, UInt32 width, UInt32 height, UInt32 hotX, UInt32 hotY) {
   IOReturn              status;
   UInt32                cursorSize;
-  HyperVGraphicsMessage *gfxMsg;
-  size_t                gfxMsgLength;
 
-  //
-  // Check that cursor is valid.
-  //
-  if ((cursorData == nullptr)
-      || (width > kHyperVGraphicsCursorMaxWidth) || (height > kHyperVGraphicsCursorMaxHeight)
-      || (hotX > width) || (hotY > height)) {
-    HVSYSLOG("Invalid cursor image passed");
-    return kIOReturnUnsupported;
+  if (cursorData != nullptr) {
+    //
+    // Check that cursor is valid.
+    //
+    if ((width > kHyperVGraphicsCursorMaxWidth) || (height > kHyperVGraphicsCursorMaxHeight)
+        || (hotX > width) || (hotY > height)) {
+      HVSYSLOG("Invalid cursor image passed");
+      return kIOReturnUnsupported;
+    }
+    cursorSize = (width * height * kHyperVGraphicsCursorARGBPixelSize);
+    if (cursorSize > kHyperVGraphicsCursorMaxSize) {
+      HVSYSLOG("Invalid cursor image passed");
+      return kIOReturnUnsupported;
+    }
+    HVDBGLOG("Cursor data at %p size %ux%u hot %ux%u length %u bytes", cursorData, width, height, hotX, hotY, cursorSize);
+  } else {
+    cursorSize = (1 * 1 * kHyperVGraphicsCursorARGBPixelSize);
+    width = 1;
+    height = 1;
+    hotX = 0;
+    hotY = 0;
+    HVDBGLOG("No cursor data passed, setting to no cursor");
   }
-  cursorSize = (width * height * kHyperVGraphicsCursorARGBPixelSize);
-  HVDBGLOG("Cursor data at %p size %ux%u hot %ux%u length %u bytes", cursorData, width, height, hotX, hotY, cursorSize);
+
+  IOSimpleLockLock(_gfxMsgCursorShapeLock);
 
   //
-  // Allocate message.
+  // Allocate message if not already allocated.
   //
-  gfxMsgLength = sizeof (*gfxMsg) + cursorSize;
-  gfxMsg = static_cast<HyperVGraphicsMessage*>(IOMalloc(gfxMsgLength));
-  if (gfxMsg == nullptr) {
-    HVSYSLOG("Failed to allocate cursor graphics message");
-    return kIOReturnNoResources;
+  if (_gfxMsgCursorShape == nullptr) {
+    _gfxMsgCursorShapeSize = sizeof (*_gfxMsgCursorShape) + kHyperVGraphicsCursorMaxSize;
+    _gfxMsgCursorShape = static_cast<HyperVGraphicsMessage*>(IOMalloc(_gfxMsgCursorShapeSize));
+    if (_gfxMsgCursorShape == nullptr) {
+      IOSimpleLockUnlock(_gfxMsgCursorShapeLock);
+      HVSYSLOG("Failed to allocate cursor graphics message");
+      return kIOReturnNoResources;
+    }
   }
 
   //
   // Send cursor image.
   // Cursor format is ARGB if alpha is enabled, RGB otherwise.
   //
-  gfxMsg->gfxHeader.type = kHyperVGraphicsMessageTypeCursorShape;
-  gfxMsg->gfxHeader.size = sizeof (gfxMsg->gfxHeader) + sizeof (gfxMsg->cursorShape) + cursorSize;
+  bzero(_gfxMsgCursorShape, _gfxMsgCursorShapeSize);
+  _gfxMsgCursorShape->gfxHeader.type = kHyperVGraphicsMessageTypeCursorShape;
+  _gfxMsgCursorShape->gfxHeader.size = sizeof (_gfxMsgCursorShape->gfxHeader) + sizeof (_gfxMsgCursorShape->cursorShape) + cursorSize;
 
-  gfxMsg->cursorShape.partIndex = kHyperVGraphicsCursorPartIndexComplete;
-  gfxMsg->cursorShape.isARGB    = 1;
-  gfxMsg->cursorShape.width     = width;
-  gfxMsg->cursorShape.height    = height;
-  gfxMsg->cursorShape.hotX      = hotX;
-  gfxMsg->cursorShape.hotY      = hotY;
+  _gfxMsgCursorShape->cursorShape.partIndex = kHyperVGraphicsCursorPartIndexComplete;
+  _gfxMsgCursorShape->cursorShape.isARGB    = 1;
+  _gfxMsgCursorShape->cursorShape.width     = width;
+  _gfxMsgCursorShape->cursorShape.height    = height;
+  _gfxMsgCursorShape->cursorShape.hotX      = hotX;
+  _gfxMsgCursorShape->cursorShape.hotY      = hotY;
 
-  //
-  // Copy cursor data.
-  // macOS provides cursor image inverted heightwise, flip here during the copy.
-  //
-  UInt32 stride = width * kHyperVGraphicsCursorARGBPixelSize;
-  for (UInt32 dstY = 0, srcY = (height - 1); dstY < height; dstY++, srcY--) {
-    memcpy(&gfxMsg->cursorShape.data[dstY * stride], &cursorData[srcY * stride], stride);
+  if (cursorData != nullptr) {
+    //
+    // Copy cursor data.
+    // macOS provides cursor image inverted heightwise, flip here during the copy.
+    //
+    UInt32 stride = width * kHyperVGraphicsCursorARGBPixelSize;
+    for (UInt32 dstY = 0, srcY = (height - 1); dstY < height; dstY++, srcY--) {
+      memcpy(&_gfxMsgCursorShape->cursorShape.data[dstY * stride], &cursorData[srcY * stride], stride);
+    }
+  } else {
+    //
+    // For no cursor use 1x1 transparent square.
+    //
+    _gfxMsgCursorShape->cursorShape.data[0] = 0;
+    _gfxMsgCursorShape->cursorShape.data[1] = 1;
+    _gfxMsgCursorShape->cursorShape.data[2] = 1;
+    _gfxMsgCursorShape->cursorShape.data[3] = 1;
   }
 
-  status = sendGraphicsMessage(gfxMsg);
+  status = sendGraphicsMessage(_gfxMsgCursorShape);
   if (status != kIOReturnSuccess) {
+    IOSimpleLockUnlock(_gfxMsgCursorShapeLock);
     HVSYSLOG("Failed to send cursor shape with status 0x%X", status);
-    IOFree(gfxMsg, gfxMsgLength);
     return status;
   }
 
-  bzero(gfxMsg, gfxMsgLength);
-  gfxMsg->gfxHeader.type = kHyperVGraphicsMessageTypeCursorPosition;
-  gfxMsg->gfxHeader.size = sizeof (gfxMsg->gfxHeader) + sizeof (gfxMsg->cursorPosition);
-  
-  gfxMsg->cursorPosition.isVisible = 1;
-  gfxMsg->cursorPosition.videoOutput = 0;
-  gfxMsg->cursorPosition.x = 128;
-  gfxMsg->cursorPosition.y = 128;
-  
-  status = sendGraphicsMessage(gfxMsg);
+  IOSimpleLockUnlock(_gfxMsgCursorShapeLock);
+  HVDBGLOG("Updated cursor data successfully");
+  return kIOReturnSuccess;
+}
+
+IOReturn HyperVGraphics::updateCursorPosition(SInt32 x, SInt32 y, bool isVisible) {
+  HyperVGraphicsMessage gfxMsg = { };
+  IOReturn              status;
+
+  //
+  // Send cursor position and visibility.
+  //
+  gfxMsg.gfxHeader.type = kHyperVGraphicsMessageTypeCursorPosition;
+  gfxMsg.gfxHeader.size = sizeof (gfxMsg.gfxHeader) + sizeof (gfxMsg.cursorPosition);
+
+  gfxMsg.cursorPosition.isVisible = isVisible;
+  gfxMsg.cursorPosition.videoOutput = 0;
+  gfxMsg.cursorPosition.x = x;
+  gfxMsg.cursorPosition.y = y;
+
+  status = sendGraphicsMessage(&gfxMsg);
   if (status != kIOReturnSuccess) {
     HVSYSLOG("Failed to send cursor position with status 0x%X", status);
-    IOFree(gfxMsg, gfxMsgLength);
     return status;
   }
-
-  IOFree(gfxMsg, gfxMsgLength);
-  HVDBGLOG("Updated cursor data successfully");
   return kIOReturnSuccess;
 }
 
