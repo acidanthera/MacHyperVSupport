@@ -32,6 +32,7 @@ public:
   //
   // IOService overrides.
   //
+  IOService *probe(IOService *provider, SInt32 *score) APPLE_KEXT_OVERRIDE;
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
   void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
 

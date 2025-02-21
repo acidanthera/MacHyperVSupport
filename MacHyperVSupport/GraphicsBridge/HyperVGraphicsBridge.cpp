@@ -11,6 +11,34 @@
 
 OSDefineMetaClassAndStructors(HyperVGraphicsBridge, super);
 
+IOService* HyperVGraphicsBridge::probe(IOService *provider, SInt32 *score) {
+  HyperVPCIRoot *hvPCIRoot;
+
+  HVCheckDebugArgs();
+
+  //
+  // Ensure parent is HyperVGraphics object and locate root PCI bus instance.
+  //
+  if (OSDynamicCast(HyperVGraphics, provider) == nullptr) {
+    HVSYSLOG("Provider is not HyperVGraphics");
+    return nullptr;
+  }
+  hvPCIRoot = HyperVPCIRoot::getPCIRootInstance();
+  if (hvPCIRoot == nullptr) {
+    HVSYSLOG("Failed to find root PCI bridge instance");
+    return nullptr;
+  }
+
+  //
+  // Do not start on Gen1 VMs.
+  //
+  if (!hvPCIRoot->isHyperVGen2()) {
+    HVDBGLOG("Not starting on Hyper-V Gen1 VM");
+    return nullptr;
+  }
+  return this;
+}
+
 bool HyperVGraphicsBridge::start(IOService *provider) {
   PE_Video consoleInfo = { };
   HyperVPCIRoot *hvPCIRoot;
@@ -37,27 +65,11 @@ bool HyperVGraphicsBridge::start(IOService *provider) {
   _fbInitialLength = (UInt32)(consoleInfo.v_height * consoleInfo.v_rowBytes);
 
   //
-  // Ensure parent is HyperVGraphics object.
-  //
-  if (OSDynamicCast(HyperVGraphics, provider) == nullptr) {
-    HVSYSLOG("Provider is not HyperVGraphics");
-    return false;
-  }
-
-  //
   // Locate root PCI bus instance.
   //
   hvPCIRoot = HyperVPCIRoot::getPCIRootInstance();
   if (hvPCIRoot == nullptr) {
     HVSYSLOG("Failed to find root PCI bridge instance");
-    return false;
-  }
-
-  //
-  // Do not start on Gen1 VMs.
-  //
-  if (!hvPCIRoot->isHyperVGen2()) {
-    HVDBGLOG("Not starting on Hyper-V Gen1 VM");
     return false;
   }
 
