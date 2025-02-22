@@ -8,7 +8,6 @@
 #include "HyperVGraphics.hpp"
 
 IOReturn HyperVGraphics::platformInitGraphics(VMBusVersion *outVersion, IOPhysicalAddress *outMemBase, UInt32 *outMemLength) {
-  PE_Video consoleInfo;
   IOReturn status;
 
   if ((outVersion == nullptr) || (outMemBase == nullptr) || (outMemLength == nullptr)) {
@@ -67,21 +66,6 @@ IOReturn HyperVGraphics::platformInitGraphics(VMBusVersion *outVersion, IOPhysic
   status = setGraphicsMemory(_gfxBase, _gfxLength);
   if (status != kIOReturnSuccess) {
     HVSYSLOG("Failed to send graphics memory location with status 0x%X", status);
-    return status;
-  }
-
-  //
-  // Pull console info.
-  //
-  if (getPlatform()->getConsoleInfo(&consoleInfo) != kIOReturnSuccess) {
-    HVSYSLOG("Failed to get console info");
-    return kIOReturnIOError;
-  }
-  HVDBGLOG("Console is at 0x%X (%ux%u, bpp: %u, bytes/row: %u)",
-           consoleInfo.v_baseAddr, consoleInfo.v_width, consoleInfo.v_height, consoleInfo.v_depth, consoleInfo.v_rowBytes);
-  status = setScreenResolution(static_cast<UInt32>(consoleInfo.v_width), static_cast<UInt32>(consoleInfo.v_height));
-  if (status != kIOReturnSuccess) {
-    HVSYSLOG("Failed to set initial screen resolution with status 0x%X", status);
     return status;
   }
 

@@ -120,11 +120,16 @@ IOReturn HyperVGraphicsFramebuffer::enableController() {
   }
 
   //
-  // Get modes.
+  // Get modes and set initial mode.
   //
   status = buildGraphicsModes();
   if (status != kIOReturnSuccess) {
     HVSYSLOG("Failed to build graphics modes with status 0x%X", status);
+    return status;
+  }
+  status = setDisplayMode(_currentDisplayMode, 0);
+  if (status != kIOReturnSuccess) {
+    HVSYSLOG("Failed to set initial display mode");
     return status;
   }
 
