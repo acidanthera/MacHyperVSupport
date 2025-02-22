@@ -40,6 +40,25 @@ bool HyperVGraphics::start(IOService *provider) {
 
   do {
     //
+    // Initialize work loop and command gate.
+    //
+    _workLoop = IOWorkLoop::workLoop();
+    if (_workLoop == nullptr) {
+      HVSYSLOG("Failed to create work loop");
+      break;
+    }
+    _cmdGate = IOCommandGate::commandGate(this);
+    if (_cmdGate == nullptr) {
+      HVSYSLOG("Failed to create command gate");
+      break;
+    }
+    status = _workLoop->addEventSource(_cmdGate);
+    if (status != kIOReturnSuccess) {
+      HVSYSLOG("Failed to add command gate event source with status 0x%X", status);
+      break;
+    }
+
+    //
     // Initialize refresh timer.
     //
     _timerEventSource = IOTimerEventSource::timerEventSource(this,
@@ -48,9 +67,9 @@ bool HyperVGraphics::start(IOService *provider) {
       HVSYSLOG("Failed to create screen refresh timer event source");
       break;
     }
-    status = getWorkLoop()->addEventSource(_timerEventSource);
+    status = _workLoop->addEventSource(_timerEventSource);
     if (status != kIOReturnSuccess) {
-      HVSYSLOG("Failed to add screen refresh timer event source");
+      HVSYSLOG("Failed to add screen refresh timer event source with status 0x%X", status);
       break;
     }
 
@@ -79,19 +98,6 @@ bool HyperVGraphics::start(IOService *provider) {
       break;
     }
 
-    status = connectGraphics();
-    if (status != kIOReturnSuccess) {
-      HVSYSLOG("Failed to connect to graphics device with status 0x%X", status);
-      break;
-    }
-
-    //
-    // Start refresh timer sending screen updates.
-    //
-    _timerEventSource->enable();
-    _timerEventSource->setTimeoutMS(kHyperVGraphicsDIRTRefreshRateMS);
-    _fbReady = true;
-
     registerService();
     HVDBGLOG("Initialized Hyper-V Synthetic Graphics");
     result = true;
@@ -108,8 +114,14 @@ void HyperVGraphics::stop(IOService *provider) {
 
   if (_timerEventSource != nullptr) {
     _timerEventSource->disable();
+    _workLoop->removeEventSource(_timerEventSource);
     OSSafeReleaseNULL(_timerEventSource);
   }
+  if (_cmdGate != nullptr) {
+    _workLoop->removeEventSource(_cmdGate);
+    OSSafeReleaseNULL(_cmdGate);
+  }
+  OSSafeReleaseNULL(_workLoop);
 
   if (_gfxMsgCursorShape != nullptr) {
     IOFree(_gfxMsgCursorShape, _gfxMsgCursorShapeSize);
@@ -133,40 +145,13 @@ IOReturn HyperVGraphics::callPlatformFunction(const OSSymbol *functionName, bool
                                               void *param1, void *param2, void *param3, void *param4) {
   HVDBGLOG("Attempting to call platform function '%s'", functionName->getCStringNoCopy());
 
-  // Get graphics version.
-  if (functionName->isEqualTo(kHyperVGraphicsFunctionGetVersion)) {
-    if (param1 == nullptr) {
-      return kIOReturnBadArgument;
-    }
-    memcpy(param1, &_gfxVersion, sizeof (_gfxVersion));
-    return kIOReturnSuccess;
-
-  // Get graphics memory.
-  } else if (functionName->isEqualTo(kHyperVGraphicsFunctionGetMemory)) {
-    if (param1 == nullptr) {
-      return kIOReturnBadArgument;
-    }
-    HyperVGraphicsFunctionGetMemoryResults *memResults = static_cast<HyperVGraphicsFunctionGetMemoryResults*>(param1);
-    memResults->base = _gfxBase;
-    memResults->length = _gfxLength;
-    return kIOReturnSuccess;
-
-  // Set resolution.
-  } else if (functionName->isEqualTo(kHyperVGraphicsFunctionSetResolution)) {
-    return updateScreenResolution(*((UInt32*)param1), *((UInt32*)param2));
-
-  // Set hardware cursor.
-  } else if (functionName->isEqualTo(kHyperVGraphicsFunctionSetCursor)) {
-    HyperVGraphicsFunctionSetCursorParams *cursorParams = static_cast<HyperVGraphicsFunctionSetCursorParams*>(param1);
-    if (cursorParams == nullptr) {
-      return kIOReturnBadArgument;
-    }
-    return updateCursorShape(cursorParams->cursorData, cursorParams->width, cursorParams->height,
-                             cursorParams->hotX, cursorParams->hotY);
-
-  } else if (functionName->isEqualTo(kHyperVGraphicsFunctionSetCusorPosition)) {
-    return updateCursorPosition(*((SInt32*)param1), *((SInt32*)param2), *((bool*)param3));
+  if (functionName->isEqualTo(kHyperVGraphicsPlatformFunctionInit)) {
+    return platformInitGraphics(static_cast<VMBusVersion*>(param1), static_cast<IOPhysicalAddress*>(param2), static_cast<UInt32*>(param3));
+  } else if (functionName->isEqualTo(kHyperVGraphicsPlatformFunctionSetResolution)) {
+    return platformSetScreenResolution(static_cast<UInt32*>(param1), static_cast<UInt32*>(param2));
   } else {
-    return kIOReturnUnsupported;
+    HVDBGLOG("Called unknown platform function");
   }
+
+  return super::callPlatformFunction(functionName, waitForFunction, param1, param2, param3, param4);
 }

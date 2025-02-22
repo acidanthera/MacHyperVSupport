@@ -31,16 +31,18 @@ private:
   HyperVGraphicsMode  *_gfxModes      = nullptr;
   IOItemCount         _gfxModesCount  = 0;
   VMBusVersion        _gfxVersion     = { };
-  UInt32              _bitDepth       = 32; // TODO: Make dynamic
 
   UInt8               *_cursorData      = nullptr;
   size_t              _cursorDataSize   = kHyperVGraphicsCursorMaxSize;
   bool                _hasCursorHotspot = false;
   
   IODisplayModeID _currentDisplayMode = 4;
-
-  IOReturn getGraphicsServiceVersion();
-  IOReturn getGraphicsServiceMemory();
+  
+  //
+  // Internal functions.
+  //
+  inline UInt32 getScreenDepth() { return (_gfxVersion.value == kHyperVGraphicsVersionV3_0) ? kHyperVGraphicsBitDepth2008 : kHyperVGraphicsBitDepth; }
+  IOReturn initGraphicsService();
   IOReturn buildGraphicsModes();
   IOReturn buildFallbackMode();
 

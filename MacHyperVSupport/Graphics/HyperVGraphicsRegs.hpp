@@ -17,20 +17,16 @@
 #define kHyperVGraphicsDefaultHeight  864
 
 //
-// Minimum size on all versions.
+// Size limits.
 //
-#define kHyperVGraphicsMinWidth       640
-#define kHyperVGraphicsMinHeight      480
+#define kHyperVGraphicsMinWidth           640
+#define kHyperVGraphicsMinHeight          480
+#define kHyperVGraphicsMaxWidth2008       1600
+#define kHyperVGraphicsMaxHeight2008      1200
+#define kHyperVGraphicsBitDepth2008       16
+#define kHyperVGraphicsBitDepth           32
+#define kHyperVGraphicsBitsPerByte        8
 
-//
-// Max sizes.
-//
-#define kHyperVGraphicsMaxWidth2008      1600
-#define kHyperVGraphicsMaxHeight2008     1200
-
-//
-// Max cursor size.
-//
 #define kHyperVGraphicsCursorMaxWidth     32
 #define kHyperVGraphicsCursorMaxHeight    32
 
@@ -50,7 +46,7 @@
 //
 #define kHyperVGraphicsRequestTransactionBaseID 0x46495348
 
-#define kHyperVGraphicsDIRTRefreshRateMS      10
+#define kHyperVGraphicsImageUpdateRefreshRateMS      10
 
 //
 // Graphics messages.

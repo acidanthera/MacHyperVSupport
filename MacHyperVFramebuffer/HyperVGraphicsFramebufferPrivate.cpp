@@ -11,29 +11,24 @@
 #define kHyperVHeightKey                  "Height"
 #define kHyperVWidthKey                   "Width"
 
-IOReturn HyperVGraphicsFramebuffer::getGraphicsServiceVersion() {
-  if (_hvGfxProvider == nullptr) {
-    return kIOReturnUnsupported;
-  }
-  return _hvGfxProvider->callPlatformFunction(kHyperVGraphicsFunctionGetVersion, true, &_gfxVersion, nullptr, nullptr, nullptr);
-}
-
-IOReturn HyperVGraphicsFramebuffer::getGraphicsServiceMemory() {
-  HyperVGraphicsFunctionGetMemoryResults memResults;
-  IOReturn                               status;
+IOReturn HyperVGraphicsFramebuffer::initGraphicsService() {
+  IOReturn status;
 
   if (_hvGfxProvider == nullptr) {
     return kIOReturnUnsupported;
   }
 
-  status = _hvGfxProvider->callPlatformFunction(kHyperVGraphicsFunctionGetMemory, true, &memResults, nullptr, nullptr, nullptr);
+  //
+  // Initialize graphics service and get version and graphics memory location.
+  //
+  status = _hvGfxProvider->callPlatformFunction(kHyperVGraphicsPlatformFunctionInit, true, &_gfxVersion, &_gfxBase, &_gfxLength, nullptr);
   if (status != kIOReturnSuccess) {
     return status;
   }
-  _gfxBase  = memResults.base;
-  _gfxLength = memResults.length;
 
-  HVSYSLOG("Graphics memory located at %p length 0x%X", _gfxBase, _gfxLength);
+  HVDBGLOG("Graphics version %u.%u", _gfxVersion.major, _gfxVersion.minor);
+  HVDBGLOG("Graphics memory located at %p length 0x%X", _gfxBase, _gfxLength);
+  HVDBGLOG("Graphics bit depth: %u-bit", (_gfxVersion.value == kHyperVGraphicsVersionV3_0) ? kHyperVGraphicsBitDepth2008 : kHyperVGraphicsBitDepth);
   return kIOReturnSuccess;
 }
 
@@ -86,7 +81,7 @@ IOReturn HyperVGraphicsFramebuffer::buildGraphicsModes() {
       }
     }
     if ((_gfxModes[i].width < kHyperVGraphicsMinWidth) || (_gfxModes[i].height < kHyperVGraphicsMinHeight)
-        || ((_gfxModes[i].width * _gfxModes[i].height * (_bitDepth / 8)) > _gfxLength)) {
+        || ((_gfxModes[i].width * _gfxModes[i].height * (getScreenDepth() / kHyperVGraphicsBitsPerByte)) > _gfxLength)) {
       HVSYSLOG("Invalid screen resolution %ux%u at %u", _gfxModes[i].width, _gfxModes[i].height, i);
       IOFree(_gfxModes, sizeof (*_gfxModes) * _gfxModesCount);
       return buildFallbackMode();

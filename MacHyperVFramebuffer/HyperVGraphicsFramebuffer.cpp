@@ -21,7 +21,6 @@ static char const pixelFormatString32[] = IO32BitDirectPixels "\0";
 
 bool HyperVGraphicsFramebuffer::start(IOService *provider) {
   IOPCIDevice *pciDevice;
-  IOReturn    status;
 
   HVCheckDebugArgs();
   HVDBGLOG("Initializing Hyper-V Synthetic Framebuffer");
@@ -52,65 +51,8 @@ bool HyperVGraphicsFramebuffer::start(IOService *provider) {
     _hasCursorHotspot = true;
   }
 
-  //
-  // Get instance of graphics service.
-  // This cannot link against the main kext due to macOS requirements, as this kext
-  // must be in /L/E on newer macOS versions, but the main one will be injected.
-  //
-  OSDictionary *gfxProvMatching = IOService::serviceMatching("HyperVGraphics");
-  if (gfxProvMatching == nullptr) {
-    HVSYSLOG("Failed to create HyperVGraphics matching dictionary");
-    return false;
-  }
-
-  HVDBGLOG("Waiting for HyperVGraphics");
-#if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
-  _hvGfxProvider = IOService::waitForService(gfxProvMatching);
-  if (_hvGfxProvider != nullptr) {
-    _hvGfxProvider->retain();
-  }
-#else
-  _hvGfxProvider = waitForMatchingService(gfxProvMatching);
-  gfxProvMatching->release();
-#endif
-
-  if (_hvGfxProvider == nullptr) {
-    HVSYSLOG("Failed to locate HyperVGraphics");
-    return false;
-  }
-  _hvGfxProvider->retain();
-  HVDBGLOG("Got instance of HyperVGraphics");
-
-  //
-  // Get version and memory.
-  //
-  status = getGraphicsServiceVersion();
-  if (status != kIOReturnSuccess) {
-    HVSYSLOG("Failed to get graphics service version");
-    OSSafeReleaseNULL(_hvGfxProvider);
-    return false;
-  }
-  status = getGraphicsServiceMemory();
-  if (status != kIOReturnSuccess) {
-    HVSYSLOG("Failed to get graphics service memory");
-    OSSafeReleaseNULL(_hvGfxProvider);
-    return false;
-  }
-
-  //
-  // Get modes.
-  //
-  status = buildGraphicsModes();
-  if (status != kIOReturnSuccess) {
-    HVSYSLOG("Failed to build graphics modes");
-    OSSafeReleaseNULL(_hvGfxProvider);
-    return false;
-  }
-
   if (!super::start(provider)) {
     HVSYSLOG("super::start() returned false");
-    IOFree(_gfxModes, sizeof (*_gfxModes) * _gfxModesCount);
-    OSSafeReleaseNULL(_hvGfxProvider);
     return false;
   }
 
@@ -140,7 +82,55 @@ void HyperVGraphicsFramebuffer::stop(IOService *provider) {
 }
 
 IOReturn HyperVGraphicsFramebuffer::enableController() {
-  HVDBGLOG("start");
+  IOReturn    status;
+
+  //
+  // Get instance of graphics service.
+  // This cannot link against the main kext due to macOS requirements, as this kext
+  // must be in /L/E on newer macOS versions, but the main one will be injected.
+  //
+  OSDictionary *gfxProvMatching = IOService::serviceMatching("HyperVGraphics");
+  if (gfxProvMatching == nullptr) {
+    HVSYSLOG("Failed to create HyperVGraphics matching dictionary");
+    return kIOReturnNoResources;
+  }
+
+  HVDBGLOG("Waiting for HyperVGraphics");
+#if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
+  _hvGfxProvider = IOService::waitForService(gfxProvMatching);
+  if (_hvGfxProvider != nullptr) {
+    _hvGfxProvider->retain();
+  }
+#else
+  _hvGfxProvider = waitForMatchingService(gfxProvMatching);
+  gfxProvMatching->release();
+#endif
+
+  if (_hvGfxProvider == nullptr) {
+    HVSYSLOG("Failed to locate HyperVGraphics");
+    return kIOReturnNotFound;
+  }
+  _hvGfxProvider->retain();
+  HVDBGLOG("Got instance of HyperVGraphics");
+
+  //
+  // Initialize graphics service.
+  //
+  status = initGraphicsService();
+  if (status != kIOReturnSuccess) {
+    HVSYSLOG("Failed to initialize graphics service with status 0x%X", status);
+    return status;
+  }
+
+  //
+  // Get modes.
+  //
+  status = buildGraphicsModes();
+  if (status != kIOReturnSuccess) {
+    HVSYSLOG("Failed to build graphics modes with status 0x%X", status);
+    return status;
+  }
+
   return kIOReturnSuccess;
 }
 
@@ -217,8 +207,8 @@ IOReturn HyperVGraphicsFramebuffer::getPixelInformation(IODisplayModeID displayM
            _gfxModes[displayMode - 1].width, _gfxModes[displayMode - 1].height);
   bzero(pixelInfo, sizeof (*pixelInfo));
 
-  pixelInfo->bytesPerRow          = _gfxModes[displayMode - 1].width * (_bitDepth / 8);
-  pixelInfo->bitsPerPixel         = _bitDepth;
+  pixelInfo->bytesPerRow          = _gfxModes[displayMode - 1].width * (getScreenDepth() / kHyperVGraphicsBitsPerByte);
+  pixelInfo->bitsPerPixel         = getScreenDepth();
   pixelInfo->pixelType            = kIORGBDirectPixels;
   pixelInfo->bitsPerComponent     = 8;
   pixelInfo->componentCount       = 3;
@@ -228,9 +218,9 @@ IOReturn HyperVGraphicsFramebuffer::getPixelInformation(IODisplayModeID displayM
   pixelInfo->activeWidth          = _gfxModes[displayMode - 1].width;
   pixelInfo->activeHeight         = _gfxModes[displayMode - 1].height;
 
-  if (_bitDepth == 32) {
+  if (getScreenDepth() == 32) {
     memcpy(&pixelInfo->pixelFormat[0], &pixelFormatString32[0], sizeof (IOPixelEncoding));
-  } else if (_bitDepth == 16) {
+  } else if (getScreenDepth() == 16) {
     memcpy(&pixelInfo->pixelFormat[0], &pixelFormatString16[0], sizeof (IOPixelEncoding));
   }
 
@@ -259,18 +249,18 @@ IOReturn HyperVGraphicsFramebuffer::setDisplayMode(IODisplayModeID displayMode, 
   //
   // Instruct graphics service to change resolution.
   //
-  return _hvGfxProvider->callPlatformFunction(kHyperVGraphicsFunctionSetResolution, true,
+  return _hvGfxProvider->callPlatformFunction(kHyperVGraphicsPlatformFunctionSetResolution, true,
                                               &width, &height, nullptr, nullptr);
 }
 
 IOReturn HyperVGraphicsFramebuffer::getAttribute(IOSelect attribute, uintptr_t *value) {
-  if (attribute == kIOHardwareCursorAttribute) {
+  /*if (attribute == kIOHardwareCursorAttribute) {
     if (value != nullptr) {
       *value = 1;
     }
     HVDBGLOG("Hardware cursor supported");
     return kIOReturnSuccess;
-  }
+  }*/
 
   return super::getAttribute(attribute, value);
 }
@@ -332,5 +322,5 @@ IOReturn HyperVGraphicsFramebuffer::setCursorState(SInt32 x, SInt32 y, bool visi
 void HyperVGraphicsFramebuffer::flushCursor() {
   HyperVGraphicsFunctionSetCursorParams cursorParams = { };
   cursorParams.cursorData = nullptr;
-  _hvGfxProvider->callPlatformFunction(kHyperVGraphicsFunctionSetCursor, true, &cursorParams, nullptr, nullptr, nullptr);
+ // _hvGfxProvider->callPlatformFunction(kHyperVGraphicsFunctionSetCursor, true, &cursorParams, nullptr, nullptr, nullptr);
 }

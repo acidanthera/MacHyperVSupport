@@ -11,9 +11,9 @@
 
 void HyperVGraphics::handleRefreshTimer(IOTimerEventSource *sender) {
   if (_fbReady) {
-    updateFramebufferImage();
-    _timerEventSource->setTimeoutMS(kHyperVGraphicsDIRTRefreshRateMS);
+    refreshFramebufferImage();
   }
+  _timerEventSource->setTimeoutMS(kHyperVGraphicsImageUpdateRefreshRateMS);
 }
 
 void HyperVGraphics::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
@@ -49,7 +49,7 @@ void HyperVGraphics::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
           updateScreenResolution(0, 0, true);
         }
         if (gfxMsg->featureUpdate.isImageUpdateNeeded) {
-          updateFramebufferImage();
+          refreshFramebufferImage();
         }
         if (gfxMsg->featureUpdate.isCursorShapeNeeded) {
           updateCursorShape(nullptr, 0, 0, 0, 0, true);
@@ -99,103 +99,16 @@ IOReturn HyperVGraphics::negotiateVersion(VMBusVersion version) {
   return gfxMsg.versionResponse.accepted != 0 ? kIOReturnSuccess : kIOReturnUnsupported;
 }
 
-IOReturn HyperVGraphics::connectGraphics() {
-  PE_Video consoleInfo = { };
-  bool foundVersion = false;
-  IOReturn status;
-
-  //
-  // Negotiate graphics system version.
-  //
-  VMBusVersion graphicsVersion;
-  switch (_hvDevice->getVMBusVersion()) {
-    case kVMBusVersionWIN8:
-    case kVMBusVersionWIN8_1:
-    case kVMBusVersionWIN10:
-    case kVMBusVersionWIN10_V4_1: // TODO: Check if this is correct.
-      graphicsVersion.value = kHyperVGraphicsVersionV3_2;
-      break;
-
-    case kVMBusVersionWIN7:
-    case kVMBusVersionWS2008:
-      graphicsVersion.value = kHyperVGraphicsVersionV3_0;
-      break;
-
-    default:
-      graphicsVersion.value = kHyperVGraphicsVersionV3_5;
-      break;
-  }
-
-  status = negotiateVersion(graphicsVersion);
-  if (status == kIOReturnSuccess) {
-    foundVersion = true;
-    _gfxVersion = graphicsVersion;
-  }
-
-  if (!foundVersion) {
-    HVSYSLOG("Could not negotiate graphics version");
-    return kIOReturnUnsupported;
-  }
-  HVDBGLOG("Using graphics version %u.%u", _gfxVersion.major, _gfxVersion.minor);
-
-  //
-  // Allocate graphics memory.
-  //
-  status = allocateGraphicsMemory();
-  if (status != kIOReturnSuccess) {
-    HVSYSLOG("Failed to allocate graphics memory with status 0x%X", status);
-    return status;
-  }
-
-  //
-  // Send location to Hyper-V.
-  //
-  status = updateGraphicsMemoryLocation();
-  if (status != kIOReturnSuccess) {
-    HVSYSLOG("Failed to send graphics memory location with status 0x%X", status);
-    return status;
-  }
-
-  //
-  // Pull console info and set resolution.
-  //
-  if (getPlatform()->getConsoleInfo(&consoleInfo) != kIOReturnSuccess) {
-    HVSYSLOG("Failed to get console info");
-    return false;
-  }
-  HVDBGLOG("Console is at 0x%X (%ux%u, bpp: %u, bytes/row: %u)",
-         consoleInfo.v_baseAddr, consoleInfo.v_width, consoleInfo.v_height, consoleInfo.v_depth, consoleInfo.v_rowBytes);
-  status = updateScreenResolution(static_cast<UInt32>(consoleInfo.v_width), static_cast<UInt32>(consoleInfo.v_height), false);
-  if (status != kIOReturnSuccess) {
-    HVSYSLOG("Failed to update screen resolution with status 0x%X", status);
-    return status;
-  }
-
-  return kIOReturnSuccess;
-}
-
-IOReturn HyperVGraphics::allocateGraphicsMemory() {
-  PE_Video consoleInfo;
+IOReturn HyperVGraphics::allocateGraphicsMemory(IOPhysicalAddress *outBase, UInt32 *outLength) {
   OSNumber *mmioBytesNumber;
 
   //
-  // Get HyperVPCIRoot instance used for allocating MMIO regions for Hyper-V Gen1 VMs.
+  // Get HyperVPCIRoot instance used for allocating MMIO regions..
   //
   HyperVPCIRoot *hvPCIRoot = HyperVPCIRoot::getPCIRootInstance();
   if (hvPCIRoot == nullptr) {
-    return kIOReturnNoResources;
+    return kIOReturnNotFound;
   }
-
-  //
-  // Pull console info. We'll use the base address but the length will be gathered from Hyper-V.
-  //
-  if (getPlatform()->getConsoleInfo(&consoleInfo) != kIOReturnSuccess) {
-    HVSYSLOG("Failed to get console info");
-    return kIOReturnIOError;
-  }
-  HVDBGLOG("Console is at 0x%X (%ux%u, bpp: %u, bytes/row: %u)",
-           consoleInfo.v_baseAddr, consoleInfo.v_width, consoleInfo.v_height, consoleInfo.v_depth, consoleInfo.v_rowBytes);
-  _fbBaseAddress = consoleInfo.v_baseAddr;
 
   //
   // Get MMIO bytes.
@@ -205,17 +118,14 @@ IOReturn HyperVGraphics::allocateGraphicsMemory() {
     HVSYSLOG("Failed to get MMIO byte count");
     return kIOReturnNoResources;
   }
-  _fbTotalLength = _gfxLength = static_cast<UInt32>(mmioBytesNumber->unsigned64BitValue());
-  HVDBGLOG("Framebuffer MMIO size: %p bytes", _gfxLength);
-  _fbInitialLength = consoleInfo.v_height * consoleInfo.v_rowBytes;
+  *outLength = static_cast<UInt32>(mmioBytesNumber->unsigned64BitValue());
+  *outBase = 0xF8000000; //0xF8000000; // TODO: Make dynamic, no need to use this one.
 
-  
-  _gfxBase = 0xF8000000;//0xFFB00000; // TODO: Fix for Gen2
-
+  HVDBGLOG("Graphics memory will be located at %p length 0x%X", *outBase, *outLength);
   return kIOReturnSuccess;
 }
 
-IOReturn HyperVGraphics::updateFramebufferImage() {
+IOReturn HyperVGraphics::refreshFramebufferImage() {
   HyperVGraphicsMessage gfxMsg = { };
   IOReturn              status;
 
@@ -239,17 +149,17 @@ IOReturn HyperVGraphics::updateFramebufferImage() {
   return status;
 }
 
-IOReturn HyperVGraphics::updateGraphicsMemoryLocation() {
+IOReturn HyperVGraphics::setGraphicsMemory(IOPhysicalAddress base, UInt32 length) {
   IOReturn status;
   HyperVGraphicsMessage gfxMsg = { };
 
   //
-  // Send location of graphics memory (VRAM)._gfxMmioLength
+  // Set location of graphics memory (VRAM).
   //
-  HVDBGLOG("Graphics memory located at %p length 0x%X", _gfxBase, _gfxLength);
   gfxMsg.gfxHeader.type = kHyperVGraphicsMessageTypeVRAMLocation;
   gfxMsg.gfxHeader.size = sizeof (gfxMsg.gfxHeader) + sizeof (gfxMsg.vramLocation);
-  gfxMsg.vramLocation.context = gfxMsg.vramLocation.vramGPA = _gfxBase;
+
+  gfxMsg.vramLocation.context            = gfxMsg.vramLocation.vramGPA = base;
   gfxMsg.vramLocation.isVRAMGPASpecified = 1;
 
   status = sendGraphicsMessage(&gfxMsg, kHyperVGraphicsMessageTypeVRAMAck, &gfxMsg);
@@ -257,12 +167,63 @@ IOReturn HyperVGraphics::updateGraphicsMemoryLocation() {
     HVSYSLOG("Failed to send graphics memory location with status 0x%X", status);
     return status;
   }
-  if (gfxMsg.vramAck.context != _gfxBase) {
-    HVSYSLOG("Returned context 0x%llX is incorrect, should be %p", gfxMsg.vramAck.context, _gfxBase);
+  if (gfxMsg.vramAck.context != base) {
+    HVSYSLOG("Returned context 0x%llX is incorrect, should be %p", gfxMsg.vramAck.context, base);
     return kIOReturnIOError;
   }
 
-  HVDBGLOG("Updated graphics memory location successfully");
+  HVDBGLOG("Set graphics memory location to %p length 0x%X", base, length);
+  return kIOReturnSuccess;
+}
+
+IOReturn HyperVGraphics::setScreenResolution(UInt32 width, UInt32 height) {
+  return _cmdGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVGraphics::setScreenResolutionGated), &width, &height);
+}
+
+IOReturn HyperVGraphics::setScreenResolutionGated(UInt32 *width, UInt32 *height) {
+  HyperVGraphicsMessage gfxMsg = { };
+  IOReturn              status;
+
+  //
+  // Check bounds.
+  //
+  if (_gfxVersion.value == kHyperVGraphicsVersionV3_0) {
+    if ((*width > kHyperVGraphicsMaxWidth2008) || (*height > kHyperVGraphicsMaxHeight2008)) {
+      HVSYSLOG("Invalid screen resolution %ux%u", *width, *height);
+      return kIOReturnBadArgument;
+    }
+  }
+  if ((*width < kHyperVGraphicsMinWidth) || (*height < kHyperVGraphicsMinHeight)
+      || (*width * *height * (getScreenDepth() / kHyperVGraphicsBitsPerByte)) > _gfxLength) {
+    HVSYSLOG("Invalid screen resolution %ux%u", *width, *height);
+    return kIOReturnBadArgument;
+  }
+
+  //
+  // Set screen resolution and pixel depth information.
+  //
+  HVDBGLOG("Setting screen resolution to %ux%ux%u", *width, *height, getScreenDepth());
+  gfxMsg.gfxHeader.type = kHyperVGraphicsMessageTypeResolutionUpdate;
+  gfxMsg.gfxHeader.size = sizeof (gfxMsg.gfxHeader) + sizeof (gfxMsg.resolutionUpdate);
+
+  gfxMsg.resolutionUpdate.context                    = 0;
+  gfxMsg.resolutionUpdate.videoOutputCount           = 1;
+  gfxMsg.resolutionUpdate.videoOutputs[0].active     = 1;
+  gfxMsg.resolutionUpdate.videoOutputs[0].vramOffset = 0;
+  gfxMsg.resolutionUpdate.videoOutputs[0].depth      = getScreenDepth();
+  gfxMsg.resolutionUpdate.videoOutputs[0].width      = *width;
+  gfxMsg.resolutionUpdate.videoOutputs[0].height     = *height;
+  gfxMsg.resolutionUpdate.videoOutputs[0].pitch      = *width * (getScreenDepth() / kHyperVGraphicsBitsPerByte);
+
+  status = sendGraphicsMessage(&gfxMsg, kHyperVGraphicsMessageTypeResolutionUpdateAck, &gfxMsg);
+  if (status != kIOReturnSuccess) {
+    HVSYSLOG("Failed to send screen resolution with status 0x%X", status);
+    return status;
+  }
+
+  _screenWidth  = *width;
+  _screenHeight = *height;
+  HVDBGLOG("Screen resolution is now set to %ux%ux%u", _screenWidth, _screenHeight, getScreenDepth());
   return kIOReturnSuccess;
 }
 
