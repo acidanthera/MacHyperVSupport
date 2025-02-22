@@ -29,6 +29,7 @@ private:
   //
   // Range allocators for low and high MMIO allocations.
   //
+  bool canAllocateMMIO                  = false;
   IORangeAllocator *_rangeAllocatorLow  = nullptr;
   IORangeAllocator *_rangeAllocatorHigh = nullptr;
   bool reserveFramebufferArea();

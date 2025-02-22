@@ -47,55 +47,55 @@ bool HyperVPCIRoot::start(IOService *provider) {
   do {
     //
     // Add memory ranges from ACPI.
-    // TODO: Handle Gen2.
     //
     OSData *acpiAddressSpaces = OSDynamicCast(OSData, provider->getProperty("acpi-address-spaces"));
     if (acpiAddressSpaces == nullptr) {
-      HVSYSLOG("Unable to locate acpi-address-spaces property");
-      break;
-    }
+      HVSYSLOG("Unable to locate acpi-address-spaces property, MMIO services will be unavailable");
+    } else {
+      IOACPIAddressSpaceDescriptor *acpiRanges    = (IOACPIAddressSpaceDescriptor*) acpiAddressSpaces->getBytesNoCopy();
+      UInt32                       acpiRangeCount = acpiAddressSpaces->getLength() / sizeof (*acpiRanges);
 
-    IOACPIAddressSpaceDescriptor *acpiRanges    = (IOACPIAddressSpaceDescriptor*) acpiAddressSpaces->getBytesNoCopy();
-    UInt32                       acpiRangeCount = acpiAddressSpaces->getLength() / sizeof (*acpiRanges);
+      _rangeAllocatorLow  = IORangeAllocator::withRange(0);
+      _rangeAllocatorHigh = IORangeAllocator::withRange(0);
+      if (_rangeAllocatorLow == nullptr || _rangeAllocatorHigh == nullptr) {
+        HVSYSLOG("Unable to allocate range allocators");
+        break;
+      }
+      
+      HVDBGLOG("Got %u ACPI ranges", acpiRangeCount);
+      for (int i = 0; i < acpiRangeCount; i++) {
+        HVDBGLOG("ACPI range type %u: minimum 0x%llX, maximum 0x%llX, length 0x%llX, high %u", acpiRanges[i].resourceType,
+                 acpiRanges[i].minAddressRange, acpiRanges[i].maxAddressRange, acpiRanges[i].addressLength,
+                 acpiRanges[i].minAddressRange > UINT32_MAX);
 
-    _rangeAllocatorLow  = IORangeAllocator::withRange(0);
-    _rangeAllocatorHigh = IORangeAllocator::withRange(0);
-    if (_rangeAllocatorLow == nullptr || _rangeAllocatorHigh == nullptr) {
-      HVSYSLOG("Unable to allocate range allocators");
-      break;
-    }
-    
-    HVDBGLOG("Got %u ACPI ranges", acpiRangeCount);
-    for (int i = 0; i < acpiRangeCount; i++) {
-      HVDBGLOG("ACPI range type %u: minimum 0x%llX, maximum 0x%llX, length 0x%llX, high %u", acpiRanges[i].resourceType,
-               acpiRanges[i].minAddressRange, acpiRanges[i].maxAddressRange, acpiRanges[i].addressLength,
-               acpiRanges[i].minAddressRange > UINT32_MAX);
+        //
+        // Skip any non-memory ranges (should not occur normally).
+        //
+        if (acpiRanges[i].resourceType != kIOACPIMemoryRange) {
+          continue;
+        }
 
-      //
-      // Skip any non-memory ranges (should not occur normally).
-      //
-      if (acpiRanges[i].resourceType != kIOACPIMemoryRange) {
-        continue;
+        //
+        // Add to appropriate range allocator.
+        //
+        if (acpiRanges[i].minAddressRange > UINT32_MAX) {
+          _rangeAllocatorHigh->deallocate(static_cast<IOPhysicalAddress>(acpiRanges[i].minAddressRange),
+                                          static_cast<IOPhysicalLength>(acpiRanges[i].addressLength));
+        } else {
+          _rangeAllocatorLow->deallocate(static_cast<IOPhysicalAddress>(acpiRanges[i].minAddressRange),
+                                         static_cast<IOPhysicalLength>(acpiRanges[i].addressLength));
+        }
       }
 
       //
-      // Add to appropriate range allocator.
+      // Reserve FB memory.
       //
-      if (acpiRanges[i].minAddressRange > UINT32_MAX) {
-        _rangeAllocatorHigh->deallocate(static_cast<IOPhysicalAddress>(acpiRanges[i].minAddressRange),
-                                        static_cast<IOPhysicalLength>(acpiRanges[i].addressLength));
-      } else {
-        _rangeAllocatorLow->deallocate(static_cast<IOPhysicalAddress>(acpiRanges[i].minAddressRange),
-                                       static_cast<IOPhysicalLength>(acpiRanges[i].addressLength));
-      }
+      reserveFramebufferArea();
+      HVDBGLOG("Initialized Hyper-V Root PCI Bridge with free size: %u bytes (low) %u bytes (high)",
+               _rangeAllocatorLow->getFreeCount(), _rangeAllocatorHigh->getFreeCount());
+      canAllocateMMIO = true;
     }
 
-    //
-    // Reserve FB memory.
-    //
-    reserveFramebufferArea();
-    HVDBGLOG("Initialized Hyper-V Root PCI Bridge with free size: %u bytes (low) %u bytes (high)",
-             _rangeAllocatorLow->getFreeCount(), _rangeAllocatorHigh->getFreeCount());
     result = true;
   } while (false);
 
@@ -328,6 +328,10 @@ IORangeScalar HyperVPCIRoot::allocateRange(IORangeScalar size, IORangeScalar ali
   IORangeScalar range = 0;
   bool result         = false;
 
+  if (!canAllocateMMIO) {
+    return 0;
+  }
+
   if (maxAddress > UINT32_MAX) {
     result = _rangeAllocatorHigh->allocate(size, &range, alignment);
   }
@@ -342,6 +346,10 @@ IORangeScalar HyperVPCIRoot::allocateRange(IORangeScalar size, IORangeScalar ali
 }
 
 void HyperVPCIRoot::freeRange(IORangeScalar start, IORangeScalar size) {
+  if (!canAllocateMMIO) {
+    return;
+  }
+
   if (start > UINT32_MAX) {
     _rangeAllocatorHigh->deallocate(start, size);
   } else {
