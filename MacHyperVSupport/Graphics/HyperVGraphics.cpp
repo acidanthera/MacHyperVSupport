@@ -73,12 +73,6 @@ bool HyperVGraphics::start(IOService *provider) {
       break;
     }
 
-    _gfxMsgCursorShapeLock = IOSimpleLockAlloc();
-    if (_gfxMsgCursorShapeLock == nullptr) {
-      HVSYSLOG("Failed to allocate cursor shape lock");
-      break;
-    }
-
     //
     // Install packet handler.
     //
@@ -127,10 +121,6 @@ void HyperVGraphics::stop(IOService *provider) {
     IOFree(_gfxMsgCursorShape, _gfxMsgCursorShapeSize);
     _gfxMsgCursorShape = nullptr;
   }
-  if (_gfxMsgCursorShapeLock != nullptr) {
-    IOSimpleLockFree(_gfxMsgCursorShapeLock);
-    _gfxMsgCursorShapeLock = nullptr;
-  }
 
   if (_hvDevice != nullptr) {
     _hvDevice->closeVMBusChannel();
@@ -143,14 +133,16 @@ void HyperVGraphics::stop(IOService *provider) {
 
 IOReturn HyperVGraphics::callPlatformFunction(const OSSymbol *functionName, bool waitForFunction,
                                               void *param1, void *param2, void *param3, void *param4) {
-  HVDBGLOG("Attempting to call platform function '%s'", functionName->getCStringNoCopy());
-
   if (functionName->isEqualTo(kHyperVGraphicsPlatformFunctionInit)) {
     return platformInitGraphics(static_cast<VMBusVersion*>(param1), static_cast<IOPhysicalAddress*>(param2), static_cast<UInt32*>(param3));
   } else if (functionName->isEqualTo(kHyperVGraphicsPlatformFunctionSetResolution)) {
     return platformSetScreenResolution(static_cast<UInt32*>(param1), static_cast<UInt32*>(param2));
+  } else if (functionName->isEqualTo(kHyperVGraphicsPlatformFunctionSetCursorShape)) {
+    return setCursorShape(static_cast<HyperVGraphicsPlatformFunctionSetCursorShapeParams*>(param1));
+  } else if (functionName->isEqualTo(kHyperVGraphicsPlatformFunctionSetCursorPosition)) {
+    return platformSetCursorPosition(static_cast<SInt32*>(param1), static_cast<SInt32*>(param2), static_cast<bool*>(param3));
   } else {
-    HVDBGLOG("Called unknown platform function");
+    HVDBGLOG("Called unknown platform function '%s'", functionName->getCStringNoCopy());
   }
 
   return super::callPlatformFunction(functionName, waitForFunction, param1, param2, param3, param4);

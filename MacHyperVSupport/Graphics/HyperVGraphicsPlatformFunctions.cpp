@@ -106,3 +106,10 @@ IOReturn HyperVGraphics::platformSetScreenResolution(UInt32 *inWidth, UInt32 *in
   }
   return setScreenResolution(*inWidth, *inHeight);
 }
+
+IOReturn HyperVGraphics::platformSetCursorPosition(SInt32 *x, SInt32 *y, bool *isVisible) {
+  if ((x == nullptr) || (y == nullptr) || (isVisible == nullptr)) {
+    return kIOReturnBadArgument;
+  }
+  return setCursorPosition(*x, *y, *isVisible);
+}

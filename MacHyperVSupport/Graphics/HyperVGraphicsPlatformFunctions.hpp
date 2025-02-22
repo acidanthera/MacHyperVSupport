@@ -13,12 +13,11 @@
 //
 #define kHyperVGraphicsPlatformFunctionInit               "HyperVGraphicsPlatformFunctionInit"
 #define kHyperVGraphicsPlatformFunctionSetResolution      "HyperVGraphicsPlatformFunctionSetResolution"
-
-#define kHyperVGraphicsFunctionSetCursor        "HyperVGraphicsFunctionSetCursor"
-#define kHyperVGraphicsFunctionSetCusorPosition "HyperVGraphicsFunctionSetCusorPosition"
+#define kHyperVGraphicsPlatformFunctionSetCursorShape     "HyperVGraphicsPlatformFunctionSetCursorShape"
+#define kHyperVGraphicsPlatformFunctionSetCursorPosition  "HyperVGraphicsPlatformFunctionSetCursorPosition"
 
 //
-// HyperVGraphicsFunctionSetCursor parameters
+// HyperVGraphicsPlatformFunctionSetCursorShape parameters
 //
 typedef struct {
   UInt8   *cursorData;
@@ -26,6 +25,6 @@ typedef struct {
   UInt32  height;
   UInt32  hotX;
   UInt32  hotY;
-} HyperVGraphicsFunctionSetCursorParams;
+} HyperVGraphicsPlatformFunctionSetCursorShapeParams;
 
 #endif

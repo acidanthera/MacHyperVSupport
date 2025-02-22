@@ -34,8 +34,7 @@ private:
   UInt32        _screenWidth    = 0;
   UInt32        _screenHeight   = 0;
   bool          _fbReady        = false;
-  
-  IOSimpleLock              *_gfxMsgCursorShapeLock = nullptr;
+
   HyperVGraphicsMessage     *_gfxMsgCursorShape     = nullptr;
   size_t                    _gfxMsgCursorShapeSize  = 0;
 
@@ -54,17 +53,17 @@ private:
   IOReturn setGraphicsMemory(IOPhysicalAddress base, UInt32 length);
   IOReturn setScreenResolution(UInt32 width, UInt32 height, bool waitForAck = true);
   IOReturn setScreenResolutionGated(UInt32 *width, UInt32 *height, bool *waitForAck);
+  IOReturn setCursorShape(HyperVGraphicsPlatformFunctionSetCursorShapeParams *params, bool refreshCursor = false);
+  IOReturn setCursorShapeGated(HyperVGraphicsPlatformFunctionSetCursorShapeParams *params, bool *refreshCursor);
+  IOReturn setCursorPosition(SInt32 x, SInt32 y, bool isVisible, bool refreshCursor = false);
+  IOReturn setCursorPositionGated(SInt32 *x, SInt32 *y, bool *isVisible, bool *refreshCursor);
 
   //
   // Platform functions.
   //
   IOReturn platformInitGraphics(VMBusVersion *outVersion, IOPhysicalAddress *outMemBase, UInt32 *outMemLength);
   IOReturn platformSetScreenResolution(UInt32 *inWidth, UInt32 *inHeight);
-  
-  
-
-  IOReturn updateCursorShape(const UInt8 *cursorData, UInt32 width, UInt32 height, UInt32 hotX, UInt32 hotY, bool featureChange = false);
-  IOReturn updateCursorPosition(SInt32 x, SInt32 y, bool isVisible, bool featureChange = false);
+  IOReturn platformSetCursorPosition(SInt32 *x, SInt32 *y, bool *isVisible);
 
 public:
   //

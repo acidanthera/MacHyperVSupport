@@ -254,13 +254,16 @@ IOReturn HyperVGraphicsFramebuffer::setDisplayMode(IODisplayModeID displayMode, 
 }
 
 IOReturn HyperVGraphicsFramebuffer::getAttribute(IOSelect attribute, uintptr_t *value) {
-  /*if (attribute == kIOHardwareCursorAttribute) {
+  //
+  // Report that a hardware cursor is supported.
+  //
+  if (attribute == kIOHardwareCursorAttribute) {
     if (value != nullptr) {
       *value = 1;
     }
     HVDBGLOG("Hardware cursor supported");
     return kIOReturnSuccess;
-  }*/
+  }
 
   return super::getAttribute(attribute, value);
 }
@@ -305,22 +308,19 @@ IOReturn HyperVGraphicsFramebuffer::setCursorImage(void *cursorImage) {
   }
   HVDBGLOG("Converted hardware cursor image at %p (%ux%u)", _cursorData, cursorInfo.cursorWidth, cursorInfo.cursorHeight);
 
-  HyperVGraphicsFunctionSetCursorParams cursorParams = { };
+  HyperVGraphicsPlatformFunctionSetCursorShapeParams cursorParams = { };
   cursorParams.cursorData = _cursorData;
   cursorParams.width      = cursorInfo.cursorWidth;
   cursorParams.height     = cursorInfo.cursorHeight;
   cursorParams.hotX       = _hasCursorHotspot ? cursorInfo.cursorHotSpotX : 0;
   cursorParams.hotY       = _hasCursorHotspot ? cursorInfo.cursorHotSpotY : 0;
-  return _hvGfxProvider->callPlatformFunction(kHyperVGraphicsFunctionSetCursor, true, &cursorParams, nullptr, nullptr, nullptr);
+  return _hvGfxProvider->callPlatformFunction(kHyperVGraphicsPlatformFunctionSetCursorShape, true, &cursorParams, nullptr, nullptr, nullptr);
 }
 
 IOReturn HyperVGraphicsFramebuffer::setCursorState(SInt32 x, SInt32 y, bool visible) {
-  HVDBGLOG("New cursor state: x %d y %d visible %u", x, y, visible);
-  return _hvGfxProvider->callPlatformFunction(kHyperVGraphicsFunctionSetCusorPosition, true, &x, &y, &visible, nullptr);
+  return _hvGfxProvider->callPlatformFunction(kHyperVGraphicsPlatformFunctionSetCursorPosition, true, &x, &y, &visible, nullptr);
 }
 
 void HyperVGraphicsFramebuffer::flushCursor() {
-  HyperVGraphicsFunctionSetCursorParams cursorParams = { };
-  cursorParams.cursorData = nullptr;
- // _hvGfxProvider->callPlatformFunction(kHyperVGraphicsFunctionSetCursor, true, &cursorParams, nullptr, nullptr, nullptr);
+  _hvGfxProvider->callPlatformFunction(kHyperVGraphicsPlatformFunctionSetCursorShape, true, nullptr, nullptr, nullptr, nullptr);
 }
