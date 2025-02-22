@@ -67,7 +67,7 @@ bool HyperVGraphics::start(IOService *provider) {
       HVSYSLOG("Failed to create screen refresh timer event source");
       break;
     }
-    status = _workLoop->addEventSource(_timerEventSource);
+    status = getWorkLoop()->addEventSource(_timerEventSource);
     if (status != kIOReturnSuccess) {
       HVSYSLOG("Failed to add screen refresh timer event source with status 0x%X", status);
       break;
@@ -114,7 +114,7 @@ void HyperVGraphics::stop(IOService *provider) {
 
   if (_timerEventSource != nullptr) {
     _timerEventSource->disable();
-    _workLoop->removeEventSource(_timerEventSource);
+    getWorkLoop()->removeEventSource(_timerEventSource);
     OSSafeReleaseNULL(_timerEventSource);
   }
   if (_cmdGate != nullptr) {
