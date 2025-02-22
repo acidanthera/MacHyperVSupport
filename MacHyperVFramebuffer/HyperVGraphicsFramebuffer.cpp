@@ -11,9 +11,6 @@
 
 OSDefineMetaClassAndStructors(HyperVGraphicsFramebuffer, super);
 
-static char const pixelFormatString16[] = IO16BitDirectPixels "\0";
-static char const pixelFormatString32[] = IO32BitDirectPixels "\0";
-
 //
 // Hotspot was silently added in macOS 10.5.6, no struct version changes.
 //
@@ -148,7 +145,7 @@ IODeviceMemory* HyperVGraphicsFramebuffer::getApertureRange(IOPixelAperture aper
 }
 
 const char* HyperVGraphicsFramebuffer::getPixelFormats() {
-  return nullptr;
+  return (getScreenDepth() == kHyperVGraphicsBitDepth2008) ? IO16BitDirectPixels : IO32BitDirectPixels;
 }
 
 IOItemCount HyperVGraphicsFramebuffer::getDisplayModeCount() {
@@ -219,9 +216,9 @@ IOReturn HyperVGraphicsFramebuffer::getPixelInformation(IODisplayModeID displayM
   pixelInfo->activeHeight         = _gfxModes[displayMode - 1].height;
 
   if (getScreenDepth() == 32) {
-    memcpy(&pixelInfo->pixelFormat[0], &pixelFormatString32[0], sizeof (IOPixelEncoding));
+    strncpy(pixelInfo->pixelFormat, IO32BitDirectPixels, sizeof (pixelInfo->pixelFormat));
   } else if (getScreenDepth() == 16) {
-    memcpy(&pixelInfo->pixelFormat[0], &pixelFormatString16[0], sizeof (IOPixelEncoding));
+    strncpy(pixelInfo->pixelFormat, IO16BitDirectPixels, sizeof (pixelInfo->pixelFormat));
   }
 
   return kIOReturnSuccess;
