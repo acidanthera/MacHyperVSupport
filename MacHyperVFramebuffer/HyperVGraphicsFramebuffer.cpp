@@ -137,11 +137,24 @@ bool HyperVGraphicsFramebuffer::isConsoleDevice() {
 }
 
 IODeviceMemory* HyperVGraphicsFramebuffer::getApertureRange(IOPixelAperture aperture) {
-  HVDBGLOG("Getting aperature for type 0x%X", aperture);
+  IOPixelInformation  pixelInfo;
+  IOReturn            status;
+
+  HVDBGLOG("Getting aperture for type 0x%X", aperture);
   if (aperture != kIOFBSystemAperture) {
     return nullptr;
   }
-  return IODeviceMemory::withRange(_gfxBase, _gfxLength);
+
+  //
+  // Get memory size for current display mode.
+  //
+  status = getPixelInformation(_currentDisplayMode, 0, aperture, &pixelInfo);
+  if (status != kIOReturnSuccess) {
+    HVSYSLOG("Failed to get pixel information for current display mode %u", _currentDisplayMode);
+    return nullptr;
+  }
+  HVDBGLOG("Aperture at %p length 0x%X", _gfxBase, pixelInfo.bytesPerRow * pixelInfo.activeHeight);
+  return IODeviceMemory::withRange(_gfxBase, pixelInfo.bytesPerRow * pixelInfo.activeHeight);
 }
 
 const char* HyperVGraphicsFramebuffer::getPixelFormats() {
