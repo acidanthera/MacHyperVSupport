@@ -15,6 +15,14 @@ IOReturn HyperVGraphics::platformInitGraphics(VMBusVersion *outVersion, IOPhysic
     return kIOReturnBadArgument;
   }
 
+  if (_fbReady) {
+    *outVersion   = _gfxVersion;
+    *outMemBase   = _gfxBase;
+    *outMemLength = _gfxLength;
+    HVDBGLOG("Graphics system already initialized");
+    return kIOReturnSuccess;
+  }
+
   //
   // Negotiate graphics system version.
   //

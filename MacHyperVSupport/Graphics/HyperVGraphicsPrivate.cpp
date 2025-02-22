@@ -46,16 +46,16 @@ void HyperVGraphics::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
                gfxMsg->featureUpdate.isCursorShapeNeeded, gfxMsg->featureUpdate.isResolutionUpdateNeeded);
       if (_fbReady) {
         if (gfxMsg->featureUpdate.isResolutionUpdateNeeded) {
-          updateScreenResolution(0, 0, true);
+          setScreenResolution(_screenWidth, _screenHeight, false);
         }
         if (gfxMsg->featureUpdate.isImageUpdateNeeded) {
           refreshFramebufferImage();
         }
         if (gfxMsg->featureUpdate.isCursorShapeNeeded) {
-          updateCursorShape(nullptr, 0, 0, 0, 0, true);
+        //  updateCursorShape(nullptr, 0, 0, 0, 0, true);
         }
         if (gfxMsg->featureUpdate.isCursorPositionNeeded) {
-          updateCursorPosition(0, 0, false, true);
+        //  updateCursorPosition(0, 0, false, true);
         }
       } else {
         HVDBGLOG("Ignoring feature change, not ready");
@@ -176,11 +176,11 @@ IOReturn HyperVGraphics::setGraphicsMemory(IOPhysicalAddress base, UInt32 length
   return kIOReturnSuccess;
 }
 
-IOReturn HyperVGraphics::setScreenResolution(UInt32 width, UInt32 height) {
-  return _cmdGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVGraphics::setScreenResolutionGated), &width, &height);
+IOReturn HyperVGraphics::setScreenResolution(UInt32 width, UInt32 height, bool waitForAck) {
+  return _cmdGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &HyperVGraphics::setScreenResolutionGated), &width, &height, &waitForAck);
 }
 
-IOReturn HyperVGraphics::setScreenResolutionGated(UInt32 *width, UInt32 *height) {
+IOReturn HyperVGraphics::setScreenResolutionGated(UInt32 *width, UInt32 *height, bool *waitForAck) {
   HyperVGraphicsMessage gfxMsg = { };
   IOReturn              status;
 
@@ -215,7 +215,7 @@ IOReturn HyperVGraphics::setScreenResolutionGated(UInt32 *width, UInt32 *height)
   gfxMsg.resolutionUpdate.videoOutputs[0].height     = *height;
   gfxMsg.resolutionUpdate.videoOutputs[0].pitch      = *width * (getScreenDepth() / kHyperVGraphicsBitsPerByte);
 
-  status = sendGraphicsMessage(&gfxMsg, kHyperVGraphicsMessageTypeResolutionUpdateAck, &gfxMsg);
+  status = sendGraphicsMessage(&gfxMsg, kHyperVGraphicsMessageTypeResolutionUpdateAck, *waitForAck ? &gfxMsg : nullptr);
   if (status != kIOReturnSuccess) {
     HVSYSLOG("Failed to send screen resolution with status 0x%X", status);
     return status;
@@ -374,68 +374,4 @@ IOReturn HyperVGraphics::updateCursorPosition(SInt32 x, SInt32 y, bool isVisible
     cursorPositionSent = true;
   }
   return status;
-}
-
-IOReturn HyperVGraphics::updateScreenResolution(UInt32 width, UInt32 height, bool featureChange) {
-  IOReturn              status;
-  PE_Video              consoleInfo;
-  HyperVGraphicsMessage gfxMsg = { };
-
-  //
-  // If a feature change was triggered, just resend the last sent packet.
-  //
-  if (featureChange) {
-    width  = _screenWidth;
-    height = _screenHeight;
-  }
-
-  //
-  // Check bounds.
-  //
-  if (_gfxVersion.value == kHyperVGraphicsVersionV3_0) {
-    if ((width > kHyperVGraphicsMaxWidth2008) || (height > kHyperVGraphicsMaxHeight2008)
-        || (width < kHyperVGraphicsMinWidth) || (height < kHyperVGraphicsMinHeight)) {
-      HVSYSLOG("Invalid screen resolution %ux%u", width, height);
-      return kIOReturnBadArgument;
-    }
-  }
-  if ((width * height * (_bitDepth / 8)) > _gfxLength) {
-    HVSYSLOG("Invalid screen resolution %ux%u", width, height);
-    return kIOReturnBadArgument;
-  }
-
-  //
-  // Get current pixel depth.
-  //
-  status = getPlatform()->getConsoleInfo(&consoleInfo);
-  if (status != kIOReturnSuccess) {
-    return status;
-  }
-  HVDBGLOG("Desired screen resolution %ux%u (%u bpp)", width, height, _bitDepth);
-
-  //
-  // Send screen resolution and pixel depth information.
-  //
-  gfxMsg.gfxHeader.type = kHyperVGraphicsMessageTypeResolutionUpdate;
-  gfxMsg.gfxHeader.size = sizeof (gfxMsg.gfxHeader) + sizeof (gfxMsg.resolutionUpdate);
-
-  gfxMsg.resolutionUpdate.context = 0;
-  gfxMsg.resolutionUpdate.videoOutputCount = 1;
-  gfxMsg.resolutionUpdate.videoOutputs[0].active = 1;
-  gfxMsg.resolutionUpdate.videoOutputs[0].vramOffset = 0;
-  gfxMsg.resolutionUpdate.videoOutputs[0].depth = _bitDepth;
-  gfxMsg.resolutionUpdate.videoOutputs[0].width = width;
-  gfxMsg.resolutionUpdate.videoOutputs[0].height = height;
-  gfxMsg.resolutionUpdate.videoOutputs[0].pitch = width * (_bitDepth / 8);
-
-  status = sendGraphicsMessage(&gfxMsg, kHyperVGraphicsMessageTypeResolutionUpdateAck, &gfxMsg);
-  if (status != kIOReturnSuccess) {
-    HVSYSLOG("Failed to send screen resolution with status 0x%X", status);
-    return status;
-  }
-
-  _screenWidth  = width;
-  _screenHeight = height;
-  HVDBGLOG("Updated screen resolution successfully");
-  return kIOReturnSuccess;
 }
