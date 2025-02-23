@@ -131,36 +131,9 @@ IOReturn HyperVPCIBridge::negotiateProtocolVersion() {
 
 IOReturn HyperVPCIBridge::allocatePCIConfigWindow() {
   //
-  // Get HyperVModuleDevice instance used for allocating MMIO regions for Hyper-V.
-  //
-  OSDictionary *vmodMatching = IOService::serviceMatching("HyperVModuleDevice");
-  if (vmodMatching == nullptr) {
-    HVSYSLOG("Failed to create HyperVModuleDevice matching dictionary");
-    return kIOReturnNotFound;
-  }
-
-  HVDBGLOG("Waiting for HyperVModuleDevice");
-#if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
-  IOService *vmodService = IOService::waitForService(vmodMatching);
-  if (vmodService != nullptr) {
-    vmodService->retain();
-  }
-#else
-  IOService *vmodService = waitForMatchingService(vmodMatching);
-  vmodMatching->release();
-#endif
-
-  if (vmodService == nullptr) {
-    HVSYSLOG("Failed to locate HyperVModuleDevice");
-    return kIOReturnNotFound;
-  }
-  HVDBGLOG("Got instance of HyperVModuleDevice");
-  _hvModuleDevice = OSDynamicCast(HyperVModuleDevice, vmodService);
-
-  //
   // Allocate PCI config window. TODO: handle lack of high MMIO space.
   //
-  _pciConfigSpace = _hvModuleDevice->allocateRange(kHyperVPCIBridgeWindowSize, PAGE_SIZE, false);
+  _pciConfigSpace = _hvPCIRoot->allocateRange(kHyperVPCIBridgeWindowSize, PAGE_SIZE, UINT32_MAX);
   if (_pciConfigSpace == 0) {
     HVSYSLOG("Could not allocate range for PCI config window");
     return kIOReturnNoResources;
@@ -302,7 +275,7 @@ IOReturn HyperVPCIBridge::queryResourceRequirements() {
     //
     _barSizes[i] = getBarSize(barVal);
     HVDBGLOG("BAR%u requires %llu bytes", i, _barSizes[i]);
-    _bars[i] = _hvModuleDevice->allocateRange(_barSizes[i], _barSizes[i], false);
+    _bars[i] = _hvPCIRoot->allocateRange(_barSizes[i], _barSizes[i], UINT32_MAX);
     if (_bars[i] == 0) {
       HVSYSLOG("BAR%u could not be allocated, no more resources", i);
       status = kIOReturnNoResources;

@@ -14,8 +14,6 @@
 #include "HyperVPCIBridgeRegs.hpp"
 #include "HyperVPCIRoot.hpp"
 
-#include "HyperVModuleDevice.hpp"
-
 class HyperVPCIBridge : public HV_PCIBRIDGE_CLASS {
   OSDeclareDefaultStructors(HyperVPCIBridge);
   HVDeclareLogFunctionsVMBusChild("pcib");
@@ -35,7 +33,6 @@ private:
   //
   // MMIO.
   //
-  HyperVModuleDevice  *_hvModuleDevice              = nullptr;
   IORangeScalar       _pciConfigSpace               = 0;
   IOMemoryDescriptor  *_pciConfigMemoryDescriptor   = nullptr;
   IOMemoryMap         *_pciConfigMemoryMap          = nullptr;

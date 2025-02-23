@@ -13,8 +13,8 @@
 //
 // Framework versions.
 //
-#define kHyperVICVersion2008  { 1, 0 }
-#define kHyperVICVersionV3    { 3, 0 }
+#define kHyperVICVersion2008  VMBUS_VERSION(1, 0)
+#define kHyperVICVersionV3    VMBUS_VERSION(3, 0)
 
 //
 // Message types.

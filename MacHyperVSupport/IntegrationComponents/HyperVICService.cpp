@@ -10,8 +10,8 @@
 OSDefineMetaClassAndAbstractStructors(HyperVICService, super);
 
 static const VMBusVersion frameworkVersions[] = {
-  kHyperVICVersionV3,
-  kHyperVICVersion2008
+  { kHyperVICVersionV3 },
+  { kHyperVICVersion2008 }
 };
 
 bool HyperVICService::start(IOService *provider) {

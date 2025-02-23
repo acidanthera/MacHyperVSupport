@@ -13,10 +13,10 @@
 //
 // Shutdown versions.
 //
-#define kHyperVShutdownVersionV1_0  { 1, 0 }
-#define kHyperVShutdownVersionV3_0  { 3, 0 }
-#define kHyperVShutdownVersionV3_1  { 3, 1 }
-#define kHyperVShutdownVersionV3_2  { 3, 2 }
+#define kHyperVShutdownVersionV1_0  VMBUS_VERSION(1, 0)
+#define kHyperVShutdownVersionV3_0  VMBUS_VERSION(3, 0)
+#define kHyperVShutdownVersionV3_1  VMBUS_VERSION(3, 1)
+#define kHyperVShutdownVersionV3_2  VMBUS_VERSION(3, 2)
 
 //
 // Shutdown flags.

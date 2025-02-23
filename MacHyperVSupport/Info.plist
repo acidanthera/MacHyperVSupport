@@ -57,16 +57,27 @@
 			<key>IOUserClientClass</key>
 			<string>HyperVFileCopyUserClient</string>
 		</dict>
-		<key>HyperVGraphicsBridge</key>
+		<key>HyperVGraphics</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>HVType</key>
 			<string>da0a7802-e377-4aac-8e77-0558eb1073f8</string>
 			<key>IOClass</key>
-			<string>HyperVGraphicsBridge</string>
+			<string>HyperVGraphics</string>
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
+		</dict>
+		<key>HyperVGraphicsBridge</key>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>IOClass</key>
+			<string>HyperVGraphicsBridge</string>
+			<key>IOProbeScore</key>
+			<integer>1000</integer>
+			<key>IOProviderClass</key>
+			<string>HyperVGraphics</string>
 		</dict>
 		<key>HyperVHeartbeat</key>
 		<dict>
@@ -89,17 +100,6 @@
 			<string>HyperVKeyboard</string>
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
-		</dict>
-		<key>HyperVModuleDevice</key>
-		<dict>
-			<key>CFBundleIdentifier</key>
-			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-			<key>IOClass</key>
-			<string>HyperVModuleDevice</string>
-			<key>IONameMatch</key>
-			<string>VMOD</string>
-			<key>IOProviderClass</key>
-			<string>IOACPIPlatformDevice</string>
 		</dict>
 		<key>HyperVMouse</key>
 		<dict>
@@ -151,15 +151,6 @@
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
 		</dict>
-		<key>HyperVPCIProviderGen2</key>
-		<dict>
-			<key>CFBundleIdentifier</key>
-			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-			<key>IOClass</key>
-			<string>HyperVPCIProvider</string>
-			<key>IOProviderClass</key>
-			<string>AppleACPIPlatformExpert</string>
-		</dict>
 		<key>HyperVPCIRootGen1</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
@@ -179,8 +170,10 @@
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>IOClass</key>
 			<string>HyperVPCIRoot</string>
+			<key>IONameMatch</key>
+			<string>VMOD</string>
 			<key>IOProviderClass</key>
-			<string>HyperVPCIProvider</string>
+			<string>IOACPIPlatformDevice</string>
 		</dict>
 		<key>HyperVPS2Keyboard</key>
 		<dict>

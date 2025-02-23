@@ -13,9 +13,9 @@
 //
 // Time sync versions.
 //
-#define kHyperVTimeSyncVersionV1_0  { 1, 0 }
-#define kHyperVTimeSyncVersionV3_0  { 3, 0 }
-#define kHyperVTimeSyncVersionV4_0  { 4, 0 }
+#define kHyperVTimeSyncVersionV1_0  VMBUS_VERSION(1, 0)
+#define kHyperVTimeSyncVersionV3_0  VMBUS_VERSION(3, 0)
+#define kHyperVTimeSyncVersionV4_0  VMBUS_VERSION(4, 0)
 
 #define kHyperVTimeSyncTimeBase     116444736000000000ULL
 

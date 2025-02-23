@@ -22,7 +22,7 @@
 //
 // File copy versions.
 //
-#define kHyperVFileCopyVersionV1_1  { 1, 1 }
+#define kHyperVFileCopyVersionV1_1 VMBUS_VERSION(1, 1)
 
 //
 // File copy messages.

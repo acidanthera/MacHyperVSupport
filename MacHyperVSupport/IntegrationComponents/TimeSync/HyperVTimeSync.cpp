@@ -10,9 +10,9 @@
 OSDefineMetaClassAndStructors(HyperVTimeSync, super);
 
 static const VMBusVersion timeSyncVersions[] = {
-  kHyperVTimeSyncVersionV4_0,
-  kHyperVTimeSyncVersionV3_0,
-  kHyperVTimeSyncVersionV1_0
+  { kHyperVTimeSyncVersionV4_0 },
+  { kHyperVTimeSyncVersionV3_0 },
+  { kHyperVTimeSyncVersionV1_0 }
 };
 
 bool HyperVTimeSync::start(IOService *provider) {
@@ -60,7 +60,7 @@ void HyperVTimeSync::close(IOService *forClient, IOOptionBits options) {
 
 void HyperVTimeSync::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
   VMBusICMessageTimeSync *timeSyncMsg       = (VMBusICMessageTimeSync*) pktData;
-  VMBusVersion           timeSyncRefVersion = kHyperVTimeSyncVersionV4_0;
+  VMBusVersion           timeSyncRefVersion = { kHyperVTimeSyncVersionV4_0 };
   UInt32                 packetSize;
 
   switch (timeSyncMsg->header.type) {

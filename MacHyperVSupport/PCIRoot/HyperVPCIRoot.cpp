@@ -2,17 +2,18 @@
 //  HyperVPCIRoot.cpp
 //  Hyper-V PCI root bridge driver
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2025 Goldfish64. All rights reserved.
 //
 
-#include "HyperVPCIRoot.hpp"
 #include <IOKit/acpi/IOACPIPlatformDevice.h>
+#include <IOKit/acpi/IOACPITypes.h>
+#include <IOKit/IODeviceTreeSupport.h>
 
-#include "AppleACPIRange.hpp"
+#include "HyperVPCIRoot.hpp"
 
 OSDefineMetaClassAndStructors(HyperVPCIRoot, super);
 
-inline bool HyperVPCIRoot::setConfigSpace(IOPCIAddressSpace space, UInt8 offset) {
+inline bool setConfigSpace(IOPCIAddressSpace space, UInt8 offset) {
   offset &= 0xFC;
   
   UInt32 pciCycle = (1 << 31) | space.bits | offset;
@@ -20,22 +21,98 @@ inline bool HyperVPCIRoot::setConfigSpace(IOPCIAddressSpace space, UInt8 offset)
   outl(0xCF8, pciCycle);
   return true;
 }
+
 bool HyperVPCIRoot::start(IOService *provider) {
+  bool result = false;
+
   HVCheckDebugArgs();
-  pciLock = IOSimpleLockAlloc();
-  
+  HVDBGLOG("Initializing Hyper-V Root PCI Bridge");
+
+  _pciLock = IOSimpleLockAlloc();
+  if (_pciLock == nullptr) {
+    HVSYSLOG("Failed to allocate lock");
+    return false;
+  }
+
   //
   // First bridge represents ourselves and will be NULL.
   //
   memset(pciBridges, 0, sizeof (pciBridges));
-  
+
   if (!super::start(provider)) {
-    HVSYSLOG("Dummy PCI bridge failed to initialize");
+    HVSYSLOG("super::start() returned false");
     return false;
   }
-  
-  HVDBGLOG("Dummy PCI bridge initialized");
-  return true;
+
+  do {
+    //
+    // Add memory ranges from ACPI.
+    //
+    OSData *acpiAddressSpaces = OSDynamicCast(OSData, provider->getProperty("acpi-address-spaces"));
+    if (acpiAddressSpaces == nullptr) {
+      HVSYSLOG("Unable to locate acpi-address-spaces property, MMIO services will be unavailable");
+    } else {
+      IOACPIAddressSpaceDescriptor *acpiRanges    = (IOACPIAddressSpaceDescriptor*) acpiAddressSpaces->getBytesNoCopy();
+      UInt32                       acpiRangeCount = acpiAddressSpaces->getLength() / sizeof (*acpiRanges);
+
+      _rangeAllocatorLow  = IORangeAllocator::withRange(0);
+      _rangeAllocatorHigh = IORangeAllocator::withRange(0);
+      if (_rangeAllocatorLow == nullptr || _rangeAllocatorHigh == nullptr) {
+        HVSYSLOG("Unable to allocate range allocators");
+        break;
+      }
+      
+      HVDBGLOG("Got %u ACPI ranges", acpiRangeCount);
+      for (int i = 0; i < acpiRangeCount; i++) {
+        HVDBGLOG("ACPI range type %u: minimum 0x%llX, maximum 0x%llX, length 0x%llX, high %u", acpiRanges[i].resourceType,
+                 acpiRanges[i].minAddressRange, acpiRanges[i].maxAddressRange, acpiRanges[i].addressLength,
+                 acpiRanges[i].minAddressRange > UINT32_MAX);
+
+        //
+        // Skip any non-memory ranges (should not occur normally).
+        //
+        if (acpiRanges[i].resourceType != kIOACPIMemoryRange) {
+          continue;
+        }
+
+        //
+        // Add to appropriate range allocator.
+        //
+        if (acpiRanges[i].minAddressRange > UINT32_MAX) {
+          _rangeAllocatorHigh->deallocate(static_cast<IOPhysicalAddress>(acpiRanges[i].minAddressRange),
+                                          static_cast<IOPhysicalLength>(acpiRanges[i].addressLength));
+        } else {
+          _rangeAllocatorLow->deallocate(static_cast<IOPhysicalAddress>(acpiRanges[i].minAddressRange),
+                                         static_cast<IOPhysicalLength>(acpiRanges[i].addressLength));
+        }
+      }
+
+      //
+      // Reserve FB memory.
+      //
+      reserveFramebufferArea();
+      HVDBGLOG("Initialized Hyper-V Root PCI Bridge with free size: %u bytes (low) %u bytes (high)",
+               _rangeAllocatorLow->getFreeCount(), _rangeAllocatorHigh->getFreeCount());
+      canAllocateMMIO = true;
+    }
+
+    result = true;
+  } while (false);
+
+  if (!result) {
+    stop(provider);
+  }
+  return result;
+}
+
+void HyperVPCIRoot::stop(IOService *provider) {
+  HVDBGLOG("Stopping Hyper-V Root PCI Bridge");
+
+  if (_pciLock != nullptr) {
+    IOSimpleLockFree(_pciLock);
+  }
+
+  super::stop(provider);
 }
 
 bool HyperVPCIRoot::configure(IOService *provider) {
@@ -43,20 +120,22 @@ bool HyperVPCIRoot::configure(IOService *provider) {
   // Add memory ranges from ACPI.
   //
   OSData *acpiAddressSpaces = OSDynamicCast(OSData, provider->getProperty("acpi-address-spaces"));
-  if (acpiAddressSpaces != NULL) {
-    AppleACPIRange *acpiRanges = (AppleACPIRange*) acpiAddressSpaces->getBytesNoCopy();
-    UInt32 acpiRangeCount = acpiAddressSpaces->getLength() / sizeof (AppleACPIRange);
-    
+  if (acpiAddressSpaces != nullptr) {
+    IOACPIAddressSpaceDescriptor *acpiRanges = (IOACPIAddressSpaceDescriptor*) acpiAddressSpaces->getBytesNoCopy();
+    UInt32 acpiRangeCount = acpiAddressSpaces->getLength() / sizeof (*acpiRanges);
+
+    HVDBGLOG("Got %u ACPI ranges", acpiRangeCount);
     for (int i = 0; i < acpiRangeCount; i++) {
-      HVDBGLOG("type %u, min %llX, max %llX, len %llX", acpiRanges[i].type, acpiRanges[i].min, acpiRanges[i].max, acpiRanges[i].length);
-      if (acpiRanges[i].type == 1) {
-        addBridgeIORange(acpiRanges[i].min, acpiRanges[i].length);
-      } else if (acpiRanges[i].type == 0) {
-        addBridgeMemoryRange(acpiRanges[i].min, acpiRanges[i].length, true);
+      HVDBGLOG("ACPI range type %u: minimum 0x%llX, maximum 0x%llX, length 0x%llX", acpiRanges[i].resourceType,
+               acpiRanges[i].minAddressRange, acpiRanges[i].maxAddressRange, acpiRanges[i].addressLength);
+      if (acpiRanges[i].resourceType == kIOACPIIORange) {
+        addBridgeIORange(acpiRanges[i].minAddressRange, acpiRanges[i].addressLength);
+      } else if (acpiRanges[i].resourceType == kIOACPIMemoryRange) {
+        addBridgeMemoryRange(acpiRanges[i].minAddressRange, acpiRanges[i].addressLength, true);
       }
     }
   }
-  
+
   return super::configure(provider);
 }
 
@@ -72,7 +151,7 @@ UInt32 HyperVPCIRoot::configRead32(IOPCIAddressSpace space, UInt8 offset) {
   
 
   
-  ints = IOSimpleLockLockDisableInterrupt(pciLock);
+  ints = IOSimpleLockLockDisableInterrupt(_pciLock);
   if (setConfigSpace(space, offset)) {
     data = inl(0xCFC);
   }
@@ -81,7 +160,7 @@ UInt32 HyperVPCIRoot::configRead32(IOPCIAddressSpace space, UInt8 offset) {
     HVDBGLOG("gonna read BAR0 %X", data);
   }
   
-  IOSimpleLockUnlockEnableInterrupt(pciLock, ints);
+  IOSimpleLockUnlockEnableInterrupt(_pciLock, ints);
   return data;
 }
 
@@ -94,7 +173,7 @@ void HyperVPCIRoot::configWrite32(IOPCIAddressSpace space, UInt8 offset, UInt32 
     pciBridges[space.es.busNum]->configWrite32(space, offset, data);
   }
   
-  ints = IOSimpleLockLockDisableInterrupt(pciLock);
+  ints = IOSimpleLockLockDisableInterrupt(_pciLock);
   if (setConfigSpace(space, offset)) {
     outl(0xCFC, data);
   }
@@ -103,7 +182,7 @@ void HyperVPCIRoot::configWrite32(IOPCIAddressSpace space, UInt8 offset, UInt32 
     HVDBGLOG("wrote BAR0 %X", data);
   }
   
-  IOSimpleLockUnlockEnableInterrupt(pciLock, ints);
+  IOSimpleLockUnlockEnableInterrupt(_pciLock, ints);
 }
 
 UInt16 HyperVPCIRoot::configRead16(IOPCIAddressSpace space, UInt8 offset) {
@@ -116,12 +195,12 @@ UInt16 HyperVPCIRoot::configRead16(IOPCIAddressSpace space, UInt8 offset) {
     return pciBridges[space.es.busNum]->configRead16(space, offset);
   }
   
-  ints = IOSimpleLockLockDisableInterrupt(pciLock);
+  ints = IOSimpleLockLockDisableInterrupt(_pciLock);
   if (setConfigSpace(space, offset)) {
     data = inw(0xCFC);
   }
   
-  IOSimpleLockUnlockEnableInterrupt(pciLock, ints);
+  IOSimpleLockUnlockEnableInterrupt(_pciLock, ints);
   return data;
 }
 
@@ -134,12 +213,12 @@ void HyperVPCIRoot::configWrite16(IOPCIAddressSpace space, UInt8 offset, UInt16 
     pciBridges[space.es.busNum]->configWrite16(space, offset, data);
   }
   
-  ints = IOSimpleLockLockDisableInterrupt(pciLock);
+  ints = IOSimpleLockLockDisableInterrupt(_pciLock);
   if (setConfigSpace(space, offset)) {
     outw(0xCFC, data);
   }
   
-  IOSimpleLockUnlockEnableInterrupt(pciLock, ints);
+  IOSimpleLockUnlockEnableInterrupt(_pciLock, ints);
 }
 
 UInt8 HyperVPCIRoot::configRead8(IOPCIAddressSpace space, UInt8 offset) {
@@ -152,12 +231,12 @@ UInt8 HyperVPCIRoot::configRead8(IOPCIAddressSpace space, UInt8 offset) {
     return pciBridges[space.es.busNum]->configRead8(space, offset);
   }
   
-  ints = IOSimpleLockLockDisableInterrupt(pciLock);
+  ints = IOSimpleLockLockDisableInterrupt(_pciLock);
   if (setConfigSpace(space, offset)) {
     data = inb(0xCFC);
   }
   
-  IOSimpleLockUnlockEnableInterrupt(pciLock, ints);
+  IOSimpleLockUnlockEnableInterrupt(_pciLock, ints);
   return data;
 }
 
@@ -170,36 +249,49 @@ void HyperVPCIRoot::configWrite8(IOPCIAddressSpace space, UInt8 offset, UInt8 da
     pciBridges[space.es.busNum]->configWrite8(space, offset, data);
   }
   
-  ints = IOSimpleLockLockDisableInterrupt(pciLock);
+  ints = IOSimpleLockLockDisableInterrupt(_pciLock);
   if (setConfigSpace(space, offset)) {
     outb(0xCFC, data);
   }
   
-  IOSimpleLockUnlockEnableInterrupt(pciLock, ints);
+  IOSimpleLockUnlockEnableInterrupt(_pciLock, ints);
 }
 
 HyperVPCIRoot* HyperVPCIRoot::getPCIRootInstance() {
+  HyperVPCIRoot *hvPCIRoot = nullptr;
+
   //
-  // Locate root PCI bus instance.
+  // Get HyperVPCIRoot instance used for allocating MMIO regions for Hyper-V Gen1 VMs.
   //
-  OSDictionary *pciMatching = IOService::serviceMatching("HyperVPCIRoot");
-  if (pciMatching == nullptr) {
-    return nullptr;
-  }
-  OSIterator *pciIterator = IOService::getMatchingServices(pciMatching);
-  if (pciIterator == nullptr) {
+  OSDictionary *pciRootMatching = IOService::serviceMatching("HyperVPCIRoot");
+  if (pciRootMatching == nullptr) {
     return nullptr;
   }
 
-  pciIterator->reset();
-  HyperVPCIRoot *pciInstance = OSDynamicCast(HyperVPCIRoot, pciIterator->getNextObject());
-  pciIterator->release();
+#if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
+  IOService *pciRootService = IOService::waitForService(pciRootMatching);
+  if (pciRootService != nullptr) {
+    pciRootService->retain();
+  }
+#else
+  IOService *pciRootService = waitForMatchingService(pciRootMatching);
+  pciRootMatching->release();
+#endif
 
-  return pciInstance;
+  if (pciRootService == nullptr) {
+    return nullptr;
+  }
+  hvPCIRoot = OSDynamicCast(HyperVPCIRoot, pciRootService);
+  pciRootService->release(); // TODO: is this needed?
+
+  if (hvPCIRoot != nullptr) {
+    hvPCIRoot->HVDBGLOG("Got instance of HyperVPCIRoot");
+  }
+  return hvPCIRoot;
 }
 
 IOReturn HyperVPCIRoot::registerChildPCIBridge(IOPCIBridge *pciBridge, UInt8 *busNumber) {
-  IOInterruptState ints = IOSimpleLockLockDisableInterrupt(pciLock);
+  IOInterruptState ints = IOSimpleLockLockDisableInterrupt(_pciLock);
   
   //
   // Find free bus number.
@@ -209,13 +301,90 @@ IOReturn HyperVPCIRoot::registerChildPCIBridge(IOPCIBridge *pciBridge, UInt8 *bu
       pciBridges[busIndex] = pciBridge;
       *busNumber = busIndex;
 
-      IOSimpleLockUnlockEnableInterrupt(pciLock, ints);
+      IOSimpleLockUnlockEnableInterrupt(_pciLock, ints);
       HVDBGLOG("PCI bus %u registered", busIndex);
       return kIOReturnSuccess;
     }
   }
-  IOSimpleLockUnlockEnableInterrupt(pciLock, ints);
+  IOSimpleLockUnlockEnableInterrupt(_pciLock, ints);
 
   HVSYSLOG("No more free PCI bus numbers available");
   return kIOReturnNoResources;
+}
+
+bool HyperVPCIRoot::isHyperVGen2() {
+  //
+  // Check for presence of PCI0. Gen2 VMs do not have a PCI bus.
+  //
+  IORegistryEntry *pciEntry = IORegistryEntry::fromPath("/PCI0@0", gIODTPlane);
+  bool isGen2 = pciEntry == nullptr;
+  OSSafeReleaseNULL(pciEntry);
+
+  HVDBGLOG("Hyper-V VM generation: %u", isGen2 ? 2 : 1);
+  return isGen2;
+}
+
+IORangeScalar HyperVPCIRoot::allocateRange(IORangeScalar size, IORangeScalar alignment, IORangeScalar maxAddress) {
+  IORangeScalar range = 0;
+  bool result         = false;
+
+  if (!canAllocateMMIO) {
+    return 0;
+  }
+
+  if (maxAddress > UINT32_MAX) {
+    result = _rangeAllocatorHigh->allocate(size, &range, alignment);
+  }
+  if (!result) {
+    result = _rangeAllocatorLow->allocate(size, &range, alignment);
+  }
+
+  HVDBGLOG("Allocation result for length %p (max %p) - %u", size, maxAddress, result);
+  HVDBGLOG("Range base: %p", result ? range : 0);
+
+  return result ? range : 0;
+}
+
+void HyperVPCIRoot::freeRange(IORangeScalar start, IORangeScalar size) {
+  if (!canAllocateMMIO) {
+    return;
+  }
+
+  if (start > UINT32_MAX) {
+    _rangeAllocatorHigh->deallocate(start, size);
+  } else {
+    _rangeAllocatorLow->deallocate(start, size);
+  }
+  HVDBGLOG("Freed range base %p length %p", start, size);
+}
+
+bool HyperVPCIRoot::reserveFramebufferArea() {
+  PE_Video consoleInfo;
+  IORangeScalar fbStart;
+  IORangeScalar fbLength;
+
+  //
+  // Pull console info. We'll use the base address but the length will be gathered from Hyper-V.
+  //
+  if (getPlatform()->getConsoleInfo(&consoleInfo) != kIOReturnSuccess) {
+    HVSYSLOG("Failed to get console info");
+    return false;
+  }
+  fbStart  = consoleInfo.v_baseAddr;
+  fbLength = consoleInfo.v_height * consoleInfo.v_rowBytes;
+  HVDBGLOG("Console is at 0x%X size 0x%X (%ux%u, bpp: %u, bytes/row: %u)",
+           fbStart, fbLength, consoleInfo.v_width, consoleInfo.v_height,
+           consoleInfo.v_depth, consoleInfo.v_rowBytes);
+
+  //
+  // Allocate intial framebuffer area to prevent use.
+  // On some versions of Hyper-V, the initial framebuffer may not actually be in the MMIO ranges.
+  // This can be silently ignored.
+  //
+  if (fbStart > UINT32_MAX) {
+    _rangeAllocatorHigh->allocateRange(fbStart, fbLength);
+  } else {
+    _rangeAllocatorLow->allocateRange(fbStart, fbLength);
+  }
+  return true;
 }

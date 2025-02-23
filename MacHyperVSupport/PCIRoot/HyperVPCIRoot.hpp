@@ -2,16 +2,16 @@
 //  HyperVPCIRoot.hpp
 //  Hyper-V PCI root bridge driver
 //
-//  Copyright © 2021 Goldfish64. All rights reserved.
+//  Copyright © 2021-2025 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperVPCIRoot_hpp
 #define HyperVPCIRoot_hpp
 
-#include "HyperV.hpp"
-
-#include <IOKit/pci/IOPCIBridge.h>
 #include <architecture/i386/pio.h>
+#include <IOKit/pci/IOPCIBridge.h>
+
+#include "HyperV.hpp"
 
 class HyperVPCIRoot : public HV_PCIBRIDGE_CLASS {
   OSDeclareDefaultStructors(HyperVPCIRoot);
@@ -19,19 +19,27 @@ class HyperVPCIRoot : public HV_PCIBRIDGE_CLASS {
   typedef HV_PCIBRIDGE_CLASS super;
 
 private:
-  IOSimpleLock *pciLock = NULL;
-  
-  inline bool setConfigSpace(IOPCIAddressSpace space, UInt8 offset);
+  IOSimpleLock *_pciLock = NULL;
+
   //
   // Child PCI bridges.
   //
   IOPCIBridge *pciBridges[256] {};
+
+  //
+  // Range allocators for low and high MMIO allocations.
+  //
+  bool canAllocateMMIO                  = false;
+  IORangeAllocator *_rangeAllocatorLow  = nullptr;
+  IORangeAllocator *_rangeAllocatorHigh = nullptr;
+  bool reserveFramebufferArea();
 
 public:
   //
   // IOService overrides.
   //
   bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
+  void stop(IOService *provider) APPLE_KEXT_OVERRIDE;
 
   //
   // IOPCIBridge overrides.
@@ -55,6 +63,10 @@ public:
 
   static HyperVPCIRoot* getPCIRootInstance();
   IOReturn registerChildPCIBridge(IOPCIBridge *pciBridge, UInt8 *busNumber);
+
+  bool isHyperVGen2();
+  IORangeScalar allocateRange(IORangeScalar size, IORangeScalar alignment, IORangeScalar maxAddress);
+  void freeRange(IORangeScalar start, IORangeScalar size);
 };
 
 #endif
