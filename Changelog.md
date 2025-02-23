@@ -8,6 +8,7 @@ MacHyperVSupport Changelog
 - Added PS/2 keyboard driver to support Gen1 VMs on Server 2008 R2 and older
 - Added framebuffer driver for basic graphics support
 - Fixed DVD drives not appearing on Gen2 SCSI controller
+- Prevent sleep/doze from occuring
 
 #### v0.9.7
 - Fixed disks on a passed-in PCI device not being usable

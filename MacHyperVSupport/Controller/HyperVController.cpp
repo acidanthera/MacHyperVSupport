@@ -7,6 +7,7 @@
 
 #include "HyperVController.hpp"
 #include <IOKit/IOMapper.h>
+#include <IOKit/pwr_mgt/RootDomain.h>
 
 #include "HyperVVMBus.hpp"
 #include "HyperVInterruptController.hpp"
@@ -106,6 +107,12 @@ bool HyperVController::start(IOService *provider) {
     }
 
     registerService();
+
+    //
+    // Prevent sleep, Hyper-V is incapable of responding to sleep commands.
+    //
+    getPMRootDomain()->receivePowerNotification(kIOPMPreventSleep);
+
     result = true;
   } while (false);
   
