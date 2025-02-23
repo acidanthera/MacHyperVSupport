@@ -332,7 +332,7 @@ bool HyperVStorage::checkSCSIDiskPresent(UInt8 diskId) {
   }
 
   HVDBGLOG("Disk %u status: 0x%X SRB status: 0x%X", diskId, storPkt.scsiRequest.scsiStatus, storPkt.scsiRequest.srbStatus);
-  return storPkt.scsiRequest.srbStatus == kHyperVSRBStatusSuccess;
+  return storPkt.scsiRequest.srbStatus != kHyperVSRBStatusInvalidLUN;
 }
 
 void HyperVStorage::startDiskEnumeration() {
