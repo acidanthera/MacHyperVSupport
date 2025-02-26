@@ -40,6 +40,7 @@ All Intel macOS versions are supported.
 #### Booter quirks
 - `AllowRelocationBlock` - required for macOS 10.7 and older
 - `AvoidRuntimeDefrag` - required
+- `ClearTaskSwitchBit` - required for macOS 10.7 and older
 - `ForceExitBootServices` - required for macOS 10.7 and older
 - `ProvideCustomSlide` - required
 - `RebuildAppleMemoryMap` - required for macOS 10.6 and older
