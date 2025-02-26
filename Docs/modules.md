@@ -1,5 +1,12 @@
 # Driver Module List
 
+## ACPI Fixup (HyperVACPIFixup)
+Prevents ACPI0007 device objects from being enumerated by AppleACPIPlatform in macOS 10.6 and older.
+
+| Boot argument  | Description |
+|----------------|-------------|
+| -hvacpifixdbg  | Enables debug printing in DEBUG builds
+
 ## Core Controller (HyperVController)
 Core Hyper-V controller module.
 
@@ -23,14 +30,32 @@ Provides host to guest file copy support (Guest Services). Requires the `hvfilec
 | -hvfcopymsgdbg | Enables debug printing of message data in DEBUG builds
 | -hvfcopyoff    | Disables this module
 
+## Graphics (HyperVGraphics)
+Provides graphics support.
+
+| Boot argument  | Description |
+|----------------|-------------|
+| -hvgfxdbg      | Enables debug printing in DEBUG builds
+| -hvgfxmsgdbg   | Enables debug printing of message data in DEBUG builds
+| -hvgfxoff      | Disables this module
+
 ## Graphics Bridge (HyperVGraphicsBridge)
-Provides basic graphics support for macOS.
+Provides basic graphics support for macOS in generation 2 VMs.
 
 | Boot argument  | Description |
 |----------------|-------------|
 | -hvgfxbdbg     | Enables debug printing in DEBUG builds
 | -hvgfxbmsgdbg  | Enables debug printing of message data in DEBUG builds
 | -hvgfxboff     | Disables this module
+
+## Graphics Framebuffer (HyperVGraphicsFramebuffer)
+Provides enhanced graphics support (resolution switching and hardware cursor) for macOS.
+This module is contained in the separate MacHyperVFramebuffer.kext kernel extension.
+
+| Boot argument  | Description |
+|----------------|-------------|
+| -hvgfxfbdbg    | Enables debug printing in DEBUG builds
+| -hvgfxfboff    | Disables this module
 
 ## Heartbeat (HyperVHeartbeat)
 Provides heartbeat reporting to Hyper-V.
@@ -50,6 +75,14 @@ Provides keyboard support.
 | -hvkbdmsgdbg   | Enables debug printing of message data in DEBUG builds
 | -hvkbdoff      | Disables this module
 
+## Keyboard (PS/2) (HyperVPS2Keyboard)
+Provides PS/2 keyboard support in generation 1 VMs.
+
+| Boot argument  | Description |
+|----------------|-------------|
+| -hvps2kbddbg   | Enables debug printing in DEBUG builds
+| -hvps2kbdoff   | Disables this module
+
 ## Mouse (HyperVMouse)
 Provides mouse support.
 
@@ -65,6 +98,7 @@ Provides networking support.
 | Boot argument  | Description |
 |----------------|-------------|
 | -hvnetdbg      | Enables debug printing in DEBUG builds
+| -hvnetdatadbg  | Enables debug printing of packet data in DEBUG builds
 | -hvnetmsgdbg   | Enables debug printing of message data in DEBUG builds
 | -hvnetoff      | Disables this module
 
@@ -76,13 +110,6 @@ Provides PCI passthrough support.
 | -hvpcibdbg     | Enables debug printing in DEBUG builds
 | -hvpcibmsgdbg  | Enables debug printing of message data in DEBUG builds
 | -hvpciboff     | Disables this module
-
-## PCI Module Device (HyperVModuleDevice)
-Provides MMIO allocation/deallocation functions for PCI passthrough.
-
-| Boot argument  | Description |
-|----------------|-------------|
-| -hvpcimdbg     | Enables debug printing in DEBUG builds
 
 ## PCI Provider (HyperVPCIProvider)
 Provides IOACPIPlatformDevice nub on generation 2 VMS for fake PCI root bridge (HyperVPCIRoot).
@@ -113,6 +140,7 @@ Provides SCSI storage support.
 | Boot argument  | Description |
 |----------------|-------------|
 | -hvstordbg     | Enables debug printing in DEBUG builds
+| -hvstordatadbg | Enables debug printing of packet data in DEBUG builds
 | -hvstormsgdbg  | Enables debug printing of message data in DEBUG builds
 | -hvstoroff     | Disables this module
 
