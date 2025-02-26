@@ -15,7 +15,7 @@ class HyperVCPU : public IOService {
   OSDeclareDefaultStructors(HyperVCPU);
   HVDeclareLogFunctions("cpu");
   typedef IOService super;
-  
+
 public:
   //
   // IOService overrides.

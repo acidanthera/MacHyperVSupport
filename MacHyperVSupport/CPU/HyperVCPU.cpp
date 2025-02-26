@@ -25,24 +25,24 @@ IOService* HyperVCPU::probe(IOService *provider, SInt32 *score) {
     return nullptr;
   }
   HVCheckDebugArgs();
-  
+
   OSNumber *cpuIndexNumber = OSDynamicCast(OSNumber, provider->getProperty("cpu index"));
   if (cpuIndexNumber == nullptr) {
     return nullptr;
   }
-  
+
   UInt32 cpuIndex = cpuIndexNumber->unsigned32BitValue();
   HVDBGLOG("Probing CPU %u", cpuIndex);
-  
+
   //
   // Allow CPUs within the limit to load AppleACPICPU.
   //
   if (cpuIndex < kMaxCPUsTiger) {
     return nullptr;
   }
-  
+
   HVDBGLOG("Blocking CPU %u", cpuIndex);
-  return this;
+  return super::probe(provider, score);
 #else
   return nullptr;
 #endif
