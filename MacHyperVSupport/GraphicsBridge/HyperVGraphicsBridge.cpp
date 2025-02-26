@@ -36,7 +36,7 @@ IOService* HyperVGraphicsBridge::probe(IOService *provider, SInt32 *score) {
     HVDBGLOG("Not starting on Hyper-V Gen1 VM");
     return nullptr;
   }
-  return this;
+  return super::probe(provider, score);
 }
 
 bool HyperVGraphicsBridge::start(IOService *provider) {
