@@ -2,7 +2,7 @@
 //  HyperVPlatformProvider.hpp
 //  Hyper-V platform functions provider
 //
-//  Copyright © 2021-2022 Goldfish64. All rights reserved.
+//  Copyright © 2021-2025 Goldfish64. All rights reserved.
 //
 
 #ifndef HyperVPlatformProvider_hpp
@@ -21,13 +21,6 @@ private:
   // Global instance.
   //
   static HyperVPlatformProvider *_instance;
-
-  //
-  // IOPlatformExpert::setConsoleInfo wrapping
-  //
-  mach_vm_address_t _setConsoleInfoAddr = 0;
-  UInt64            _setConsoleInfoOrg[2] {};
-  static IOReturn wrapSetConsoleInfo(IOPlatformExpert *that, PE_Video *consoleInfo, unsigned int op);
 
   //
   // Initialization function.

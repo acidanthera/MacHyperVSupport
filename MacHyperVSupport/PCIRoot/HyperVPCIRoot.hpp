@@ -9,6 +9,7 @@
 #define HyperVPCIRoot_hpp
 
 #include <architecture/i386/pio.h>
+#include <IOKit/IOPlatformExpert.h>
 #include <IOKit/pci/IOPCIBridge.h>
 
 #include "HyperV.hpp"
@@ -19,6 +20,14 @@ class HyperVPCIRoot : public HV_PCIBRIDGE_CLASS {
   typedef HV_PCIBRIDGE_CLASS super;
 
 private:
+  //
+  // IOPlatformExpert::setConsoleInfo wrapping
+  //
+  static HyperVPCIRoot *_instance;
+  mach_vm_address_t    _setConsoleInfoAddr = 0;
+  UInt64               _setConsoleInfoOrg[2] {};
+  static IOReturn wrapSetConsoleInfo(IOPlatformExpert *that, PE_Video *consoleInfo, unsigned int op);
+
   IOSimpleLock *_pciLock = NULL;
 
   //
