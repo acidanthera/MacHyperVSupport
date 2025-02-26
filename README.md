@@ -3,7 +3,7 @@ MacHyperVSupport
 
 [![Build Status](https://github.com/acidanthera/MacHyperVSupport/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/acidanthera/MacHyperVSupport/actions) [![Scan Status](https://scan.coverity.com/projects/23212/badge.svg?flat=1)](https://scan.coverity.com/projects/23212)
 
-Hyper-V integration services for macOS. Requires a Generation 2 virtual machine on Windows Server 2012 R2 / Windows 8.1 or higher. Windows Server 2016 is currently unsupported.
+Hyper-V integration services for macOS running on Windows Server 2008 R2 or higher (generation 1) or Windows 8.1 / Windows Server 2012 R2 or higher (generation 2). Windows Server 2016 is currently unsupported when using a generation 2 VM.
 
 All Intel macOS versions are supported.
 
@@ -13,15 +13,18 @@ All Intel macOS versions are supported.
 - Time synchronization (with daemon)
 - Host to guest file copy (with daemon)
 - PCI passthrough (partial support)
-- Synthetic graphics (partial support)
+- PS/2 keyboard (applies to generation 1 VMs only)
+- Synthetic graphics (full support requires HyperVFramebuffer.kext to be loaded or installed)
 - Synthetic keyboard
 - Synthetic mouse
 - Synthetic network controller
+- Synthetic IDE controller (applies to generation 1 VMs only, currently only virtual hard disks)
 - Synthetic SCSI controller
 
 ### Binaries
 - MacHyperVSupport.kext: Core Hyper-V support kext for macOS 10.4 to 11.0.
 - MacHyperVSupportMonterey.kext: Core Hyper-V support kext for macOS 12.0 and newer.
+- MacHyperVFramebuffer.kext: Basic framebuffer support kext for all macOS versions. This extension must be installed and kext signing disabled in SIP on macOS 11.0 and newer due to macOS requirements.
 - hvfilecopyd: File copy userspace daemon.
 - hvshutdownd: Shutdown userspace daemon.
 - hvtimesyncd: Time synchronization userspace daemon.
@@ -30,8 +33,8 @@ All Intel macOS versions are supported.
 #### ACPI
 - [SSDT-HV-VMBUS](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-VMBUS.dsl): Enables correct Startup Disk operation, ensure patches described within are also configured.
 - [SSDT-HV-DEV](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-DEV.dsl): Required on Windows Server 2019 / Windows 10 and newer, provides proper processor objects and disables incompatible virtual devices under macOS.
-- [SSDT-HV-DEV-WS2022](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-DEV-WS2022.dsl): Required on Windows Server 2022 / Windows 11 and newer, disables addiitonal incompatible virtual devices under macOS.
 - [SSDT-HV-PLUG](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-HV-PLUG.dsl): Ensures VMPlatformPlugin loads on Big Sur and above, avoids freezes with the default PlatformPlugin.
+* Ensure all SSDTs are added in the order above. Legacy iasl will need to be used when using older versions of macOS prior to 10.7.
 * Ensure all patches described in above SSDTs are present in `ACPI->Patch`.
 
 #### Booter quirks
@@ -47,13 +50,11 @@ All Intel macOS versions are supported.
 - The following additional kernel extensions are required:
   - [Lilu](https://github.com/acidanthera/Lilu) - patching and library functions
   - [VirtualSMC](https://github.com/acidanthera/VirtualSMC) - SMC emulator
-- Block
-  - com.apple.driver.AppleEFIRuntime
-    - Required for 32-bit versions of macOS (10.4 and 10.5, and 10.6 in 32-bit mode). EFI runtime services and NVRAM are unavailable in those versions due to incompatiblities with the Hyper-V UEFI.
 - Force
   - On older versions of macOS, the following kernel extensions may need to be Force injected. Refer to the OpenCore Configuration manual for details.
   - IONetworkingFamily (`com.apple.iokit.IONetworkingFamily`)
   - IOSCSIParallelFamily (`com.apple.iokit.IOSCSIParallelFamily`)
+  - If injecting MacHyperVFramebuffer on supported versions, IOGraphicsFamily (`com.apple.iokit.IOGraphicsFamily`) must also be injected with `Force`
 - Patch
   - Disable _hpet_init
     - Arch = `i386`
@@ -84,18 +85,15 @@ All Intel macOS versions are supported.
 - Emulate
   - DummyPowerManagement and CPU spoofing may be required depending on the host CPU for older versions of macOS.
 
-#### NVRAM
-- Boot arguments
-  - `-legacy` is required for running 32-bit versions of macOS (10.4 - 10.5, 10.6 if running in 32-bit mode). 64-bit applications and NVRAM support are unavailable in those versions.
-
 #### UEFI
 - Quirks
   - `DisableSecurityPolicy` - required on Windows Server 2019 / Windows 10 and newer
 
 ### Installer image creation
-- Installer images can either be passed in from USB hard disks, or converted from a DMG to a VHDX image using `qemu-img`:
+- Installer images can either be passed in from USB hard disks, or converted from a DMG to a VHD/VHDX image using `qemu-img`:
   - DMGs need to be in a read/write format first.
-  - `qemu-img convert -f raw -O vhdx Installer.dmg Installer.vhdx`
+  - VHD: `qemu-img convert -f raw -O vpc Installer.dmg Installer.vhd`
+  - VHDX: `qemu-img convert -f raw -O vhdx Installer.dmg Installer.vhdx`
 
 ### Boot arguments
 See the [module list](Docs/modules.md) for boot arguments for each module.
