@@ -29,7 +29,7 @@ private:
   UInt64            _acpiWalkNamespaceOrig[2] {};
   static ACPI_STATUS wrapAcpiWalkNamespace(ACPI_OBJECT_TYPE Type, ACPI_HANDLE StartObject, UInt32 MaxDepth,
                                            ACPI_WALK_CALLBACK UserFunction, void *Context, void **ReturnValue);
-  ACPI_WALK_CALLBACK _origAcpiWalkCallback;
+  ACPI_WALK_CALLBACK _origAcpiWalkCallback = nullptr;
   static ACPI_STATUS acpiWalkCallback(ACPI_HANDLE ObjHandle, UInt32 NestingLevel, void *Context, void **ReturnValue);
 
   //
