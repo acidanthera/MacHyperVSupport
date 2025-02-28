@@ -821,10 +821,9 @@
 			path = hvshutdownd;
 			sourceTree = "<group>";
 		};
-		417C978C289217CA00CFE0B2 /* Tools */ = {
+		417C978C289217CA00CFE0B2 /* Daemons */ = {
 			isa = PBXGroup;
 			children = (
-				41A98B002D5C1A2900A1931C /* build-universal.tool */,
 				41B371732896CD5F00D348B5 /* hvdebug.h */,
 				4191F6E128F32E5200809232 /* hviokit.c */,
 				4191F6E028F32E5200809232 /* hviokit.h */,
@@ -832,7 +831,7 @@
 				415D990728F3261D0078FA71 /* hvshutdownd */,
 				4191F6E328F4E52500809232 /* hvtimesyncd */,
 			);
-			path = Tools;
+			path = Daemons;
 			sourceTree = "<group>";
 		};
 		417CEDD128E22C3900D0F6A8 /* TimeSync */ = {
@@ -944,6 +943,15 @@
 			path = Graphics;
 			sourceTree = "<group>";
 		};
+		41AD08B42D7150A400E1F91F /* BuildScripts */ = {
+			isa = PBXGroup;
+			children = (
+				41A98B002D5C1A2900A1931C /* build-universal.tool */,
+				41AE1CFF28974C7E001A7B42 /* package.tool */,
+			);
+			path = BuildScripts;
+			sourceTree = "<group>";
+		};
 		41AE1D0B289C9595001A7B42 /* CPU */ = {
 			isa = PBXGroup;
 			children = (
@@ -982,13 +990,14 @@
 		41BE40FA263EDE370018C52B = {
 			isa = PBXGroup;
 			children = (
+				41AD08B42D7150A400E1F91F /* BuildScripts */,
+				417C978C289217CA00CFE0B2 /* Daemons */,
 				41C604AA28B2F81200FB77ED /* Docs */,
 				41BE4112263EDEA10018C52B /* Frameworks */,
 				41F2E3D12665B41200CE26CE /* LiluSDK */,
 				41A98B892D603C3900A1931C /* MacHyperVFramebuffer */,
 				41BE4106263EDE380018C52B /* MacHyperVSupport */,
 				41BE4105263EDE380018C52B /* Products */,
-				417C978C289217CA00CFE0B2 /* Tools */,
 				41A71CA7289EB5A400CAE2FF /* Changelog.md */,
 				41A71CA6289EB5A400CAE2FF /* README.md */,
 			);
@@ -1018,7 +1027,6 @@
 			children = (
 				41BE410B263EDE380018C52B /* Info.plist */,
 				41F2E4272665B4C100CE26CE /* kern_start.cpp */,
-				41AE1CFF28974C7E001A7B42 /* package.tool */,
 				41FADE342D6D4EBA006310A2 /* ACPIFixup */,
 				41E5E20928C5765300E6E84F /* Controller */,
 				41AE1D0B289C9595001A7B42 /* CPU */,
@@ -1367,7 +1375,7 @@
 			buildConfigurationList = 41A98AFB2D5C18FA00A1931C /* Build configuration list for PBXLegacyTarget "hvshutdownd-universal" */;
 			buildPhases = (
 			);
-			buildToolPath = "${SRCROOT}/Tools/build-universal.tool";
+			buildToolPath = "${SRCROOT}/BuildScripts/build-universal.tool";
 			buildWorkingDirectory = "";
 			dependencies = (
 				41A98AFD2D5C190C00A1931C /* PBXTargetDependency */,
@@ -1383,7 +1391,7 @@
 			buildConfigurationList = 41A98B312D5D72EC00A1931C /* Build configuration list for PBXLegacyTarget "hvtimesyncd-universal" */;
 			buildPhases = (
 			);
-			buildToolPath = "${SRCROOT}/Tools/build-universal.tool";
+			buildToolPath = "${SRCROOT}/BuildScripts/build-universal.tool";
 			buildWorkingDirectory = "";
 			dependencies = (
 				41A98B352D5D73DE00A1931C /* PBXTargetDependency */,
@@ -1399,7 +1407,7 @@
 			buildConfigurationList = 41A98B6B2D5D9BD800A1931C /* Build configuration list for PBXLegacyTarget "hvfilecopyd-universal" */;
 			buildPhases = (
 			);
-			buildToolPath = "${SRCROOT}/Tools/build-universal.tool";
+			buildToolPath = "${SRCROOT}/BuildScripts/build-universal.tool";
 			buildWorkingDirectory = "";
 			dependencies = (
 				41A98B6F2D5D9BED00A1931C /* PBXTargetDependency */,
@@ -1415,7 +1423,7 @@
 			buildConfigurationList = 41AE1D0128974D81001A7B42 /* Build configuration list for PBXLegacyTarget "Package" */;
 			buildPhases = (
 			);
-			buildToolPath = "${SRCROOT}/MacHyperVSupport/package.tool";
+			buildToolPath = "${SRCROOT}/BuildScripts/package.tool";
 			buildWorkingDirectory = "";
 			dependencies = (
 				41A98BFD2D603D7600A1931C /* PBXTargetDependency */,
@@ -1435,7 +1443,7 @@
 			buildConfigurationList = 41E814752D5B08B700AAA93E /* Build configuration list for PBXLegacyTarget "Package Universal" */;
 			buildPhases = (
 			);
-			buildToolPath = "${SRCROOT}/MacHyperVSupport/package.tool";
+			buildToolPath = "${SRCROOT}/BuildScripts/package.tool";
 			buildWorkingDirectory = "";
 			dependencies = (
 				41A98BFB2D603D7100A1931C /* PBXTargetDependency */,
@@ -1604,7 +1612,7 @@
 				41A98B8C2D603CC900A1931C /* Headers */,
 				41A98BC72D603CC900A1931C /* Sources */,
 				41A98BF32D603CC900A1931C /* Frameworks */,
-				41A98BF42D603CC900A1931C /* Archive */,
+				41A98BF42D603CC900A1931C /* Post-process Binary */,
 			);
 			buildRules = (
 			);
@@ -1622,7 +1630,7 @@
 				41BE40FF263EDE370018C52B /* Headers */,
 				41BE4100263EDE370018C52B /* Sources */,
 				41BE4101263EDE370018C52B /* Frameworks */,
-				41F2E38D265F154B00CE26CE /* Archive */,
+				41F2E38D265F154B00CE26CE /* Post-process Binary */,
 			);
 			buildRules = (
 			);
@@ -1722,7 +1730,7 @@
 /* End PBXProject section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		41A98BF42D603CC900A1931C /* Archive */ = {
+		41A98BF42D603CC900A1931C /* Post-process Binary */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1731,7 +1739,7 @@
 			);
 			inputPaths = (
 			);
-			name = Archive;
+			name = "Post-process Binary";
 			outputFileListPaths = (
 			);
 			outputPaths = (
@@ -1758,7 +1766,7 @@
 			shellPath = /bin/sh;
 			shellScript = "cd \"${TARGET_BUILD_DIR}\"\n\nstrip -S \"${EXECUTABLE_PATH}\"\nif [ \"$CONFIGURATION\" == \"Release\" ]; then\n  strip -x -T \"${EXECUTABLE_PATH}\" &>/dev/null || strip -x \"${EXECUTABLE_PATH}\"\nfi\n";
 		};
-		41F2E38D265F154B00CE26CE /* Archive */ = {
+		41F2E38D265F154B00CE26CE /* Post-process Binary */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1767,7 +1775,7 @@
 			);
 			inputPaths = (
 			);
-			name = Archive;
+			name = "Post-process Binary";
 			outputFileListPaths = (
 			);
 			outputPaths = (
