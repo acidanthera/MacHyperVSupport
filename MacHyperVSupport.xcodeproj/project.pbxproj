@@ -952,6 +952,14 @@
 			path = BuildScripts;
 			sourceTree = "<group>";
 		};
+		41AD08F22D7359CE00E1F91F /* Tools */ = {
+			isa = PBXGroup;
+			children = (
+				417C978C289217CA00CFE0B2 /* Daemons */,
+			);
+			path = Tools;
+			sourceTree = "<group>";
+		};
 		41AE1D0B289C9595001A7B42 /* CPU */ = {
 			isa = PBXGroup;
 			children = (
@@ -991,12 +999,12 @@
 			isa = PBXGroup;
 			children = (
 				41AD08B42D7150A400E1F91F /* BuildScripts */,
-				417C978C289217CA00CFE0B2 /* Daemons */,
 				41C604AA28B2F81200FB77ED /* Docs */,
 				41BE4112263EDEA10018C52B /* Frameworks */,
 				41F2E3D12665B41200CE26CE /* LiluSDK */,
 				41A98B892D603C3900A1931C /* MacHyperVFramebuffer */,
 				41BE4106263EDE380018C52B /* MacHyperVSupport */,
+				41AD08F22D7359CE00E1F91F /* Tools */,
 				41BE4105263EDE380018C52B /* Products */,
 				41A71CA7289EB5A400CAE2FF /* Changelog.md */,
 				41A71CA6289EB5A400CAE2FF /* README.md */,
