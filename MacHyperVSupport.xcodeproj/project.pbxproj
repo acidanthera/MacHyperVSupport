@@ -952,10 +952,21 @@
 			path = BuildScripts;
 			sourceTree = "<group>";
 		};
+		41AD08EE2D7346BF00E1F91F /* package */ = {
+			isa = PBXGroup;
+			children = (
+				41AD08F12D73473A00E1F91F /* Description.plist */,
+				41AD08EF2D7346E800E1F91F /* Info.plist */,
+				41AD08F32D73681F00E1F91F /* postinstall */,
+			);
+			path = package;
+			sourceTree = "<group>";
+		};
 		41AD08F22D7359CE00E1F91F /* Tools */ = {
 			isa = PBXGroup;
 			children = (
 				417C978C289217CA00CFE0B2 /* Daemons */,
+				41AD08EE2D7346BF00E1F91F /* package */,
 			);
 			path = Tools;
 			sourceTree = "<group>";

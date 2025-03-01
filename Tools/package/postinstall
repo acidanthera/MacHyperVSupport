@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+#  postinstall
+#  MacHyperVSupport Tools package postinstall script
+#
+
+dir_launchdaemons="Library/LaunchDaemons"
+
+# Load LaunchDaemons.
+launchctl load ${dir_launchdaemons}/fish.goldfish64.hvfilecopyd.plist || exit 1
+launchctl load ${dir_launchdaemons}/fish.goldfish64.hvshutdownd.plist || exit 1
+launchctl load ${dir_launchdaemons}/fish.goldfish64.hvtimesyncd.plist || exit 1
