@@ -9,6 +9,7 @@ MacHyperVSupport Changelog
 - Added framebuffer driver for basic graphics support
 - Fixed DVD drives not appearing on Gen2 SCSI controller
 - Prevent sleep/doze from occuring
+- Added installer package for userspace components
 
 #### v0.9.7
 - Fixed disks on a passed-in PCI device not being usable
