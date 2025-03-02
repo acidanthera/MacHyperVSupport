@@ -102,6 +102,12 @@
 		41AD08AF2D6D6FE600E1F91F /* HyperVACPIPlatformExpertShim.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41FADE3C2D6D50D0006310A2 /* HyperVACPIPlatformExpertShim.cpp */; };
 		41AD08B02D6D713300E1F91F /* HyperVACPIFixup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41FADE352D6D4EE5006310A2 /* HyperVACPIFixup.cpp */; };
 		41AD08B12D6D713400E1F91F /* HyperVACPIFixup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41FADE352D6D4EE5006310A2 /* HyperVACPIFixup.cpp */; };
+		41AD09042D74AE9E00E1F91F /* hviokit.c in Sources */ = {isa = PBXBuildFile; fileRef = 4191F6E128F32E5200809232 /* hviokit.c */; };
+		41AD090C2D74AEB300E1F91F /* hvsnapshotd.c in Sources */ = {isa = PBXBuildFile; fileRef = 41AD09012D74AE9300E1F91F /* hvsnapshotd.c */; };
+		41AD091B2D74BAB900E1F91F /* HyperVSnapshot.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AD09192D74BAB900E1F91F /* HyperVSnapshot.cpp */; };
+		41AD091C2D74BAB900E1F91F /* HyperVSnapshot.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AD09192D74BAB900E1F91F /* HyperVSnapshot.cpp */; };
+		41AD091D2D74BAB900E1F91F /* HyperVSnapshot.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41AD091A2D74BAB900E1F91F /* HyperVSnapshot.hpp */; };
+		41AD091E2D74BAB900E1F91F /* HyperVSnapshot.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41AD091A2D74BAB900E1F91F /* HyperVSnapshot.hpp */; };
 		41AE1D0E289C95A9001A7B42 /* HyperVCPU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */; };
 		41AE1D0F289C95A9001A7B42 /* HyperVCPU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */; };
 		41AE1D10289C95A9001A7B42 /* HyperVCPU.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41AE1D0D289C95A9001A7B42 /* HyperVCPU.hpp */; };
@@ -477,6 +483,20 @@
 			remoteGlobalIDString = 41AD08D22D71548500E1F91F;
 			remoteInfo = "Package Tools Universal";
 		};
+		41AD090D2D74AF3D00E1F91F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41AD09022D74AE9E00E1F91F;
+			remoteInfo = hvsnapshotd;
+		};
+		41AD090F2D74AF4900E1F91F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41AD09022D74AE9E00E1F91F;
+			remoteInfo = hvsnapshotd;
+		};
 		41AE1D0428974D8B001A7B42 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
@@ -594,6 +614,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
+		41AD09072D74AE9E00E1F91F /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 		41E814652D59809600AAA93E /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -699,6 +728,12 @@
 		41AD08F92D740C4900E1F91F /* build-toolspkg.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "build-toolspkg.py"; sourceTree = "<group>"; };
 		41AD08FC2D74166000E1F91F /* Localizable_EN.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = Localizable_EN.strings; sourceTree = "<group>"; };
 		41AD08FD2D74166000E1F91F /* scripts.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = scripts.js; sourceTree = "<group>"; };
+		41AD09012D74AE9300E1F91F /* hvsnapshotd.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = hvsnapshotd.c; sourceTree = "<group>"; };
+		41AD090B2D74AE9E00E1F91F /* hvsnapshotd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = hvsnapshotd; sourceTree = BUILT_PRODUCTS_DIR; };
+		41AD09192D74BAB900E1F91F /* HyperVSnapshot.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVSnapshot.cpp; sourceTree = "<group>"; };
+		41AD091A2D74BAB900E1F91F /* HyperVSnapshot.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVSnapshot.hpp; sourceTree = "<group>"; };
+		41AD091F2D74BBBD00E1F91F /* HyperVSnapshotRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVSnapshotRegs.hpp; sourceTree = "<group>"; };
+		41AD09202D74BD7F00E1F91F /* HyperVSnapshotRegsUser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HyperVSnapshotRegsUser.h; sourceTree = "<group>"; };
 		41AE1CFF28974C7E001A7B42 /* package.tool */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = package.tool; sourceTree = "<group>"; };
 		41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVCPU.cpp; sourceTree = "<group>"; };
 		41AE1D0D289C95A9001A7B42 /* HyperVCPU.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVCPU.hpp; sourceTree = "<group>"; };
@@ -843,6 +878,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		41AD09062D74AE9E00E1F91F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		41BE4101263EDE370018C52B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -923,10 +965,11 @@
 			isa = PBXGroup;
 			children = (
 				41B371732896CD5F00D348B5 /* hvdebug.h */,
+				4191F6FA28F504B000809232 /* hvfilecopyd */,
 				4191F6E128F32E5200809232 /* hviokit.c */,
 				4191F6E028F32E5200809232 /* hviokit.h */,
-				4191F6FA28F504B000809232 /* hvfilecopyd */,
 				415D990728F3261D0078FA71 /* hvshutdownd */,
+				41AD09002D74AE7500E1F91F /* hvsnapshotd */,
 				4191F6E328F4E52500809232 /* hvtimesyncd */,
 			);
 			path = Daemons;
@@ -972,6 +1015,7 @@
 				817C3CB328EB754C002EA298 /* FileCopy */,
 				411FB8FC289DD2FF0063EF4E /* Heartbeat */,
 				41B3717228960AA000D348B5 /* Shutdown */,
+				41AD09182D74BA9D00E1F91F /* Snapshot */,
 				417CEDD128E22C3900D0F6A8 /* TimeSync */,
 			);
 			path = IntegrationComponents;
@@ -1071,6 +1115,25 @@
 			path = package;
 			sourceTree = "<group>";
 		};
+		41AD09002D74AE7500E1F91F /* hvsnapshotd */ = {
+			isa = PBXGroup;
+			children = (
+				41AD09012D74AE9300E1F91F /* hvsnapshotd.c */,
+			);
+			path = hvsnapshotd;
+			sourceTree = "<group>";
+		};
+		41AD09182D74BA9D00E1F91F /* Snapshot */ = {
+			isa = PBXGroup;
+			children = (
+				41AD09192D74BAB900E1F91F /* HyperVSnapshot.cpp */,
+				41AD091A2D74BAB900E1F91F /* HyperVSnapshot.hpp */,
+				41AD091F2D74BBBD00E1F91F /* HyperVSnapshotRegs.hpp */,
+				41AD09202D74BD7F00E1F91F /* HyperVSnapshotRegsUser.h */,
+			);
+			path = Snapshot;
+			sourceTree = "<group>";
+		};
 		41AE1D0B289C9595001A7B42 /* CPU */ = {
 			isa = PBXGroup;
 			children = (
@@ -1137,6 +1200,7 @@
 				41A98B5B2D5D9B6D00A1931C /* hvfilecopyd-i386 */,
 				41A98B652D5D9BB500A1931C /* hvfilecopyd-tiger */,
 				41A98BF82D603CC900A1931C /* MacHyperVFramebuffer.kext */,
+				41AD090B2D74AE9E00E1F91F /* hvsnapshotd */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1367,6 +1431,7 @@
 				41F2E4082665B42200CE26CE /* sparc.h in Headers */,
 				41F2E40F2665B42200CE26CE /* platform.h in Headers */,
 				418F052326483C8300E1D14C /* HyperVICService.hpp in Headers */,
+				41AD091D2D74BAB900E1F91F /* HyperVSnapshot.hpp in Headers */,
 				4191F6F728F4E71A00809232 /* HyperVTimeSyncUserClientInternal.hpp in Headers */,
 				41F2E40C2665B42200CE26CE /* ppc.h in Headers */,
 				4191F70E28F5057F00809232 /* HyperVFileCopyUserClientInternal.hpp in Headers */,
@@ -1433,6 +1498,7 @@
 				41BF45DF288CDF1200813670 /* sparc.h in Headers */,
 				41BF45E0288CDF1200813670 /* platform.h in Headers */,
 				41BF45E1288CDF1200813670 /* HyperVICService.hpp in Headers */,
+				41AD091E2D74BAB900E1F91F /* HyperVSnapshot.hpp in Headers */,
 				4191F6F828F4E71A00809232 /* HyperVTimeSyncUserClientInternal.hpp in Headers */,
 				817C3CBB28EB7561002EA298 /* HyperVFileCopy.hpp in Headers */,
 				4191F70F28F5057F00809232 /* HyperVFileCopyUserClientInternal.hpp in Headers */,
@@ -1576,6 +1642,7 @@
 				41AE1D0728974D8B001A7B42 /* PBXTargetDependency */,
 				4191F70928F5052200809232 /* PBXTargetDependency */,
 				4191F6DF28F3272100809232 /* PBXTargetDependency */,
+				41AD09102D74AF4900E1F91F /* PBXTargetDependency */,
 				4191F6F228F4E61A00809232 /* PBXTargetDependency */,
 			);
 			name = Package;
@@ -1602,6 +1669,7 @@
 				41A98B062D5C250E00A1931C /* PBXTargetDependency */,
 				41A98B132D5C53A400A1931C /* PBXTargetDependency */,
 				41A98B022D5C1C4700A1931C /* PBXTargetDependency */,
+				41AD090E2D74AF3D00E1F91F /* PBXTargetDependency */,
 				41E814732D5B08B700AAA93E /* PBXTargetDependency */,
 				41A98B392D5D745300A1931C /* PBXTargetDependency */,
 				41A98B472D5D74B200A1931C /* PBXTargetDependency */,
@@ -1769,6 +1837,23 @@
 			productReference = 41A98BF82D603CC900A1931C /* MacHyperVFramebuffer.kext */;
 			productType = "com.apple.product-type.kernel-extension";
 		};
+		41AD09022D74AE9E00E1F91F /* hvsnapshotd */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 41AD09082D74AE9E00E1F91F /* Build configuration list for PBXNativeTarget "hvsnapshotd" */;
+			buildPhases = (
+				41AD09032D74AE9E00E1F91F /* Sources */,
+				41AD09062D74AE9E00E1F91F /* Frameworks */,
+				41AD09072D74AE9E00E1F91F /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = hvsnapshotd;
+			productName = hvshutdown;
+			productReference = 41AD090B2D74AE9E00E1F91F /* hvsnapshotd */;
+			productType = "com.apple.product-type.tool";
+		};
 		41BE4103263EDE370018C52B /* MacHyperVSupport */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 41BE410E263EDE380018C52B /* Build configuration list for PBXNativeTarget "MacHyperVSupport" */;
@@ -1875,6 +1960,7 @@
 				41A98B182D5D72DE00A1931C /* hvtimesyncd-i386 */,
 				41A98B3C2D5D745E00A1931C /* hvtimesyncd-tiger */,
 				41A98B2C2D5D72EC00A1931C /* hvtimesyncd-universal */,
+				41AD09022D74AE9E00E1F91F /* hvsnapshotd */,
 			);
 		};
 /* End PBXProject section */
@@ -2018,6 +2104,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		41AD09032D74AE9E00E1F91F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				41AD090C2D74AEB300E1F91F /* hvsnapshotd.c in Sources */,
+				41AD09042D74AE9E00E1F91F /* hviokit.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		41BE4100263EDE370018C52B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -2045,6 +2140,7 @@
 				41A98B7A2D5EBA6A00A1931C /* HyperVPS2Keyboard.cpp in Sources */,
 				41225F512644C34300574E86 /* HyperVVMBusDevice.cpp in Sources */,
 				419B88C2263F0169005A9977 /* HyperVControllerHypercalls.cpp in Sources */,
+				41AD091B2D74BAB900E1F91F /* HyperVSnapshot.cpp in Sources */,
 				418F052226483C8300E1D14C /* HyperVICService.cpp in Sources */,
 				4191F70C28F5057F00809232 /* HyperVFileCopyUserClient.cpp in Sources */,
 				417C576128C64B92003A177C /* HyperVVMBusInterrupts.cpp in Sources */,
@@ -2097,6 +2193,7 @@
 				41A98B7B2D5EBA6A00A1931C /* HyperVPS2Keyboard.cpp in Sources */,
 				41BF4611288CDF1200813670 /* HyperVVMBusDevice.cpp in Sources */,
 				41BF4613288CDF1200813670 /* HyperVControllerHypercalls.cpp in Sources */,
+				41AD091C2D74BAB900E1F91F /* HyperVSnapshot.cpp in Sources */,
 				41BF4614288CDF1200813670 /* HyperVICService.cpp in Sources */,
 				4191F70D28F5057F00809232 /* HyperVFileCopyUserClient.cpp in Sources */,
 				417C576228C64B92003A177C /* HyperVVMBusInterrupts.cpp in Sources */,
@@ -2303,6 +2400,16 @@
 			isa = PBXTargetDependency;
 			target = 41AD08D22D71548500E1F91F /* Package Tools Universal */;
 			targetProxy = 41AD08FE2D74187B00E1F91F /* PBXContainerItemProxy */;
+		};
+		41AD090E2D74AF3D00E1F91F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41AD09022D74AE9E00E1F91F /* hvsnapshotd */;
+			targetProxy = 41AD090D2D74AF3D00E1F91F /* PBXContainerItemProxy */;
+		};
+		41AD09102D74AF4900E1F91F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41AD09022D74AE9E00E1F91F /* hvsnapshotd */;
+			targetProxy = 41AD090F2D74AF4900E1F91F /* PBXContainerItemProxy */;
 		};
 		41AE1D0528974D8B001A7B42 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -2810,6 +2917,22 @@
 		41AD08D52D71548600E1F91F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+			};
+			name = Release;
+		};
+		41AD09092D74AE9E00E1F91F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		41AD090A2D74AE9E00E1F91F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
@@ -3383,6 +3506,15 @@
 			buildConfigurations = (
 				41AD08D42D71548600E1F91F /* Debug */,
 				41AD08D52D71548600E1F91F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		41AD09082D74AE9E00E1F91F /* Build configuration list for PBXNativeTarget "hvsnapshotd" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41AD09092D74AE9E00E1F91F /* Debug */,
+				41AD090A2D74AE9E00E1F91F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

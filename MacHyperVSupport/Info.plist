@@ -212,6 +212,19 @@
 			<key>IOUserClientClass</key>
 			<string>HyperVShutdownUserClient</string>
 		</dict>
+		<key>HyperVSnapshot</key>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>HVType</key>
+			<string>35fa2e29-ea23-4236-96ae-3a6ebacba440</string>
+			<key>IOClass</key>
+			<string>HyperVSnapshot</string>
+			<key>IOProviderClass</key>
+			<string>HyperVVMBusDevice</string>
+			<key>IOUserClientClass</key>
+			<string>HyperVFileCopyUserClient</string>
+		</dict>
 		<key>HyperVStorageIDE</key>
 		<dict>
 			<key>CFBundleIdentifier</key>

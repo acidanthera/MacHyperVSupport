@@ -25,7 +25,7 @@ typedef enum : UInt16 {
   kVMBusICMessageTypeKVPExchange  = 2,
   kVMBusICMessageTypeShutdown     = 3,
   kVMBusICMessageTypeTimeSync     = 4,
-  kVMBusICMessageTypeVSS          = 5,
+  kVMBusICMessageTypeSnapshot     = 5,
   kVMBusICMessageTypeFileCopy     = 7
 } VMBusICMessageType;
 
