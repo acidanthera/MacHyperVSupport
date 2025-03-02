@@ -9,6 +9,9 @@ MacHyperVSupport Changelog
 - Added framebuffer driver for basic graphics support
 - Fixed DVD drives not appearing on Gen2 SCSI controller
 - Prevent sleep/doze from occuring
+- Rework MMIO handling into HyperVPCIRoot
+- Added ACPI fixup module to resolve ACPI issues on macOS 10.6 and older without SSDT
+- Removed requirement to force legacy mode on macOS 10.4 and 10.5, use the `ClearTaskSwitchBit` OpenCore Booter quirk instead
 - Added installer package for userspace components
 
 #### v0.9.7
