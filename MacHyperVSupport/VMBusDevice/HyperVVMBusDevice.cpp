@@ -11,15 +11,15 @@ OSDefineMetaClassAndStructors(HyperVVMBusDevice, super);
 
 bool HyperVVMBusDevice::attach(IOService *provider) {
   bool result = false;
-  
+
   char     channelLocation[10];
   OSString *typeIdString;
   OSNumber *channelNumber;
   OSData   *instanceBytes;
-  
+
   UInt8 builtInBytes = 0;
   OSData *builtInData;
-  
+
   //
   // Get VMBus provider.
   //
@@ -46,14 +46,14 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
       HVSYSLOG("Failed to initialize work loop");
       break;
     }
-    
+
     _commandGate = IOCommandGate::commandGate(this);
     if (_commandGate == nullptr) {
       HVSYSLOG("Failed to initialize command gate");
       break;
     }
     _workLoop->addEventSource(_commandGate);
-    
+
     //
     // Get channel number and GUID properties.
     //
@@ -64,7 +64,7 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
       HVSYSLOG("Failed to get channel properties");
       break;
     }
-    
+
     //
     // Copy channel number and GUIDs.
     // uuid_string_t size includes null terminator.
@@ -73,13 +73,13 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
     _channelId = channelNumber->unsigned32BitValue();
     HVDBGLOG("Attaching nub type %s for channel %u", _typeId, _channelId);
     memcpy(_instanceId, instanceBytes->getBytesNoCopy(), instanceBytes->getLength());
-    
+
     //
     // Set location to ensure unique names in I/O Registry.
     //
     snprintf(channelLocation, sizeof (channelLocation), "%x", (unsigned int) _channelId);
     setLocation(channelLocation);
-    
+
     //
     // The built-in property is required for some devices, like networking.
     //
@@ -91,12 +91,15 @@ bool HyperVVMBusDevice::attach(IOService *provider) {
     setProperty("built-in", builtInData);
     builtInData->release();
 
-    _vmbusRequestsLock = IOLockAlloc();
-    _vmbusTransLock    = IOLockAlloc();
-    
+    _vmbusRequestsLock      = IOLockAlloc();
+    _vmbusTransLock         = IOLockAlloc();
     _threadZeroRequest.lock = IOLockAlloc();
+    if ((_vmbusRequestsLock == nullptr) || (_vmbusTransLock == nullptr) || (_threadZeroRequest.lock == nullptr)) {
+      HVSYSLOG("Failed to initialize locks");
+      break;
+    }
     prepareSleepThread();
-    
+
     result = true;
   } while (false);
 
@@ -117,9 +120,15 @@ void HyperVVMBusDevice::detach(IOService *provider) {
     OSSafeReleaseNULL(_vmbusProvider);
   }
 
-  IOLockFree(_vmbusRequestsLock);
-  IOLockFree(_vmbusTransLock);
-  IOLockFree(_threadZeroRequest.lock);
+  if (_vmbusRequestsLock != nullptr) {
+    IOLockFree(_vmbusRequestsLock);
+  }
+  if (_vmbusTransLock != nullptr) {
+    IOLockFree(_vmbusTransLock);
+  }
+  if (_threadZeroRequest.lock != nullptr) {
+    IOLockFree(_threadZeroRequest.lock);
+  }
 
   if (_commandGate != nullptr) {
     _workLoop->removeEventSource(_commandGate);
