@@ -1,0 +1,6 @@
+#!/bin/sh
+#
+#  postinstall
+#  MacHyperVSupport hvfilecopyd daemon package postinstall script
+#
+launchctl load /Library/LaunchDaemons/fish.goldfish64.hvfilecopyd.plist || exit 1

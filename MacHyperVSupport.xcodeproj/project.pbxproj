@@ -386,6 +386,97 @@
 			remoteGlobalIDString = 41A98B8B2D603CC900A1931C;
 			remoteInfo = MacHyperVFramebuffer;
 		};
+		41AD08D62D7154C300E1F91F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4191F6FD28F504FD00809232;
+			remoteInfo = hvfilecopyd;
+		};
+		41AD08D82D7154C300E1F91F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41A98B522D5D9B6D00A1931C;
+			remoteInfo = "hvfilecopyd-i386";
+		};
+		41AD08DA2D7154C300E1F91F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41A98B5C2D5D9BB500A1931C;
+			remoteInfo = "hvfilecopyd-tiger";
+		};
+		41AD08DC2D7154C300E1F91F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41A98B662D5D9BD800A1931C;
+			remoteInfo = "hvfilecopyd-universal";
+		};
+		41AD08DE2D7154C300E1F91F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4191F6D428F326F900809232;
+			remoteInfo = hvshutdownd;
+		};
+		41AD08E02D7154C300E1F91F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41E814602D59809600AAA93E;
+			remoteInfo = "hvshutdownd-i386";
+		};
+		41AD08E22D7154C300E1F91F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41A98B082D5C535400A1931C;
+			remoteInfo = "hvshutdownd-tiger";
+		};
+		41AD08E42D7154C300E1F91F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41A98AF82D5C18F900A1931C;
+			remoteInfo = "hvshutdownd-universal";
+		};
+		41AD08E62D7154C300E1F91F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4191F6E628F4E55F00809232;
+			remoteInfo = hvtimesyncd;
+		};
+		41AD08E82D7154C300E1F91F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41A98B182D5D72DE00A1931C;
+			remoteInfo = "hvtimesyncd-i386";
+		};
+		41AD08EA2D7154C300E1F91F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41A98B3C2D5D745E00A1931C;
+			remoteInfo = "hvtimesyncd-tiger";
+		};
+		41AD08EC2D7154C300E1F91F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41A98B2C2D5D72EC00A1931C;
+			remoteInfo = "hvtimesyncd-universal";
+		};
+		41AD08FE2D74187B00E1F91F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41AD08D22D71548500E1F91F;
+			remoteInfo = "Package Tools Universal";
+		};
 		41AE1D0428974D8B001A7B42 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
@@ -602,6 +693,12 @@
 		41A98C0A2D604EE500A1931C /* HyperVGraphicsPrivate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVGraphicsPrivate.cpp; sourceTree = "<group>"; };
 		41A98C0D2D60FCD500A1931C /* HyperVGraphicsPlatformFunctions.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVGraphicsPlatformFunctions.hpp; sourceTree = "<group>"; };
 		41AD08B22D6EC55D00E1F91F /* HyperV-ref-docs.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HyperV-ref-docs.md"; sourceTree = "<group>"; };
+		41AD08F62D740BE600E1F91F /* postinstall */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = postinstall; sourceTree = "<group>"; };
+		41AD08F72D740BED00E1F91F /* postinstall */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = postinstall; sourceTree = "<group>"; };
+		41AD08F82D740BF400E1F91F /* postinstall */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = postinstall; sourceTree = "<group>"; };
+		41AD08F92D740C4900E1F91F /* build-toolspkg.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "build-toolspkg.py"; sourceTree = "<group>"; };
+		41AD08FC2D74166000E1F91F /* Localizable_EN.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = Localizable_EN.strings; sourceTree = "<group>"; };
+		41AD08FD2D74166000E1F91F /* scripts.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = scripts.js; sourceTree = "<group>"; };
 		41AE1CFF28974C7E001A7B42 /* package.tool */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = package.tool; sourceTree = "<group>"; };
 		41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVCPU.cpp; sourceTree = "<group>"; };
 		41AE1D0D289C95A9001A7B42 /* HyperVCPU.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVCPU.hpp; sourceTree = "<group>"; };
@@ -817,6 +914,7 @@
 			children = (
 				415D990828F3266A0078FA71 /* fish.goldfish64.hvshutdownd.plist */,
 				4191F6D328F326DF00809232 /* hvshutdownd.c */,
+				41AD08F72D740BED00E1F91F /* postinstall */,
 			);
 			path = hvshutdownd;
 			sourceTree = "<group>";
@@ -906,6 +1004,7 @@
 			children = (
 				4191F6E428F4E54900809232 /* fish.goldfish64.hvtimesyncd.plist */,
 				4191F6E528F4E55800809232 /* hvtimesyncd.c */,
+				41AD08F82D740BF400E1F91F /* postinstall */,
 			);
 			path = hvtimesyncd;
 			sourceTree = "<group>";
@@ -915,6 +1014,7 @@
 			children = (
 				4191F6FB28F504CD00809232 /* fish.goldfish64.hvfilecopyd.plist */,
 				4191F6FC28F504F700809232 /* hvfilecopyd.c */,
+				41AD08F62D740BE600E1F91F /* postinstall */,
 			);
 			path = hvfilecopyd;
 			sourceTree = "<group>";
@@ -946,29 +1046,29 @@
 		41AD08B42D7150A400E1F91F /* BuildScripts */ = {
 			isa = PBXGroup;
 			children = (
+				41AD08F92D740C4900E1F91F /* build-toolspkg.py */,
 				41A98B002D5C1A2900A1931C /* build-universal.tool */,
 				41AE1CFF28974C7E001A7B42 /* package.tool */,
 			);
 			path = BuildScripts;
 			sourceTree = "<group>";
 		};
-		41AD08EE2D7346BF00E1F91F /* package */ = {
-			isa = PBXGroup;
-			children = (
-				41AD08F12D73473A00E1F91F /* Description.plist */,
-				41AD08EF2D7346E800E1F91F /* Info.plist */,
-				41AD08F32D73681F00E1F91F /* postinstall */,
-			);
-			path = package;
-			sourceTree = "<group>";
-		};
 		41AD08F22D7359CE00E1F91F /* Tools */ = {
 			isa = PBXGroup;
 			children = (
 				417C978C289217CA00CFE0B2 /* Daemons */,
-				41AD08EE2D7346BF00E1F91F /* package */,
+				41AD08FB2D74164700E1F91F /* package */,
 			);
 			path = Tools;
+			sourceTree = "<group>";
+		};
+		41AD08FB2D74164700E1F91F /* package */ = {
+			isa = PBXGroup;
+			children = (
+				41AD08FC2D74166000E1F91F /* Localizable_EN.strings */,
+				41AD08FD2D74166000E1F91F /* scripts.js */,
+			);
+			path = package;
 			sourceTree = "<group>";
 		};
 		41AE1D0B289C9595001A7B42 /* CPU */ = {
@@ -1436,6 +1536,32 @@
 			passBuildSettingsInEnvironment = 1;
 			productName = "hvshutdownd-universal";
 		};
+		41AD08D22D71548500E1F91F /* Package Tools Universal */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = 41AD08D32D71548600E1F91F /* Build configuration list for PBXLegacyTarget "Package Tools Universal" */;
+			buildPhases = (
+			);
+			buildToolPath = "${SRCROOT}/BuildScripts/build-toolspkg.py";
+			buildWorkingDirectory = "";
+			dependencies = (
+				41AD08D72D7154C300E1F91F /* PBXTargetDependency */,
+				41AD08D92D7154C300E1F91F /* PBXTargetDependency */,
+				41AD08DB2D7154C300E1F91F /* PBXTargetDependency */,
+				41AD08DD2D7154C300E1F91F /* PBXTargetDependency */,
+				41AD08DF2D7154C300E1F91F /* PBXTargetDependency */,
+				41AD08E12D7154C300E1F91F /* PBXTargetDependency */,
+				41AD08E32D7154C300E1F91F /* PBXTargetDependency */,
+				41AD08E52D7154C300E1F91F /* PBXTargetDependency */,
+				41AD08E72D7154C300E1F91F /* PBXTargetDependency */,
+				41AD08E92D7154C300E1F91F /* PBXTargetDependency */,
+				41AD08EB2D7154C300E1F91F /* PBXTargetDependency */,
+				41AD08ED2D7154C300E1F91F /* PBXTargetDependency */,
+			);
+			name = "Package Tools Universal";
+			passBuildSettingsInEnvironment = 1;
+			productName = "Package Tools Universal";
+		};
 		41AE1D0028974D81001A7B42 /* Package */ = {
 			isa = PBXLegacyTarget;
 			buildArgumentsString = "$(ACTION)";
@@ -1480,6 +1606,7 @@
 				41A98B392D5D745300A1931C /* PBXTargetDependency */,
 				41A98B472D5D74B200A1931C /* PBXTargetDependency */,
 				41A98B3B2D5D745300A1931C /* PBXTargetDependency */,
+				41AD08FF2D74187B00E1F91F /* PBXTargetDependency */,
 			);
 			name = "Package Universal";
 			passBuildSettingsInEnvironment = 1;
@@ -1706,6 +1833,9 @@
 					41A98AF82D5C18F900A1931C = {
 						CreatedOnToolsVersion = 14.2;
 					};
+					41AD08D22D71548500E1F91F = {
+						CreatedOnToolsVersion = 14.2;
+					};
 					41AE1D0028974D81001A7B42 = {
 						CreatedOnToolsVersion = 13.4.1;
 					};
@@ -1729,6 +1859,7 @@
 			targets = (
 				41AE1D0028974D81001A7B42 /* Package */,
 				41E8146A2D5B08B700AAA93E /* Package Universal */,
+				41AD08D22D71548500E1F91F /* Package Tools Universal */,
 				41A98B8B2D603CC900A1931C /* MacHyperVFramebuffer */,
 				41BE4103263EDE370018C52B /* MacHyperVSupport */,
 				41BF45D6288CDF1200813670 /* MacHyperVSupportMonterey */,
@@ -2107,6 +2238,71 @@
 			isa = PBXTargetDependency;
 			target = 41A98B8B2D603CC900A1931C /* MacHyperVFramebuffer */;
 			targetProxy = 41A98BFC2D603D7600A1931C /* PBXContainerItemProxy */;
+		};
+		41AD08D72D7154C300E1F91F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4191F6FD28F504FD00809232 /* hvfilecopyd */;
+			targetProxy = 41AD08D62D7154C300E1F91F /* PBXContainerItemProxy */;
+		};
+		41AD08D92D7154C300E1F91F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41A98B522D5D9B6D00A1931C /* hvfilecopyd-i386 */;
+			targetProxy = 41AD08D82D7154C300E1F91F /* PBXContainerItemProxy */;
+		};
+		41AD08DB2D7154C300E1F91F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41A98B5C2D5D9BB500A1931C /* hvfilecopyd-tiger */;
+			targetProxy = 41AD08DA2D7154C300E1F91F /* PBXContainerItemProxy */;
+		};
+		41AD08DD2D7154C300E1F91F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41A98B662D5D9BD800A1931C /* hvfilecopyd-universal */;
+			targetProxy = 41AD08DC2D7154C300E1F91F /* PBXContainerItemProxy */;
+		};
+		41AD08DF2D7154C300E1F91F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4191F6D428F326F900809232 /* hvshutdownd */;
+			targetProxy = 41AD08DE2D7154C300E1F91F /* PBXContainerItemProxy */;
+		};
+		41AD08E12D7154C300E1F91F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41E814602D59809600AAA93E /* hvshutdownd-i386 */;
+			targetProxy = 41AD08E02D7154C300E1F91F /* PBXContainerItemProxy */;
+		};
+		41AD08E32D7154C300E1F91F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41A98B082D5C535400A1931C /* hvshutdownd-tiger */;
+			targetProxy = 41AD08E22D7154C300E1F91F /* PBXContainerItemProxy */;
+		};
+		41AD08E52D7154C300E1F91F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41A98AF82D5C18F900A1931C /* hvshutdownd-universal */;
+			targetProxy = 41AD08E42D7154C300E1F91F /* PBXContainerItemProxy */;
+		};
+		41AD08E72D7154C300E1F91F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4191F6E628F4E55F00809232 /* hvtimesyncd */;
+			targetProxy = 41AD08E62D7154C300E1F91F /* PBXContainerItemProxy */;
+		};
+		41AD08E92D7154C300E1F91F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41A98B182D5D72DE00A1931C /* hvtimesyncd-i386 */;
+			targetProxy = 41AD08E82D7154C300E1F91F /* PBXContainerItemProxy */;
+		};
+		41AD08EB2D7154C300E1F91F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41A98B3C2D5D745E00A1931C /* hvtimesyncd-tiger */;
+			targetProxy = 41AD08EA2D7154C300E1F91F /* PBXContainerItemProxy */;
+		};
+		41AD08ED2D7154C300E1F91F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41A98B2C2D5D72EC00A1931C /* hvtimesyncd-universal */;
+			targetProxy = 41AD08EC2D7154C300E1F91F /* PBXContainerItemProxy */;
+		};
+		41AD08FF2D74187B00E1F91F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41AD08D22D71548500E1F91F /* Package Tools Universal */;
+			targetProxy = 41AD08FE2D74187B00E1F91F /* PBXContainerItemProxy */;
 		};
 		41AE1D0528974D8B001A7B42 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -2602,6 +2798,18 @@
 				STRIP_STYLE = "non-global";
 				VALID_ARCHS = "x86_64 ACID32";
 				WRAPPER_EXTENSION = kext;
+			};
+			name = Release;
+		};
+		41AD08D42D71548600E1F91F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		41AD08D52D71548600E1F91F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
 			};
 			name = Release;
 		};
@@ -3166,6 +3374,15 @@
 			buildConfigurations = (
 				41A98BF62D603CC900A1931C /* Debug */,
 				41A98BF72D603CC900A1931C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		41AD08D32D71548600E1F91F /* Build configuration list for PBXLegacyTarget "Package Tools Universal" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41AD08D42D71548600E1F91F /* Debug */,
+				41AD08D52D71548600E1F91F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

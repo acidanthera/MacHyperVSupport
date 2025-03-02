@@ -1,0 +1,6 @@
+#!/bin/sh
+#
+#  postinstall
+#  MacHyperVSupport hvshutdownd daemon package postinstall script
+#
+launchctl load /Library/LaunchDaemons/fish.goldfish64.hvshutdownd.plist || exit 1

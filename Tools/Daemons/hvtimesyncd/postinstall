@@ -1,0 +1,6 @@
+#!/bin/sh
+#
+#  postinstall
+#  MacHyperVSupport hvtimesyncd daemon package postinstall script
+#
+launchctl load /Library/LaunchDaemons/fish.goldfish64.hvtimesyncd.plist || exit 1
