@@ -308,7 +308,7 @@ ET.SubElement(distInstallerGuiScript, "options", {
     "rootVolumeOnly"         : "true"
     })
 ET.SubElement(distInstallerGuiScript, "script").text = mpkgScriptsJS
-# ET.SubElement(distInstallerGuiScript, "installation-check", { "script" : "installCheckScript()" })
+ET.SubElement(distInstallerGuiScript, "installation-check", { "script" : "installCheckScript()" })
 
 # Choices outline.
 distChoices = ET.SubElement(distInstallerGuiScript, "choices-outline")
