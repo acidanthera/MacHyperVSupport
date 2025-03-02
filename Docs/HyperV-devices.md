@@ -11,7 +11,7 @@ This page describes the different services and devices exposed to a virtual mach
 [Provides](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/reference/integration-services#hyper-v-volume-shadow-copy-requestor) Volume Shadow Copy support to guests. 
 * Availability: Windows Server 2008 SP2 and later
 * GUID: `35fa2e29-ea23-4236-96ae-3a6ebacba440`
-* Support status: No
+* Support status: Planned
 
 ### Data Exchange
 [Provides](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/reference/integration-services#hyper-v-data-exchange-service-kvp) a mechanism to exchange basic metadata between the guest and the host via a key/value pair system.
@@ -67,7 +67,7 @@ This page describes the different services and devices exposed to a virtual mach
 Provides virtual graphics framebuffer support.
 * Availability: Windows Server 2008 and later
 * GUID: `da0a7802-e377-4aac-8e77-0558eb1073f8`
-* Support status: Handled by HyperVGraphicsBridge
+* Support status: Handled by HyperVGraphics (requires HyperVFramebuffer for full functionality)
 
 ### Synthetic IDE controller
 [Provides](https://learn.microsoft.com/en-us/windows-server/administration/performance-tuning/role/hyper-v-server/storage-io-performance#ide) enhanced performance over the emulated IDE controller in a Gen1 guest. Virtual hard disks will appear on both the emulated controller and the synthetic controller, CD devices will appear only on the emulated controller.
