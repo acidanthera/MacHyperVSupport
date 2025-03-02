@@ -13,6 +13,7 @@ MacHyperVSupport Changelog
 - Added ACPI fixup module to resolve ACPI issues on macOS 10.6 and older without SSDT
 - Removed requirement to force legacy mode on macOS 10.4 and 10.5, use the `ClearTaskSwitchBit` OpenCore Booter quirk instead
 - Added installer package for userspace components
+- Fixed storage hotplug not working on the first addition/removal of a disk
 
 #### v0.9.7
 - Fixed disks on a passed-in PCI device not being usable

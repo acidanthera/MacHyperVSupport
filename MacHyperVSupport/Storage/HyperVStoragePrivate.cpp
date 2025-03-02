@@ -39,7 +39,11 @@ static const HyperVStorageProtocol storageProtocols[] = {
 };
 
 bool HyperVStorage::wakePacketHandler(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
-  return true;
+  //
+  // Only CompleteIO requests should wake sleeping threads.
+  //
+  HyperVStoragePacket *storPkt = (HyperVStoragePacket*) pktData;
+  return storPkt->operation == kHyperVStoragePacketOperationCompleteIO;
 }
 
 void HyperVStorage::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) {
