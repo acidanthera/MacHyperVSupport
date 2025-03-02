@@ -6,10 +6,11 @@ if [ "${TARGET_BUILD_DIR}" = "" ]; then
 fi
 
 cd "${TARGET_BUILD_DIR}"
+archive="MacHyperVSupport-${MODULE_VERSION}-$(echo $CONFIGURATION | tr /a-z/ /A-Z/).zip"
 
 # clean / build
 if [ "$1" != "analyze" ]; then
-  rm -rf package *.zip || exit 1
+  rm -rf package "${archive}" || exit 1
 fi
 
 if [ "$1" != "" ]; then
@@ -30,6 +31,7 @@ if [ ! -f ../libaistat.dylib ]; then
   sleep 5
 fi
 
+cp "${PROJECT_DIR}/Tools/Daemons/hvfilecopyd/fish.goldfish64.hvfilecopyd.plist" Tools/fish.goldfish64.hvfilecopyd.plist || exit 1
 if [[ -f "../hvfilecopyd-universal" ]] && [[ "../hvfilecopyd-universal" -nt "../hvfilecopyd" ]]; then
   cp ../hvfilecopyd-universal Tools/hvfilecopyd || exit 1
 else
@@ -38,6 +40,8 @@ fi
 if [[ -f "../hvfilecopyd-tiger" ]]; then
   cp ../hvfilecopyd-tiger Tools/ || exit 1
 fi
+
+cp "${PROJECT_DIR}/Tools/Daemons/hvfilecopyd/fish.goldfish64.hvfilecopyd.plist" Tools/fish.goldfish64.hvshutdownd.plist || exit 1
 if [[ -f "../hvshutdownd-universal" ]] && [[ "../hvshutdownd-universal" -nt "../hvshutdownd" ]]; then
   cp ../hvshutdownd-universal Tools/hvshutdownd || exit 1
 else
@@ -46,6 +50,8 @@ fi
 if [[ -f "../hvshutdownd-tiger" ]]; then
   cp ../hvshutdownd-tiger Tools/ || exit 1
 fi
+
+cp "${PROJECT_DIR}/Tools/Daemons/hvfilecopyd/fish.goldfish64.hvfilecopyd.plist" Tools/fish.goldfish64.hvtimesyncd.plist || exit 1
 if [[ -f "../hvtimesyncd-universal" ]] && [[ "../hvtimesyncd-universal" -nt "../hvtimesyncd" ]]; then
   cp ../hvtimesyncd-universal Tools/hvtimesyncd || exit 1
 else
@@ -82,5 +88,4 @@ if [ "$CONFIGURATION" = "Release" ]; then
   done
 fi
 
-archive="MacHyperVSupport-${MODULE_VERSION}-$(echo $CONFIGURATION | tr /a-z/ /A-Z/).zip"
 zip -qry -FS ../"${archive}" * || exit 1
