@@ -13,7 +13,7 @@
 #include "HyperVVMBusDevice.hpp"
 #include "HyperVIC.hpp"
 
-#define kHyperVICBufferSize     PAGE_SIZE
+#define kHyperVICBufferSize     (PAGE_SIZE * 4)
 
 class HyperVICService : public IOService {
   OSDeclareDefaultStructors(HyperVICService);
