@@ -1,0 +1,6 @@
+#!/bin/sh
+#
+#  postinstall
+#  MacHyperVSupport hvsnapshotd daemon package postinstall script
+#
+launchctl load /Library/LaunchDaemons/fish.goldfish64.hvsnapshotd.plist || exit 1

@@ -10,11 +10,15 @@
 
 #include "HyperVICService.hpp"
 #include "HyperVSnapshotRegs.hpp"
+#include "HyperVSnapshotUserClientInternal.hpp"
 
 class HyperVSnapshot : public HyperVICService {
   OSDeclareDefaultStructors(HyperVSnapshot);
   HVDeclareLogFunctionsVMBusChild("snap");
   typedef HyperVICService super;
+
+private:
+  HyperVSnapshotUserClient *_userClientInstance = nullptr;
 
 protected:
   void handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeaderLength, UInt8 *pktData, UInt32 pktDataLength) APPLE_KEXT_OVERRIDE;

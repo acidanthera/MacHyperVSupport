@@ -223,7 +223,7 @@
 			<key>IOProviderClass</key>
 			<string>HyperVVMBusDevice</string>
 			<key>IOUserClientClass</key>
-			<string>HyperVFileCopyUserClient</string>
+			<string>HyperVSnapshotUserClient</string>
 		</dict>
 		<key>HyperVStorageIDE</key>
 		<dict>

@@ -108,6 +108,12 @@
 		41AD091C2D74BAB900E1F91F /* HyperVSnapshot.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AD09192D74BAB900E1F91F /* HyperVSnapshot.cpp */; };
 		41AD091D2D74BAB900E1F91F /* HyperVSnapshot.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41AD091A2D74BAB900E1F91F /* HyperVSnapshot.hpp */; };
 		41AD091E2D74BAB900E1F91F /* HyperVSnapshot.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41AD091A2D74BAB900E1F91F /* HyperVSnapshot.hpp */; };
+		41AD09232D74D43B00E1F91F /* HyperVSnapshotUserClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AD09212D74D43B00E1F91F /* HyperVSnapshotUserClient.cpp */; };
+		41AD09242D74D43B00E1F91F /* HyperVSnapshotUserClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AD09212D74D43B00E1F91F /* HyperVSnapshotUserClient.cpp */; };
+		41AD09252D74D43B00E1F91F /* HyperVSnapshotUserClientInternal.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41AD09222D74D43B00E1F91F /* HyperVSnapshotUserClientInternal.hpp */; };
+		41AD09262D74D43B00E1F91F /* HyperVSnapshotUserClientInternal.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41AD09222D74D43B00E1F91F /* HyperVSnapshotUserClientInternal.hpp */; };
+		41AD09292D74D74A00E1F91F /* HyperVSnapshotUserClientPrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AD09282D74D74A00E1F91F /* HyperVSnapshotUserClientPrivate.cpp */; };
+		41AD092A2D74D74A00E1F91F /* HyperVSnapshotUserClientPrivate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AD09282D74D74A00E1F91F /* HyperVSnapshotUserClientPrivate.cpp */; };
 		41AE1D0E289C95A9001A7B42 /* HyperVCPU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */; };
 		41AE1D0F289C95A9001A7B42 /* HyperVCPU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */; };
 		41AE1D10289C95A9001A7B42 /* HyperVCPU.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 41AE1D0D289C95A9001A7B42 /* HyperVCPU.hpp */; };
@@ -733,7 +739,12 @@
 		41AD09192D74BAB900E1F91F /* HyperVSnapshot.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVSnapshot.cpp; sourceTree = "<group>"; };
 		41AD091A2D74BAB900E1F91F /* HyperVSnapshot.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVSnapshot.hpp; sourceTree = "<group>"; };
 		41AD091F2D74BBBD00E1F91F /* HyperVSnapshotRegs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVSnapshotRegs.hpp; sourceTree = "<group>"; };
-		41AD09202D74BD7F00E1F91F /* HyperVSnapshotRegsUser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HyperVSnapshotRegsUser.h; sourceTree = "<group>"; };
+		41AD09212D74D43B00E1F91F /* HyperVSnapshotUserClient.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVSnapshotUserClient.cpp; sourceTree = "<group>"; };
+		41AD09222D74D43B00E1F91F /* HyperVSnapshotUserClientInternal.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVSnapshotUserClientInternal.hpp; sourceTree = "<group>"; };
+		41AD09272D74D48F00E1F91F /* HyperVSnapshotUserClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HyperVSnapshotUserClient.h; sourceTree = "<group>"; };
+		41AD09282D74D74A00E1F91F /* HyperVSnapshotUserClientPrivate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVSnapshotUserClientPrivate.cpp; sourceTree = "<group>"; };
+		41AD092B2D77E53B00E1F91F /* fish.goldfish64.hvsnapshotd.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = fish.goldfish64.hvsnapshotd.plist; sourceTree = "<group>"; };
+		41AD092C2D77E53B00E1F91F /* postinstall */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = postinstall; sourceTree = "<group>"; };
 		41AE1CFF28974C7E001A7B42 /* package.tool */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = package.tool; sourceTree = "<group>"; };
 		41AE1D0C289C95A9001A7B42 /* HyperVCPU.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVCPU.cpp; sourceTree = "<group>"; };
 		41AE1D0D289C95A9001A7B42 /* HyperVCPU.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVCPU.hpp; sourceTree = "<group>"; };
@@ -965,9 +976,9 @@
 			isa = PBXGroup;
 			children = (
 				41B371732896CD5F00D348B5 /* hvdebug.h */,
-				4191F6FA28F504B000809232 /* hvfilecopyd */,
 				4191F6E128F32E5200809232 /* hviokit.c */,
 				4191F6E028F32E5200809232 /* hviokit.h */,
+				4191F6FA28F504B000809232 /* hvfilecopyd */,
 				415D990728F3261D0078FA71 /* hvshutdownd */,
 				41AD09002D74AE7500E1F91F /* hvsnapshotd */,
 				4191F6E328F4E52500809232 /* hvtimesyncd */,
@@ -1118,7 +1129,9 @@
 		41AD09002D74AE7500E1F91F /* hvsnapshotd */ = {
 			isa = PBXGroup;
 			children = (
+				41AD092B2D77E53B00E1F91F /* fish.goldfish64.hvsnapshotd.plist */,
 				41AD09012D74AE9300E1F91F /* hvsnapshotd.c */,
+				41AD092C2D77E53B00E1F91F /* postinstall */,
 			);
 			path = hvsnapshotd;
 			sourceTree = "<group>";
@@ -1129,7 +1142,10 @@
 				41AD09192D74BAB900E1F91F /* HyperVSnapshot.cpp */,
 				41AD091A2D74BAB900E1F91F /* HyperVSnapshot.hpp */,
 				41AD091F2D74BBBD00E1F91F /* HyperVSnapshotRegs.hpp */,
-				41AD09202D74BD7F00E1F91F /* HyperVSnapshotRegsUser.h */,
+				41AD09212D74D43B00E1F91F /* HyperVSnapshotUserClient.cpp */,
+				41AD09272D74D48F00E1F91F /* HyperVSnapshotUserClient.h */,
+				41AD09222D74D43B00E1F91F /* HyperVSnapshotUserClientInternal.hpp */,
+				41AD09282D74D74A00E1F91F /* HyperVSnapshotUserClientPrivate.cpp */,
 			);
 			path = Snapshot;
 			sourceTree = "<group>";
@@ -1444,6 +1460,7 @@
 				41F9B8F12849792200E0DCB2 /* HyperVPCIBridge.hpp in Headers */,
 				41F2E3FB2665B42200CE26CE /* kern_policy.hpp in Headers */,
 				41F2E3FE2665B42200CE26CE /* kern_iokit.hpp in Headers */,
+				41AD09252D74D43B00E1F91F /* HyperVSnapshotUserClientInternal.hpp in Headers */,
 				817C3CB928EB754C002EA298 /* HyperVFileCopy.hpp in Headers */,
 				41F2E4102665B42200CE26CE /* kern_patcher.hpp in Headers */,
 				417CEDED28F31FF300D0F6A8 /* HyperVICUserClient.hpp in Headers */,
@@ -1511,6 +1528,7 @@
 				41BF45E7288CDF1200813670 /* kern_time.hpp in Headers */,
 				41BF45E8288CDF1200813670 /* HyperVPCIBridge.hpp in Headers */,
 				41BF45E9288CDF1200813670 /* kern_policy.hpp in Headers */,
+				41AD09262D74D43B00E1F91F /* HyperVSnapshotUserClientInternal.hpp in Headers */,
 				41BF45EB288CDF1200813670 /* kern_iokit.hpp in Headers */,
 				41BF45EC288CDF1200813670 /* kern_patcher.hpp in Headers */,
 				417CEDEE28F31FF300D0F6A8 /* HyperVICUserClient.hpp in Headers */,
@@ -2108,8 +2126,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				41AD090C2D74AEB300E1F91F /* hvsnapshotd.c in Sources */,
 				41AD09042D74AE9E00E1F91F /* hviokit.c in Sources */,
+				41AD090C2D74AEB300E1F91F /* hvsnapshotd.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2150,7 +2168,9 @@
 				41AD08AE2D6D6FE500E1F91F /* HyperVACPIPlatformExpertShim.cpp in Sources */,
 				41F2E43C2666E6A100CE26CE /* HyperVGraphicsBridge.cpp in Sources */,
 				417CEDD428E22C5400D0F6A8 /* HyperVTimeSync.cpp in Sources */,
+				41AD09232D74D43B00E1F91F /* HyperVSnapshotUserClient.cpp in Sources */,
 				41E2EC78263F894300BBE18F /* HyperVControllerInterrupts.cpp in Sources */,
+				41AD09292D74D74A00E1F91F /* HyperVSnapshotUserClientPrivate.cpp in Sources */,
 				416E429D265751CC006DED6D /* HyperVVMBusDevicePrivate.cpp in Sources */,
 				41CF8A6F2ADB89A9002AC7A4 /* HyperVPCIBridgeDevProps.cpp in Sources */,
 				4191F6F528F4E71A00809232 /* HyperVTimeSyncUserClient.cpp in Sources */,
@@ -2203,7 +2223,9 @@
 				41AD08AF2D6D6FE600E1F91F /* HyperVACPIPlatformExpertShim.cpp in Sources */,
 				41BF4618288CDF1200813670 /* HyperVGraphicsBridge.cpp in Sources */,
 				417CEDD528E22C5400D0F6A8 /* HyperVTimeSync.cpp in Sources */,
+				41AD09242D74D43B00E1F91F /* HyperVSnapshotUserClient.cpp in Sources */,
 				41BF4619288CDF1200813670 /* HyperVControllerInterrupts.cpp in Sources */,
+				41AD092A2D74D74A00E1F91F /* HyperVSnapshotUserClientPrivate.cpp in Sources */,
 				41BF461A288CDF1200813670 /* HyperVVMBusDevicePrivate.cpp in Sources */,
 				41CF8A702ADB89A9002AC7A4 /* HyperVPCIBridgeDevProps.cpp in Sources */,
 				4191F6F628F4E71A00809232 /* HyperVTimeSyncUserClient.cpp in Sources */,

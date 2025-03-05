@@ -38,18 +38,21 @@ void HyperVSnapshot::stop(IOService *provider) {
 }
 
 bool HyperVSnapshot::open(IOService *forClient, IOOptionBits options, void *arg) {
-
+  HyperVSnapshotUserClient *hvSnapshotUserClient = OSDynamicCast(HyperVSnapshotUserClient, forClient);
+  if ((hvSnapshotUserClient == nullptr) || (_userClientInstance != nullptr)) {
+    return false;
+  }
 
   if (!super::open(forClient, options, arg)) {
     return false;
   }
 
-
+  _userClientInstance = hvSnapshotUserClient;
   return true;
 }
 
 void HyperVSnapshot::close(IOService *forClient, IOOptionBits options) {
-
+  _userClientInstance = nullptr;
   super::close(forClient, options);
 }
 
@@ -70,15 +73,46 @@ void HyperVSnapshot::handlePacket(VMBusPacketHeader *pktHeader, UInt32 pktHeader
 
     case kVMBusICMessageTypeSnapshot:
       HVDBGLOG("Attempting snapshot operation type %u", snapshotMsg->snapshotHeader.type);
-      snapshotMsg->icHeader.status = kHyperVStatusFailure;
-      
+      if (_userClientInstance == nullptr) {
+        HVSYSLOG("Unable to perform snapshot (snapshot daemon is not running)");
+        snapshotMsg->icHeader.status = kHyperVStatusFailure;
+        break;
+      }
+
       switch (snapshotMsg->snapshotHeader.type) {
+        case kHyperVSnapshotMessageTypeHotBackup:
+          HVDBGLOG("Hot backup is starting");
+          if (pktDataLength < sizeof (snapshotMsg->checkFeature)) {
+            HVSYSLOG("Hot backup request packet is invalid size (%u bytes)", pktDataLength);
+            status = kIOReturnUnsupported;
+            break;
+          }
+
+          status = _userClientInstance->checkSnapshotAbility();
+          if (status == kIOReturnSuccess) {
+            snapshotMsg->checkFeature.flags = kHyperVSnapshotMessageCheckFeatureFlagNoAutoRecovery;
+          }
+          break;
+
+        case kHyperVSnapshotMessageTypeFreeze:
+          HVDBGLOG("Filesystem freeze requested");
+          status = _userClientInstance->doFreeze();
+          break;
+
+        case kHyperVSnapshotMessageTypeThaw:
+          HVDBGLOG("Filesystem thaw requested");
+          status = _userClientInstance->doThaw();
+          break;
+
         default:
           HVDBGLOG("Unknown snapshot operation type %u", snapshotMsg->snapshotHeader.type);
           status = kIOReturnUnsupported;
           break;
       }
-      
+
+      //
+      // Report status to Hyper-V.
+      //
       switch (status) {
         case kIOReturnSuccess:
           snapshotMsg->icHeader.status = kHyperVStatusSuccess;

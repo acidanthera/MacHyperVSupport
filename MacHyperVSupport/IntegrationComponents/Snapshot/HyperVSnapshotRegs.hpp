@@ -9,12 +9,28 @@
 #define HyperVSnapshotRegs_hpp
 
 #include "HyperVIC.hpp"
-#include "HyperVSnapshotRegsUser.h"
 
 //
 // Snapshot versions.
 //
 #define kHyperVSnapshotVersionV5_0  VMBUS_VERSION(5, 0)
+
+//
+// Snapshot message types.
+//
+typedef enum : UInt8 {
+  kHyperVSnapshotMessageTypeCreate      = 0,
+  kHyperVSnapshotMessageTypeDelete      = 1,
+  // Hot backup is starting.
+  kHyperVSnapshotMessageTypeHotBackup   = 2,
+  kHyperVSnapshotMessageTypeGetDMInfo   = 3,
+  kHyperVSnapshotMessageTypeBUComplete  = 4,
+  // All filesystems are to be frozen.
+  kHyperVSnapshotMessageTypeFreeze      = 5,
+  // All filesystems are to be thawed.
+  kHyperVSnapshotMessageTypeThaw        = 6,
+  kHyperVSnapshotMessageTypeAutoRecover = 7
+} HyperVSnapshotMessageType;
 
 //
 // Snapshot message header.
@@ -29,6 +45,10 @@ typedef struct __attribute__((packed)) {
   UInt8                     reserved[7];
 } HyperVSnapshotMessageHeader;
 
+//
+// Supported feature check, sent in response to kHyperVSnapshotMessageTypeHotBackup.
+//
+#define kHyperVSnapshotMessageCheckFeatureFlagNoAutoRecovery    0x5
 typedef struct __attribute__((packed)) {
   // Snapshot message header.
   HyperVSnapshotMessageHeader header;
