@@ -16,6 +16,7 @@
 
 //
 // Snapshot user client methods from daemon.
+// These must match notifications.
 //
 typedef enum : UInt32 {
   // Report daemon is alive and snapshot can be completed on all mounted volumes.
@@ -33,6 +34,7 @@ typedef enum : UInt32 {
 
 //
 // Snapshot user client notifications to daemon.
+// These must match method types.
 //
 typedef enum : UInt32 {
   // Request from user client to ensure daemon is alive.
