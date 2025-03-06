@@ -190,6 +190,10 @@
 		41BF4623288CDF1200813670 /* HyperVPCIBridge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41F9B8EE2849792200E0DCB2 /* HyperVPCIBridge.cpp */; };
 		41CF8A6F2ADB89A9002AC7A4 /* HyperVPCIBridgeDevProps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41CF8A6E2ADB89A9002AC7A4 /* HyperVPCIBridgeDevProps.cpp */; };
 		41CF8A702ADB89A9002AC7A4 /* HyperVPCIBridgeDevProps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41CF8A6E2ADB89A9002AC7A4 /* HyperVPCIBridgeDevProps.cpp */; };
+		41D35E8E2D79329C00AD0C87 /* hviokit.c in Sources */ = {isa = PBXBuildFile; fileRef = 4191F6E128F32E5200809232 /* hviokit.c */; };
+		41D35E962D7932B200AD0C87 /* hvsnapshotd.c in Sources */ = {isa = PBXBuildFile; fileRef = 41AD09012D74AE9300E1F91F /* hvsnapshotd.c */; };
+		41D35EA52D79562000AD0C87 /* hviokit.c in Sources */ = {isa = PBXBuildFile; fileRef = 4191F6E128F32E5200809232 /* hviokit.c */; };
+		41D35EAD2D79563200AD0C87 /* hvsnapshotd.c in Sources */ = {isa = PBXBuildFile; fileRef = 41AD09012D74AE9300E1F91F /* hvsnapshotd.c */; };
 		41E2EC78263F894300BBE18F /* HyperVControllerInterrupts.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41E2EC77263F894300BBE18F /* HyperVControllerInterrupts.cpp */; };
 		41E5E20C28C5766700E6E84F /* HyperVController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41E5E20A28C5766700E6E84F /* HyperVController.cpp */; };
 		41E5E20D28C5766700E6E84F /* HyperVController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41E5E20A28C5766700E6E84F /* HyperVController.cpp */; };
@@ -517,6 +521,69 @@
 			remoteGlobalIDString = 41BF45D6288CDF1200813670;
 			remoteInfo = MacHyperVSupportMonterey;
 		};
+		41D35E972D7932C900AD0C87 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41D35E8C2D79329C00AD0C87;
+			remoteInfo = "hvsnapshotd-tiger";
+		};
+		41D35EA12D79561D00AD0C87 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41AD09022D74AE9E00E1F91F;
+			remoteInfo = hvsnapshotd;
+		};
+		41D35EAE2D79564500AD0C87 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41D35EA32D79562000AD0C87;
+			remoteInfo = "hvsnapshotd-i386";
+		};
+		41D35EB02D79566600AD0C87 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41D35EA32D79562000AD0C87;
+			remoteInfo = "hvsnapshotd-i386";
+		};
+		41D35EB22D79566600AD0C87 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41D35E992D7955FD00AD0C87;
+			remoteInfo = "hvsnapshotd-universal";
+		};
+		41D35EB42D79567A00AD0C87 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41AD09022D74AE9E00E1F91F;
+			remoteInfo = hvsnapshotd;
+		};
+		41D35EB62D79567A00AD0C87 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41D35EA32D79562000AD0C87;
+			remoteInfo = "hvsnapshotd-i386";
+		};
+		41D35EB82D79567A00AD0C87 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41D35E8C2D79329C00AD0C87;
+			remoteInfo = "hvsnapshotd-tiger";
+		};
+		41D35EBA2D79567A00AD0C87 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41D35E992D7955FD00AD0C87;
+			remoteInfo = "hvsnapshotd-universal";
+		};
 		41E8146C2D5B08B700AAA93E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 41BE40FB263EDE370018C52B /* Project object */;
@@ -621,6 +688,24 @@
 			runOnlyForDeploymentPostprocessing = 1;
 		};
 		41AD09072D74AE9E00E1F91F /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		41D35E912D79329C00AD0C87 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		41D35EA82D79562000AD0C87 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -762,6 +847,8 @@
 		41C604AB28B2F87600FB77ED /* HyperV-versions.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HyperV-versions.md"; sourceTree = "<group>"; };
 		41CF8A6E2ADB89A9002AC7A4 /* HyperVPCIBridgeDevProps.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVPCIBridgeDevProps.cpp; sourceTree = "<group>"; };
 		41CF8A712ADB8DD2002AC7A4 /* DevicePathPropertyDatabase.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = DevicePathPropertyDatabase.hpp; sourceTree = "<group>"; };
+		41D35E952D79329C00AD0C87 /* hvsnapshotd-tiger */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "hvsnapshotd-tiger"; sourceTree = BUILT_PRODUCTS_DIR; };
+		41D35EAC2D79562000AD0C87 /* hvsnapshotd-i386 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "hvsnapshotd-i386"; sourceTree = BUILT_PRODUCTS_DIR; };
 		41E2EC77263F894300BBE18F /* HyperVControllerInterrupts.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVControllerInterrupts.cpp; sourceTree = "<group>"; };
 		41E5E20A28C5766700E6E84F /* HyperVController.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HyperVController.cpp; sourceTree = "<group>"; };
 		41E5E20B28C5766700E6E84F /* HyperVController.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HyperVController.hpp; sourceTree = "<group>"; };
@@ -904,6 +991,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		41BF4625288CDF1200813670 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		41D35E902D79329C00AD0C87 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		41D35EA72D79562000AD0C87 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1217,6 +1318,8 @@
 				41A98B652D5D9BB500A1931C /* hvfilecopyd-tiger */,
 				41A98BF82D603CC900A1931C /* MacHyperVFramebuffer.kext */,
 				41AD090B2D74AE9E00E1F91F /* hvsnapshotd */,
+				41D35E952D79329C00AD0C87 /* hvsnapshotd-tiger */,
+				41D35EAC2D79562000AD0C87 /* hvsnapshotd-i386 */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1637,6 +1740,10 @@
 				41AD08E12D7154C300E1F91F /* PBXTargetDependency */,
 				41AD08E32D7154C300E1F91F /* PBXTargetDependency */,
 				41AD08E52D7154C300E1F91F /* PBXTargetDependency */,
+				41D35EB52D79567A00AD0C87 /* PBXTargetDependency */,
+				41D35EB72D79567A00AD0C87 /* PBXTargetDependency */,
+				41D35EB92D79567A00AD0C87 /* PBXTargetDependency */,
+				41D35EBB2D79567A00AD0C87 /* PBXTargetDependency */,
 				41AD08E72D7154C300E1F91F /* PBXTargetDependency */,
 				41AD08E92D7154C300E1F91F /* PBXTargetDependency */,
 				41AD08EB2D7154C300E1F91F /* PBXTargetDependency */,
@@ -1667,6 +1774,22 @@
 			passBuildSettingsInEnvironment = 1;
 			productName = Package;
 		};
+		41D35E992D7955FD00AD0C87 /* hvsnapshotd-universal */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "hvsnapshotd hvsnapshotd-i386 $(TARGET_NAME)";
+			buildConfigurationList = 41D35E9E2D7955FD00AD0C87 /* Build configuration list for PBXLegacyTarget "hvsnapshotd-universal" */;
+			buildPhases = (
+			);
+			buildToolPath = "${SRCROOT}/BuildScripts/build-universal.tool";
+			buildWorkingDirectory = "";
+			dependencies = (
+				41D35EA22D79561D00AD0C87 /* PBXTargetDependency */,
+				41D35EAF2D79564500AD0C87 /* PBXTargetDependency */,
+			);
+			name = "hvsnapshotd-universal";
+			passBuildSettingsInEnvironment = 1;
+			productName = "hvshutdownd-universal";
+		};
 		41E8146A2D5B08B700AAA93E /* Package Universal */ = {
 			isa = PBXLegacyTarget;
 			buildArgumentsString = "$(ACTION)";
@@ -1688,6 +1811,9 @@
 				41A98B132D5C53A400A1931C /* PBXTargetDependency */,
 				41A98B022D5C1C4700A1931C /* PBXTargetDependency */,
 				41AD090E2D74AF3D00E1F91F /* PBXTargetDependency */,
+				41D35EB12D79566600AD0C87 /* PBXTargetDependency */,
+				41D35E982D7932C900AD0C87 /* PBXTargetDependency */,
+				41D35EB32D79566600AD0C87 /* PBXTargetDependency */,
 				41E814732D5B08B700AAA93E /* PBXTargetDependency */,
 				41A98B392D5D745300A1931C /* PBXTargetDependency */,
 				41A98B472D5D74B200A1931C /* PBXTargetDependency */,
@@ -1908,6 +2034,40 @@
 			productReference = 41BF462A288CDF1200813670 /* MacHyperVSupportMonterey.kext */;
 			productType = "com.apple.product-type.kernel-extension";
 		};
+		41D35E8C2D79329C00AD0C87 /* hvsnapshotd-tiger */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 41D35E922D79329C00AD0C87 /* Build configuration list for PBXNativeTarget "hvsnapshotd-tiger" */;
+			buildPhases = (
+				41D35E8D2D79329C00AD0C87 /* Sources */,
+				41D35E902D79329C00AD0C87 /* Frameworks */,
+				41D35E912D79329C00AD0C87 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "hvsnapshotd-tiger";
+			productName = hvshutdown;
+			productReference = 41D35E952D79329C00AD0C87 /* hvsnapshotd-tiger */;
+			productType = "com.apple.product-type.tool";
+		};
+		41D35EA32D79562000AD0C87 /* hvsnapshotd-i386 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 41D35EA92D79562000AD0C87 /* Build configuration list for PBXNativeTarget "hvsnapshotd-i386" */;
+			buildPhases = (
+				41D35EA42D79562000AD0C87 /* Sources */,
+				41D35EA72D79562000AD0C87 /* Frameworks */,
+				41D35EA82D79562000AD0C87 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "hvsnapshotd-i386";
+			productName = hvshutdown;
+			productReference = 41D35EAC2D79562000AD0C87 /* hvsnapshotd-i386 */;
+			productType = "com.apple.product-type.tool";
+		};
 		41E814602D59809600AAA93E /* hvshutdownd-i386 */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 41E814662D59809600AAA93E /* Build configuration list for PBXNativeTarget "hvshutdownd-i386" */;
@@ -1974,11 +2134,14 @@
 				41E814602D59809600AAA93E /* hvshutdownd-i386 */,
 				41A98B082D5C535400A1931C /* hvshutdownd-tiger */,
 				41A98AF82D5C18F900A1931C /* hvshutdownd-universal */,
+				41AD09022D74AE9E00E1F91F /* hvsnapshotd */,
+				41D35EA32D79562000AD0C87 /* hvsnapshotd-i386 */,
+				41D35E8C2D79329C00AD0C87 /* hvsnapshotd-tiger */,
+				41D35E992D7955FD00AD0C87 /* hvsnapshotd-universal */,
 				4191F6E628F4E55F00809232 /* hvtimesyncd */,
 				41A98B182D5D72DE00A1931C /* hvtimesyncd-i386 */,
 				41A98B3C2D5D745E00A1931C /* hvtimesyncd-tiger */,
 				41A98B2C2D5D72EC00A1931C /* hvtimesyncd-universal */,
-				41AD09022D74AE9E00E1F91F /* hvsnapshotd */,
 			);
 		};
 /* End PBXProject section */
@@ -2241,6 +2404,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		41D35E8D2D79329C00AD0C87 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				41D35E8E2D79329C00AD0C87 /* hviokit.c in Sources */,
+				41D35E962D7932B200AD0C87 /* hvsnapshotd.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		41D35EA42D79562000AD0C87 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				41D35EA52D79562000AD0C87 /* hviokit.c in Sources */,
+				41D35EAD2D79563200AD0C87 /* hvsnapshotd.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		41E814612D59809600AAA93E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -2442,6 +2623,51 @@
 			isa = PBXTargetDependency;
 			target = 41BF45D6288CDF1200813670 /* MacHyperVSupportMonterey */;
 			targetProxy = 41AE1D0628974D8B001A7B42 /* PBXContainerItemProxy */;
+		};
+		41D35E982D7932C900AD0C87 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41D35E8C2D79329C00AD0C87 /* hvsnapshotd-tiger */;
+			targetProxy = 41D35E972D7932C900AD0C87 /* PBXContainerItemProxy */;
+		};
+		41D35EA22D79561D00AD0C87 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41AD09022D74AE9E00E1F91F /* hvsnapshotd */;
+			targetProxy = 41D35EA12D79561D00AD0C87 /* PBXContainerItemProxy */;
+		};
+		41D35EAF2D79564500AD0C87 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41D35EA32D79562000AD0C87 /* hvsnapshotd-i386 */;
+			targetProxy = 41D35EAE2D79564500AD0C87 /* PBXContainerItemProxy */;
+		};
+		41D35EB12D79566600AD0C87 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41D35EA32D79562000AD0C87 /* hvsnapshotd-i386 */;
+			targetProxy = 41D35EB02D79566600AD0C87 /* PBXContainerItemProxy */;
+		};
+		41D35EB32D79566600AD0C87 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41D35E992D7955FD00AD0C87 /* hvsnapshotd-universal */;
+			targetProxy = 41D35EB22D79566600AD0C87 /* PBXContainerItemProxy */;
+		};
+		41D35EB52D79567A00AD0C87 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41AD09022D74AE9E00E1F91F /* hvsnapshotd */;
+			targetProxy = 41D35EB42D79567A00AD0C87 /* PBXContainerItemProxy */;
+		};
+		41D35EB72D79567A00AD0C87 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41D35EA32D79562000AD0C87 /* hvsnapshotd-i386 */;
+			targetProxy = 41D35EB62D79567A00AD0C87 /* PBXContainerItemProxy */;
+		};
+		41D35EB92D79567A00AD0C87 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41D35E8C2D79329C00AD0C87 /* hvsnapshotd-tiger */;
+			targetProxy = 41D35EB82D79567A00AD0C87 /* PBXContainerItemProxy */;
+		};
+		41D35EBB2D79567A00AD0C87 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41D35E992D7955FD00AD0C87 /* hvsnapshotd-universal */;
+			targetProxy = 41D35EBA2D79567A00AD0C87 /* PBXContainerItemProxy */;
 		};
 		41E8146B2D5B08B700AAA93E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -3356,6 +3582,104 @@
 			};
 			name = Release;
 		};
+		41D35E932D79329C00AD0C87 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = ACID32;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				OTHER_CFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				OTHER_LDFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx10.13;
+				VALID_ARCHS = ACID32;
+			};
+			name = Debug;
+		};
+		41D35E942D79329C00AD0C87 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = ACID32;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				OTHER_CFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				OTHER_LDFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.4",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx10.13;
+				VALID_ARCHS = ACID32;
+			};
+			name = Release;
+		};
+		41D35E9F2D7955FD00AD0C87 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		41D35EA02D7955FD00AD0C87 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		41D35EAA2D79562000AD0C87 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = ACID32;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				OTHER_CFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.5",
+				);
+				OTHER_LDFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.5",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx10.13;
+				VALID_ARCHS = ACID32;
+			};
+			name = Debug;
+		};
+		41D35EAB2D79562000AD0C87 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = ACID32;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				OTHER_CFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.5",
+				);
+				OTHER_LDFLAGS = (
+					"-fallow-unsupported",
+					"-target",
+					"i386-apple-macos10.5",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx10.13;
+				VALID_ARCHS = ACID32;
+			};
+			name = Release;
+		};
 		41E814672D59809600AAA93E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -3573,6 +3897,33 @@
 			buildConfigurations = (
 				41BF4628288CDF1200813670 /* Debug */,
 				41BF4629288CDF1200813670 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		41D35E922D79329C00AD0C87 /* Build configuration list for PBXNativeTarget "hvsnapshotd-tiger" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41D35E932D79329C00AD0C87 /* Debug */,
+				41D35E942D79329C00AD0C87 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		41D35E9E2D7955FD00AD0C87 /* Build configuration list for PBXLegacyTarget "hvsnapshotd-universal" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41D35E9F2D7955FD00AD0C87 /* Debug */,
+				41D35EA02D7955FD00AD0C87 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		41D35EA92D79562000AD0C87 /* Build configuration list for PBXNativeTarget "hvsnapshotd-i386" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41D35EAA2D79562000AD0C87 /* Debug */,
+				41D35EAB2D79562000AD0C87 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

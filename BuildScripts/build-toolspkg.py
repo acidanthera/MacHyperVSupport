@@ -221,6 +221,9 @@ moduleFileCopyToolFriendly  = "Hyper-V File Copy Daemon"
 moduleShutdownTool          = "ShutdownTool"
 moduleShutdownToolTiger     = moduleShutdownTool + "Tiger"
 moduleShutdownToolFriendly  = "Hyper-V Shutdown Daemon"
+moduleSnapshotTool          = "SnapshotTool"
+moduleSnapshotToolTiger     = moduleSnapshotTool + "Tiger"
+moduleSnapshotToolFriendly  = "Hyper-V Snapshot Daemon"
 moduleTimeSyncTool          = "TimeSyncTool"
 moduleTimeSyncToolTiger     = moduleTimeSyncTool + "Tiger"
 moduleTimeSyncToolFriendly  = "Hyper-V Time Synchronization Daemon"
@@ -248,6 +251,18 @@ if Path(gBuildDir + "/hvshutdownd-tiger").is_file():
                                                        gProjDir + "/Tools/Daemons/hvshutdownd/fish.goldfish64.hvshutdownd.plist")
     shutdownTigerPkg, shutdownTigerPkgId = buildBundlePkg(moduleShutdownToolTiger, moduleShutdownToolFriendly,
                                                           shutdownTigerPath, gProjDir + "/Tools/Daemons/hvshutdownd/postinstall")
+                                                          
+# Build hvsnapshotd package.
+snapshotPath = createDaemonPayloadLayout(moduleSnapshotTool, gBuildDir + "/hvsnapshotd", gBuildDir + "/hvsnapshotd-universal",
+                                         gProjDir + "/Tools/Daemons/hvsnapshotd/fish.goldfish64.hvsnapshotd.plist")
+snapshotPkg, snapshotPkgId = buildFlatPkg(moduleSnapshotTool, snapshotPath, gProjDir + "/Tools/Daemons/hvsnapshotd")
+
+# Build hvsnapshotd package for Tiger.
+if Path(gBuildDir + "/hvsnapshotd-tiger").is_file():
+    snapshotTigerPath = createDaemonTigerPayloadLayout(moduleSnapshotToolTiger, gBuildDir + "/hvsnapshotd-tiger",
+                                                       gProjDir + "/Tools/Daemons/hvsnapshotd/fish.goldfish64.hvsnapshotd.plist")
+    snapshotTigerPkg, snapshotTigerPkgId = buildBundlePkg(moduleSnapshotToolTiger, moduleSnapshotToolFriendly,
+                                                          snapshotTigerPath, gProjDir + "/Tools/Daemons/hvsnapshotd/postinstall")
 
 # Build hvtimesyncd package.
 timeSyncPath = createDaemonPayloadLayout(moduleTimeSyncTool, gBuildDir + "/hvtimesyncd", gBuildDir + "/hvtimesyncd-universal",
@@ -284,6 +299,9 @@ if fileCopyTigerPkg is not None:
 shutil.copyfile(shutdownPkg, mpkgPackagesPath + "/" + os.path.basename(shutdownPkg))
 if shutdownTigerPkg is not None:
     shutil.copytree(shutdownTigerPkg, mpkgPackagesPath + "/" + os.path.basename(shutdownTigerPkg), dirs_exist_ok=True)
+shutil.copyfile(snapshotPkg, mpkgPackagesPath + "/" + os.path.basename(snapshotPkg))
+if snapshotTigerPkg is not None:
+    shutil.copytree(snapshotTigerPkg, mpkgPackagesPath + "/" + os.path.basename(snapshotTigerPkg), dirs_exist_ok=True)
 shutil.copyfile(timeSyncPkg, mpkgPackagesPath + "/" + os.path.basename(timeSyncPkg))
 if timeSyncTigerPkg is not None:
     shutil.copytree(timeSyncTigerPkg, mpkgPackagesPath + "/" + os.path.basename(timeSyncTigerPkg), dirs_exist_ok=True)
@@ -320,6 +338,10 @@ if fileCopyTigerPkg is not None:
 ET.SubElement(distChoices, "line", { "choice": moduleShutdownTool })
 if shutdownTigerPkg is not None:
     ET.SubElement(distChoices, "line", { "choice": moduleShutdownToolTiger })
+
+ET.SubElement(distChoices, "line", { "choice": moduleSnapshotTool })
+if snapshotTigerPkg is not None:
+    ET.SubElement(distChoices, "line", { "choice": moduleSnapshotToolTiger })
 
 ET.SubElement(distChoices, "line", { "choice": moduleTimeSyncTool })
 if timeSyncTigerPkg is not None:
@@ -361,6 +383,24 @@ if shutdownTigerPkg is not None:
         "visible" : "checkIfTiger()",
     })
     ET.SubElement(distChoiceShutdownTiger, "pkg-ref", { "id" : shutdownTigerPkgId })
+
+distChoiceSnapshot = ET.SubElement(distInstallerGuiScript, "choice", {
+    "id" : moduleSnapshotTool,
+    "title" : moduleSnapshotTool + "_title",
+    "description" : moduleSnapshotTool + "_description",
+    "start_selected" : "!checkIfTiger()",
+    "visible" : "!checkIfTiger()",
+})
+ET.SubElement(distChoiceSnapshot, "pkg-ref", { "id" : snapshotPkgId })
+if snapshotTigerPkg is not None:
+    distChoiceSnapshotTiger = ET.SubElement(distInstallerGuiScript, "choice", {
+        "id" : moduleSnapshotToolTiger,
+        "title" : moduleSnapshotToolTiger + "_title",
+        "description" : moduleSnapshotToolTiger + "_description",
+        "start_selected" : "checkIfTiger()",
+        "visible" : "checkIfTiger()",
+    })
+    ET.SubElement(distChoiceSnapshotTiger, "pkg-ref", { "id" : snapshotTigerPkgId })
 
 distChoiceTimeSync = ET.SubElement(distInstallerGuiScript, "choice", {
     "id" : moduleTimeSyncTool,
@@ -404,6 +444,18 @@ if shutdownTigerPkg is not None:
         "auth" : "root",
         "installKBytes" : str(round(getDirectorySize(shutdownTigerPath) / 1000))
     }).text = "file:./Contents/Packages/" + os.path.basename(shutdownTigerPkg)
+
+ET.SubElement(distInstallerGuiScript, "pkg-ref", {
+    "id" : snapshotPkgId,
+    "auth" : "root",
+    "installKBytes" : str(round(getDirectorySize(snapshotPath) / 1000))
+}).text = "file:./Contents/Packages/" + os.path.basename(snapshotPkg)
+if snapshotTigerPkg is not None:
+    ET.SubElement(distInstallerGuiScript, "pkg-ref", {
+        "id" : snapshotTigerPkgId,
+        "auth" : "root",
+        "installKBytes" : str(round(getDirectorySize(snapshotTigerPath) / 1000))
+    }).text = "file:./Contents/Packages/" + os.path.basename(snapshotTigerPkg)
 
 ET.SubElement(distInstallerGuiScript, "pkg-ref", {
     "id" : timeSyncPkgId,
