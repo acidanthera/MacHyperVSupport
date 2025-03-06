@@ -134,6 +134,16 @@ Provides software shutdown through Virtual Machine Connection and PowerShell. Re
 | -hvshutmsgdbg  | Enables debug printing of message data in DEBUG builds
 | -hvshutoff     | Disables this module
 
+## Snapshot (HyperVSnapshot)
+Provides support for consistent backup support and production checkpoints. Requires the `hvsnapshotd` userspace daemon to be running.
+
+| Boot argument  | Description |
+|----------------|-------------|
+| -hvsnapdbg     | Enables debug printing in DEBUG builds
+| -hvsnapuserdbg | Enables debug printing of user client data in DEBUG builds
+| -hvsnapmsgdbg  | Enables debug printing of message data in DEBUG builds
+| -hvsnapoff     | Disables this module
+
 ## Storage (HyperVStorage)
 Provides SCSI storage support.
 
