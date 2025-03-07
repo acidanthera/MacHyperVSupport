@@ -299,8 +299,7 @@ static IOReturn freezeThawMountedFilesystems(UInt32 type) {
     // Thaw filesystem.
     //
     } else if (type == kHyperVSnapshotUserClientNotificationTypeThaw) {
-      status = freezeThawFilesystem(mountList[i].f_mntonname, F_THAW_FS);
-      HVDBGLOG(stdout, "Thaw status: 0x%X", status);
+      freezeThawFilesystem(mountList[i].f_mntonname, F_THAW_FS);
     }
   }
 
