@@ -52,6 +52,16 @@ if [[ -f "../hvshutdownd-tiger" ]]; then
 fi
 
 cp "${PROJECT_DIR}/Tools/Daemons/hvfilecopyd/fish.goldfish64.hvfilecopyd.plist" Tools/fish.goldfish64.hvtimesyncd.plist || exit 1
+cp "${PROJECT_DIR}/Tools/Daemons/hvsnapshotd/fish.goldfish64.hvsnapshotd.plist" Tools/fish.goldfish64.hvsnapshotd.plist || exit 1
+if [[ -f "../hvsnapshotd-universal" ]] && [[ "../hvsnapshotd-universal" -nt "../hvsnapshotd" ]]; then
+  cp ../hvsnapshotd-universal Tools/hvsnapshotd || exit 1
+else
+  cp ../hvsnapshotd Tools/hvsnapshotd || exit 1
+fi
+if [[ -f "../hvsnapshotd-tiger" ]]; then
+  cp ../hvsnapshotd-tiger Tools/ || exit 1
+fi
+
 if [[ -f "../hvtimesyncd-universal" ]] && [[ "../hvtimesyncd-universal" -nt "../hvtimesyncd" ]]; then
   cp ../hvtimesyncd-universal Tools/hvtimesyncd || exit 1
 else

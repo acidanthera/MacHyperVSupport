@@ -12,6 +12,7 @@ All Intel macOS versions are supported.
 - Guest shutdown (with daemon)
 - Time synchronization (with daemon)
 - Host to guest file copy (with daemon)
+- VSS and production checkpoints (with daemon)
 - PCI passthrough (partial support)
 - PS/2 keyboard (applies to generation 1 VMs only)
 - Synthetic graphics (full support requires HyperVFramebuffer.kext to be loaded or installed)

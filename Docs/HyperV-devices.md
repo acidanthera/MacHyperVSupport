@@ -11,7 +11,7 @@ This page describes the different services and devices exposed to a virtual mach
 [Provides](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/reference/integration-services#hyper-v-volume-shadow-copy-requestor) Volume Shadow Copy support to guests. 
 * Availability: Windows Server 2008 SP2 and later
 * GUID: `35fa2e29-ea23-4236-96ae-3a6ebacba440`
-* Support status: Planned
+* Support status: Handled by HyperVSnapshot
 
 ### Data Exchange
 [Provides](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/reference/integration-services#hyper-v-data-exchange-service-kvp) a mechanism to exchange basic metadata between the guest and the host via a key/value pair system.
