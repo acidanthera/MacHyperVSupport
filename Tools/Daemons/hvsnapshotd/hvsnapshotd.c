@@ -9,16 +9,14 @@
 #include "hvdebug.h"
 #include "hviokit.h"
 
+#include <paths.h>
 #include <sys/mount.h>
 #include <sys/utsname.h>
 
+#include <DiskArbitration/DiskArbitration.h>
+
 #define HYPERV_SNAPSHOT_KERNEL_SERVICE  "HyperVSnapshot"
-
 #define DARWIN_VERSION_HIGHSIERRA       17
-#define DISKUTIL_INFO                   "/usr/sbin/diskutil info -plist "
-#define DISKUTIL_APFS_LIST              "/usr/sbin/diskutil apfs list -plist"
-
-static const char *devPath = "/dev/";
 
 typedef struct {
   char  apfsDevPath[128 + 1];
@@ -50,214 +48,87 @@ static bool isApfsSupported() {
   return version[0] >= DARWIN_VERSION_HIGHSIERRA;
 }
 
-static IOReturn getPlistDiskInfo(const char *command, CFDataRef *outPlistData, CFDictionaryRef *outPlistDict) {
-  char              lineBuffer[256];
-  size_t            plistBufferAllocatedSize  = 0;
-  size_t            plistBufferCurrentLength  = 0;
-  char              *plistBuffer              = NULL;
-  char              *newPlistBuffer           = NULL;
-  CFDataRef         plistData                 = NULL;
-  CFDictionaryRef   plistDict                 = NULL;
+static CFStringRef getApfsDiskContainer(const char *diskPath) {
+  DASessionRef    session           = NULL;
+  DADiskRef       disk              = NULL;
+  io_service_t    media             = IO_OBJECT_NULL;
+  io_service_t    partitionScheme   = IO_OBJECT_NULL;
+  io_service_t    mediaContainer    = IO_OBJECT_NULL;
+  CFTypeRef       containerBSDName  = NULL;
 
-  //
-  // Invoke diskutil to get APFS info.
-  //
-  FILE *stream = popen(command, "r");
-  if (stream == NULL) {
-    HVSYSLOG(stderr, "Failed to call '%'", command);
-    return kIOReturnIOError;
-  }
-
-  plistBufferAllocatedSize = (PAGE_SIZE * 4);
-  plistBufferCurrentLength = 0;
-  plistBuffer = malloc(plistBufferAllocatedSize);
-  if (plistBuffer == NULL) {
-    HVSYSLOG(stderr, "Failed to allocate plist buffer");
-    return kIOReturnNoResources;
-  }
-
-  //
-  // Read all lines and append to plist buffer.
-  // Resize plist buffer if needed.
-  //
-  while (!feof(stream)) {
-    if (fgets(lineBuffer, sizeof (lineBuffer), stream) != NULL) {
-      size_t lineLength = strlen(lineBuffer);
-      if ((plistBufferCurrentLength + lineLength + 1) > plistBufferAllocatedSize) {
-        HVDBGLOG(stdout, "Plist buffer too small, reallocating");
-        plistBufferAllocatedSize += PAGE_SIZE;
-        newPlistBuffer = realloc(plistBuffer, plistBufferAllocatedSize);
-        if (newPlistBuffer == NULL) {
-          free(plistBuffer);
-          HVSYSLOG(stderr, "Failed to reallocate plist buffer");
-          return kIOReturnNoResources;
-        }
-        plistBuffer = newPlistBuffer;
-      }
-
-      strncat(plistBuffer, lineBuffer, plistBufferAllocatedSize);
-      plistBufferCurrentLength += lineLength;
-    }
-  }
-  pclose(stream);
-
-  //
-  // Create CFData object.
-  //
-  plistData = CFDataCreate(kCFAllocatorDefault, (uint8_t*) plistBuffer, plistBufferAllocatedSize);
-  free(plistBuffer);
-  if (plistData == NULL) {
-    HVSYSLOG(stderr, "Failed to create CFDataRef plist object");
-    return kIOReturnNoResources;
-  }
-
-  if (__builtin_available(macOS 10.6, *)) {
-    plistDict = CFPropertyListCreateWithData(kCFAllocatorDefault, plistData, 0, NULL, NULL);
-  } else {
-    plistDict = NULL;
-  }
-  if (plistDict == NULL) {
-    HVSYSLOG(stderr, "Failed to create CFDataRef plist object");
-    CFRelease(plistData);
-    return kIOReturnNoResources;
-  }
-
-  *outPlistData = plistData;
-  *outPlistDict = plistDict;
-  return kIOReturnSuccess;
-}
-
-static IOReturn getApfsList(CFDataRef *outPlistData, CFDictionaryRef *outPlistDict) {
-  return getPlistDiskInfo(DISKUTIL_APFS_LIST, outPlistData, outPlistDict);
-}
-
-static IOReturn getDiskInfo(const char *disk, CFDataRef *outPlistData, CFDictionaryRef *outPlistDict) {
-  char diskUtilCommand[128] = { DISKUTIL_INFO };
-  strncat(diskUtilCommand, disk, sizeof (diskUtilCommand) - 1);
-
-  return getPlistDiskInfo(diskUtilCommand, outPlistData, outPlistDict);
-}
-
-static CFStringRef getApfsContainer(const char *volume) {
-  CFDataRef       plistData         = NULL;
-  CFDictionaryRef plistDict         = NULL;
-  CFDataRef       diskPlistData     = NULL;
-  CFDictionaryRef diskPlistDict     = NULL;
-  CFStringRef     diskDeviceIdStr   = NULL;
-
-  CFArrayRef      containersArray   = NULL;
-  CFDictionaryRef containerDict     = NULL;
-  CFArrayRef      volumesArray      = NULL;
-  CFDictionaryRef volumeDict        = NULL;
-  CFStringRef     deviceIdStr       = NULL;
-  CFStringRef     containerRefStr   = NULL;
+  kern_return_t   status            = KERN_SUCCESS;
   CFStringRef     resultStr         = NULL;
 
-  IOReturn        status;
-
-  //
-  // Get device info for volume path.
-  //
-  status = getDiskInfo(volume, &diskPlistData, &diskPlistDict);
-  if (status != kIOReturnSuccess) {
-    HVSYSLOG(stderr, "Failed to get disk information for '%s'", volume);
-    return NULL;
-  }
-
-  //
-  // Check if container reference is directly present on disk info.
-  //
-  containerRefStr = CFDictionaryGetValue(diskPlistDict, CFSTR("APFSContainerReference"));
-  if (containerRefStr != NULL) {
-    resultStr = CFStringCreateCopy(kCFAllocatorDefault, containerRefStr);
-    HVDBGLOG(stdout, "Got APFS container for device '%s' using direct property", volume);
-
-    CFRelease(diskPlistDict);
-    CFRelease(diskPlistData);
-    return resultStr;
-  }
-
-  //
-  // Fallback to pulling/comparing from all disks.
-  //
-  diskDeviceIdStr = CFDictionaryGetValue(diskPlistDict, CFSTR("DeviceIdentifier"));
-  if (diskDeviceIdStr == NULL) {
-    HVSYSLOG(stderr, "Failed to get disk identifier for '%s'", volume);
-    CFRelease(diskPlistDict);
-    CFRelease(diskPlistData);
-    return NULL;
-  }
-
-  status = getApfsList(&plistData, &plistDict);
-  if (status != kIOReturnSuccess) {
-    HVSYSLOG(stderr, "Failed to get APFS disk info");
-    CFRelease(diskPlistDict);
-    CFRelease(diskPlistData);
-    return NULL;
-  }
-
-  containersArray = CFDictionaryGetValue(plistDict, CFSTR("Containers"));
-  if (containersArray == NULL) {
-    HVSYSLOG(stderr, "Failed to get containers array");
-    CFRelease(diskPlistDict);
-    CFRelease(diskPlistData);
-    CFRelease(plistDict);
-    CFRelease(plistData);
-    return NULL;
-  }
-
-  for (int i = 0; i < CFArrayGetCount(containersArray); i++) {
-    containerDict = CFArrayGetValueAtIndex(containersArray, i);
-    if (containerDict == NULL) {
-      HVSYSLOG(stderr, "Failed to get container dict");
-      continue;
+  do {
+    //
+    // Get disk object for path.
+    //
+    session = DASessionCreate(kCFAllocatorDefault);
+    if (session == NULL) {
+      HVSYSLOG(stderr, "Failed to create DiskArbitration session");
+      break;
+    }
+    disk = DADiskCreateFromBSDName(kCFAllocatorDefault, session, diskPath);
+    if (disk == NULL) {
+      HVSYSLOG(stderr, "Failed to get DiskArbitration disk for '%s'", diskPath);
+      break;
     }
 
     //
-    // Check if container has volume.
+    // Get IOMedia object.
     //
-    volumesArray = CFDictionaryGetValue(containerDict, CFSTR("Volumes"));
-    if (volumesArray == NULL) {
-      HVSYSLOG(stderr, "Failed to get volumes array");
-      continue;
+    media = DADiskCopyIOMedia(disk);
+    if (media == IO_OBJECT_NULL) {
+      HVSYSLOG(stderr, "Failed to get IOMedia service for '%s'", diskPath);
+      break;
     }
 
-    for (int v = 0; v < CFArrayGetCount(volumesArray); v++) {
-      volumeDict = CFArrayGetValueAtIndex(volumesArray, v);
-      if (volumeDict == NULL) {
-        HVSYSLOG(stderr, "Failed to get volume dict");
-        continue;
-      }
-
-      deviceIdStr = CFDictionaryGetValue(volumeDict, CFSTR("DeviceIdentifier"));
-      if (deviceIdStr == NULL) {
-        HVSYSLOG(stderr, "Failed to get device identifier");
-        continue;
-      }
-      if (CFStringCompare(diskDeviceIdStr, deviceIdStr, 0) == kCFCompareEqualTo) {
-        //
-        // Get container reference.
-        //
-        containerRefStr = CFDictionaryGetValue(containerDict, CFSTR("ContainerReference"));
-        if (containerRefStr != NULL) {
-          resultStr = CFStringCreateCopy(kCFAllocatorDefault, containerRefStr);
-          HVDBGLOG(stdout, "Got APFS container for device '%s'", volume);
-
-          CFRelease(diskPlistDict);
-          CFRelease(diskPlistData);
-          CFRelease(plistDict);
-          CFRelease(plistData);
-          return resultStr;
-        }
-      }
+    //
+    // Get parent APFSPartitionScheme and AppleAPFSMedia.
+    //
+    status = IORegistryEntryGetParentEntry(media, kIOServicePlane, &partitionScheme);
+    if ((status != KERN_SUCCESS) || IOObjectConformsTo(partitionScheme, "APFSPartitionScheme")) {
+      HVSYSLOG(stderr, "Failed to get parent APFSPartitionScheme service for '%s'", diskPath);
+      break;
     }
+    status = IORegistryEntryGetParentEntry(partitionScheme, kIOServicePlane, &mediaContainer);
+    if ((status != KERN_SUCCESS) || IOObjectConformsTo(mediaContainer, "APFSMedia")) {
+      HVSYSLOG(stderr, "Failed to get parent APFSMedia service for '%s'", diskPath);
+      break;
+    }
+
+    //
+    // Get BSD name for AppleAPFSMedia service.
+    //
+    containerBSDName = IORegistryEntryCreateCFProperty(mediaContainer, CFSTR(kIOBSDNameKey), kCFAllocatorDefault, 0);
+    if ((containerBSDName == NULL) || (CFGetTypeID(containerBSDName) != CFStringGetTypeID())) {
+      HVSYSLOG(stderr, "Failed to get name for parent APFSMedia service for '%s'", diskPath);
+      break;
+    }
+
+    resultStr = CFStringCreateCopy(kCFAllocatorDefault, containerBSDName);
+  } while (false);
+
+  if (containerBSDName != NULL) {
+    CFRelease(containerBSDName);
+  }
+  if (mediaContainer != IO_OBJECT_NULL) {
+    IOObjectRelease(mediaContainer);
+  }
+  if (partitionScheme != IO_OBJECT_NULL) {
+    IOObjectRelease(partitionScheme);
+  }
+  if (media != IO_OBJECT_NULL) {
+    IOObjectRelease(media);
+  }
+  if (disk != NULL) {
+    CFRelease(disk);
+  }
+  if (session != NULL) {
+    CFRelease(session);
   }
 
-  CFRelease(diskPlistDict);
-  CFRelease(diskPlistData);
-  CFRelease(plistDict);
-  CFRelease(plistData);
-  return NULL;
+  return resultStr;
 }
 
 static bool checkFilesystemIsSupported(const char *fsName) {
@@ -335,16 +206,20 @@ static IOReturn freezeThawMountedFilesystems(UInt32 type) {
     //
     // Only handle disk-based filesystems that are mounted read/write.
     //
-    if (strncmp(mountList[i].f_mntfromname, devPath, strlen(devPath)) != 0) {
+    if (strncmp(mountList[i].f_mntfromname, _PATH_DEV, strlen(_PATH_DEV)) != 0) {
+      HVDBGLOG(stdout, "Skipping non-disk filesystem");
       continue;
     } else if (isReadOnly) {
+      HVDBGLOG(stdout, "Skipping read only filesystem");
       continue;
     } else if (!checkFilesystemIsSupported(mountList[i].f_fstypename)) {
+      HVDBGLOG(stdout, "Skipping unsupported filesystem");
       continue;
     }
-    
+
     if (isApfs && !isApfsSupported()) {
       // TODO: Fail if APFS is found on Sierra.
+      HVDBGLOG(stdout, "Skipping unsupported APFS filesystem");
       continue;
     }
 
@@ -355,7 +230,7 @@ static IOReturn freezeThawMountedFilesystems(UInt32 type) {
       strncpy(apfsContainerMappings[i].apfsDevPath, mountList[i].f_mntfromname, sizeof (apfsContainerMappings[i].apfsDevPath) - 1);
       apfsContainerMappings[i].apfsDevPath[sizeof (apfsContainerMappings[i].apfsDevPath) - 1] = '\0';
 
-      apfsContainerStr = getApfsContainer(mountList[i].f_mntfromname);
+      apfsContainerStr = getApfsDiskContainer(mountList[i].f_mntfromname);
       if (apfsContainerStr == NULL) {
         HVSYSLOG(stderr, "Failed to get container for APFS volume '%s'", mountList[i].f_mntfromname);
         free(apfsContainerMappings);
@@ -404,7 +279,7 @@ static IOReturn freezeThawMountedFilesystems(UInt32 type) {
         // Thaw any frozen filesystems and return error.
         //
         for (int f = 0; f < i; f++) {
-          if (strncmp(mountList[f].f_mntfromname, devPath, strlen(devPath)) != 0) {
+          if (strncmp(mountList[f].f_mntfromname, _PATH_DEV, strlen(_PATH_DEV)) != 0) {
             continue;
           } else if ((mountList[f].f_flags & MNT_RDONLY) == MNT_RDONLY) {
             continue;
