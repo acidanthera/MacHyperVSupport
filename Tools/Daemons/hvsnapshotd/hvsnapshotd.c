@@ -48,7 +48,7 @@ static bool isApfsSupported() {
   return version[0] >= DARWIN_VERSION_HIGHSIERRA;
 }
 
-static CFStringRef getApfsDiskContainer(const char *diskPath) {
+static CFStringRef apfsGetDiskContainer(const char *diskPath) __attribute__((cf_returns_retained)) {
   DASessionRef    session           = NULL;
   DADiskRef       disk              = NULL;
   io_service_t    media             = IO_OBJECT_NULL;
@@ -230,7 +230,7 @@ static IOReturn freezeThawMountedFilesystems(UInt32 type) {
       strncpy(apfsContainerMappings[i].apfsDevPath, mountList[i].f_mntfromname, sizeof (apfsContainerMappings[i].apfsDevPath) - 1);
       apfsContainerMappings[i].apfsDevPath[sizeof (apfsContainerMappings[i].apfsDevPath) - 1] = '\0';
 
-      apfsContainerStr = getApfsDiskContainer(mountList[i].f_mntfromname);
+      apfsContainerStr = apfsGetDiskContainer(mountList[i].f_mntfromname);
       if (apfsContainerStr == NULL) {
         HVSYSLOG(stderr, "Failed to get container for APFS volume '%s'", mountList[i].f_mntfromname);
         free(apfsContainerMappings);
