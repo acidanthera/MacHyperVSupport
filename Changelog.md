@@ -1,5 +1,8 @@
 MacHyperVSupport Changelog
 ============================
+#### v0.9.9
+- Added constants for macOS 26 support
+
 #### v0.9.8
 - Added constants for macOS 15 support
 - Fixed completion flag not being added for storage commands

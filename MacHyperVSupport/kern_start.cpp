@@ -25,7 +25,7 @@ PluginConfiguration ADDPR(config) {
   NULL,
   0,
   KernelVersion::Tiger,
-  KernelVersion::Sequoia,
+  KernelVersion::Tahoe,
   []() {
     HyperVPlatformProvider::getInstance();
   }
