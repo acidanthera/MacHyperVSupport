@@ -41,7 +41,7 @@ if [[ -f "../hvfilecopyd-tiger" ]]; then
   cp ../hvfilecopyd-tiger Tools/ || exit 1
 fi
 
-cp "${PROJECT_DIR}/Tools/Daemons/hvfilecopyd/fish.goldfish64.hvfilecopyd.plist" Tools/fish.goldfish64.hvshutdownd.plist || exit 1
+cp "${PROJECT_DIR}/Tools/Daemons/hvshutdownd/fish.goldfish64.hvshutdownd.plist" Tools/fish.goldfish64.hvshutdownd.plist || exit 1
 if [[ -f "../hvshutdownd-universal" ]] && [[ "../hvshutdownd-universal" -nt "../hvshutdownd" ]]; then
   cp ../hvshutdownd-universal Tools/hvshutdownd || exit 1
 else
@@ -51,7 +51,7 @@ if [[ -f "../hvshutdownd-tiger" ]]; then
   cp ../hvshutdownd-tiger Tools/ || exit 1
 fi
 
-cp "${PROJECT_DIR}/Tools/Daemons/hvfilecopyd/fish.goldfish64.hvfilecopyd.plist" Tools/fish.goldfish64.hvtimesyncd.plist || exit 1
+cp "${PROJECT_DIR}/Tools/Daemons/hvtimesyncd/fish.goldfish64.hvtimesyncd.plist" Tools/fish.goldfish64.hvtimesyncd.plist || exit 1
 if [[ -f "../hvtimesyncd-universal" ]] && [[ "../hvtimesyncd-universal" -nt "../hvtimesyncd" ]]; then
   cp ../hvtimesyncd-universal Tools/hvtimesyncd || exit 1
 else
