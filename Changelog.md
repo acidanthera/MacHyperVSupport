@@ -1,5 +1,8 @@
 MacHyperVSupport Changelog
 ============================
+#### v1.0.0
+- Fixed PCI compatibility issues with macOS 26
+
 #### v0.9.9
 - Added constants for macOS 26 support
 
