@@ -9,35 +9,6 @@
 #include "HyperVInterruptController.hpp"
 #include "VMBus.hpp"
 
-#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_6
-//
-// PM versions.
-//
-// Versions 10.7.0 and above are all the same 102.
-//
-#define kPMDispatchVersion10_6_0    17
-#define kPMDispatchVersion10_6_1    17
-#define kPMDispatchVersion10_6_2    18
-#define kPMDispatchVersion10_6_3    19
-#define kPMDispatchVersion10_6_4    20
-#define kPMDispatchVersion10_6_5    21
-#define kPMDispatchVersion10_6_6    21
-#define kPMDispatchVersion10_6_7    21
-#define kPMDispatchVersion10_6_8    23
-
-static UInt32 pmVersionsSnowLeopard[] = {
-  kPMDispatchVersion10_6_0,
-  kPMDispatchVersion10_6_1,
-  kPMDispatchVersion10_6_2,
-  kPMDispatchVersion10_6_3,
-  kPMDispatchVersion10_6_4,
-  kPMDispatchVersion10_6_5,
-  kPMDispatchVersion10_6_6,
-  kPMDispatchVersion10_6_7,
-  kPMDispatchVersion10_6_8
-};
-#endif
-
 //
 // External functions from mp.c
 //
@@ -83,16 +54,20 @@ extern "C" void initCPUSyncIC(void *cpuData) {
   wrmsr64(kHyperVMsrSyncICControl, kHyperVMsrSyncICControlEnable | (rdmsr64(kHyperVMsrSyncICControl) & kHyperVMsrSyncICControlRsvdMask));
 }
 
-#if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_6
-extern "C" void doAllCpuSyncICEOM(void *cpu) {
-  int currentCpuIndex  = cpu_number();
-  int *desiredCpuIndex = (int*)cpu;
+struct SynICEOMContext {
+  UInt32 targetCpu;
+  volatile UInt32 executedCpu;
+};
 
-  if (currentCpuIndex == *desiredCpuIndex) {
+extern "C" void doAllCpuSyncICEOM(void *cpu) {
+  UInt32 currentCpuIndex = cpu_number();
+  auto *context = static_cast<SynICEOMContext*>(cpu);
+
+  if (currentCpuIndex == context->targetCpu) {
     wrmsr64(kHyperVMsrEom, 0);
+    context->executedCpu = currentCpuIndex;
   }
 }
-#endif
 
 bool HyperVController::allocateInterruptBuffers() {
   //
@@ -180,28 +155,6 @@ bool HyperVController::initInterrupts() {
   _interruptVector = vector;
   HVDBGLOG("VMBus device interrupt vector: 0x%X", _interruptVector);
 
-#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_6
-  //
-  // Get PM callbacks.
-  //
-  UInt32 pmVersion = PM_DISPATCH_VERSION;
-  if (getKernelVersion() == KernelVersion::SnowLeopard) {
-    if (getKernelMinorVersion() < arrsize(pmVersionsSnowLeopard)) {
-      pmVersion = pmVersionsSnowLeopard[getKernelMinorVersion()];
-    }
-  }
-
-  pmKextRegister(pmVersion, NULL, &_pmCallbacks);
-  if (_pmCallbacks.LCPUtoProcessor == nullptr || _pmCallbacks.ThreadBind == nullptr) {
-    HVSYSLOG("PM callbacks are invalid");
-    return false;
-  }
-  _preemptionLock = IOSimpleLockAlloc();
-  if (_preemptionLock == nullptr) {
-    return false;
-  }
-#endif
-
   //
   // Allocate buffers for interrupts.
   //
@@ -234,6 +187,7 @@ bool HyperVController::initInterrupts() {
   // Setup SynIC interrupts on all processors.
   //
   mp_rendezvous_no_intrs(initCPUSyncIC, _cpuData);
+  HVSYSLOG("SynIC EOM fix r1: rendezvous enabled, CPUs=%u", _cpuDataCount);
   return true;
 }
 
@@ -311,48 +265,42 @@ void HyperVController::disableInterrupts() {
 }
 
 void HyperVController::sendSynICEOM(UInt32 cpu) {
-  //
-  // Only EOM if there is a pending message.
-  //
-  _cpuData[cpu].messages[kVMBusInterruptMessage].type = kHyperVMessageTypeNone;
-  if (!_cpuData[cpu].messages[kVMBusInterruptMessage].flags.messagePending) {
+  if (cpu >= _cpuDataCount) {
+    HVSYSLOG("SynIC EOM invalid CPU %u (count %u)", cpu, _cpuDataCount);
     return;
   }
-  
-#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_6
+
   //
-  // Change to desired CPU if needed.
+  // Publish the empty slot before checking the host's pending flag.
+  // The host may queue another message while this slot is being released.
   //
-  if (cpu != cpu_number()) {
-    if (!IOSimpleLockTryLock(_preemptionLock)) {
-      HVSYSLOG("Failed to disable preemption");
-      return;
-    }
-
-    bool intsEnabled = ml_set_interrupts_enabled(false);
-
-    do {
-      processor_t proc = _pmCallbacks.LCPUtoProcessor(cpu);
-      if (proc == nullptr) {
-        break;
-      }
-
-      _pmCallbacks.ThreadBind(proc);
-    } while (false);
-
-    IOSimpleLockUnlock(_preemptionLock);
-    ml_set_interrupts_enabled(intsEnabled);
-    HVDBGLOG("Changed to cpu %u", cpu_number());
+  volatile HyperVMessage *message = &_cpuData[cpu].messages[kVMBusInterruptMessage];
+  message->type = kHyperVMessageTypeNone;
+  __sync_synchronize();
+  if (!message->flags.messagePending) {
+    return;
   }
 
   //
-  // We should now be on the correct CPU, so send EOM.
+  // EOM is a per-VP MSR. thread_bind() changes affinity but does not move
+  // the current thread until it blocks. Run on the owning CPU explicitly.
+  // Keep the local CPU check and MSR write non-preemptible.
   //
-  wrmsr64(kHyperVMsrEom, 0);
-#else
-  //
-  // PM kext API does not exist on 10.4, call function on all CPUs.
-  //
-  mp_rendezvous_no_intrs(doAllCpuSyncICEOM, &cpu);
-#endif
+  bool intsEnabled = ml_set_interrupts_enabled(false);
+  UInt32 currentCpu = cpu_number();
+  SynICEOMContext context = { cpu, static_cast<UInt32>(-1) };
+  if (currentCpu == cpu) {
+    wrmsr64(kHyperVMsrEom, 0);
+    context.executedCpu = currentCpu;
+    ml_set_interrupts_enabled(intsEnabled);
+  } else {
+    ml_set_interrupts_enabled(intsEnabled);
+    mp_rendezvous_no_intrs(doAllCpuSyncICEOM, &context);
+  }
+
+  if (context.executedCpu != cpu) {
+    HVSYSLOG("SynIC EOM failed: target=%u executed=%u", cpu, context.executedCpu);
+  } else if (_synicEomLogCount++ < 16) {
+    HVSYSLOG("SynIC EOM r1: caller=%u target=%u executed=%u", currentCpu, cpu, context.executedCpu);
+  }
 }

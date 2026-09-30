@@ -16,7 +16,6 @@
 extern "C" {
 #include <i386/cpuid.h>
 #include <i386/proc_reg.h>
-#include <i386/pmCPU.h>
 }
 
 typedef struct {
@@ -55,10 +54,7 @@ private:
   UInt16 _hvMajorVersion = 0;
   UInt32 _hvRecommends   = 0;
   
-#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_6
-  pmCallBacks_t _pmCallbacks     = { };
-  IOSimpleLock  *_preemptionLock = nullptr;
-#endif
+  UInt32 _synicEomLogCount = 0;
   
   //
   // Hypercall page.
