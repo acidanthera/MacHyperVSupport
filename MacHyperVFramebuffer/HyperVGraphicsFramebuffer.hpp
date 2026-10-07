@@ -35,6 +35,7 @@ private:
   UInt8               *_cursorData      = nullptr;
   size_t              _cursorDataSize   = kHyperVGraphicsCursorMaxSize;
   bool                _hasCursorHotspot = false;
+  bool                _useHardwareCursor = false;
   
   IODisplayModeID _currentDisplayMode = 4;
   

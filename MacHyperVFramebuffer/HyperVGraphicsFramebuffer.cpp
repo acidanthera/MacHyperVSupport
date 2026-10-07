@@ -48,6 +48,13 @@ bool HyperVGraphicsFramebuffer::start(IOService *provider) {
     _hasCursorHotspot = true;
   }
 
+  //
+  // Hyper-V cursor shapes are limited in size and macOS switches between hardware and
+  // software cursors often, which leaves the cursor invisible. Like the Linux driver, let
+  // macOS draw the cursor itself unless -hvgfxhwcursor is passed.
+  //
+  _useHardwareCursor = checkKernelArgument("-hvgfxhwcursor");
+
   if (!super::start(provider)) {
     HVSYSLOG("super::start() returned false");
     return false;
@@ -131,6 +138,13 @@ IOReturn HyperVGraphicsFramebuffer::enableController() {
   if (status != kIOReturnSuccess) {
     HVSYSLOG("Failed to set initial display mode");
     return status;
+  }
+
+  //
+  // Hide the host-drawn cursor when macOS draws a software cursor.
+  //
+  if (!_useHardwareCursor) {
+    flushCursor();
   }
 
   return kIOReturnSuccess;
@@ -257,13 +271,13 @@ IOReturn HyperVGraphicsFramebuffer::setDisplayMode(IODisplayModeID displayMode, 
 
 IOReturn HyperVGraphicsFramebuffer::getAttribute(IOSelect attribute, uintptr_t *value) {
   //
-  // Report that a hardware cursor is supported.
+  // Report whether a hardware cursor is supported.
   //
   if (attribute == kIOHardwareCursorAttribute) {
     if (value != nullptr) {
-      *value = 1;
+      *value = _useHardwareCursor ? 1 : 0;
     }
-    HVDBGLOG("Hardware cursor supported");
+    HVDBGLOG("Hardware cursor %s", _useHardwareCursor ? "supported" : "disabled");
     return kIOReturnSuccess;
   }
 
