@@ -31,6 +31,9 @@ typedef enum : UInt32 {
 #define HV_PAGEALIGN(a)         (((a) + (PAGE_SIZE - 1)) &~ (PAGE_SIZE - 1))
 
 #define kHyperVHypercallRetryCount  100
+// Retry delays double from 10 us up to 100 ms (about 9 s across all retries).
+#define kHyperVHypercallRetryInitialDelayUs  10
+#define kHyperVHypercallRetryMaxDelayUs      100000
 
 inline void
 guid_unparse(const uuid_t uu, uuid_string_t out) {

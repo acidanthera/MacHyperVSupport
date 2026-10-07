@@ -118,6 +118,13 @@ IOReturn HyperVVMBus::sendVMBusMessageGated(VMBusChannelMessage *message, UInt32
   // Multiple hypercalls may fail due to lack of resources on the host
   // side, just try again if that happens.
   //
+  // The host can take far longer than a few microseconds to free its message
+  // buffers, e.g. while several devices start at once on a busy host. Back off
+  // exponentially like Linux's vmbus_post_msg() so a temporary shortage doesn't
+  // fail channel setup (seen as "Failed to create GPADL for receive buffer" and
+  // a missing network interface).
+  //
+  UInt32 delayUs = kHyperVHypercallRetryInitialDelayUs;
   for (int i = 0; i < kHyperVHypercallRetryCount; i++) {
     HVDBGLOG("Sending message on connection ID %u, type %u, %u bytes", _vmbusMsgConnectionId, msgEntry->type, size);
     hvStatus = hvController->hypercallPostMessage(_vmbusMsgConnectionId, kHyperVMessageTypeChannel, message, (UInt32) size);
@@ -141,7 +148,12 @@ IOReturn HyperVVMBus::sendVMBusMessageGated(VMBusChannelMessage *message, UInt32
     if (postCompleted) {
       break;
     }
-    IODelay(10);
+    if (delayUs < 1000) {
+      IODelay(delayUs);
+    } else {
+      IOSleep(delayUs / 1000);
+    }
+    delayUs = (delayUs * 2 < kHyperVHypercallRetryMaxDelayUs) ? delayUs * 2 : kHyperVHypercallRetryMaxDelayUs;
   }
   
   if (returnStatus != kIOReturnSuccess) {
