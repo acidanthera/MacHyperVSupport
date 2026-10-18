@@ -69,11 +69,13 @@ bool HyperVNetwork::start(IOService *provider) {
     status = _hvDevice->openVMBusChannel(kHyperVNetworkRingBufferSize, kHyperVNetworkRingBufferSize, kHyperVNetworkMaximumTransId);
     if (status != kIOReturnSuccess) {
       HVSYSLOG("Failed to open VMBus channel with status 0x%X", status);
-      return status;
+      break;
     }
     
-    // TODO
-    connectNetwork();
+    if (!connectNetwork()) {
+      HVSYSLOG("Failed to connect to network");
+      break;
+    }
     
     //
     // Attach and register network interface.
